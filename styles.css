@@ -1,0 +1,378 @@
+/* Layout & Container */
+.mysql-workbench-container {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background-color: var(--background-primary);
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+}
+
+.mysql-workbench-container:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-color: var(--interactive-accent);
+}
+
+/* Source Code Area */
+.mysql-source-code {
+    background-color: var(--background-secondary) !important;
+    padding: 16px !important;
+    /* Increased padding */
+    margin: 0 !important;
+    border-radius: 0 !important;
+    /* Flush with container */
+    border-bottom: 1px solid var(--background-modifier-border);
+    font-family: 'Fira Code', var(--font-monospace);
+    font-size: 0.9em;
+    line-height: 1.5;
+}
+
+/* Controls Toolbar */
+.mysql-controls {
+    display: flex;
+    gap: 12px;
+    padding: 12px 16px;
+    background-color: var(--background-primary-alt);
+    border-bottom: 1px solid var(--background-modifier-border);
+    align-items: center;
+}
+
+/* Buttons */
+.mysql-controls button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    /* Larger click area */
+    border-radius: 6px;
+    /* Modern rounded corners */
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.mysql-btn-run {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.mysql-btn-run:hover {
+    background-color: var(--interactive-accent-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.mysql-btn-run:active {
+    transform: translateY(0);
+}
+
+.mysql-btn {
+    background-color: transparent;
+    color: var(--text-normal);
+    border: 1px solid var(--background-modifier-border);
+}
+
+.mysql-btn:hover {
+    background-color: var(--background-modifier-hover);
+    border-color: var(--interactive-accent);
+}
+
+
+.mysql-reset-btn {
+    background-color: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--background-modifier-border);
+}
+
+.mysql-reset-btn:hover {
+    background-color: var(--background-modifier-error-hover);
+    color: var(--text-on-accent);
+    border-color: transparent;
+}
+
+/* Spinner Animation */
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Results Area */
+.mysql-result-container {
+    padding: 0;
+    background-color: var(--background-primary);
+    min-height: 0;
+    /* Collapsed when empty */
+}
+
+/* Individual Result Section */
+.mysql-result-section {
+    padding: 16px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mysql-result-title {
+    margin: 0 0 12px 0;
+    color: var(--text-accent);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mysql-result-title::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 1em;
+    background-color: var(--interactive-accent);
+    border-radius: 2px;
+}
+
+/* Table Card Grid (New) */
+.mysql-table-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    padding: 16px;
+}
+
+.mysql-table-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    background-color: var(--background-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    color: var(--text-normal);
+}
+
+.mysql-table-card:hover {
+    background-color: var(--background-primary);
+    border-color: var(--interactive-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.mysql-table-card svg {
+    color: var(--text-muted);
+}
+
+.mysql-table-card:hover svg {
+    color: var(--interactive-accent);
+}
+
+/* Result Header with Back Button */
+.mysql-result-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background-color: var(--background-secondary);
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.mysql-link-btn {
+    background: none;
+    border: none;
+    color: var(--text-accent);
+    cursor: pointer;
+    padding: 4px 8px;
+    font-size: 0.8em;
+}
+
+.mysql-link-btn:hover {
+    text-decoration: underline;
+}
+
+
+/* Table Styling */
+.mysql-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    font-size: 0.9em;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--background-modifier-border);
+}
+
+.mysql-table th,
+.mysql-table td {
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.mysql-table th {
+    background-color: var(--background-secondary-alt);
+    font-weight: 600;
+    color: var(--text-normal);
+    text-transform: uppercase;
+    font-size: 0.8em;
+    letter-spacing: 0.05em;
+    border-right: 1px solid var(--background-modifier-border);
+    /* Vertical separators */
+}
+
+.mysql-table th:last-child {
+    border-right: none;
+}
+
+.mysql-table td {
+    border-right: 1px solid var(--background-modifier-border);
+    font-family: var(--font-monospace);
+    /* Data feels more like data */
+    color: var(--text-normal);
+}
+
+.mysql-table td:last-child {
+    border-right: none;
+}
+
+.mysql-table tr:last-child td {
+    border-bottom: none;
+}
+
+.mysql-table tr:nth-child(even) {
+    background-color: var(--background-primary-alt);
+}
+
+.mysql-table tr:hover td {
+    background-color: var(--background-modifier-hover);
+}
+
+/* Metadata & Errors */
+.mysql-metadata {
+    color: var(--text-muted);
+    font-style: italic;
+    margin: 0;
+    padding: 8px 12px;
+    background-color: var(--background-secondary);
+    border-left: 3px solid var(--interactive-accent);
+    border-radius: 0 4px 4px 0;
+    font-size: 0.9em;
+}
+
+.mysql-error {
+    padding: 12px 16px;
+    border: 1px solid var(--color-red);
+    background-color: rgba(233, 49, 71, 0.1);
+    /* Red tint */
+    border-radius: 6px;
+    color: var(--color-red);
+    font-family: var(--font-monospace);
+    font-size: 0.9em;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.mysql-empty-state {
+    padding: 30px;
+    text-align: center;
+    color: var(--text-faint);
+    background-color: var(--background-secondary);
+}
+
+/* PrismJS Syntax Highlighting */
+.mysql-source-code .token.comment,
+.mysql-source-code .token.prolog,
+.mysql-source-code .token.doctype,
+.mysql-source-code .token.cdata {
+    color: var(--code-comment);
+    font-style: italic;
+}
+
+.mysql-source-code .token.punctuation {
+    color: var(--code-punctuation);
+}
+
+.mysql-source-code .token.namespace {
+    opacity: .7;
+}
+
+.mysql-source-code .token.property,
+.mysql-source-code .token.tag,
+.mysql-source-code .token.boolean,
+.mysql-source-code .token.number,
+.mysql-source-code .token.constant,
+.mysql-source-code .token.symbol,
+.mysql-source-code .token.deleted {
+    color: var(--code-value);
+}
+
+.mysql-source-code .token.selector,
+.mysql-source-code .token.attr-name,
+.mysql-source-code .token.string,
+.mysql-source-code .token.char,
+.mysql-source-code .token.builtin,
+.mysql-source-code .token.inserted {
+    color: var(--code-string);
+}
+
+.mysql-source-code .token.operator,
+.mysql-source-code .token.entity,
+.mysql-source-code .token.url,
+.mysql-source-code .language-css .token.string,
+.mysql-source-code .style .token.string {
+    color: var(--code-operator);
+}
+
+.mysql-source-code .token.atrule,
+.mysql-source-code .token.attr-value,
+.mysql-source-code .token.keyword {
+    color: var(--code-keyword);
+}
+
+.mysql-source-code .token.function,
+.mysql-source-code .token.class-name {
+    color: var(--code-function);
+}
+
+.mysql-source-code .token.regex,
+.mysql-source-code .token.important,
+.mysql-source-code .token.variable {
+    color: var(--code-tag);
+}
+
+.mysql-source-code .token.important,
+.mysql-source-code .token.bold {
+    font-weight: bold;
+}
+
+.mysql-source-code .token.italic {
+    font-style: italic;
+}
+
+.mysql-source-code .token.entity {
+    cursor: help;
+}
