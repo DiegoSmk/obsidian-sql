@@ -8,7 +8,15 @@ export default class MySQLPlugin extends Plugin {
     async onload() {
         // Initialize AlaSQL with MySQL compatibility
         alasql.options.mysql = true;
-        alasql('CREATE DATABASE IF NOT EXISTS empresa; USE empresa;');
+
+        // Fix 2: Strict check to prevent "Database already exists" on rapid reloads
+        if (!alasql.databases.empresa) {
+            alasql('CREATE DATABASE empresa;');
+        }
+        alasql('USE empresa;');
+
+        // Fix 3: BigInt Warning
+        console.warn("MySQL Plugin: Note that BigInt support is limited by standard JavaScript Number precision (> 2^53).");
 
         // Check for saved data
         await this.loadDatabase();
@@ -159,6 +167,11 @@ export default class MySQLPlugin extends Plugin {
             // Remove 'CREATE DATABASE ... empresa ... ;' aggressively
             // Matches optional 'IF NOT EXISTS', 'empresa', and everything until the next semicolon
             .replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?empresa[^;]*;?/gi, "")
+            // Fix 1: Remove AUTO_INCREMENT options (common in dumps)
+            .replace(/AUTO_INCREMENT\s*=?\s*\d+/gi, "")
+            // Fix 1: Remove LOCK/UNLOCK TABLES (not supported by AlaSQL in this mode)
+            .replace(/LOCK\s+TABLES\s+[^;]+;/gi, "")
+            .replace(/UNLOCK\s+TABLES\s*;?/gi, "")
             // Clean empty lines left by removals
             .replace(/^\s*[\r\n]/gm, "");
 
