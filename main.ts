@@ -309,20 +309,72 @@ export default class MySQLPlugin extends Plugin {
         // Header
         const thead = table.createEl("thead");
         const headerRow = thead.createEl("tr");
-
-        keys.forEach(key => {
-            headerRow.createEl("th", { text: key });
-        });
+        keys.forEach(key => headerRow.createEl("th", { text: key }));
 
         // Body
         const tbody = table.createEl("tbody");
-        rows.forEach(row => {
+
+        // Lazy Loading / Pagination State
+        const batchSize = 50;
+        let currentCount = 0;
+
+        // Render first batch
+        const initialBatch = rows.slice(0, batchSize);
+        initialBatch.forEach(row => {
             const tr = tbody.createEl("tr");
             keys.forEach(key => {
                 const val = row[key];
                 tr.createEl("td", { text: val === null || val === undefined ? "NULL" : String(val) });
             });
         });
+        currentCount += initialBatch.length;
+
+        // Controls logic
+        if (rows.length > batchSize) {
+            const controls = el.createEl("div", { cls: "mysql-pagination-controls" });
+            const status = controls.createEl("span", { cls: "mysql-pagination-status" });
+
+            const loadMoreBtn = controls.createEl("button", { cls: "mysql-btn", text: "Load More (50)" });
+            const loadAllBtn = controls.createEl("button", { cls: "mysql-btn", text: "Load All" });
+
+            const updateControls = () => {
+                status.setText(`Showing ${currentCount} of ${rows.length} rows`);
+                if (currentCount >= rows.length) {
+                    loadMoreBtn.style.display = "none";
+                    loadAllBtn.style.display = "none";
+                }
+            };
+
+            // Initial update
+            updateControls();
+
+            // Handlers
+            loadMoreBtn.onclick = () => {
+                const nextBatch = rows.slice(currentCount, currentCount + batchSize);
+                nextBatch.forEach(row => {
+                    const tr = tbody.createEl("tr");
+                    keys.forEach(key => {
+                        const val = row[key];
+                        tr.createEl("td", { text: val === null || val === undefined ? "NULL" : String(val) });
+                    });
+                });
+                currentCount += nextBatch.length;
+                updateControls();
+            };
+
+            loadAllBtn.onclick = () => {
+                const rest = rows.slice(currentCount);
+                rest.forEach(row => {
+                    const tr = tbody.createEl("tr");
+                    keys.forEach(key => {
+                        const val = row[key];
+                        tr.createEl("td", { text: val === null || val === undefined ? "NULL" : String(val) });
+                    });
+                });
+                currentCount = rows.length;
+                updateControls();
+            };
+        }
     }
 
     renderError(error: any, el: HTMLElement) {
