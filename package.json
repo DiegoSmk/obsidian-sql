@@ -8,7 +8,7 @@
     "build": "node esbuild.config.mjs production"
   },
   "keywords": [],
-  "author": "",
+  "author": "Diego Pena",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
