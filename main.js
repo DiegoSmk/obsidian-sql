@@ -9789,7 +9789,11 @@ Prism.languages.sql = {
 var MySQLPlugin = class extends import_obsidian.Plugin {
   async onload() {
     import_alasql.default.options.mysql = true;
-    (0, import_alasql.default)("CREATE DATABASE IF NOT EXISTS empresa; USE empresa;");
+    if (!import_alasql.default.databases.empresa) {
+      (0, import_alasql.default)("CREATE DATABASE empresa;");
+    }
+    (0, import_alasql.default)("USE empresa;");
+    console.warn("MySQL Plugin: Note that BigInt support is limited by standard JavaScript Number precision (> 2^53).");
     await this.loadDatabase();
     this.registerMarkdownCodeBlockProcessor("mysql", async (source, el, ctx) => {
       const code = source.trim();
@@ -9885,7 +9889,7 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
     });
   }
   cleanSQL(sql) {
-    let cleaned = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "").replace(/(DEFAULT )?(CHARACTER SET|CHARSET)\s*=?\s*[\w\d_]+/gi, "").replace(/(DEFAULT )?COLLATE\s*=?\s*[\w\d_]+/gi, "").replace(/ENGINE\s*=?\s*[\w\d_]+/gi, "").replace(/ROW_FORMAT\s*=?\s*[\w\d_]+/gi, "").replace(/USE\s+empresa\s*;?/gi, "").replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?empresa[^;]*;?/gi, "").replace(/^\s*[\r\n]/gm, "");
+    let cleaned = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "").replace(/(DEFAULT )?(CHARACTER SET|CHARSET)\s*=?\s*[\w\d_]+/gi, "").replace(/(DEFAULT )?COLLATE\s*=?\s*[\w\d_]+/gi, "").replace(/ENGINE\s*=?\s*[\w\d_]+/gi, "").replace(/ROW_FORMAT\s*=?\s*[\w\d_]+/gi, "").replace(/USE\s+empresa\s*;?/gi, "").replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?empresa[^;]*;?/gi, "").replace(/AUTO_INCREMENT\s*=?\s*\d+/gi, "").replace(/LOCK\s+TABLES\s+[^;]+;/gi, "").replace(/UNLOCK\s+TABLES\s*;?/gi, "").replace(/^\s*[\r\n]/gm, "");
     return cleaned;
   }
   async loadDatabase() {
@@ -9981,17 +9985,57 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
     table.addClass("mysql-table");
     const thead = table.createEl("thead");
     const headerRow = thead.createEl("tr");
-    keys.forEach((key) => {
-      headerRow.createEl("th", { text: key });
-    });
+    keys.forEach((key) => headerRow.createEl("th", { text: key }));
     const tbody = table.createEl("tbody");
-    rows.forEach((row) => {
+    const batchSize = 50;
+    let currentCount = 0;
+    const initialBatch = rows.slice(0, batchSize);
+    initialBatch.forEach((row) => {
       const tr = tbody.createEl("tr");
       keys.forEach((key) => {
         const val = row[key];
         tr.createEl("td", { text: val === null || val === void 0 ? "NULL" : String(val) });
       });
     });
+    currentCount += initialBatch.length;
+    if (rows.length > batchSize) {
+      const controls = el.createEl("div", { cls: "mysql-pagination-controls" });
+      const status = controls.createEl("span", { cls: "mysql-pagination-status" });
+      const loadMoreBtn = controls.createEl("button", { cls: "mysql-btn", text: "Load More (50)" });
+      const loadAllBtn = controls.createEl("button", { cls: "mysql-btn", text: "Load All" });
+      const updateControls = () => {
+        status.setText(`Showing ${currentCount} of ${rows.length} rows`);
+        if (currentCount >= rows.length) {
+          loadMoreBtn.style.display = "none";
+          loadAllBtn.style.display = "none";
+        }
+      };
+      updateControls();
+      loadMoreBtn.onclick = () => {
+        const nextBatch = rows.slice(currentCount, currentCount + batchSize);
+        nextBatch.forEach((row) => {
+          const tr = tbody.createEl("tr");
+          keys.forEach((key) => {
+            const val = row[key];
+            tr.createEl("td", { text: val === null || val === void 0 ? "NULL" : String(val) });
+          });
+        });
+        currentCount += nextBatch.length;
+        updateControls();
+      };
+      loadAllBtn.onclick = () => {
+        const rest = rows.slice(currentCount);
+        rest.forEach((row) => {
+          const tr = tbody.createEl("tr");
+          keys.forEach((key) => {
+            const val = row[key];
+            tr.createEl("td", { text: val === null || val === void 0 ? "NULL" : String(val) });
+          });
+        });
+        currentCount = rows.length;
+        updateControls();
+      };
+    }
   }
   renderError(error, el) {
     const errDiv = el.createEl("div");
