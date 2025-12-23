@@ -114,7 +114,23 @@ export default class MySQLPlugin extends Plugin {
                     // Note: AlaSQL's promise signature: alasql.promise(sql, [params])
                     // If we pass an object params, it should map :key to value.
 
-                    const result = await alasql.promise(cleanedCode, [paramValues]);
+                    console.log("MySQL Plugin: Executing SQL...");
+                    // Use a direct promise wrapper to ensure completion/error handling
+                    const runQuery = (sql: string, params: any): Promise<any> => {
+                        return new Promise((resolve, reject) => {
+                            try {
+                                alasql(sql, params, (res: any, err: any) => {
+                                    if (err) reject(err);
+                                    else resolve(res);
+                                });
+                            } catch (e) {
+                                reject(e);
+                            }
+                        });
+                    };
+
+                    const result = await runQuery(cleanedCode, paramValues);
+                    console.log("MySQL Plugin: Execution complete. Result:", result);
 
                     // Auto-save logic
                     // Sync UI if USE command was executed manually
@@ -128,6 +144,7 @@ export default class MySQLPlugin extends Plugin {
                     }
 
                     if (this.settings.autoSave && !cleanedCode.trim().toUpperCase().startsWith('SELECT') && !cleanedCode.trim().toUpperCase().startsWith('SHOW')) {
+                        console.log("MySQL Plugin: Auto-saving database...");
                         await this.saveDatabase();
                     }
 
@@ -161,24 +178,42 @@ export default class MySQLPlugin extends Plugin {
             };
 
             resetButton.onclick = async () => {
-                // Reset example DB
-                if (!confirm("Are you sure you want to drop all tables in 'dbo'?")) return;
+                if (!confirm("This will delete all your databases and tables (except the default 'dbo' structure). Are you sure?")) return;
 
                 try {
-                    alasql('DROP DATABASE IF EXISTS dbo');
-                    // Also clear saved data
-                    await this.saveData({ databases: {}, currentDB: 'dbo' });
-                    alasql('CREATE DATABASE dbo; USE dbo;');
-
+                    await this.resetPluginData();
                     resultContainer.empty();
-                    new Notice('Database reset.');
-                    resultContainer.createEl("p", { text: "Database reset. Clean slate.", cls: "mysql-metadata" });
+                    new Notice('All databases reset.');
+                    resultContainer.createEl("p", { text: "All databases cleared. Reset to 'dbo'.", cls: "mysql-metadata" });
                 } catch (e) {
                     console.error(e);
+                    new Notice("Error during reset: " + e.message);
                 }
             };
         });
     }
+
+    async resetPluginData() {
+        const dbs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
+        for (const db of dbs) {
+            try {
+                alasql(`DROP DATABASE IF EXISTS ${db}`);
+            } catch (e) { console.error(`Failed to drop ${db}`, e); }
+        }
+
+        // Ensure dbo exists and is used
+        if (!alasql.databases.dbo) {
+            alasql('CREATE DATABASE dbo');
+        }
+        alasql('USE dbo');
+        this.currentDB = 'dbo';
+
+        // Clear saved data but keep settings
+        const data = await this.loadData() || {};
+        const newData = { ...this.settings, currentDB: 'dbo', databases: {} };
+        await this.saveData(newData);
+    }
+
 
     async loadSettings() {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -207,10 +242,10 @@ export default class MySQLPlugin extends Plugin {
             // Remove 'USE dbo' (case insensitive, various spacings)
             .replace(/USE\s+dbo\s*;?/gi, "")
             // Remove 'CREATE DATABASE ... dbo ... ;' aggressively
-            // Matches optional 'IF NOT EXISTS', 'dbo', and everything until the next semicolon
             .replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?dbo[^;]*;?/gi, "")
             // Fix 1: Remove AUTO_INCREMENT options (common in dumps)
-            .replace(/AUTO_INCREMENT\s*=?\s*\d+/gi, "")
+            // Matches 'AUTO_INCREMENT' with optional '= 123'
+            .replace(/AUTO_INCREMENT(\s*=?\s*\d+)?/gi, "")
             // Fix 1: Remove LOCK/UNLOCK TABLES (not supported by AlaSQL in this mode)
             .replace(/LOCK\s+TABLES\s+[^;]+;/gi, "")
             .replace(/UNLOCK\s+TABLES\s*;?/gi, "")
@@ -854,18 +889,16 @@ class MySQLSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Reset Database')
-            .setDesc('DANGER: Drops all tables in the CURRENT database.')
+            .setName('Reset All Data')
+            .setDesc('DANGER: Deletes all databases and tables. Resets to clean state.')
             .addButton(btn => btn
                 .setWarning()
-                .setButtonText('Reset Now')
+                .setButtonText('Reset Everything Now')
                 .onClick(async () => {
-                    if (!confirm(`Are you sure you want to reset the database '${this.plugin.currentDB}'?`)) return;
-                    await alasql.promise(`DROP DATABASE ${this.plugin.currentDB}`);
-                    await alasql.promise(`CREATE DATABASE ${this.plugin.currentDB}`);
-                    await alasql.promise(`USE ${this.plugin.currentDB}`);
-                    await this.plugin.saveDatabase();
-                    new Notice(`Database '${this.plugin.currentDB}' reset.`);
+                    if (!confirm(`Are you sure you want to delete ALL databases? This cannot be undone.`)) return;
+                    await this.plugin.resetPluginData();
+                    this.display(); // Refresh tab
+                    new Notice(`All SQL data has been reset.`);
                 }));
     }
 }

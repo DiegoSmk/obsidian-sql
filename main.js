@@ -9852,7 +9852,21 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
         runBtn.innerHTML = `<svg class="spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Executing...`;
         try {
           const cleanedCode = this.cleanSQL(code);
-          const result = await import_alasql.default.promise(cleanedCode, [paramValues]);
+          console.log("MySQL Plugin: Executing SQL...");
+          const runQuery = (sql, params) => {
+            return new Promise((resolve, reject) => {
+              try {
+                (0, import_alasql.default)(sql, params, (res, err) => {
+                  if (err) reject(err);
+                  else resolve(res);
+                });
+              } catch (e) {
+                reject(e);
+              }
+            });
+          };
+          const result = await runQuery(cleanedCode, paramValues);
+          console.log("MySQL Plugin: Execution complete. Result:", result);
           const useMatch = cleanedCode.match(/USE\s+([a-zA-Z0-9_]+)/i);
           if (useMatch && useMatch[1]) {
             const newDB = useMatch[1];
@@ -9862,6 +9876,7 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
             }
           }
           if (this.settings.autoSave && !cleanedCode.trim().toUpperCase().startsWith("SELECT") && !cleanedCode.trim().toUpperCase().startsWith("SHOW")) {
+            console.log("MySQL Plugin: Auto-saving database...");
             await this.saveDatabase();
           }
           const ignoredPatterns = [
@@ -9890,19 +9905,36 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
         }
       };
       resetButton.onclick = async () => {
-        if (!confirm("Are you sure you want to drop all tables in 'dbo'?")) return;
+        if (!confirm("This will delete all your databases and tables (except the default 'dbo' structure). Are you sure?")) return;
         try {
-          (0, import_alasql.default)("DROP DATABASE IF EXISTS dbo");
-          await this.saveData({ databases: {}, currentDB: "dbo" });
-          (0, import_alasql.default)("CREATE DATABASE dbo; USE dbo;");
+          await this.resetPluginData();
           resultContainer.empty();
-          new import_obsidian.Notice("Database reset.");
-          resultContainer.createEl("p", { text: "Database reset. Clean slate.", cls: "mysql-metadata" });
+          new import_obsidian.Notice("All databases reset.");
+          resultContainer.createEl("p", { text: "All databases cleared. Reset to 'dbo'.", cls: "mysql-metadata" });
         } catch (e) {
           console.error(e);
+          new import_obsidian.Notice("Error during reset: " + e.message);
         }
       };
     });
+  }
+  async resetPluginData() {
+    const dbs = Object.keys(import_alasql.default.databases).filter((d) => d !== "alasql");
+    for (const db of dbs) {
+      try {
+        (0, import_alasql.default)(`DROP DATABASE IF EXISTS ${db}`);
+      } catch (e) {
+        console.error(`Failed to drop ${db}`, e);
+      }
+    }
+    if (!import_alasql.default.databases.dbo) {
+      (0, import_alasql.default)("CREATE DATABASE dbo");
+    }
+    (0, import_alasql.default)("USE dbo");
+    this.currentDB = "dbo";
+    const data = await this.loadData() || {};
+    const newData = { ...this.settings, currentDB: "dbo", databases: {} };
+    await this.saveData(newData);
   }
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
@@ -9913,7 +9945,7 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
     await this.saveData(newData);
   }
   cleanSQL(sql) {
-    let cleaned = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "").replace(/(DEFAULT )?(CHARACTER SET|CHARSET)\s*=?\s*[\w\d_]+/gi, "").replace(/(DEFAULT )?COLLATE\s*=?\s*[\w\d_]+/gi, "").replace(/ENGINE\s*=?\s*[\w\d_]+/gi, "").replace(/ROW_FORMAT\s*=?\s*[\w\d_]+/gi, "").replace(/USE\s+dbo\s*;?/gi, "").replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?dbo[^;]*;?/gi, "").replace(/AUTO_INCREMENT\s*=?\s*\d+/gi, "").replace(/LOCK\s+TABLES\s+[^;]+;/gi, "").replace(/UNLOCK\s+TABLES\s*;?/gi, "").replace(/^\s*[\r\n]/gm, "");
+    let cleaned = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "").replace(/(DEFAULT )?(CHARACTER SET|CHARSET)\s*=?\s*[\w\d_]+/gi, "").replace(/(DEFAULT )?COLLATE\s*=?\s*[\w\d_]+/gi, "").replace(/ENGINE\s*=?\s*[\w\d_]+/gi, "").replace(/ROW_FORMAT\s*=?\s*[\w\d_]+/gi, "").replace(/USE\s+dbo\s*;?/gi, "").replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?dbo[^;]*;?/gi, "").replace(/AUTO_INCREMENT(\s*=?\s*\d+)?/gi, "").replace(/LOCK\s+TABLES\s+[^;]+;/gi, "").replace(/UNLOCK\s+TABLES\s*;?/gi, "").replace(/^\s*[\r\n]/gm, "");
     return cleaned;
   }
   async loadDatabase() {
@@ -10350,13 +10382,11 @@ var MySQLSettingTab = class extends import_obsidian.PluginSettingTab {
         new import_obsidian.Notice(`Tables: ${result.map((r) => r.tableid).join(", ")}`);
       }
     }));
-    new import_obsidian.Setting(containerEl).setName("Reset Database").setDesc("DANGER: Drops all tables in the CURRENT database.").addButton((btn) => btn.setWarning().setButtonText("Reset Now").onClick(async () => {
-      if (!confirm(`Are you sure you want to reset the database '${this.plugin.currentDB}'?`)) return;
-      await import_alasql.default.promise(`DROP DATABASE ${this.plugin.currentDB}`);
-      await import_alasql.default.promise(`CREATE DATABASE ${this.plugin.currentDB}`);
-      await import_alasql.default.promise(`USE ${this.plugin.currentDB}`);
-      await this.plugin.saveDatabase();
-      new import_obsidian.Notice(`Database '${this.plugin.currentDB}' reset.`);
+    new import_obsidian.Setting(containerEl).setName("Reset All Data").setDesc("DANGER: Deletes all databases and tables. Resets to clean state.").addButton((btn) => btn.setWarning().setButtonText("Reset Everything Now").onClick(async () => {
+      if (!confirm(`Are you sure you want to delete ALL databases? This cannot be undone.`)) return;
+      await this.plugin.resetPluginData();
+      this.display();
+      new import_obsidian.Notice(`All SQL data has been reset.`);
     }));
   }
 };
