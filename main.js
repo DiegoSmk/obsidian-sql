@@ -9786,19 +9786,25 @@ Prism.languages.sql = {
 };
 
 // main.ts
+var DEFAULT_SETTINGS = {
+  exportFolderName: "sql-exports",
+  autoSave: true
+};
 var MySQLPlugin = class extends import_obsidian.Plugin {
   constructor() {
     super(...arguments);
-    this.currentDB = "empresa";
+    this.currentDB = "dbo";
   }
   async onload() {
+    await this.loadSettings();
     import_alasql.default.options.mysql = true;
-    if (!import_alasql.default.databases.empresa) {
-      (0, import_alasql.default)("CREATE DATABASE empresa;");
+    if (!import_alasql.default.databases.dbo) {
+      (0, import_alasql.default)("CREATE DATABASE dbo;");
     }
-    (0, import_alasql.default)("USE empresa;");
+    (0, import_alasql.default)("USE dbo;");
     console.warn("MySQL Plugin: Note that BigInt support is limited by standard JavaScript Number precision (> 2^53).");
     await this.loadDatabase();
+    this.addSettingTab(new MySQLSettingTab(this.app, this));
     this.registerMarkdownCodeBlockProcessor("mysql", async (source, el, ctx) => {
       const code = source.trim();
       if (!code) return;
@@ -9835,51 +9841,8 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
       }
       const runBtn = controls.createEl("button", { cls: "mod-cta mysql-btn-run" });
       runBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Run`;
-      const dbControls = controls.createEl("div", { cls: "mysql-db-controls" });
-      const dbSelect = dbControls.createEl("select", { cls: "mysql-db-select" });
-      const refreshDBs = () => {
-        dbSelect.innerHTML = "";
-        const dbs = Object.keys(import_alasql.default.databases).filter((d) => d !== "alasql");
-        dbs.forEach((db) => {
-          const opt = dbSelect.createEl("option", { text: db, value: db });
-          if (db === import_alasql.default.useid) opt.selected = true;
-        });
-      };
-      refreshDBs();
-      dbSelect.onchange = async () => {
-        const newDB = dbSelect.value;
-        await import_alasql.default.promise(`USE ${newDB}`);
-        this.currentDB = newDB;
-        await this.saveDatabase();
-        new import_obsidian.Notice(`Switched to: ${newDB}`);
-      };
-      const newDbBtn = dbControls.createEl("button", { cls: "mysql-btn", text: "+" });
-      newDbBtn.title = "New Database";
-      newDbBtn.onclick = () => {
-        new NewDatabaseModal(this.app, async (name) => {
-          try {
-            name = name.replace(/[^a-zA-Z0-9_]/g, "");
-            if (!name) return;
-            await import_alasql.default.promise(`CREATE DATABASE IF NOT EXISTS ${name}`);
-            await import_alasql.default.promise(`USE ${name}`);
-            this.currentDB = name;
-            await this.saveDatabase();
-            refreshDBs();
-            dbSelect.value = name;
-            new import_obsidian.Notice(`Created & Switched to: ${name}`);
-          } catch (e) {
-            new import_obsidian.Notice("Error: " + e.message);
-          }
-        }).open();
-      };
       const resetButton = controls.createEl("button", { cls: "mysql-reset-btn" });
       resetButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg> Reset`;
-      const exportButton = controls.createEl("button", { cls: "mysql-btn" });
-      exportButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Save`;
-      const exportCsvBtn = controls.createEl("button", { cls: "mysql-btn" });
-      exportCsvBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Exp CSV`;
-      const importCsvBtn = controls.createEl("button", { cls: "mysql-btn" });
-      importCsvBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Imp CSV`;
       const showTablesButton = controls.createEl("button", { cls: "mysql-btn" });
       showTablesButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg> Tables`;
       const resultContainer = el.createEl("div", { cls: "mysql-result-container" });
@@ -9895,17 +9858,11 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
             const newDB = useMatch[1];
             if (import_alasql.default.databases[newDB]) {
               this.currentDB = newDB;
-              dbSelect.value = newDB;
-              if (dbSelect.value !== newDB) {
-                refreshDBs();
-                dbSelect.value = newDB;
-              }
               new import_obsidian.Notice(`Switched to: ${newDB}`);
             }
           }
-          if (!cleanedCode.trim().toUpperCase().startsWith("SELECT") && !cleanedCode.trim().toUpperCase().startsWith("SHOW")) {
+          if (this.settings.autoSave && !cleanedCode.trim().toUpperCase().startsWith("SELECT") && !cleanedCode.trim().toUpperCase().startsWith("SHOW")) {
             await this.saveDatabase();
-            new import_obsidian.Notice("SQL executed & saved!");
           }
           const ignoredPatterns = [
             { regex: /(CHARACTER SET|CHARSET)\s*=?\s*[\w\d_]+/i, name: "Character Set" },
@@ -9932,63 +9889,12 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
           runBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Run SQL`;
         }
       };
-      exportButton.onclick = async () => {
-        await this.saveDatabase();
-        new import_obsidian.Notice("Database saved to disk.");
-      };
-      exportCsvBtn.onclick = async () => {
-        new TableSelectionModal(this.app, async (tableName) => {
-          await this.exportTableToCSV(tableName);
-        }).open();
-      };
-      importCsvBtn.onclick = async () => {
-        new CSVSelectionModal(this.app, async (file) => {
-          await this.importCSVToTable(file);
-          new import_obsidian.Notice(`Imported ${file.basename} into table '${file.basename}'`);
-        }).open();
-      };
-      showTablesButton.onclick = async () => {
-        try {
-          const result = await import_alasql.default.promise("SHOW TABLES");
-          resultContainer.empty();
-          resultContainer.createEl("h6", { text: "Existing Tables:", cls: "mysql-result-title" });
-          if (result.length === 0) {
-            resultContainer.createEl("p", { text: "No tables found.", cls: "mysql-metadata" });
-          } else {
-            const grid = resultContainer.createEl("div", { cls: "mysql-table-grid" });
-            result.forEach((row) => {
-              const tableName = row.tableid;
-              const btn = grid.createEl("button", { cls: "mysql-table-card" });
-              btn.innerHTML = `
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-                                <span>${tableName}</span>
-                            `;
-              btn.onclick = async () => {
-                resultContainer.empty();
-                try {
-                  new import_obsidian.Notice(`Fetching data for '${tableName}'...`);
-                  const data = await import_alasql.default.promise(`SELECT * FROM ${tableName}`);
-                  const header = resultContainer.createEl("div", { cls: "mysql-result-header" });
-                  const backBtn = header.createEl("button", { text: "\u2190 Back to Tables", cls: "mysql-link-btn" });
-                  header.createEl("span", { text: `Table: ${tableName}`, cls: "mysql-result-title" });
-                  backBtn.onclick = () => showTablesButton.click();
-                  this.renderResult(data, resultContainer);
-                } catch (err) {
-                  this.renderError(err, resultContainer);
-                }
-              };
-            });
-          }
-        } catch (e) {
-          this.renderError(e, resultContainer);
-        }
-      };
       resetButton.onclick = async () => {
-        if (!confirm("Are you sure you want to drop all tables in 'empresa'?")) return;
+        if (!confirm("Are you sure you want to drop all tables in 'dbo'?")) return;
         try {
-          (0, import_alasql.default)("DROP DATABASE IF EXISTS empresa");
-          await this.saveData({});
-          (0, import_alasql.default)("CREATE DATABASE empresa; USE empresa;");
+          (0, import_alasql.default)("DROP DATABASE IF EXISTS dbo");
+          await this.saveData({ databases: {}, currentDB: "dbo" });
+          (0, import_alasql.default)("CREATE DATABASE dbo; USE dbo;");
           resultContainer.empty();
           new import_obsidian.Notice("Database reset.");
           resultContainer.createEl("p", { text: "Database reset. Clean slate.", cls: "mysql-metadata" });
@@ -9998,15 +9904,23 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
       };
     });
   }
+  async loadSettings() {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+  async saveSettings() {
+    const currentData = await this.loadData() || {};
+    const newData = { ...currentData, ...this.settings };
+    await this.saveData(newData);
+  }
   cleanSQL(sql) {
-    let cleaned = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "").replace(/(DEFAULT )?(CHARACTER SET|CHARSET)\s*=?\s*[\w\d_]+/gi, "").replace(/(DEFAULT )?COLLATE\s*=?\s*[\w\d_]+/gi, "").replace(/ENGINE\s*=?\s*[\w\d_]+/gi, "").replace(/ROW_FORMAT\s*=?\s*[\w\d_]+/gi, "").replace(/USE\s+empresa\s*;?/gi, "").replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?empresa[^;]*;?/gi, "").replace(/AUTO_INCREMENT\s*=?\s*\d+/gi, "").replace(/LOCK\s+TABLES\s+[^;]+;/gi, "").replace(/UNLOCK\s+TABLES\s*;?/gi, "").replace(/^\s*[\r\n]/gm, "");
+    let cleaned = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "").replace(/(DEFAULT )?(CHARACTER SET|CHARSET)\s*=?\s*[\w\d_]+/gi, "").replace(/(DEFAULT )?COLLATE\s*=?\s*[\w\d_]+/gi, "").replace(/ENGINE\s*=?\s*[\w\d_]+/gi, "").replace(/ROW_FORMAT\s*=?\s*[\w\d_]+/gi, "").replace(/USE\s+dbo\s*;?/gi, "").replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?dbo[^;]*;?/gi, "").replace(/AUTO_INCREMENT\s*=?\s*\d+/gi, "").replace(/LOCK\s+TABLES\s+[^;]+;/gi, "").replace(/UNLOCK\s+TABLES\s*;?/gi, "").replace(/^\s*[\r\n]/gm, "");
     return cleaned;
   }
   async loadDatabase() {
     const data = await this.loadData();
     if (data && data.databases) {
       try {
-        const activeDB = data.currentDB || "empresa";
+        const activeDB = data.currentDB || "dbo";
         for (const [dbName, content] of Object.entries(data.databases)) {
           const db = content;
           if (!db.tables && !db.schema) continue;
@@ -10090,8 +10004,9 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
       if (currentUseId && import_alasql.default.databases[currentUseId]) {
         await import_alasql.default.promise(`USE ${currentUseId}`);
       }
-      await this.saveData(dataToSave);
-      console.log("MySQL Plugin: Database saved to disk (v1.2 Schema).");
+      const finalData = { ...this.settings, ...dataToSave };
+      await this.saveData(finalData);
+      console.log("MySQL Plugin: Database saved to disk (v1.2 Schema + Settings).");
     } catch (e) {
       console.error("MySQL Plugin: Error saving database", e);
     }
@@ -10306,38 +10221,6 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
     errDiv.createEl("span", { text: error.message || String(error) });
   }
 };
-var TableSelectionModal = class extends import_obsidian.FuzzySuggestModal {
-  constructor(app, callback) {
-    super(app);
-    this.callback = callback;
-  }
-  getItems() {
-    const res = (0, import_alasql.default)("SHOW TABLES");
-    if (!res) return [];
-    return res.map((r) => r.tableid);
-  }
-  getItemText(item) {
-    return item;
-  }
-  onChooseItem(item, evt) {
-    this.callback(item);
-  }
-};
-var CSVSelectionModal = class extends import_obsidian.FuzzySuggestModal {
-  constructor(app, callback) {
-    super(app);
-    this.callback = callback;
-  }
-  getItems() {
-    return this.app.vault.getFiles().filter((f) => f.extension === "csv");
-  }
-  getItemText(item) {
-    return item.path;
-  }
-  onChooseItem(item, evt) {
-    this.callback(item);
-  }
-};
 var NewDatabaseModal = class extends import_obsidian.Modal {
   constructor(app, onSubmit) {
     super(app);
@@ -10369,6 +10252,112 @@ var NewDatabaseModal = class extends import_obsidian.Modal {
   onClose() {
     const { contentEl } = this;
     contentEl.empty();
+  }
+};
+var MySQLSettingTab = class extends import_obsidian.PluginSettingTab {
+  constructor(app, plugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+  display() {
+    const { containerEl } = this;
+    containerEl.empty();
+    containerEl.createEl("h2", { text: "MySQL Runner Settings" });
+    containerEl.createEl("h3", { text: "Database Management" });
+    new import_obsidian.Setting(containerEl).setName("Active Database").setDesc("Switch the global SQL context.").addDropdown((dropdown) => {
+      const dbs = Object.keys(import_alasql.default.databases).filter((d) => d !== "alasql");
+      dbs.forEach((db) => dropdown.addOption(db, db));
+      dropdown.setValue(this.plugin.currentDB);
+      dropdown.onChange(async (value) => {
+        await import_alasql.default.promise(`USE ${value}`);
+        this.plugin.currentDB = value;
+        await this.plugin.saveDatabase();
+        new import_obsidian.Notice(`Switched to: ${value}`);
+      });
+    });
+    new import_obsidian.Setting(containerEl).setName("New Database").setDesc("Create a new isolated SQL database.").addButton((btn) => btn.setButtonText("+ Create New").onClick(() => {
+      new NewDatabaseModal(this.app, async (name) => {
+        try {
+          name = name.replace(/[^a-zA-Z0-9_]/g, "");
+          if (!name) return;
+          await import_alasql.default.promise(`CREATE DATABASE IF NOT EXISTS ${name}`);
+          await import_alasql.default.promise(`USE ${name}`);
+          this.plugin.currentDB = name;
+          await this.plugin.saveDatabase();
+          this.display();
+          new import_obsidian.Notice(`Created & Switched to: ${name}`);
+        } catch (e) {
+          new import_obsidian.Notice("Error: " + e.message);
+        }
+      }).open();
+    }));
+    containerEl.createEl("h3", { text: "Data Operations (CSV)" });
+    new import_obsidian.Setting(containerEl).setName("Export Folder").setDesc("Vault folder where CSV exports will be saved.").addText((text) => text.setPlaceholder("sql-exports").setValue(this.plugin.settings.exportFolderName).onChange(async (value) => {
+      this.plugin.settings.exportFolderName = value || "sql-exports";
+      await this.plugin.saveSettings();
+    }));
+    new import_obsidian.Setting(containerEl).setName("Export Table").setDesc("Select a table to export as CSV.").addButton((btn) => btn.setButtonText("Export...").onClick(() => {
+      new class TableSelectionModalInternal extends import_obsidian.FuzzySuggestModal {
+        constructor(app, pluginRef, cb) {
+          super(app);
+          this.pluginRef = pluginRef;
+          this.cb = cb;
+        }
+        getItems() {
+          const tables = import_alasql.default.tables;
+          return Object.keys(tables).filter((t) => !t.startsWith("_"));
+        }
+        getItemText(item) {
+          return item;
+        }
+        onChooseItem(item, evt) {
+          this.cb(item);
+        }
+      }(this.app, this.plugin, async (tableName) => {
+        await this.plugin.exportTableToCSV(tableName);
+      }).open();
+    }));
+    new import_obsidian.Setting(containerEl).setName("Import CSV").setDesc("Import a CSV file from your vault into the current database.").addButton((btn) => btn.setButtonText("Import...").onClick(() => {
+      new class CSVSelectionModalInternal extends import_obsidian.FuzzySuggestModal {
+        constructor(app, cb) {
+          super(app);
+          this.cb = cb;
+        }
+        getItems() {
+          return this.app.vault.getFiles().filter((f) => f.extension === "csv");
+        }
+        getItemText(item) {
+          return item.path;
+        }
+        onChooseItem(item, evt) {
+          this.cb(item);
+        }
+      }(this.app, async (file) => {
+        await this.plugin.importCSVToTable(file);
+        new import_obsidian.Notice(`Imported ${file.basename}`);
+      }).open();
+    }));
+    containerEl.createEl("h3", { text: "Maintenance" });
+    new import_obsidian.Setting(containerEl).setName("Auto-Save").setDesc("Automatically save database changes after execution.").addToggle((toggle) => toggle.setValue(this.plugin.settings.autoSave).onChange(async (value) => {
+      this.plugin.settings.autoSave = value;
+      await this.plugin.saveSettings();
+    }));
+    new import_obsidian.Setting(containerEl).setName("Show All Tables").setDesc("View existing tables in the current database.").addButton((btn) => btn.setButtonText("View Tables").onClick(async () => {
+      const result = await import_alasql.default.promise("SHOW TABLES");
+      if (result.length === 0) {
+        new import_obsidian.Notice("No tables found.");
+      } else {
+        new import_obsidian.Notice(`Tables: ${result.map((r) => r.tableid).join(", ")}`);
+      }
+    }));
+    new import_obsidian.Setting(containerEl).setName("Reset Database").setDesc("DANGER: Drops all tables in the CURRENT database.").addButton((btn) => btn.setWarning().setButtonText("Reset Now").onClick(async () => {
+      if (!confirm(`Are you sure you want to reset the database '${this.plugin.currentDB}'?`)) return;
+      await import_alasql.default.promise(`DROP DATABASE ${this.plugin.currentDB}`);
+      await import_alasql.default.promise(`CREATE DATABASE ${this.plugin.currentDB}`);
+      await import_alasql.default.promise(`USE ${this.plugin.currentDB}`);
+      await this.plugin.saveDatabase();
+      new import_obsidian.Notice(`Database '${this.plugin.currentDB}' reset.`);
+    }));
   }
 };
 /*! Bundled license information:

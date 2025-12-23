@@ -1,27 +1,43 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile, FuzzySuggestModal } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, TFile, FuzzySuggestModal, PluginSettingTab, Setting } from 'obsidian';
 // @ts-ignore
 import alasql from 'alasql';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-sql';
 
+interface MySQLSettings {
+    exportFolderName: string;
+    autoSave: boolean;
+}
+
+const DEFAULT_SETTINGS: MySQLSettings = {
+    exportFolderName: 'sql-exports',
+    autoSave: true
+}
+
 export default class MySQLPlugin extends Plugin {
-    currentDB: string = 'empresa';
+    currentDB: string = 'dbo';
+    settings: MySQLSettings;
 
     async onload() {
+        await this.loadSettings();
+
         // Initialize AlaSQL with MySQL compatibility
         alasql.options.mysql = true;
 
         // Fix 2: Strict check to prevent "Database already exists" on rapid reloads
-        if (!alasql.databases.empresa) {
-            alasql('CREATE DATABASE empresa;');
+        if (!alasql.databases.dbo) {
+            alasql('CREATE DATABASE dbo;');
         }
-        alasql('USE empresa;');
+        alasql('USE dbo;');
 
         // Fix 3: BigInt Warning
         console.warn("MySQL Plugin: Note that BigInt support is limited by standard JavaScript Number precision (> 2^53).");
 
         // Check for saved data
         await this.loadDatabase();
+
+        // This adds a settings tab so the user can configure various aspects of the plugin
+        this.addSettingTab(new MySQLSettingTab(this.app, this));
 
         // Register the Code Block Processor
         this.registerMarkdownCodeBlockProcessor("mysql", async (source, el, ctx) => {
@@ -71,64 +87,11 @@ export default class MySQLPlugin extends Plugin {
             }
 
             // 2. Controls (Run Button)
-            // const controls = el.createEl("div", { cls: "mysql-controls" }); // Already created above
             const runBtn = controls.createEl("button", { cls: "mod-cta mysql-btn-run" });
             runBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Run`;
 
-            // DB Switcher
-            const dbControls = controls.createEl("div", { cls: "mysql-db-controls" });
-            const dbSelect = dbControls.createEl("select", { cls: "mysql-db-select" });
-
-            const refreshDBs = () => {
-                dbSelect.innerHTML = "";
-                const dbs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
-                dbs.forEach(db => {
-                    const opt = dbSelect.createEl("option", { text: db, value: db });
-                    if (db === alasql.useid) opt.selected = true;
-                });
-            };
-            refreshDBs();
-
-            dbSelect.onchange = async () => {
-                const newDB = dbSelect.value;
-                await alasql.promise(`USE ${newDB}`);
-                this.currentDB = newDB;
-                await this.saveDatabase();
-                new Notice(`Switched to: ${newDB}`);
-            };
-
-            const newDbBtn = dbControls.createEl("button", { cls: "mysql-btn", text: "+" });
-            newDbBtn.title = "New Database";
-            newDbBtn.onclick = () => {
-                new NewDatabaseModal(this.app, async (name) => {
-                    try {
-                        // Sanitize
-                        name = name.replace(/[^a-zA-Z0-9_]/g, "");
-                        if (!name) return;
-
-                        await alasql.promise(`CREATE DATABASE IF NOT EXISTS ${name}`);
-                        await alasql.promise(`USE ${name}`);
-                        this.currentDB = name;
-                        await this.saveDatabase();
-                        refreshDBs();
-                        // Update select visually as well for this instance
-                        dbSelect.value = name;
-                        new Notice(`Created & Switched to: ${name}`);
-                    } catch (e) { new Notice("Error: " + e.message); }
-                }).open();
-            };
-
             const resetButton = controls.createEl("button", { cls: "mysql-reset-btn" });
             resetButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg> Reset`;
-
-            const exportButton = controls.createEl("button", { cls: "mysql-btn" });
-            exportButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Save`;
-
-            const exportCsvBtn = controls.createEl("button", { cls: "mysql-btn" });
-            exportCsvBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Exp CSV`;
-
-            const importCsvBtn = controls.createEl("button", { cls: "mysql-btn" });
-            importCsvBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg> Imp CSV`;
 
             const showTablesButton = controls.createEl("button", { cls: "mysql-btn" });
             showTablesButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg> Tables`;
@@ -160,19 +123,12 @@ export default class MySQLPlugin extends Plugin {
                         const newDB = useMatch[1];
                         if (alasql.databases[newDB]) {
                             this.currentDB = newDB;
-                            dbSelect.value = newDB; // Update Dropdown
-                            // If dropdown doesn't have it (e.g. created via SQL), refresh options
-                            if (dbSelect.value !== newDB) {
-                                refreshDBs();
-                                dbSelect.value = newDB;
-                            }
                             new Notice(`Switched to: ${newDB}`);
                         }
                     }
 
-                    if (!cleanedCode.trim().toUpperCase().startsWith('SELECT') && !cleanedCode.trim().toUpperCase().startsWith('SHOW')) {
+                    if (this.settings.autoSave && !cleanedCode.trim().toUpperCase().startsWith('SELECT') && !cleanedCode.trim().toUpperCase().startsWith('SHOW')) {
                         await this.saveDatabase();
-                        new Notice('SQL executed & saved!');
                     }
 
                     // Check for ignored patterns to display warning in results
@@ -204,80 +160,15 @@ export default class MySQLPlugin extends Plugin {
                 }
             };
 
-            exportButton.onclick = async () => {
-                await this.saveDatabase();
-                new Notice("Database saved to disk.");
-            };
-
-            exportCsvBtn.onclick = async () => {
-                new TableSelectionModal(this.app, async (tableName) => {
-                    await this.exportTableToCSV(tableName);
-                }).open();
-            };
-
-            importCsvBtn.onclick = async () => {
-                new CSVSelectionModal(this.app, async (file) => {
-                    await this.importCSVToTable(file);
-                    // Refresh if tables view is open? 
-                    new Notice(`Imported ${file.basename} into table '${file.basename}'`);
-                }).open();
-            };
-
-            showTablesButton.onclick = async () => {
-                try {
-                    const result = await alasql.promise("SHOW TABLES") as any[];
-                    resultContainer.empty();
-                    resultContainer.createEl("h6", { text: "Existing Tables:", cls: "mysql-result-title" });
-
-                    if (result.length === 0) {
-                        resultContainer.createEl("p", { text: "No tables found.", cls: "mysql-metadata" });
-                    } else {
-                        // Render a grid of buttons for tables
-                        const grid = resultContainer.createEl("div", { cls: "mysql-table-grid" });
-
-                        result.forEach(row => {
-                            const tableName = row.tableid;
-                            const btn = grid.createEl("button", { cls: "mysql-table-card" });
-                            btn.innerHTML = `
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-                                <span>${tableName}</span>
-                            `;
-
-                            btn.onclick = async () => {
-                                // "Open" the table (Run SELECT *)
-                                resultContainer.empty();
-                                try {
-                                    new Notice(`Fetching data for '${tableName}'...`);
-                                    const data = await alasql.promise(`SELECT * FROM ${tableName}`);
-
-                                    // Header with back button
-                                    const header = resultContainer.createEl("div", { cls: "mysql-result-header" });
-                                    const backBtn = header.createEl("button", { text: "← Back to Tables", cls: "mysql-link-btn" });
-                                    header.createEl("span", { text: `Table: ${tableName}`, cls: "mysql-result-title" });
-
-                                    backBtn.onclick = () => showTablesButton.click(); // Re-trigger show tables
-
-                                    this.renderResult(data, resultContainer);
-                                } catch (err) {
-                                    this.renderError(err, resultContainer);
-                                }
-                            };
-                        });
-                    }
-                } catch (e) {
-                    this.renderError(e, resultContainer);
-                }
-            };
-
             resetButton.onclick = async () => {
                 // Reset example DB
-                if (!confirm("Are you sure you want to drop all tables in 'empresa'?")) return;
+                if (!confirm("Are you sure you want to drop all tables in 'dbo'?")) return;
 
                 try {
-                    alasql('DROP DATABASE IF EXISTS empresa');
+                    alasql('DROP DATABASE IF EXISTS dbo');
                     // Also clear saved data
-                    await this.saveData({});
-                    alasql('CREATE DATABASE empresa; USE empresa;');
+                    await this.saveData({ databases: {}, currentDB: 'dbo' });
+                    alasql('CREATE DATABASE dbo; USE dbo;');
 
                     resultContainer.empty();
                     new Notice('Database reset.');
@@ -287,6 +178,17 @@ export default class MySQLPlugin extends Plugin {
                 }
             };
         });
+    }
+
+    async loadSettings() {
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    }
+
+    async saveSettings() {
+        // We need to merge settings with the database data
+        const currentData = await this.loadData() || {};
+        const newData = { ...currentData, ...this.settings };
+        await this.saveData(newData);
     }
 
     cleanSQL(sql: string): string {
@@ -302,11 +204,11 @@ export default class MySQLPlugin extends Plugin {
             .replace(/ENGINE\s*=?\s*[\w\d_]+/gi, "")
             // Remove ROW_FORMAT options
             .replace(/ROW_FORMAT\s*=?\s*[\w\d_]+/gi, "")
-            // Remove 'USE empresa' (case insensitive, various spacings)
-            .replace(/USE\s+empresa\s*;?/gi, "")
-            // Remove 'CREATE DATABASE ... empresa ... ;' aggressively
-            // Matches optional 'IF NOT EXISTS', 'empresa', and everything until the next semicolon
-            .replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?empresa[^;]*;?/gi, "")
+            // Remove 'USE dbo' (case insensitive, various spacings)
+            .replace(/USE\s+dbo\s*;?/gi, "")
+            // Remove 'CREATE DATABASE ... dbo ... ;' aggressively
+            // Matches optional 'IF NOT EXISTS', 'dbo', and everything until the next semicolon
+            .replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?dbo[^;]*;?/gi, "")
             // Fix 1: Remove AUTO_INCREMENT options (common in dumps)
             .replace(/AUTO_INCREMENT\s*=?\s*\d+/gi, "")
             // Fix 1: Remove LOCK/UNLOCK TABLES (not supported by AlaSQL in this mode)
@@ -323,7 +225,7 @@ export default class MySQLPlugin extends Plugin {
         const data = await this.loadData();
         if (data && data.databases) {
             try {
-                const activeDB = data.currentDB || 'empresa';
+                const activeDB = data.currentDB || 'dbo';
 
                 // Restore
                 for (const [dbName, content] of Object.entries(data.databases)) {
@@ -401,7 +303,7 @@ export default class MySQLPlugin extends Plugin {
                 if (dbName === 'alasql') continue;
 
                 await alasql.promise(`USE ${dbName}`);
-                const tables = await alasql.promise("SHOW TABLES");
+                const tables = await alasql.promise("SHOW TABLES") as any[];
 
                 const dbData: any = {};
                 const dbSchema: any = {};
@@ -441,8 +343,10 @@ export default class MySQLPlugin extends Plugin {
                 await alasql.promise(`USE ${currentUseId}`);
             }
 
-            await this.saveData(dataToSave);
-            console.log("MySQL Plugin: Database saved to disk (v1.2 Schema).");
+            // Combine with settings
+            const finalData = { ...this.settings, ...dataToSave };
+            await this.saveData(finalData);
+            console.log("MySQL Plugin: Database saved to disk (v1.2 Schema + Settings).");
         } catch (e) {
             console.error("MySQL Plugin: Error saving database", e);
         }
@@ -805,5 +709,163 @@ class NewDatabaseModal extends Modal {
     onClose() {
         const { contentEl } = this;
         contentEl.empty();
+    }
+}
+
+class MySQLSettingTab extends PluginSettingTab {
+    plugin: MySQLPlugin;
+
+    constructor(app: App, plugin: MySQLPlugin) {
+        super(app, plugin);
+        this.plugin = plugin;
+    }
+
+    display(): void {
+        const { containerEl } = this;
+        containerEl.empty();
+        containerEl.createEl('h2', { text: 'MySQL Runner Settings' });
+
+        // --- Database Management ---
+        containerEl.createEl('h3', { text: 'Database Management' });
+
+        new Setting(containerEl)
+            .setName('Active Database')
+            .setDesc('Switch the global SQL context.')
+            .addDropdown(dropdown => {
+                const dbs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
+                dbs.forEach(db => dropdown.addOption(db, db));
+                dropdown.setValue(this.plugin.currentDB);
+                dropdown.onChange(async (value) => {
+                    await alasql.promise(`USE ${value}`);
+                    this.plugin.currentDB = value;
+                    await this.plugin.saveDatabase();
+                    new Notice(`Switched to: ${value}`);
+                });
+            });
+
+        new Setting(containerEl)
+            .setName('New Database')
+            .setDesc('Create a new isolated SQL database.')
+            .addButton(btn => btn
+                .setButtonText('+ Create New')
+                .onClick(() => {
+                    new NewDatabaseModal(this.app, async (name) => {
+                        try {
+                            name = name.replace(/[^a-zA-Z0-9_]/g, "");
+                            if (!name) return;
+                            await alasql.promise(`CREATE DATABASE IF NOT EXISTS ${name}`);
+                            await alasql.promise(`USE ${name}`);
+                            this.plugin.currentDB = name;
+                            await this.plugin.saveDatabase();
+                            this.display(); // Refresh tab
+                            new Notice(`Created & Switched to: ${name}`);
+                        } catch (e) { new Notice("Error: " + e.message); }
+                    }).open();
+                }));
+
+        // --- CSV Operations ---
+        containerEl.createEl('h3', { text: 'Data Operations (CSV)' });
+
+        new Setting(containerEl)
+            .setName('Export Folder')
+            .setDesc('Vault folder where CSV exports will be saved.')
+            .addText(text => text
+                .setPlaceholder('sql-exports')
+                .setValue(this.plugin.settings.exportFolderName)
+                .onChange(async (value) => {
+                    this.plugin.settings.exportFolderName = value || 'sql-exports';
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Export Table')
+            .setDesc('Select a table to export as CSV.')
+            .addButton(btn => btn
+                .setButtonText('Export...')
+                .onClick(() => {
+                    // Reuse existing modal logic (internal helper)
+                    new (class TableSelectionModalInternal extends FuzzySuggestModal<string> {
+                        pluginRef: MySQLPlugin;
+                        cb: (name: string) => void;
+                        constructor(app: App, pluginRef: MySQLPlugin, cb: (name: string) => void) {
+                            super(app);
+                            this.pluginRef = pluginRef;
+                            this.cb = cb;
+                        }
+                        getItems(): string[] {
+                            const tables = alasql.tables;
+                            return Object.keys(tables).filter(t => !t.startsWith('_'));
+                        }
+                        getItemText(item: string): string { return item; }
+                        onChooseItem(item: string, evt: MouseEvent | KeyboardEvent): void { this.cb(item); }
+                    })(this.app, this.plugin, async (tableName) => {
+                        await this.plugin.exportTableToCSV(tableName);
+                    }).open();
+                }));
+
+        new Setting(containerEl)
+            .setName('Import CSV')
+            .setDesc('Import a CSV file from your vault into the current database.')
+            .addButton(btn => btn
+                .setButtonText('Import...')
+                .onClick(() => {
+                    new (class CSVSelectionModalInternal extends FuzzySuggestModal<TFile> {
+                        cb: (file: TFile) => void;
+                        constructor(app: App, cb: (file: TFile) => void) {
+                            super(app);
+                            this.cb = cb;
+                        }
+                        getItems(): TFile[] {
+                            return this.app.vault.getFiles().filter(f => f.extension === 'csv');
+                        }
+                        getItemText(item: TFile): string { return item.path; }
+                        onChooseItem(item: TFile, evt: MouseEvent | KeyboardEvent): void { this.cb(item); }
+                    })(this.app, async (file) => {
+                        await this.plugin.importCSVToTable(file);
+                        new Notice(`Imported ${file.basename}`);
+                    }).open();
+                }));
+
+        // --- Maintenance ---
+        containerEl.createEl('h3', { text: 'Maintenance' });
+
+        new Setting(containerEl)
+            .setName('Auto-Save')
+            .setDesc('Automatically save database changes after execution.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.autoSave)
+                .onChange(async (value) => {
+                    this.plugin.settings.autoSave = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Show All Tables')
+            .setDesc('View existing tables in the current database.')
+            .addButton(btn => btn
+                .setButtonText('View Tables')
+                .onClick(async () => {
+                    const result = await alasql.promise("SHOW TABLES") as any[];
+                    if (result.length === 0) {
+                        new Notice("No tables found.");
+                    } else {
+                        new Notice(`Tables: ${result.map(r => r.tableid).join(", ")}`);
+                    }
+                }));
+
+        new Setting(containerEl)
+            .setName('Reset Database')
+            .setDesc('DANGER: Drops all tables in the CURRENT database.')
+            .addButton(btn => btn
+                .setWarning()
+                .setButtonText('Reset Now')
+                .onClick(async () => {
+                    if (!confirm(`Are you sure you want to reset the database '${this.plugin.currentDB}'?`)) return;
+                    await alasql.promise(`DROP DATABASE ${this.plugin.currentDB}`);
+                    await alasql.promise(`CREATE DATABASE ${this.plugin.currentDB}`);
+                    await alasql.promise(`USE ${this.plugin.currentDB}`);
+                    await this.plugin.saveDatabase();
+                    new Notice(`Database '${this.plugin.currentDB}' reset.`);
+                }));
     }
 }
