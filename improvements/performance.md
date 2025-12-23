@@ -1,13 +1,19 @@
 # Performance Improvements
 
-## 1. Web Worker Offloading
-- **Goal**: Prevent UI freezing during heavy queries.
-- **Details**: Move the `alasql` execution to a Web Worker. This ensures that long-running `INSERT` scripts or complex `JOIN`s do not block the Obsidian main thread.
-
-## 2. Lazy Loading Results
+## 1. Lazy Loading Results (Implemented)
 - **Goal**: Speed up initial render.
-- **Details**: Render only the first 50 rows of a result set immediately. Render the rest on scroll or demand.
+- **Details**: `main.ts` now paginates results 50 rows at a time. Requires no further action.
 
-## 3. IndexedDB Persistence
+## 2. Web Worker Offloading (Researched)
+- **Goal**: Prevent UI freezing during heavy queries.
+- **Analysis**:
+    - AlaSQL supports workers, but bundling a secondary entry point in Obsidian is complex due to plugin architecture.
+    - **Strategy**: Creating a `worker.ts` and configuring `esbuild` to output a separate `worker.js`.
+    - **Constraint**: Main thread communication must be asynchronous (which `alasql.promise` already is).
+
+## 3. IndexedDB Persistence (Researched)
 - **Goal**: Handle larger datasets than `data.json` allows.
-- **Details**: Instead of saving the entire DB to a single JSON file, use the browser's IndexedDB (via AlaSQL's local storage or a custom adapter) for better performance with 10k+ rows.
+- **Analysis**:
+    - **Pros**: Can handle 500MB+ depending on browser limits. Fast structured access.
+    - **Cons**: Does **not** sync with Obsidian Sync. Data is local to the device.
+    - **Recommendation**: Only implement if users specifically request "Local-Only High Performance Mode". `data.json` is sufficient for <10MB text data.
