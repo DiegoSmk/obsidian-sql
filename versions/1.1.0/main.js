@@ -9918,8 +9918,10 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
             resultContainer.createEl("h6", { text: "Active Tables", cls: "mysql-result-title" });
             this.renderTableGrid(result, resultContainer, async (tableName) => {
               resultContainer.empty();
-              const backBtn = resultContainer.createEl("button", { cls: "mysql-btn", text: "\u2190 Back to Tables" });
-              backBtn.style.marginBottom = "10px";
+              const backBtn = resultContainer.createEl("button", {
+                cls: "mysql-btn-back",
+                text: "\u2190 Back to Tables"
+              });
               backBtn.onclick = () => showTablesButton.click();
               resultContainer.createEl("h6", { text: `Table: ${tableName}`, cls: "mysql-result-title" });
               const tableData = await import_alasql.default.promise(`SELECT * FROM ${tableName}`);

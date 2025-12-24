@@ -197,8 +197,10 @@ export default class MySQLPlugin extends Plugin {
                         resultContainer.createEl("h6", { text: "Active Tables", cls: "mysql-result-title" });
                         this.renderTableGrid(result, resultContainer, async (tableName) => {
                             resultContainer.empty();
-                            const backBtn = resultContainer.createEl("button", { cls: "mysql-btn", text: "← Back to Tables" });
-                            backBtn.style.marginBottom = "10px";
+                            const backBtn = resultContainer.createEl("button", {
+                                cls: "mysql-btn-back",
+                                text: "← Back to Tables"
+                            });
                             backBtn.onclick = () => showTablesButton.click();
 
                             resultContainer.createEl("h6", { text: `Table: ${tableName}`, cls: "mysql-result-title" });

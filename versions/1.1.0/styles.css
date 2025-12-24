@@ -122,6 +122,25 @@
     border-color: var(--interactive-accent);
 }
 
+.mysql-btn-back {
+    margin: 16px 20px 8px 20px;
+    background-color: var(--background-secondary);
+    color: var(--text-muted);
+    border: 1px solid var(--background-modifier-border);
+    font-size: 0.8em;
+    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all var(--mysql-transition-fast);
+}
+
+.mysql-btn-back:hover {
+    color: var(--text-normal);
+    background-color: var(--background-modifier-hover);
+    border-color: var(--interactive-accent);
+}
+
 .mysql-reset-btn {
     background-color: transparent;
     color: var(--text-muted);
@@ -176,7 +195,7 @@
 }
 
 .mysql-result-title {
-    margin: 24px 0 16px 0;
+    margin: 24px 20px 16px 20px;
     color: var(--text-accent);
     font-size: 0.75rem;
     font-weight: 700;
