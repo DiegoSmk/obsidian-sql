@@ -154,12 +154,22 @@ export default class MySQLPlugin extends Plugin {
                     const foundIgnored = ignoredPatterns.filter(p => p.regex.test(code));
                     if (foundIgnored.length > 0) {
                         const ignoredNames = foundIgnored.map(p => p.name).join(", ");
-                        const warnDiv = resultContainer.createEl("div");
-                        warnDiv.style.color = "var(--text-warning)";
-                        warnDiv.style.marginBottom = "10px";
-                        warnDiv.style.borderLeft = "4px solid var(--text-warning)";
-                        warnDiv.style.paddingLeft = "8px";
-                        warnDiv.innerText = `⚠️ MySQL Compatibility: The following settings were ignored: ${ignoredNames}`;
+                        const notice = resultContainer.createEl("div", { cls: "mysql-compatibility-notice" });
+
+                        notice.createEl("span", {
+                            cls: "mysql-compatibility-icon",
+                            text: "⚠️"
+                        });
+
+                        const content = notice.createEl("div", { cls: "mysql-compatibility-content" });
+                        content.createEl("div", {
+                            cls: "mysql-compatibility-title",
+                            text: "MySQL Compatibility Note"
+                        });
+                        content.createEl("div", {
+                            cls: "mysql-compatibility-list",
+                            text: `Some settings were ignored: ${ignoredNames}`
+                        });
                     }
 
                     this.renderResult(result, resultContainer);

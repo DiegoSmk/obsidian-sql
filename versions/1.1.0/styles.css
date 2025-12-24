@@ -498,3 +498,43 @@
     font-weight: 600;
     margin-right: auto;
 }
+
+/* ===== Compatibility Notice ===== */
+.mysql-compatibility-notice {
+    margin: 14px 20px;
+    padding: 12px 16px;
+    background-color: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-border);
+    border-left: 4px solid var(--text-warning);
+    border-radius: var(--mysql-radius-sm);
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 0.9em;
+    color: var(--text-normal);
+    animation: fadeInUp var(--mysql-transition-normal);
+}
+
+.mysql-compatibility-icon {
+    color: var(--text-warning);
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.mysql-compatibility-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mysql-compatibility-title {
+    font-weight: 700;
+    color: var(--text-warning);
+    font-size: 0.75em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.mysql-compatibility-list {
+    color: var(--text-muted);
+}
