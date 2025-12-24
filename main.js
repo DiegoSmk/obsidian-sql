@@ -9945,7 +9945,7 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
     await this.saveData(newData);
   }
   cleanSQL(sql) {
-    let cleaned = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "").replace(/(DEFAULT )?(CHARACTER SET|CHARSET)\s*=?\s*[\w\d_]+/gi, "").replace(/(DEFAULT )?COLLATE\s*=?\s*[\w\d_]+/gi, "").replace(/ENGINE\s*=?\s*[\w\d_]+/gi, "").replace(/ROW_FORMAT\s*=?\s*[\w\d_]+/gi, "").replace(/USE\s+dbo\s*;?/gi, "").replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?dbo[^;]*;?/gi, "").replace(/AUTO_INCREMENT(\s*=?\s*\d+)?/gi, "").replace(/LOCK\s+TABLES\s+[^;]+;/gi, "").replace(/UNLOCK\s+TABLES\s*;?/gi, "").replace(/^\s*[\r\n]/gm, "");
+    let cleaned = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "").replace(/(DEFAULT )?(CHARACTER SET|CHARSET)\s*=?\s*[\w\d_]+/gi, "").replace(/(DEFAULT )?COLLATE\s*=?\s*[\w\d_]+/gi, "").replace(/ENGINE\s*=?\s*[\w\d_]+/gi, "").replace(/ROW_FORMAT\s*=?\s*[\w\d_]+/gi, "").replace(/USE\s+dbo\s*;?/gi, "").replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?dbo[^;]*;?/gi, "").replace(/AUTO_INCREMENT\s*=\s*\d+/gi, "").replace(/LOCK\s+TABLES\s+[^;]+;/gi, "").replace(/UNLOCK\s+TABLES\s*;?/gi, "").replace(/^\s*[\r\n]/gm, "");
     return cleaned;
   }
   async loadDatabase() {

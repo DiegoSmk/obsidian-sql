@@ -243,9 +243,9 @@ export default class MySQLPlugin extends Plugin {
             .replace(/USE\s+dbo\s*;?/gi, "")
             // Remove 'CREATE DATABASE ... dbo ... ;' aggressively
             .replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?dbo[^;]*;?/gi, "")
-            // Fix 1: Remove AUTO_INCREMENT options (common in dumps)
-            // Matches 'AUTO_INCREMENT' with optional '= 123'
-            .replace(/AUTO_INCREMENT(\s*=?\s*\d+)?/gi, "")
+            // Fix 1: Remove global AUTO_INCREMENT assignments (common in dumps/at the end of CREATE TABLE)
+            // But KEEP "AUTO_INCREMENT" property on columns so IDs are generated correctly.
+            .replace(/AUTO_INCREMENT\s*=\s*\d+/gi, "")
             // Fix 1: Remove LOCK/UNLOCK TABLES (not supported by AlaSQL in this mode)
             .replace(/LOCK\s+TABLES\s+[^;]+;/gi, "")
             .replace(/UNLOCK\s+TABLES\s*;?/gi, "")
