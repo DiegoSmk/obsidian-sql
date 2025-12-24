@@ -9853,20 +9853,13 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
         try {
           const cleanedCode = this.cleanSQL(code);
           console.log("MySQL Plugin: Executing SQL...");
-          const runQuery = (sql, params) => {
-            return new Promise((resolve, reject) => {
-              try {
-                (0, import_alasql.default)(sql, params, (res, err) => {
-                  if (err) reject(err);
-                  else resolve(res);
-                });
-              } catch (e) {
-                reject(e);
-              }
-            });
-          };
-          const result = await runQuery(cleanedCode, paramValues);
-          console.log("MySQL Plugin: Execution complete. Result:", result);
+          let result;
+          if (uniqueParams.length > 0) {
+            result = await import_alasql.default.promise(cleanedCode, [paramValues]);
+          } else {
+            result = await import_alasql.default.promise(cleanedCode);
+          }
+          console.log("MySQL Plugin: Execution complete.");
           const useMatch = cleanedCode.match(/USE\s+([a-zA-Z0-9_]+)/i);
           if (useMatch && useMatch[1]) {
             const newDB = useMatch[1];
@@ -9945,7 +9938,7 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
     await this.saveData(newData);
   }
   cleanSQL(sql) {
-    let cleaned = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "").replace(/(DEFAULT )?(CHARACTER SET|CHARSET)\s*=?\s*[\w\d_]+/gi, "").replace(/(DEFAULT )?COLLATE\s*=?\s*[\w\d_]+/gi, "").replace(/ENGINE\s*=?\s*[\w\d_]+/gi, "").replace(/ROW_FORMAT\s*=?\s*[\w\d_]+/gi, "").replace(/USE\s+dbo\s*;?/gi, "").replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?dbo[^;]*;?/gi, "").replace(/AUTO_INCREMENT\s*=\s*\d+/gi, "").replace(/LOCK\s+TABLES\s+[^;]+;/gi, "").replace(/UNLOCK\s+TABLES\s*;?/gi, "").replace(/^\s*[\r\n]/gm, "");
+    let cleaned = sql.replace(/\/\*[\s\S]*?\*\//g, "").replace(/--.*$/gm, "").replace(/(DEFAULT )?(CHARACTER SET|CHARSET)\s*=?\s*[\w\d_]+/gi, "").replace(/(DEFAULT )?COLLATE\s*=?\s*[\w\d_]+/gi, "").replace(/ENGINE\s*=?\s*[\w\d_]+/gi, "").replace(/ROW_FORMAT\s*=?\s*[\w\d_]+/gi, "").replace(/USE\s+dbo\s*;?/gi, "").replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?dbo[^;]*;?/gi, "").replace(/AUTO_INCREMENT\s*=\s*\d+/gi, "").replace(/DEFAULT\s+(CHARACTER SET|CHARSET|COLLATE)\s*=?\s*[\w\d_]+/gi, "").replace(/(CHARACTER SET|CHARSET|COLLATE)\s*=?\s*[\w\d_]+/gi, "").replace(/LOCK\s+TABLES\s+[^;]+;/gi, "").replace(/UNLOCK\s+TABLES\s*;?/gi, "").replace(/^\s*[\r\n]/gm, "");
     return cleaned;
   }
   async loadDatabase() {

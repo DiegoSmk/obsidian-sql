@@ -115,22 +115,17 @@ export default class MySQLPlugin extends Plugin {
                     // If we pass an object params, it should map :key to value.
 
                     console.log("MySQL Plugin: Executing SQL...");
-                    // Use a direct promise wrapper to ensure completion/error handling
-                    const runQuery = (sql: string, params: any): Promise<any> => {
-                        return new Promise((resolve, reject) => {
-                            try {
-                                alasql(sql, params, (res: any, err: any) => {
-                                    if (err) reject(err);
-                                    else resolve(res);
-                                });
-                            } catch (e) {
-                                reject(e);
-                            }
-                        });
-                    };
 
-                    const result = await runQuery(cleanedCode, paramValues);
-                    console.log("MySQL Plugin: Execution complete. Result:", result);
+                    // Safer execution logic for scripts vs parameterized queries
+                    let result;
+                    if (uniqueParams.length > 0) {
+                        // Use the promise wrapper with params
+                        result = await alasql.promise(cleanedCode, [paramValues]);
+                    } else {
+                        // Run as a generic script - more reliable for multi-statement blocks without params
+                        result = await alasql.promise(cleanedCode);
+                    }
+                    console.log("MySQL Plugin: Execution complete.");
 
                     // Auto-save logic
                     // Sync UI if USE command was executed manually
@@ -244,8 +239,10 @@ export default class MySQLPlugin extends Plugin {
             // Remove 'CREATE DATABASE ... dbo ... ;' aggressively
             .replace(/CREATE\s+DATABASE\s+(IF\s+NOT\s+EXISTS\s+)?dbo[^;]*;?/gi, "")
             // Fix 1: Remove global AUTO_INCREMENT assignments (common in dumps/at the end of CREATE TABLE)
-            // But KEEP "AUTO_INCREMENT" property on columns so IDs are generated correctly.
             .replace(/AUTO_INCREMENT\s*=\s*\d+/gi, "")
+            // Remove MySQL character set/collation defaults that cause syntax errors if dangling
+            .replace(/DEFAULT\s+(CHARACTER SET|CHARSET|COLLATE)\s*=?\s*[\w\d_]+/gi, "")
+            .replace(/(CHARACTER SET|CHARSET|COLLATE)\s*=?\s*[\w\d_]+/gi, "")
             // Fix 1: Remove LOCK/UNLOCK TABLES (not supported by AlaSQL in this mode)
             .replace(/LOCK\s+TABLES\s+[^;]+;/gi, "")
             .replace(/UNLOCK\s+TABLES\s*;?/gi, "")
