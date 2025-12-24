@@ -10303,6 +10303,29 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
     errDiv.createEl("span", { text: error.message || String(error) });
   }
 };
+var DataViewModal = class extends import_obsidian.Modal {
+  constructor(app, plugin, tableName) {
+    super(app);
+    this.plugin = plugin;
+    this.tableName = tableName;
+  }
+  async onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.createEl("h2", { text: `Table: ${this.tableName}` });
+    const container = contentEl.createEl("div", { cls: "mysql-workbench-container" });
+    const resultContainer = container.createEl("div", { cls: "mysql-result-container" });
+    try {
+      const data = await import_alasql.default.promise(`SELECT * FROM ${this.tableName}`);
+      this.plugin.renderResult(data, resultContainer);
+    } catch (e) {
+      resultContainer.createEl("p", { text: "Error: " + e.message, cls: "mysql-error" });
+    }
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
 var NewDatabaseModal = class extends import_obsidian.Modal {
   constructor(app, onSubmit) {
     super(app);
@@ -10430,8 +10453,9 @@ var MySQLSettingTab = class extends import_obsidian.PluginSettingTab {
         new import_obsidian.Notice("No tables found.");
       } else {
         new class TableViewerModal extends import_obsidian.FuzzySuggestModal {
-          constructor(app, tables) {
+          constructor(app, plugin, tables) {
             super(app);
+            this.plugin = plugin;
             this.tables = tables;
           }
           getItems() {
@@ -10442,11 +10466,9 @@ var MySQLSettingTab = class extends import_obsidian.PluginSettingTab {
           }
           async onChooseItem(item, evt) {
             const tableName = item.tableid;
-            const data = await import_alasql.default.promise(`SELECT TOP 10 * FROM ${tableName}`);
-            new import_obsidian.Notice(`Viewing first 10 rows of '${tableName}' in console (F12).`);
-            console.table(data);
+            new DataViewModal(this.app, this.plugin, tableName).open();
           }
-        }(this.app, result).open();
+        }(this.app, this.plugin, result).open();
       }
     }));
     new import_obsidian.Setting(containerEl).setName("Reset All Data").setDesc("DANGER: Deletes all databases and tables. Resets to clean state.").addButton((btn) => btn.setWarning().setButtonText("Reset Everything Now").onClick(async () => {

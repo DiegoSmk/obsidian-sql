@@ -720,6 +720,37 @@ export default class MySQLPlugin extends Plugin {
     }
 }
 
+class DataViewModal extends Modal {
+    plugin: MySQLPlugin;
+    tableName: string;
+
+    constructor(app: App, plugin: MySQLPlugin, tableName: string) {
+        super(app);
+        this.plugin = plugin;
+        this.tableName = tableName;
+    }
+
+    async onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+        contentEl.createEl("h2", { text: `Table: ${this.tableName}` });
+
+        const container = contentEl.createEl("div", { cls: "mysql-workbench-container" });
+        const resultContainer = container.createEl("div", { cls: "mysql-result-container" });
+
+        try {
+            const data = await alasql.promise(`SELECT * FROM ${this.tableName}`);
+            this.plugin.renderResult(data, resultContainer);
+        } catch (e) {
+            resultContainer.createEl("p", { text: "Error: " + e.message, cls: "mysql-error" });
+        }
+    }
+
+    onClose() {
+        this.contentEl.empty();
+    }
+}
+
 class TableSelectionModal extends FuzzySuggestModal<string> {
     callback: (item: string) => void;
 
@@ -946,8 +977,10 @@ class MySQLSettingTab extends PluginSettingTab {
                         // Open a simple selection modal to view tables
                         new (class TableViewerModal extends FuzzySuggestModal<any> {
                             tables: any[];
-                            constructor(app: App, tables: any[]) {
+                            plugin: MySQLPlugin;
+                            constructor(app: App, plugin: MySQLPlugin, tables: any[]) {
                                 super(app);
+                                this.plugin = plugin;
                                 this.tables = tables;
                             }
                             getItems(): any[] {
@@ -956,11 +989,9 @@ class MySQLSettingTab extends PluginSettingTab {
                             getItemText(item: any): string { return item.tableid; }
                             async onChooseItem(item: any, evt: MouseEvent | KeyboardEvent) {
                                 const tableName = item.tableid;
-                                const data = await alasql.promise(`SELECT TOP 10 * FROM ${tableName}`);
-                                new Notice(`Viewing first 10 rows of '${tableName}' in console (F12).`);
-                                console.table(data);
+                                new DataViewModal(this.app, this.plugin, tableName).open();
                             }
-                        })(this.app, result).open();
+                        })(this.app, this.plugin, result).open();
                     }
                 }));
 
