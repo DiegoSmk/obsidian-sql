@@ -9852,23 +9852,23 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
         runBtn.innerHTML = `<svg class="spin" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg> Executing...`;
         try {
           const cleanedCode = this.cleanSQL(code);
-          console.log("MySQL Plugin: Starting Sequential Execution...");
-          const statements = cleanedCode.split(/;(?=(?:(?:[^"]*"){2})*[^"]*$)/).map((s) => s.trim()).filter((s) => s.length > 0);
-          let lastResult;
-          for (const statement of statements) {
-            console.log(`MySQL Plugin: Executing statement: ${statement.substring(0, 50)}...`);
-            lastResult = await import_alasql.default.promise(statement, uniqueParams.length > 0 ? [paramValues] : void 0);
-            const useMatch = statement.match(/^USE\s+([a-zA-Z0-9_]+)/i);
-            if (useMatch && useMatch[1]) {
-              const newDB = useMatch[1];
-              if (import_alasql.default.databases[newDB]) {
-                this.currentDB = newDB;
-                new import_obsidian.Notice(`Switched to: ${newDB}`);
-              }
-            }
+          console.log("MySQL Plugin: Executing SQL...");
+          let result;
+          if (uniqueParams.length > 0) {
+            result = await import_alasql.default.promise(cleanedCode, [paramValues]);
+          } else {
+            result = await import_alasql.default.promise(cleanedCode);
           }
           console.log("MySQL Plugin: Execution complete.");
-          if (this.settings.autoSave && !cleanedCode.trim().toUpperCase().includes("SELECT") && !cleanedCode.trim().toUpperCase().includes("SHOW")) {
+          const useMatch = cleanedCode.match(/USE\s+([a-zA-Z0-9_]+)/i);
+          if (useMatch && useMatch[1]) {
+            const newDB = useMatch[1];
+            if (import_alasql.default.databases[newDB]) {
+              this.currentDB = newDB;
+              new import_obsidian.Notice(`Switched to: ${newDB}`);
+            }
+          }
+          if (this.settings.autoSave && !cleanedCode.trim().toUpperCase().startsWith("SELECT") && !cleanedCode.trim().toUpperCase().startsWith("SHOW")) {
             console.log("MySQL Plugin: Auto-saving database...");
             await this.saveDatabase();
           }
@@ -9888,13 +9888,26 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
             warnDiv.style.paddingLeft = "8px";
             warnDiv.innerText = `\u26A0\uFE0F MySQL Compatibility: The following settings were ignored: ${ignoredNames}`;
           }
-          this.renderResult(lastResult, resultContainer);
+          this.renderResult(result, resultContainer);
         } catch (error) {
           new import_obsidian.Notice("SQL Execution Failed", 5e3);
           this.renderError(error, resultContainer);
         } finally {
           runBtn.disabled = false;
           runBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Run SQL`;
+        }
+      };
+      showTablesButton.onclick = () => {
+        try {
+          const result = (0, import_alasql.default)("SHOW TABLES");
+          if (result.length === 0) {
+            new import_obsidian.Notice("No tables found in current database.");
+          } else {
+            resultContainer.empty();
+            this.renderResult(result, resultContainer);
+          }
+        } catch (e) {
+          new import_obsidian.Notice("Error showing tables: " + e.message);
         }
       };
       resetButton.onclick = async () => {
@@ -9921,12 +9934,17 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
       }
     }
     if (!import_alasql.default.databases.dbo) {
-      (0, import_alasql.default)("CREATE DATABASE dbo");
+      (0, import_alasql.default)("CREATE DATABASE IF NOT EXISTS dbo");
     }
     (0, import_alasql.default)("USE dbo");
     this.currentDB = "dbo";
-    const data = await this.loadData() || {};
-    const newData = { ...this.settings, currentDB: "dbo", databases: {} };
+    const currentData = await this.loadData() || {};
+    const newData = {
+      exportFolderName: this.settings.exportFolderName,
+      autoSave: this.settings.autoSave,
+      currentDB: "dbo",
+      databases: {}
+    };
     await this.saveData(newData);
   }
   async loadSettings() {
@@ -9974,11 +9992,11 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
                 }
               }
             } else {
-              await import_alasql.default.promise(`CREATE TABLE ${tableRef} (temp INT)`);
+              await import_alasql.default.promise(`CREATE TABLE ${tableRef} (_dummy_col INT)`);
               if (rowData.length > 0) {
                 await import_alasql.default.promise(`SELECT * INTO ${tableRef} FROM ?`, [rowData]);
               }
-              await import_alasql.default.promise(`ALTER TABLE ${tableRef} DROP COLUMN temp`);
+              await import_alasql.default.promise(`ALTER TABLE ${tableRef} DROP COLUMN _dummy_col`);
             }
           }
         }
@@ -9994,29 +10012,42 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
   }
   async saveDatabase() {
     try {
+      console.log("MySQL Plugin: saveDatabase() started");
       const currentUseId = import_alasql.default.useid;
       const databases = Object.keys(import_alasql.default.databases).filter((d) => d !== "alasql");
       const dataToSave = {
-        currentDB: this.currentDB,
+        currentDB: currentUseId || "dbo",
         databases: {}
       };
       for (const dbName of databases) {
-        (0, import_alasql.default)(`USE ${dbName}`);
+        console.log(`MySQL Plugin: Processing database '${dbName}'`);
+        try {
+          (0, import_alasql.default)(`USE ${dbName}`);
+        } catch (useErr) {
+          console.warn(`MySQL Plugin: Could not USE ${dbName}, skipping.`, useErr);
+          continue;
+        }
         const tables = (0, import_alasql.default)("SHOW TABLES");
         const dbData = {};
         const dbSchema = {};
-        if (Array.isArray(tables)) {
-          for (const table of tables) {
-            const tableName = table.tableid;
-            dbData[tableName] = (0, import_alasql.default)(`SELECT * FROM ${tableName}`);
-            try {
-              const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${tableName}`);
-              if (createRes && createRes.length > 0) {
-                let createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
-                if (createSQL) dbSchema[tableName] = createSQL;
+        for (const table of tables) {
+          const tableName = table.tableid;
+          console.log(`MySQL Plugin: Saving table '${tableName}' in '${dbName}'`);
+          try {
+            const rows = await import_alasql.default.promise(`SELECT * FROM ${tableName}`);
+            dbData[tableName] = rows;
+          } catch (dataErr) {
+            console.error(`MySQL Plugin: Error saving data for ${tableName}`, dataErr);
+          }
+          try {
+            const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${tableName}`);
+            if (createRes && createRes.length > 0) {
+              let createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
+              if (createSQL) {
+                dbSchema[tableName] = createSQL;
               }
-            } catch (e) {
             }
+          } catch (schemaErr) {
           }
         }
         dataToSave.databases[dbName] = {
@@ -10024,12 +10055,15 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
           schema: dbSchema
         };
       }
-      if (currentUseId) (0, import_alasql.default)(`USE ${currentUseId}`);
+      if (currentUseId && import_alasql.default.databases[currentUseId]) {
+        (0, import_alasql.default)(`USE ${currentUseId}`);
+      }
+      console.log("MySQL Plugin: Writing to disk...");
       const finalData = { ...this.settings, ...dataToSave };
       await this.saveData(finalData);
-      console.log("MySQL Plugin: Data persisted to disk.");
+      console.log("MySQL Plugin: Database successfully saved to disk.");
     } catch (e) {
-      console.error("MySQL Plugin: Critical error during save:", e);
+      console.error("MySQL Plugin: Critical error in saveDatabase", e);
     }
   }
   async exportTableToCSV(tableName) {
@@ -10109,9 +10143,9 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
       const tableName = file.basename.replace(/[^a-zA-Z0-9_]/g, "_");
       if (data.length > 0) {
         await import_alasql.default.promise(`DROP TABLE IF EXISTS ${tableName}`);
-        await import_alasql.default.promise(`CREATE TABLE ${tableName} (temp INT)`);
+        await import_alasql.default.promise(`CREATE TABLE ${tableName} (_dummy_col INT)`);
         await import_alasql.default.promise(`SELECT * INTO ${tableName} FROM ?`, [data]);
-        await import_alasql.default.promise(`ALTER TABLE ${tableName} DROP COLUMN temp`);
+        await import_alasql.default.promise(`ALTER TABLE ${tableName} DROP COLUMN _dummy_col`);
       }
       await this.saveDatabase();
       new import_obsidian.Notice(`Imported ${data.length} rows into '${tableName}'`);
