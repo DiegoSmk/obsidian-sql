@@ -9897,6 +9897,9 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
             });
           }
           this.renderResult(result, resultContainer);
+          const now = /* @__PURE__ */ new Date();
+          const log = resultContainer.createEl("div", { cls: "mysql-execution-log" });
+          log.innerHTML = `<b>\u2713</b> Executed on ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
         } catch (error) {
           new import_obsidian.Notice("SQL Execution Failed", 5e3);
           this.renderError(error, resultContainer);

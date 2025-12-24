@@ -173,6 +173,11 @@ export default class MySQLPlugin extends Plugin {
                     }
 
                     this.renderResult(result, resultContainer);
+
+                    // Add execution log (Option 1: UI-only)
+                    const now = new Date();
+                    const log = resultContainer.createEl("div", { cls: "mysql-execution-log" });
+                    log.innerHTML = `<b>✓</b> Executed on ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
                 } catch (error) {
                     new Notice('SQL Execution Failed', 5000); // System toast
                     this.renderError(error, resultContainer);

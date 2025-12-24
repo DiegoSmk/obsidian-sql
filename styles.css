@@ -542,3 +542,20 @@
 .cm-lang-mysql:hover {
     box-shadow: none !important;
 }
+
+.mysql-execution-log {
+    margin: 10px 20px;
+    padding: 8px 12px;
+    background-color: var(--background-secondary);
+    border-radius: var(--mysql-radius-sm);
+    font-size: 0.8em;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px dashed var(--background-modifier-border);
+}
+
+.mysql-execution-log b {
+    color: var(--text-success);
+}
