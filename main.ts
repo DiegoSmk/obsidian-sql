@@ -114,31 +114,31 @@ export default class MySQLPlugin extends Plugin {
                     // Note: AlaSQL's promise signature: alasql.promise(sql, [params])
                     // If we pass an object params, it should map :key to value.
 
-                    console.log("MySQL Plugin: Executing SQL...");
+                    console.log("MySQL Plugin: Starting Sequential Execution...");
 
-                    // Safer execution logic for scripts vs parameterized queries
-                    let result;
-                    if (uniqueParams.length > 0) {
-                        // Use the promise wrapper with params
-                        result = await alasql.promise(cleanedCode, [paramValues]);
-                    } else {
-                        // Run as a generic script - more reliable for multi-statement blocks without params
-                        result = await alasql.promise(cleanedCode);
-                    }
-                    console.log("MySQL Plugin: Execution complete.");
+                    // Split by semicolon but ignore semicolons inside quotes
+                    const statements = cleanedCode.split(/;(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.trim()).filter(s => s.length > 0);
 
-                    // Auto-save logic
-                    // Sync UI if USE command was executed manually
-                    const useMatch = cleanedCode.match(/USE\s+([a-zA-Z0-9_]+)/i);
-                    if (useMatch && useMatch[1]) {
-                        const newDB = useMatch[1];
-                        if (alasql.databases[newDB]) {
-                            this.currentDB = newDB;
-                            new Notice(`Switched to: ${newDB}`);
+                    let lastResult;
+                    for (const statement of statements) {
+                        console.log(`MySQL Plugin: Executing statement: ${statement.substring(0, 50)}...`);
+                        lastResult = await alasql.promise(statement, uniqueParams.length > 0 ? [paramValues] : undefined);
+
+                        // Immediate Sync UI if USE command was executed
+                        const useMatch = statement.match(/^USE\s+([a-zA-Z0-9_]+)/i);
+                        if (useMatch && useMatch[1]) {
+                            const newDB = useMatch[1];
+                            if (alasql.databases[newDB]) {
+                                this.currentDB = newDB;
+                                new Notice(`Switched to: ${newDB}`);
+                            }
                         }
                     }
 
-                    if (this.settings.autoSave && !cleanedCode.trim().toUpperCase().startsWith('SELECT') && !cleanedCode.trim().toUpperCase().startsWith('SHOW')) {
+                    console.log("MySQL Plugin: Execution complete.");
+
+                    // Auto-save logic
+                    if (this.settings.autoSave && !cleanedCode.trim().toUpperCase().includes('SELECT') && !cleanedCode.trim().toUpperCase().includes('SHOW')) {
                         console.log("MySQL Plugin: Auto-saving database...");
                         await this.saveDatabase();
                     }
@@ -162,7 +162,7 @@ export default class MySQLPlugin extends Plugin {
                         warnDiv.innerText = `⚠️ MySQL Compatibility: The following settings were ignored: ${ignoredNames}`;
                     }
 
-                    this.renderResult(result, resultContainer);
+                    this.renderResult(lastResult, resultContainer);
                 } catch (error) {
                     new Notice('SQL Execution Failed', 5000); // System toast
                     this.renderError(error, resultContainer);
@@ -325,42 +325,33 @@ export default class MySQLPlugin extends Plugin {
     async saveDatabase() {
         try {
             const currentUseId = alasql.useid;
-            const databases = alasql.databases;
+            const databases = Object.keys(alasql.databases).filter(d => d !== 'alasql');
+
             const dataToSave: any = {
-                currentDB: currentUseId,
+                currentDB: this.currentDB,
                 databases: {}
             };
 
-            for (const dbName of Object.keys(databases)) {
-                if (dbName === 'alasql') continue;
-
-                await alasql.promise(`USE ${dbName}`);
-                const tables = await alasql.promise("SHOW TABLES") as any[];
+            for (const dbName of databases) {
+                // Use synchronous call for internal state capturing to avoid promise overhead/hangs inside loops
+                alasql(`USE ${dbName}`);
+                const tables = alasql("SHOW TABLES");
 
                 const dbData: any = {};
                 const dbSchema: any = {};
 
-                for (const table of tables) {
-                    const tableName = table.tableid;
+                if (Array.isArray(tables)) {
+                    for (const table of tables) {
+                        const tableName = table.tableid;
+                        dbData[tableName] = alasql(`SELECT * FROM ${tableName}`);
 
-                    // Save Data
-                    const rows = await alasql.promise(`SELECT * FROM ${tableName}`) as any[];
-                    dbData[tableName] = rows;
-
-                    // Save Schema
-                    try {
-                        const createRes = await alasql.promise(`SHOW CREATE TABLE ${tableName}`) as any[];
-                        // alasql returns object like { Table: 'name', 'Create Table': '...' }
-                        if (createRes && createRes.length > 0) {
-                            let createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"]; // potential casing diffs
-                            if (createSQL) {
-                                // Clean up the SQL slightly for portability if needed, 
-                                // but usually taking it raw is best for restoration.
-                                dbSchema[tableName] = createSQL;
+                        try {
+                            const createRes = alasql(`SHOW CREATE TABLE ${tableName}`) as any[];
+                            if (createRes && createRes.length > 0) {
+                                let createSQL = (createRes[0] as any)["Create Table"] || (createRes[0] as any)["CreateTable"];
+                                if (createSQL) dbSchema[tableName] = createSQL;
                             }
-                        }
-                    } catch (schemaErr) {
-                        // Not critical, fallback to data-only
+                        } catch (e) { }
                     }
                 }
 
@@ -371,16 +362,14 @@ export default class MySQLPlugin extends Plugin {
             }
 
             // Restore context
-            if (currentUseId && alasql.databases[currentUseId]) {
-                await alasql.promise(`USE ${currentUseId}`);
-            }
+            if (currentUseId) alasql(`USE ${currentUseId}`);
 
             // Combine with settings
             const finalData = { ...this.settings, ...dataToSave };
             await this.saveData(finalData);
-            console.log("MySQL Plugin: Database saved to disk (v1.2 Schema + Settings).");
+            console.log("MySQL Plugin: Data persisted to disk.");
         } catch (e) {
-            console.error("MySQL Plugin: Error saving database", e);
+            console.error("MySQL Plugin: Critical error during save:", e);
         }
     }
 
