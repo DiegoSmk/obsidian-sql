@@ -538,3 +538,7 @@
 .mysql-compatibility-list {
     color: var(--text-muted);
 }
+
+.cm-lang-mysql:hover {
+    box-shadow: none !important;
+}
