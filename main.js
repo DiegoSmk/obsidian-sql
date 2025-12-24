@@ -9912,7 +9912,16 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
             new import_obsidian.Notice("No tables found in current database.");
           } else {
             resultContainer.empty();
-            this.renderResult(result, resultContainer);
+            resultContainer.createEl("h6", { text: "Active Tables", cls: "mysql-result-title" });
+            this.renderTableGrid(result, resultContainer, async (tableName) => {
+              resultContainer.empty();
+              const backBtn = resultContainer.createEl("button", { cls: "mysql-btn", text: "\u2190 Back to Tables" });
+              backBtn.style.marginBottom = "10px";
+              backBtn.onclick = () => showTablesButton.click();
+              resultContainer.createEl("h6", { text: `Table: ${tableName}`, cls: "mysql-result-title" });
+              const tableData = await import_alasql.default.promise(`SELECT * FROM ${tableName}`);
+              this.renderResult(tableData, resultContainer);
+            });
           }
         } catch (e) {
           new import_obsidian.Notice("Error showing tables: " + e.message);
@@ -10164,6 +10173,16 @@ var MySQLPlugin = class extends import_obsidian.Plugin {
   }
   onunload() {
   }
+  renderTableGrid(tables, el, onSelect) {
+    const grid = el.createEl("div", { cls: "mysql-table-grid" });
+    tables.forEach((t) => {
+      const tableName = t.tableid;
+      const card = grid.createEl("div", { cls: "mysql-table-card" });
+      card.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                             <span>${tableName}</span>`;
+      card.onclick = () => onSelect(tableName);
+    });
+  }
   renderResult(result, el) {
     const wrapper = el.createEl("div");
     wrapper.style.overflowX = "auto";
@@ -10410,7 +10429,24 @@ var MySQLSettingTab = class extends import_obsidian.PluginSettingTab {
       if (result.length === 0) {
         new import_obsidian.Notice("No tables found.");
       } else {
-        new import_obsidian.Notice(`Tables: ${result.map((r) => r.tableid).join(", ")}`);
+        new class TableViewerModal extends import_obsidian.FuzzySuggestModal {
+          constructor(app, tables) {
+            super(app);
+            this.tables = tables;
+          }
+          getItems() {
+            return this.tables;
+          }
+          getItemText(item) {
+            return item.tableid;
+          }
+          async onChooseItem(item, evt) {
+            const tableName = item.tableid;
+            const data = await import_alasql.default.promise(`SELECT TOP 10 * FROM ${tableName}`);
+            new import_obsidian.Notice(`Viewing first 10 rows of '${tableName}' in console (F12).`);
+            console.table(data);
+          }
+        }(this.app, result).open();
       }
     }));
     new import_obsidian.Setting(containerEl).setName("Reset All Data").setDesc("DANGER: Deletes all databases and tables. Resets to clean state.").addButton((btn) => btn.setWarning().setButtonText("Reset Everything Now").onClick(async () => {

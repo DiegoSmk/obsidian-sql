@@ -189,7 +189,17 @@ export default class MySQLPlugin extends Plugin {
                         new Notice("No tables found in current database.");
                     } else {
                         resultContainer.empty();
-                        this.renderResult(result, resultContainer);
+                        resultContainer.createEl("h6", { text: "Active Tables", cls: "mysql-result-title" });
+                        this.renderTableGrid(result, resultContainer, async (tableName) => {
+                            resultContainer.empty();
+                            const backBtn = resultContainer.createEl("button", { cls: "mysql-btn", text: "← Back to Tables" });
+                            backBtn.style.marginBottom = "10px";
+                            backBtn.onclick = () => showTablesButton.click();
+
+                            resultContainer.createEl("h6", { text: `Table: ${tableName}`, cls: "mysql-result-title" });
+                            const tableData = await alasql.promise(`SELECT * FROM ${tableName}`);
+                            this.renderResult(tableData, resultContainer);
+                        });
                     }
                 } catch (e) {
                     new Notice("Error showing tables: " + e.message);
@@ -529,6 +539,18 @@ export default class MySQLPlugin extends Plugin {
     }
 
     onunload() {
+    }
+
+    renderTableGrid(tables: any[], el: HTMLElement, onSelect: (tableName: string) => void) {
+        const grid = el.createEl("div", { cls: "mysql-table-grid" });
+        tables.forEach(t => {
+            const tableName = t.tableid;
+            const card = grid.createEl("div", { cls: "mysql-table-card" });
+            card.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+                             <span>${tableName}</span>`;
+
+            card.onclick = () => onSelect(tableName);
+        });
     }
 
     renderResult(result: any, el: HTMLElement) {
@@ -921,7 +943,24 @@ class MySQLSettingTab extends PluginSettingTab {
                     if (result.length === 0) {
                         new Notice("No tables found.");
                     } else {
-                        new Notice(`Tables: ${result.map(r => r.tableid).join(", ")}`);
+                        // Open a simple selection modal to view tables
+                        new (class TableViewerModal extends FuzzySuggestModal<any> {
+                            tables: any[];
+                            constructor(app: App, tables: any[]) {
+                                super(app);
+                                this.tables = tables;
+                            }
+                            getItems(): any[] {
+                                return this.tables;
+                            }
+                            getItemText(item: any): string { return item.tableid; }
+                            async onChooseItem(item: any, evt: MouseEvent | KeyboardEvent) {
+                                const tableName = item.tableid;
+                                const data = await alasql.promise(`SELECT TOP 10 * FROM ${tableName}`);
+                                new Notice(`Viewing first 10 rows of '${tableName}' in console (F12).`);
+                                console.table(data);
+                            }
+                        })(this.app, result).open();
                     }
                 }));
 
