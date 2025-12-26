@@ -1,4 +1,4 @@
-# Professional Development Guidelines - Obsidian SQL
+# Professional Development Guidelines - SQL Notebook
 
 Este documento define os padrões arquiteturais, o fluxo de git e as normas de codificação deste projeto. Todas as contribuições (humanas ou IA) devem aderir estritamente a estas diretrizes.
 

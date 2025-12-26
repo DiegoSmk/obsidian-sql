@@ -1,4 +1,4 @@
-name: Obsidian SQL Release
+name: SQL Notebook Release
 
 on:
   push:
@@ -18,7 +18,7 @@ jobs:
       - name: Clone repository
         run: |
           git clone --depth=1 --branch ${{ gitea.ref_name }} \
-          http://x-access-token:${{ secrets.RELEASE_TOKEN }}@192.168.1.217:3003/Diego/obsidian-sql.git .
+          http://x-access-token:${{ secrets.RELEASE_TOKEN }}@192.168.1.217:3003/Diego/sql-notebook.git .
       
       - name: Validate build
         run: |
@@ -29,11 +29,11 @@ jobs:
         run: |
           mkdir release
           cp main.js manifest.json styles.css release/
-          cd release && zip ../obsidian-sql.zip * && cd ..
+          cd release && zip ../sql-notebook.zip * && cd ..
 
       - name: Create Gitea Release
         run: |
-          curl -X POST "http://192.168.1.217:3003/api/v1/repos/Diego/obsidian-sql/releases" \
+          curl -X POST "http://192.168.1.217:3003/api/v1/repos/Diego/sql-notebook/releases" \
             -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d "{
@@ -45,9 +45,9 @@ jobs:
       - name: Upload asset
         run: |
           RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" \
-            http://192.168.1.217:3003/api/v1/repos/Diego/obsidian-sql/releases/tags/${{ gitea.ref_name }} | jq .id)
+            http://192.168.1.217:3003/api/v1/repos/Diego/sql-notebook/releases/tags/${{ gitea.ref_name }} | jq .id)
 
           curl -X POST \
             -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" \
-            -F "attachment=@obsidian-sql.zip" \
-            "http://192.168.1.217:3003/api/v1/repos/Diego/obsidian-sql/releases/$RELEASE_ID/assets?name=obsidian-sql.zip"
+            -F "attachment=@sql-notebook.zip" \
+            "http://192.168.1.217:3003/api/v1/repos/Diego/sql-notebook/releases/$RELEASE_ID/assets?name=sql-notebook.zip"

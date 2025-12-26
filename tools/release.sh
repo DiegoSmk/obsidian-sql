@@ -11,10 +11,10 @@ mkdir -p release
 cp main.js manifest.json styles.css release/
 
 # 3. Criar ZIP para o Gitea Release
-zip -j "obsidian-sql-$VERSION.zip" release/*
+zip -j "sql-notebook-$VERSION.zip" release/*
 
 echo "✅ Release v$VERSION pronta!"
 echo "🚀 Próximos passos sugeridos:"
 echo "   1. git tag -a v$VERSION -m \"Release v$VERSION\""
 echo "   2. git push origin v$VERSION"
-echo "   3. Upload 'obsidian-sql-$VERSION.zip' no Gitea Releases."
+echo "   3. Upload 'sql-notebook-$VERSION.zip' no Gitea Releases."

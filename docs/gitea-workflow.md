@@ -6,8 +6,8 @@ Este documento descreve como gerenciar o repositório e o ciclo de vida de vers�
 
 ## 1. Conexão com o Servidor
 O repositório está configurado para o servidor Gitea em:
-- **HTTP**: `http://192.168.1.217:3003/Diego/obsidian-sql.git`
-- **SSH**: `ssh://git@192.168.1.217:222/Diego/obsidian-sql.git`
+- **HTTP**: `http://192.168.1.217:3003/Diego/sql-notebook.git`
+- **SSH**: `ssh://git@192.168.1.217:222/Diego/sql-notebook.git`
 
 ### Comandos de Sincronização
 Para enviar suas alterações para o servidor:
@@ -30,7 +30,7 @@ No terminal, execute o script de automação:
 ```bash
 ./tools/release.sh
 ```
-Isso irá gerar um arquivo `obsidian-sql-[versao].zip` na raiz do projeto.
+Isso irá gerar um arquivo `sql-notebook-[versao].zip` na raiz do projeto.
 
 ### Passo 2: Marcar a Versão (Git Tag)
 Crie uma "etiqueta" no tempo para o código atual. Isso disparará a **Automação de Release** no Gitea:
@@ -60,4 +60,4 @@ O Gitea Actions detectará a tag e executará um workflow robusto em **Alpine**:
 Se o Gitea pedir senha toda vez e você quiser usar SSH:
 1. Adicione sua chave pública (`~/.ssh/id_rsa.pub`) no seu perfil do Gitea (**Configurações -> Chaves SSH/GPG**).
 2. Mude o remoto para SSH:
-   `git remote set-url origin ssh://git@192.168.1.217:222/Diego/obsidian-sql.git`
+   `git remote set-url origin ssh://git@192.168.1.217:222/Diego/sql-notebook.git`

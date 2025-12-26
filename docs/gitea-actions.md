@@ -31,7 +31,7 @@ Toda vez que você faz um `git push` para as branches `develop` ou `master`:
 1. O Gitea Actions inicia um container Docker com Node.js.
 2. Instala as dependências (`npm ci`).
 3. Executa o build (`npm run build`).
-4. Gera um **Artifact** chamado `obsidian-sql-build` (um arquivo .zip) que fica disponível para download na aba **Actions** por 7 dias.
+4. Gera um **Artifact** chamado `sql-notebook-build` (um arquivo .zip) que fica disponível para download na aba **Actions** por 7 dias.
 
 ### Release Automática (CD)
 Este fluxo é acionado por tags (ex: `v1.2.3`). Ele é projetado para ser **independente de Node no host** e de plugins externos:
