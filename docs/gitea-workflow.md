@@ -33,20 +33,20 @@ No terminal, execute o script de automação:
 Isso irá gerar um arquivo `obsidian-sql-[versao].zip` na raiz do projeto.
 
 ### Passo 2: Marcar a Versão (Git Tag)
-Crie uma "etiqueta" no tempo para o código atual:
+Crie uma "etiqueta" no tempo para o código atual. Isso disparará a **Automação de Release** no Gitea:
 ```bash
 # Substitua v1.2.2 pela versão correta definida no package.json
 git tag -a v1.2.2 -m "Release v1.2.2"
 git push origin v1.2.2
 ```
 
-### Passo 3: Publicar no Gitea
-1. Acesse o projeto no Gitea pelo navegador.
-2. Vá na aba **Releases** -> **New Release**.
-3. Selecione a **Tag** que você acabou de enviar (`v1.2.2`).
-4. Escreva um título e uma breve descrição das mudanças.
-5. **Upload**: Arraste o arquivo `.zip` gerado no Passo 1 para a área de anexos.
-6. Clique em **Publish Release**.
+### Passo 3: Conferir a Release Automática (CD)
+Este fluxo é focado em tags de versão (ex: `v1.2.3`):
+1. O Gitea Actions inicia um container ultraleve (**Alpine**).
+2. Valida a existência dos arquivos `main.js` e `manifest.json`.
+3. Empacota o plugin em um arquivo `.zip`.
+4. Utiliza o `RELEASE_TOKEN` para criar a Release oficial no Gitea e anexar o arquivo.
+   *Você não precisa mais fazer upload manual se o Gitea Actions estiver configurado.*
 
 ---
 

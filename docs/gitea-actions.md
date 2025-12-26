@@ -34,11 +34,11 @@ Toda vez que você faz um `git push` para as branches `develop` ou `master`:
 4. Gera um **Artifact** chamado `obsidian-sql-build` (um arquivo .zip) que fica disponível para download na aba **Actions** por 7 dias.
 
 ### Release Automática (CD)
-Quando você faz o envio de uma **Git Tag** de versão (ex: `v1.2.3`):
-1. O Job de Build é executado primeiro.
-2. Se o build passar, o Job de **Release** é acionado.
-3. A automação cria uma nova página de Release no Gitea.
-4. O arquivo `.zip` do plugin é anexado automaticamente à Release.
+Este fluxo é focado em tags de versão (ex: `v1.2.3`):
+1. O Gitea Actions inicia um container ultraleve (**Alpine**).
+2. Valida a existência dos arquivos `main.js` e `manifest.json`.
+3. Empacota o plugin em um arquivo `.zip`.
+4. Utiliza o `RELEASE_TOKEN` para criar a Release oficial no Gitea e anexar o arquivo.
 
 ---
 

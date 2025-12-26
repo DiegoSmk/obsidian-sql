@@ -1,58 +1,37 @@
-name: Obsidian SQL CI/CD
+name: Obsidian SQL Release
 
 on:
   push:
-    branches: [master, develop]
     tags:
       - "v*"
 
 jobs:
-  build-and-artifact:
+  release:
     runs-on: docker
     container:
-      image: node:18-slim
+      image: alpine:latest
 
     steps:
-      - name: Install Zip Utility
-        run: apt-get update && apt-get install -y zip
+      - name: Install tools
+        run: apk add --no-cache zip
 
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Production Build
-        run: npm run build
-
-      - name: Prepare Plugin Bundle
+      - name: Validate build exists
         run: |
-          mkdir -p release
+          test -f main.js || (echo "main.js missing" && exit 1)
+          test -f manifest.json || (echo "manifest.json missing" && exit 1)
+
+      - name: Create ZIP
+        run: |
+          mkdir release
           cp main.js manifest.json styles.css release/
           cd release && zip ../obsidian-sql.zip * && cd ..
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: obsidian-sql-build
-          path: obsidian-sql.zip
-
-  release:
-    needs: build-and-artifact
-    if: startsWith(gitea.ref, 'refs/tags/')
-    runs-on: docker
-    container:
-      image: node:18-slim
-
-    steps:
-      - name: Download Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: obsidian-sql-build
 
       - name: Create Gitea Release
         uses: gitea/act-release@v1
         with:
-          files: "obsidian-sql.zip"
+          files: obsidian-sql.zip
           tag_name: ${{ gitea.ref_name }}
           token: ${{ secrets.RELEASE_TOKEN }}
