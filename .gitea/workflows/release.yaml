@@ -13,15 +13,17 @@ jobs:
 
     steps:
       - name: Install tools
-        run: apk add --no-cache zip
+        run: apk add --no-cache git zip curl jq
 
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Validate build exists
+      - name: Clone repository
         run: |
-          test -f main.js || (echo "main.js missing" && exit 1)
-          test -f manifest.json || (echo "manifest.json missing" && exit 1)
+          git clone --depth=1 --branch ${{ gitea.ref_name }} \
+          http://x-access-token:${{ secrets.RELEASE_TOKEN }}@192.168.1.217:3003/Diego/obsidian-sql.git .
+      
+      - name: Validate build
+        run: |
+          test -f main.js
+          test -f manifest.json
 
       - name: Create ZIP
         run: |
@@ -30,8 +32,22 @@ jobs:
           cd release && zip ../obsidian-sql.zip * && cd ..
 
       - name: Create Gitea Release
-        uses: gitea/act-release@v1
-        with:
-          files: obsidian-sql.zip
-          tag_name: ${{ gitea.ref_name }}
-          token: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          curl -X POST "http://192.168.1.217:3003/api/v1/repos/Diego/obsidian-sql/releases" \
+            -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"tag_name\": \"${{ gitea.ref_name }}\",
+              \"name\": \"${{ gitea.ref_name }}\",
+              \"body\": \"Automated release\"
+            }"
+
+      - name: Upload asset
+        run: |
+          RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" \
+            http://192.168.1.217:3003/api/v1/repos/Diego/obsidian-sql/releases/tags/${{ gitea.ref_name }} | jq .id)
+
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" \
+            -F "attachment=@obsidian-sql.zip" \
+            "http://192.168.1.217:3003/api/v1/repos/Diego/obsidian-sql/releases/$RELEASE_ID/assets?name=obsidian-sql.zip"

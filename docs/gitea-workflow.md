@@ -41,12 +41,11 @@ git push origin v1.2.2
 ```
 
 ### Passo 3: Conferir a Release Automática (CD)
-Este fluxo é focado em tags de versão (ex: `v1.2.3`):
-1. O Gitea Actions inicia um container ultraleve (**Alpine**).
-2. Valida a existência dos arquivos `main.js` e `manifest.json`.
-3. Empacota o plugin em um arquivo `.zip`.
-4. Utiliza o `RELEASE_TOKEN` para criar a Release oficial no Gitea e anexar o arquivo.
-   *Você não precisa mais fazer upload manual se o Gitea Actions estiver configurado.*
+O Gitea Actions detectará a tag e executará um workflow robusto em **Alpine**:
+1. Clona o código de forma independente.
+2. Valida os binários e gera o `.zip`.
+3. Cria a Release e anexa o arquivo via API (`curl`), sem depender de bibliotecas externas de Actions.
+   *Acompanhe o status na aba **Actions** do Gitea.*
 
 ---
 
