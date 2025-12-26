@@ -1,60 +1,60 @@
 # Professional Development Guidelines - SQL Notebook
 
-Este documento define os padrões arquiteturais, o fluxo de git e as normas de codificação deste projeto. Todas as contribuições (humanas ou IA) devem aderir estritamente a estas diretrizes.
+This document defines the architectural patterns, git workflow, and coding standards for this project. All contributions (human or AI) must strictly adhere to these guidelines.
 
-## 0. Instruções para a IA (Senior Persona)
+## 0. Instructions for AI (Senior Persona)
 
-Sempre que atuar neste repositório, **atue como um Engenheiro de Software Sênior**. O código produzido deve ser **production-grade**, seguindo rigorosamente:
+Whenever working in this repository, **act as a Senior Software Engineer**. The code produced must be **production-grade**, strictly following:
 
-1.  **Tratamento de Erros**: Implemente blocos try/catch, mensagens de erro claras e informativas. Nunca deixe erros silenciosos.
-2.  **Segurança**: Garanta a sanitização de entradas (SQL Injection protection) e evite exposição de dados sensíveis. Utilize o `SQLSanitizer` existente.
-3.  **Observabilidade**: Inclua logs estruturados (utilizando o `Logger.ts` do projeto) em pontos críticos para facilitar a depuração.
-4.  **Escalabilidade e Clean Code**: Utilize princípios SOLID, tipagem forte (TypeScript) e garanta que funções sejam pequenas, modulares e testáveis.
-5.  **Resiliência**: Para operações assíncronas ou externas, aplique estratégias de timeout e garanta o uso correto do `AbortSignal` quando disponível.
-6.  **Documentação**: Adicione comentários JSDoc explicativos em classes e métodos complexos.
+1.  **Error Handling**: Implement try/catch blocks, clear and informative error messages. Never leave silent errors.
+2.  **Security**: Ensure input sanitization (SQL Injection protection) and avoid exposing sensitive data. Use the existing `SQLSanitizer`.
+3.  **Observability**: Include structured logs (using the project's `Logger.ts`) at critical points to facilitate debugging.
+4.  **Scalability and Clean Code**: Utilize SOLID principles, strong typing (TypeScript), and ensure functions are small, modular, and testable.
+5.  **Resilience**: For asynchronous or external operations, apply timeout strategies and ensure correct use of `AbortSignal` when available.
+6.  **Documentation**: Add explanatory JSDoc comments to complex classes and methods.
 
 ---
 
 ## 1. Git Workflow (Professional Flow)
 
-Seguimos um modelo rigoroso de branches:
+We follow a strict branching model:
 
-- **`master`**: Apenas código estável e pronto para produção (Lançamentos de Release).
-- **`develop`**: Branch de integração para novas funcionalidades.
-- **`feature/xxx`**: Branch dedicada para novas features, derivada de `develop`.
-- **`fix/xxx`**: Branch dedicada para correções de bugs.
+- **`master`**: Only stable, production-ready code (Release launches).
+- **`develop`**: Integration branch for new features.
+- **`feature/xxx`**: Dedicated branch for new features, derived from `develop`.
+- **`fix/xxx`**: Dedicated branch for bug fixes.
 
-### Padrão de Commits (Conventional Commits)
-Formato: `<type>: <description>`
-- `feat`: Nova funcionalidade.
-- `fix`: Correção de bug.
-- `refactor`: Refatoração sem mudança de comportamento.
-- `chore`: Manutenção (build, dependências, CI/CD).
-- `docs`: Documentação.
-
----
-
-## 2. Arquitetura & Modularização
-
-O projeto é modularizado em `src/` para evitar crescimento monolítico:
-
-- **`src/core`**: Lógica de negócio (QueryExecutor, DatabaseManager, CSVManager).
-- **`src/ui`**: Renderização e interação (ResultRenderer).
-- **`src/utils`**: Utilitários transversais (Logger, Sanitizer).
-- **`src/types`**: Definições de tipos globais.
+### Commit Standard (Conventional Commits)
+Format: `<type>: <description>`
+- `feat`: New feature.
+- `fix`: Bug fix.
+- `refactor`: Refactoring without behavioral change.
+- `chore`: Maintenance (build, dependencies, CI/CD).
+- `docs`: Documentation.
 
 ---
 
-## 3. Regras de Engenharia (Alta Robustez)
+## 2. Architecture & Modularization
 
-1.  **SQL Parsing**: Nunca use `.split(';')` ingênuo. Use o AST do AlaSQL ou verificações conservadoras de comando único.
-2.  **LIMIT Injection**: Apenas injete `LIMIT 1000` em `SELECT` de nível superior que sejam claramente queries únicas e sem LIMIT manual.
-3.  **Safe Mode**: Utilize Regex robustos para detecção de comandos bloqueados.
+The project is modularized in `src/` to prevent monolithic growth:
+
+- **`src/core`**: Business logic (QueryExecutor, DatabaseManager, CSVManager).
+- **`src/ui`**: Rendering and interaction (ResultRenderer).
+- **`src/utils`**: Cross-cutting utilities (Logger, Sanitizer).
+- **`src/types`**: Global type definitions.
 
 ---
 
-## 4. Rituais de Desenvolvimento & Release
-1.  **Build**: Sempre execute `npm run build` após alterações para validar o bundle.
-2.  **Versionamento**: Atualize a versão no `package.json` e `manifest.json` antes de lançar.
-3.  **Release Automática**: O lançamento é disparado por **Git Tags** (`vX.X.X`). O Gitea Actions cuida do empacotamento (`sql-notebook.zip`) e da publicação da Release via API.
-4.  **Limpeza**: Binários não devem ser submetidos ao Git. Utilize a aba de Releases do Gitea para download de versões compiladas.
+## 3. Engineering Rules (High Robustness)
+
+1.  **SQL Parsing**: Never use naive `.split(';')`. Use AlaSQL's AST or conservative single-command checks.
+2.  **LIMIT Injection**: Only inject `LIMIT 1000` into top-level `SELECT` statements that are clearly single queries and lack a manual LIMIT.
+3.  **Safe Mode**: Use robust Regex for detecting blocked commands.
+
+---
+
+## 4. Development & Release Rituals
+1.  **Build**: Always run `npm run build` after changes to validate the bundle.
+2.  **Versioning**: Update the version in `package.json` and `manifest.json` before launching.
+3.  **Automated Release**: Launch is triggered by **Git Tags** (`vX.X.X`). Gitea Actions handles packaging (`sql-notebook.zip`) and API-based Release publication.
+4.  **Cleanup**: Binaries should not be submitted to Git. Use Gitea's Releases tab for downloading compiled versions.
