@@ -1,13 +1,10 @@
 name: Obsidian SQL CI/CD
-run-name: Build & Release by @${{ github.actor }}
 
 on:
   push:
-    branches:
-      - master
-      - develop
+    branches: [master, develop]
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   build-and-artifact:
@@ -20,7 +17,7 @@ jobs:
         run: apt-get update && apt-get install -y zip
 
       - name: Checkout Code
-        uses: gitea/checkout@v4
+        uses: actions/checkout@v4
 
       - name: Install Dependencies
         run: npm ci
@@ -35,27 +32,27 @@ jobs:
           cd release && zip ../obsidian-sql.zip * && cd ..
 
       - name: Upload Artifact
-        uses: gitea/upload-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
           name: obsidian-sql-build
           path: obsidian-sql.zip
 
   release:
     needs: build-and-artifact
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(gitea.ref, 'refs/tags/')
     runs-on: docker
     container:
       image: node:18-slim
-    
+
     steps:
       - name: Download Artifact
-        uses: gitea/download-artifact@v4
+        uses: actions/download-artifact@v4
         with:
           name: obsidian-sql-build
 
       - name: Create Gitea Release
-        uses: https://github.com/actions/gitea-release-action@main
+        uses: gitea/act-release@v1
         with:
           files: "obsidian-sql.zip"
-          name: "Release ${{ github.ref_name }}"
-          token: "${{ secrets.RELEASE_TOKEN }}"
+          tag_name: ${{ gitea.ref_name }}
+          token: ${{ secrets.RELEASE_TOKEN }}
