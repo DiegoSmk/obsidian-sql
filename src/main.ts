@@ -1,0 +1,405 @@
+import { Plugin, TFile, Notice, debounce, Debouncer } from 'obsidian';
+// @ts-ignore
+import alasql from 'alasql';
+import Prism from 'prismjs';
+import 'prismjs/components/prism-sql';
+
+import { MySQLSettings, IMySQLPlugin } from './types';
+import { DEFAULT_SETTINGS } from './utils/constants';
+import { SQLSanitizer } from './utils/SQLSanitizer';
+import { Logger } from './utils/Logger';
+
+import { DatabaseManager } from './core/DatabaseManager';
+import { CSVManager } from './core/CSVManager';
+import { QueryExecutor } from './core/QueryExecutor';
+
+import { ResultRenderer } from './ui/ResultRenderer';
+import { CSVSelectionModal } from './ui/CSVSelectionModal';
+import { MySQLSettingTab } from './settings';
+
+export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
+    settings: MySQLSettings;
+    public dbManager: DatabaseManager;
+    public csvManager: CSVManager;
+    // @ts-ignore
+    private debouncedSave: Debouncer<[], Promise<void>>;
+
+    async onload() {
+        console.log('Loading MySQL Runner Plugin');
+
+        await this.loadSettings();
+
+        // Initialize alasql
+        alasql.options.autocommit = false;
+        alasql.options.mysql = true;
+        alasql.promise = (sql: string, params?: any[]) => {
+            return new Promise((resolve, reject) => {
+                alasql(sql, params || [], (data: any, err: Error) => {
+                    if (err) reject(err);
+                    else resolve(data);
+                });
+            });
+        };
+
+        this.dbManager = new DatabaseManager(this);
+        this.csvManager = new CSVManager(this);
+
+        this.debouncedSave = debounce(
+            () => this.dbManager.save(),
+            this.settings.autoSaveDelay,
+            true
+        );
+
+        this.app.workspace.onLayoutReady(async () => {
+            await this.dbManager.load();
+        });
+
+        // Register SQL code block
+        this.registerMarkdownCodeBlockProcessor("mysql", (source, el, ctx) => {
+            this.processSQLBlock(source, el, ctx);
+        });
+
+        // Add Import CSV command
+        this.addCommand({
+            id: 'import-csv-to-alasql',
+            name: 'Import CSV to Table',
+            callback: () => {
+                new CSVSelectionModal(this.app, async (file) => {
+                    const success = await this.csvManager.importCSV(file);
+                    if (success) {
+                        await this.dbManager.save();
+                    }
+                }).open();
+            }
+        });
+
+        // Add Settings Tab
+        this.addSettingTab(new MySQLSettingTab(this.app, this));
+
+        // Add Export CSV context menu
+        this.registerEvent(
+            this.app.workspace.on("file-menu", (menu, file) => {
+                // Not really relevant for file-menu on files, but maybe for table view?
+                // Unused in provided monolithic code, but I'll keep it if it was there or matches patterns.
+                // Wait, previous code had it?
+                // Looking at monolithic main.ts...
+                // It didn't have explicit file-menu event for export. It had export button in Table View (ResultRenderer/ViewFileOutline? No, ResultRenderer had 'Copy').
+                // Ah, CSVManager has exportTable(tableName). Where is it called?
+                // In monolithic main.ts: "showTables" method (which I missed in utilities extraction?)
+                // Wait, "showTables" was a method in MySQLPlugin class in monolithic code.
+                // I need to port `processSQLBlock`, `showTables`, `resetDatabase`, `executeQuery`, `injectParams`, `safeHighlight`, `renderParameterInputs`.
+            })
+        );
+    }
+
+    async onunload() {
+        console.log('Unloading MySQL Runner Plugin');
+        if (this.settings.autoSave) {
+            await this.dbManager.save();
+        }
+    }
+
+    async loadSettings() {
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    }
+
+    async saveSettings() {
+        await this.saveData(this.settings);
+        // Update debounce delay if changed
+        if (this.debouncedSave) {
+            this.debouncedSave = debounce(
+                () => this.dbManager.save(),
+                this.settings.autoSaveDelay,
+                true
+            );
+        }
+    }
+
+    // ========================================================================
+    // LOGIC PORTED FROM MONOLITHIC CLASS
+    // ========================================================================
+
+    async processSQLBlock(source: string, el: HTMLElement, ctx: any) {
+        // Safe Code Highlighting
+        const codeBlock = el.createEl("pre", { cls: "mysql-source-code" });
+        codeBlock.innerHTML = `<code class="language-sql">${this.safeHighlight(source)}</code>`;
+
+        const controls = el.createEl("div", { cls: "mysql-controls" });
+        const runBtn = controls.createEl("button", {
+            cls: "mysql-btn",
+            text: "▶️ Run"
+        });
+
+        // Add Tables Button
+        const showTablesBtn = controls.createEl("button", {
+            cls: "mysql-btn",
+            text: "📊 Tables"
+        });
+
+        // Add Import CSV Button
+        const importBtn = controls.createEl("button", {
+            cls: "mysql-btn",
+            text: "📥 Import CSV"
+        });
+
+        // Add Reset Button
+        const resetBtn = controls.createEl("button", {
+            cls: "mysql-btn mysql-btn-danger",
+            text: "🗑️ Reset"
+        });
+
+        importBtn.onclick = () => {
+            new CSVSelectionModal(this.app, async (file) => {
+                const success = await this.csvManager.importCSV(file);
+                if (success) {
+                    await this.dbManager.save();
+                    // Refrescar tabelas se estiver mostrando
+                    this.showTables(resultContainer, showTablesBtn);
+                }
+            }).open();
+        };
+
+        const resultContainer = el.createEl("div", { cls: "mysql-result" });
+
+        // Event Handlers for new buttons
+        showTablesBtn.onclick = () => this.showTables(resultContainer, showTablesBtn);
+        resetBtn.onclick = () => this.resetDatabase(resultContainer);
+
+        // Parse optional parameters JSON in comments
+        const paramMatch = source.match(/\/\*\s*params\s*:\s*({[\s\S]*?})\s*\*\//);
+        const params = paramMatch ? JSON.parse(paramMatch[1]) : {};
+
+        if (Object.keys(params).length > 0) {
+            this.renderParameterInputs(params, controls, runBtn, (newParams) => {
+                this.executeQuery(source, newParams, runBtn, resultContainer);
+            });
+        }
+
+        runBtn.onclick = () => this.executeQuery(source, params, runBtn, resultContainer);
+    }
+
+    private safeHighlight(code: string): string {
+        const highlighted = Prism.highlight(code, Prism.languages.sql, 'sql');
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(highlighted, 'text/html');
+
+        // Remove perigos
+        const dangerousTags = ['script', 'iframe', 'img', 'object', 'embed', 'link'];
+        dangerousTags.forEach(tag => {
+            doc.querySelectorAll(tag).forEach(el => el.remove());
+        });
+
+        // Remove event handlers
+        doc.querySelectorAll('*').forEach(el => {
+            const attrs = el.attributes;
+            for (let i = 0; i < attrs.length; i++) {
+                if (attrs[i].name.startsWith('on') || attrs[i].name.startsWith('javascript:')) {
+                    el.removeAttribute(attrs[i].name);
+                }
+            }
+        });
+
+        return doc.body.innerHTML;
+    }
+
+    private renderParameterInputs(
+        params: Record<string, any>,
+        container: HTMLElement,
+        runBtn: HTMLButtonElement,
+        onParamsChange: (params: Record<string, any>) => void
+    ) {
+        const inputsContainer = container.createEl("div", { cls: "mysql-params" });
+        const currentParams = { ...params };
+
+        Object.keys(params).forEach(key => {
+            const wrapper = inputsContainer.createEl("div", { cls: "mysql-param-wrapper" });
+            wrapper.createEl("label", { text: key });
+            const input = wrapper.createEl("input", {
+                type: "text",
+                value: String(params[key])
+            });
+
+            input.oninput = () => {
+                currentParams[key] = input.value;
+                onParamsChange(currentParams);
+            };
+
+            // Allow Enter to run
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') runBtn.click();
+            }
+        });
+    }
+
+    private async executeQuery(
+        query: string,
+        params: Record<string, any>,
+        btn: HTMLButtonElement,
+        container: HTMLElement
+    ): Promise<void> {
+        btn.disabled = true;
+
+        // Add Cancel Button
+        const cancelBtn = container.parentElement?.querySelector('.mysql-controls')?.createEl("button", {
+            cls: "mysql-btn mysql-btn-warn",
+            text: "🛑 Cancel"
+        });
+
+        const abortController = new AbortController();
+
+        if (cancelBtn) {
+            cancelBtn.onclick = () => {
+                abortController.abort();
+                cancelBtn.remove();
+                btn.disabled = false;
+                btn.innerHTML = `▶️ Run`;
+                new Notice("Query aborted by user");
+            };
+        }
+
+        btn.innerHTML = `⏳ Executing...`;
+
+        // Handle Special Commands like SHOW TABLES (custom view?)
+        // The original code handled SHOW TABLES normally via AlaSQL, but wrapped it?
+        // Let's look at `showTables()` method in original code... no, it seems `showTables` was a separate method but not called by executeQuery directly unless specialized.
+        // Actually, standard sql block execution handles everything via QueryExecutor.
+        // But wait, the user wants "Export CSV" button in table detail view.
+        // In ResultRenderer? Or somewhere else?
+        // Original code: `ResultRenderer` didn't seem to have `Export CSV`.
+        // Let's re-read the original monolithic code for `showTables` and where `Export CSV` button was added.
+        // It was added in `renderTable` inside `ResultRenderer`? Or `MySQLPlugin` had a `showTables` logic?
+        // Ah, `step 2` summary said: "Export CSV button was added to the table detail view (accessed by clicking on a table in the 'Tables' list)."
+        // Where is the "Tables" list?
+        // Maybe it's `SHOW TABLES` output rendered?
+        // If I run `SHOW TABLES`, AlaSQL returns a list of tables. ResultRenderer renders it.
+        // If I click on a table?
+        // The original code seemed to have `renderTable` in `ResultRenderer`?
+        // Let's assume standard execution for now. 
+        // Oh, wait. I see `this.csvManager.exportTable(tableName)` in the monolithic `exportTable` method?
+        // I need to ensure `ResultRenderer` supports exporting if it was there.
+        // The previous `ResultRenderer.ts` I wrote has `Copy`, `Screenshot`, `Insert`. No `Export CSV`.
+        // I should check if I missed `Export CSV` in `ResultRenderer`.
+
+        let finalQuery = query;
+        if (Object.keys(params).length > 0) {
+            finalQuery = this.injectParams(query, params);
+        }
+
+        try {
+            const result = await QueryExecutor.execute(finalQuery, undefined, {
+                safeMode: this.settings.safeMode,
+                signal: abortController.signal
+            });
+
+            if (cancelBtn) cancelBtn.remove();
+
+            // Render Result
+            ResultRenderer.render(result, container, this.app, this);
+
+            // Determine if we should add "Export CSV" button if result looks like a single table select or check logic
+            // The request said: "Export CSV button was added to the table detail view (accessed by clicking on a table in the "Tables" list)."
+            // This implies there is a "Tables list" view.
+            // If the query was `SHOW TABLES`, the result is clickable?
+            // Since I don't fully recall the interaction code for "Tables list" -> "Table Detail", I will just rely on `QueryExecutor` + `ResultRenderer`.
+            // However, the `csvManager` has `exportTable`.
+            // I'll add an "Export Table to CSV" command to Obsidian palette for safety.
+            // Or check if I should add it to `ResultRenderer` if the query matches `SELECT * FROM table`.
+
+            // Auto-save if modification
+            if (result.success && this.settings.autoSave) {
+                const cleanQuery = query.trim().toUpperCase();
+                if (!cleanQuery.startsWith('SELECT') && !cleanQuery.startsWith('SHOW')) {
+                    await this.debouncedSave();
+                }
+            }
+        } catch (e) {
+            if (cancelBtn) cancelBtn.remove();
+            Logger.error("Execute Query Error", e);
+            ResultRenderer.render({ success: false, error: e.message }, container, this.app, this);
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = `▶️ Run`;
+    }
+
+    private injectParams(query: string, params: Record<string, any>): string {
+        let injected = query;
+        for (const [key, value] of Object.entries(params)) {
+            // Handle numeric and string params differently
+            const wrapper = typeof value === 'string' ? "'" : "";
+            const safeValue = SQLSanitizer.escapeValue(value);
+            // RegEx to replace :param or @param
+            const regex = new RegExp(`[:@]${key}\\b`, 'g');
+            // safeValue already has quotes if string from escapeValue?
+            // SQLSanitizer.escapeValue adds quotes for strings.
+            // So we replace directly.
+            injected = injected.replace(regex, safeValue);
+        }
+        return injected;
+    }
+
+    private showTables(container: HTMLElement, btn: HTMLButtonElement): void {
+        try {
+            // Use alasql directly or via execute
+            const tables = alasql("SHOW TABLES") as any[];
+
+            if (tables.length === 0) {
+                new Notice("No tables found");
+                return;
+            }
+
+            container.empty();
+            container.createEl("h6", { text: "📊 Active Tables" });
+
+            const grid = container.createEl("div", { cls: "mysql-table-grid" });
+
+            tables.forEach(t => {
+                const card = grid.createEl("div", { cls: "mysql-table-card" });
+                card.innerHTML = `<strong>${t.tableid}</strong>`;
+
+                card.onclick = async () => {
+                    container.empty();
+
+                    const header = container.createEl("div", { cls: "mysql-table-header" });
+
+                    const back = header.createEl("button", {
+                        text: "← Back",
+                        cls: "mysql-btn"
+                    });
+                    back.onclick = () => btn.click();
+
+                    header.createEl("h6", { text: `Table: ${t.tableid}` });
+
+                    const exportBtn = header.createEl("button", {
+                        cls: "mysql-btn",
+                        text: "📤 Export CSV"
+                    });
+                    exportBtn.onclick = () => this.csvManager.exportTable(t.tableid);
+
+                    const result = await QueryExecutor.execute(`SELECT * FROM ${t.tableid}`);
+                    ResultRenderer.render(result, container, this.app, this, t.tableid);
+                };
+            });
+        } catch (error) {
+            new Notice("Error showing tables: " + error.message);
+        }
+    }
+
+    private async resetDatabase(container: HTMLElement): Promise<void> {
+        if (!confirm("⚠️ This will delete ALL databases and tables. Are you sure?")) {
+            return;
+        }
+
+        try {
+            await this.dbManager.reset();
+            container.empty();
+            container.createEl("p", {
+                text: "✓ All databases reset successfully",
+                cls: "mysql-success"
+            });
+            new Notice("Database reset completed");
+        } catch (error) {
+            new Notice("Reset failed: " + error.message);
+        }
+    }
+}

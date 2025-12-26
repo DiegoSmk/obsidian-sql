@@ -15,7 +15,7 @@ const context = await esbuild.context({
     banner: {
         js: banner,
     },
-    entryPoints: ["main.ts"],
+    entryPoints: ["src/main.ts"],
     bundle: true,
     external: [
         "obsidian",
@@ -43,6 +43,7 @@ const context = await esbuild.context({
         "@codemirror/view",
         "react-native-fs",
         "react-native-fetch-blob",
+        "react-native",
         ...builtins
     ],
     format: "cjs",
