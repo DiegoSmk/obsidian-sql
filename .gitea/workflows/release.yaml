@@ -18,7 +18,7 @@ jobs:
       - name: Clone repository
         run: |
           git clone --depth=1 --branch ${{ gitea.ref_name }} \
-          http://x-access-token:${{ secrets.RELEASE_TOKEN }}@192.168.1.217:3003/Diego/sql-notebook.git .
+          http://x-access-token:${{ secrets.RELEASE_TOKEN }}@192.168.1.217:3003/Diego/obsidian-sql.git .
       
       - name: Validate build
         run: |
