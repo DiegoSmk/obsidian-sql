@@ -11,18 +11,16 @@ on:
 
 jobs:
   build-and-artifact:
-    # Ajustado para suas labels específicas
     runs-on: docker
-    
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+    container:
+      image: node:18-slim
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: 'npm'
+    steps:
+      - name: Install Zip Utility
+        run: apt-get update && apt-get install -y zip
+
+      - name: Checkout Code
+        uses: gitea/checkout@v4
 
       - name: Install Dependencies
         run: npm ci
@@ -34,24 +32,24 @@ jobs:
         run: |
           mkdir -p release
           cp main.js manifest.json styles.css release/
-          # Usando zip disponível na imagem docker do runner
           cd release && zip ../obsidian-sql.zip * && cd ..
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: gitea/upload-artifact@v4
         with:
           name: obsidian-sql-build
           path: obsidian-sql.zip
-          retention-days: 7
 
   release:
     needs: build-and-artifact
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: docker
+    container:
+      image: node:18-slim
     
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@v3
+        uses: gitea/download-artifact@v4
         with:
           name: obsidian-sql-build
 
