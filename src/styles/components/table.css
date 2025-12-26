@@ -18,7 +18,7 @@
 .mysql-table th {
     background-color: var(--background-secondary-alt);
     font-weight: 700;
-    color: var(--text-normal);
+    color: var(--mysql-accent-purple);
     text-transform: uppercase;
     font-size: 0.75em;
     letter-spacing: 0.08em;
@@ -82,7 +82,7 @@
 
 .mysql-table-card:hover {
     background-color: var(--background-primary);
-    border-color: var(--interactive-accent);
+    border-color: var(--mysql-accent-purple);
     transform: translateY(-3px);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
 }
@@ -93,7 +93,7 @@
 }
 
 .mysql-table-card:hover svg {
-    color: var(--interactive-accent);
+    color: var(--mysql-accent-purple);
 }
 
 .mysql-pagination-controls {

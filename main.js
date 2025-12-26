@@ -63848,7 +63848,7 @@ __export(main_exports, {
   default: () => MySQLPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian5 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 var import_alasql4 = __toESM(require_alasql_fs());
 var import_prismjs = __toESM(require_prism());
 
@@ -64330,38 +64330,38 @@ var ResultRenderer = class {
       return;
     }
     const data = result.data || [];
-    const wrapper = container.createEl("div", { cls: "mysql-result-wrapper" });
-    if (result.executionTime !== void 0) {
-      const meta = wrapper.createEl("div", { cls: "mysql-metadata" });
-      meta.innerHTML = `\u23F1\uFE0F Execution time: <strong>${result.executionTime}ms</strong>`;
-    }
-    this.renderData(data, wrapper, app, plugin, tableName);
+    const wrapper = container.createEl("div", { cls: "mysql-result-container" });
+    this.renderData(data, wrapper, app, plugin, tableName, result.executionTime);
   }
   static addActionButtons(container, data, resultWrapper, app, plugin, tableName) {
     const copyBtn = container.createEl("button", {
       cls: "mysql-action-btn",
       attr: { title: "Copy result to clipboard" }
     });
-    copyBtn.innerHTML = `\u{1F4CB} Copy`;
+    (0, import_obsidian2.setIcon)(copyBtn, "copy");
+    copyBtn.createSpan({ text: "Copy" });
     copyBtn.onclick = () => this.copyToClipboard(data);
     const screenshotBtn = container.createEl("button", {
       cls: "mysql-action-btn",
       attr: { title: "Take screenshot of result" }
     });
-    screenshotBtn.innerHTML = `\u{1F4F8} Screenshot`;
+    (0, import_obsidian2.setIcon)(screenshotBtn, "camera");
+    screenshotBtn.createSpan({ text: "Screenshot" });
     screenshotBtn.onclick = () => this.takeScreenshot(resultWrapper);
     const insertBtn = container.createEl("button", {
       cls: "mysql-action-btn",
       attr: { title: "Insert result into note" }
     });
-    insertBtn.innerHTML = `\u{1F4DD} Insert`;
+    (0, import_obsidian2.setIcon)(insertBtn, "file-plus");
+    insertBtn.createSpan({ text: "Add to Note" });
     insertBtn.onclick = () => this.insertIntoNote(data, app);
     if (tableName) {
       const exportBtn = container.createEl("button", {
         cls: "mysql-action-btn",
         attr: { title: "Export result to CSV" }
       });
-      exportBtn.innerHTML = `\u{1F4E4} Export CSV`;
+      (0, import_obsidian2.setIcon)(exportBtn, "file-output");
+      exportBtn.createSpan({ text: "Export CSV" });
       exportBtn.onclick = async () => {
         const csvManager = plugin.csvManager;
         if (csvManager && csvManager.exportTable) {
@@ -64401,7 +64401,6 @@ var ResultRenderer = class {
       const canvas = await (0, import_html2canvas.default)(element, {
         backgroundColor: getComputedStyle(element).backgroundColor || "#ffffff",
         scale: 2,
-        // Higher quality
         logging: false
       });
       canvas.toBlob(async (blob) => {
@@ -64469,7 +64468,7 @@ var ResultRenderer = class {
     });
     return md;
   }
-  static renderData(results, container, app, plugin, tableName) {
+  static renderData(results, container, app, plugin, tableName, executionTime) {
     if (!Array.isArray(results) || results.length === 0) {
       container.createEl("p", {
         text: "Query executed successfully (no result set)",
@@ -64479,25 +64478,34 @@ var ResultRenderer = class {
     }
     results.forEach((rs, idx) => {
       const rsWrapper = container.createEl("div", { cls: "mysql-result-set" });
-      if (results.length > 1) {
-        rsWrapper.createEl("h4", { text: `Result #${idx + 1}`, cls: "mysql-result-header" });
+      const header = rsWrapper.createDiv({ cls: "mysql-result-header" });
+      const contentWrapper = rsWrapper.createDiv({ cls: "mysql-result-content" });
+      const left = header.createDiv({ cls: "mysql-header-left" });
+      (0, import_obsidian2.setIcon)(left, results.length > 1 ? "list" : "database");
+      const labelText = results.length > 1 ? `Result #${idx + 1}` : tableName ? `Table: ${tableName}` : "Query Result";
+      left.createSpan({ text: labelText, cls: "mysql-result-label" });
+      const right = header.createDiv({ cls: "mysql-header-right" });
+      if (idx === 0 && executionTime !== void 0) {
+        const meta = right.createDiv({ cls: "mysql-metadata-compact" });
+        (0, import_obsidian2.setIcon)(meta, "timer");
+        meta.createSpan({ text: `${executionTime}ms` });
       }
       if (rs.type === "table" || rs.type === "scalar") {
-        const actions = rsWrapper.createEl("div", { cls: "mysql-result-actions" });
-        this.addActionButtons(actions, rs.data, rsWrapper, app, plugin, rs.type === "table" ? tableName : void 0);
+        const actions = right.createDiv({ cls: "mysql-result-actions" });
+        this.addActionButtons(actions, rs.data, contentWrapper, app, plugin, rs.type === "table" ? tableName : void 0);
       }
       switch (rs.type) {
         case "table":
-          this.renderTable(rs.data, rsWrapper);
+          this.renderTable(rs.data, contentWrapper);
           break;
         case "scalar":
           if (typeof rs.data === "number") {
-            rsWrapper.createEl("div", {
+            contentWrapper.createEl("div", {
               text: String(rs.data),
               cls: "mysql-scalar-value"
             });
           } else {
-            rsWrapper.createEl("pre", {
+            contentWrapper.createEl("pre", {
               text: JSON.stringify(rs.data, null, 2),
               cls: "mysql-json-result"
             });
@@ -64506,15 +64514,26 @@ var ResultRenderer = class {
         case "message":
         case "error":
           const isDML = rs.type === "message" && rs.message && rs.message.includes("affected");
-          rsWrapper.createEl("p", {
-            text: rs.message || "Done",
-            cls: rs.type === "error" ? "mysql-error-inline" : isDML ? "mysql-success-inline" : "mysql-info"
+          const msgWrapper = contentWrapper.createDiv({
+            cls: rs.type === "error" ? "mysql-error-inline" : isDML ? "mysql-success-state mysql-msg-compact" : "mysql-info-state mysql-msg-compact"
           });
+          if (rs.type === "error") {
+            msgWrapper.createEl("p", { text: rs.message || "Error" });
+          } else {
+            const iconWrapper = msgWrapper.createDiv({ cls: isDML ? "mysql-success-icon" : "mysql-info-icon" });
+            (0, import_obsidian2.setIcon)(iconWrapper, isDML ? "database" : "info");
+            msgWrapper.createDiv({
+              text: rs.message || "Done",
+              cls: isDML ? "mysql-success" : "mysql-info-text"
+            });
+          }
           break;
       }
       if (rs.rowCount !== void 0 && rs.type === "table") {
-        const rowInfo = rsWrapper.createEl("div", { cls: "mysql-row-count" });
-        rowInfo.setText(`(${rs.rowCount} rows)`);
+        const rowInfo = contentWrapper.createDiv({ cls: "mysql-row-count-wrapper" });
+        const countIcon = rowInfo.createDiv({ cls: "mysql-count-icon" });
+        (0, import_obsidian2.setIcon)(countIcon, "list-ordered");
+        rowInfo.createSpan({ text: `${rs.rowCount} rows found`, cls: "mysql-row-count-text" });
       }
     });
   }
@@ -64553,9 +64572,12 @@ var ResultRenderer = class {
     }
   }
   static renderError(message, container) {
-    const errorDiv = container.createEl("div", { cls: "mysql-error" });
-    errorDiv.createEl("strong", { text: "Error: " });
-    errorDiv.createEl("span", { text: message });
+    const errorDiv = container.createDiv({ cls: "mysql-error" });
+    const header = errorDiv.createDiv({ cls: "mysql-error-header" });
+    const iconWrapper = header.createDiv({ cls: "mysql-error-icon" });
+    (0, import_obsidian2.setIcon)(iconWrapper, "alert-circle");
+    header.createSpan({ text: "Execution Error", cls: "mysql-error-title" });
+    errorDiv.createDiv({ text: message, cls: "mysql-error-message" });
   }
 };
 
@@ -64635,8 +64657,42 @@ var MySQLSettingTab = class extends import_obsidian4.PluginSettingTab {
   }
 };
 
+// src/ui/ConfirmationModal.ts
+var import_obsidian5 = require("obsidian");
+var ConfirmationModal = class extends import_obsidian5.Modal {
+  constructor(app, title, message, onSubmit, confirmText = "Confirm", cancelText = "Cancel") {
+    super(app);
+    this.titleText = title;
+    this.message = message;
+    this.onSubmit = onSubmit;
+    this.confirmText = confirmText;
+    this.cancelText = cancelText;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    this.modalEl.addClass("mysql-confirmation-modal");
+    const header = contentEl.createDiv({ cls: "mysql-modal-header" });
+    const iconContainer = header.createDiv({ cls: "mysql-modal-icon" });
+    (0, import_obsidian5.setIcon)(iconContainer, "alert-triangle");
+    header.createEl("h2", { text: this.titleText, cls: "mysql-modal-title" });
+    contentEl.createEl("p", { text: this.message, cls: "mysql-modal-body" });
+    const buttonsGroup = contentEl.createDiv({ cls: "mysql-modal-footer" });
+    const cancelBtn = new import_obsidian5.ButtonComponent(buttonsGroup).setButtonText(this.cancelText).onClick(() => this.close());
+    cancelBtn.buttonEl.addClass("mysql-modal-btn-cancel");
+    const confirmBtn = new import_obsidian5.ButtonComponent(buttonsGroup).setButtonText(this.confirmText).setWarning().onClick(() => {
+      this.onSubmit(true);
+      this.close();
+    });
+    confirmBtn.buttonEl.addClass("mysql-modal-btn-confirm");
+  }
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
+  }
+};
+
 // src/main.ts
-var MySQLPlugin = class extends import_obsidian5.Plugin {
+var MySQLPlugin = class extends import_obsidian6.Plugin {
   async onload() {
     console.log("Loading MySQL Runner Plugin");
     await this.loadSettings();
@@ -64652,7 +64708,7 @@ var MySQLPlugin = class extends import_obsidian5.Plugin {
     };
     this.dbManager = new DatabaseManager(this);
     this.csvManager = new CSVManager(this);
-    this.debouncedSave = (0, import_obsidian5.debounce)(
+    this.debouncedSave = (0, import_obsidian6.debounce)(
       () => this.dbManager.save(),
       this.settings.autoSaveDelay,
       true
@@ -64693,7 +64749,7 @@ var MySQLPlugin = class extends import_obsidian5.Plugin {
   async saveSettings() {
     await this.saveData(this.settings);
     if (this.debouncedSave) {
-      this.debouncedSave = (0, import_obsidian5.debounce)(
+      this.debouncedSave = (0, import_obsidian6.debounce)(
         () => this.dbManager.save(),
         this.settings.autoSaveDelay,
         true
@@ -64704,25 +64760,26 @@ var MySQLPlugin = class extends import_obsidian5.Plugin {
   // LOGIC PORTED FROM MONOLITHIC CLASS
   // ========================================================================
   async processSQLBlock(source, el, ctx) {
-    const codeBlock = el.createEl("pre", { cls: "mysql-source-code" });
+    el.empty();
+    el.addClass("mysql-block-parent");
+    const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
+    const codeBlock = workbench.createEl("pre", { cls: "mysql-source-code" });
     codeBlock.innerHTML = `<code class="language-sql">${this.safeHighlight(source)}</code>`;
-    const controls = el.createEl("div", { cls: "mysql-controls" });
-    const runBtn = controls.createEl("button", {
-      cls: "mysql-btn",
-      text: "\u25B6\uFE0F Run"
-    });
-    const showTablesBtn = controls.createEl("button", {
-      cls: "mysql-btn",
-      text: "\u{1F4CA} Tables"
-    });
-    const importBtn = controls.createEl("button", {
-      cls: "mysql-btn",
-      text: "\u{1F4E5} Import CSV"
-    });
-    const resetBtn = controls.createEl("button", {
-      cls: "mysql-btn mysql-btn-danger",
-      text: "\u{1F5D1}\uFE0F Reset"
-    });
+    const controls = workbench.createEl("div", { cls: "mysql-controls" });
+    const runBtn = controls.createEl("button", { cls: "mysql-btn mysql-btn-run" });
+    (0, import_obsidian6.setIcon)(runBtn, "play");
+    runBtn.createSpan({ text: "Run" });
+    const rightControls = controls.createEl("div", { cls: "mysql-controls-right" });
+    const showTablesBtn = rightControls.createEl("button", { cls: "mysql-btn" });
+    (0, import_obsidian6.setIcon)(showTablesBtn, "table");
+    showTablesBtn.createSpan({ text: "Tables" });
+    const importBtn = rightControls.createEl("button", { cls: "mysql-btn" });
+    (0, import_obsidian6.setIcon)(importBtn, "file-up");
+    importBtn.createSpan({ text: "Import CSV" });
+    const resetBtn = rightControls.createEl("button", { cls: "mysql-btn mysql-btn-danger" });
+    (0, import_obsidian6.setIcon)(resetBtn, "trash-2");
+    resetBtn.createSpan({ text: "Reset" });
+    const resultContainer = workbench.createEl("div", { cls: "mysql-result-container" });
     importBtn.onclick = () => {
       new CSVSelectionModal(this.app, async (file) => {
         const success = await this.csvManager.importCSV(file);
@@ -64732,7 +64789,6 @@ var MySQLPlugin = class extends import_obsidian5.Plugin {
         }
       }).open();
     };
-    const resultContainer = el.createEl("div", { cls: "mysql-result" });
     showTablesBtn.onclick = () => this.showTables(resultContainer, showTablesBtn);
     resetBtn.onclick = () => this.resetDatabase(resultContainer);
     const paramMatch = source.match(/\/\*\s*params\s*:\s*({[\s\S]*?})\s*\*\//);
@@ -64785,9 +64841,12 @@ var MySQLPlugin = class extends import_obsidian5.Plugin {
     var _a, _b;
     btn.disabled = true;
     const cancelBtn = (_b = (_a = container.parentElement) == null ? void 0 : _a.querySelector(".mysql-controls")) == null ? void 0 : _b.createEl("button", {
-      cls: "mysql-btn mysql-btn-warn",
-      text: "\u{1F6D1} Cancel"
+      cls: "mysql-btn mysql-btn-warn"
     });
+    if (cancelBtn) {
+      (0, import_obsidian6.setIcon)(cancelBtn, "stop-circle");
+      cancelBtn.createSpan({ text: "Cancel" });
+    }
     const abortController = new AbortController();
     if (cancelBtn) {
       cancelBtn.onclick = () => {
@@ -64795,7 +64854,7 @@ var MySQLPlugin = class extends import_obsidian5.Plugin {
         cancelBtn.remove();
         btn.disabled = false;
         btn.innerHTML = `\u25B6\uFE0F Run`;
-        new import_obsidian5.Notice("Query aborted by user");
+        new import_obsidian6.Notice("Query aborted by user");
       };
     }
     btn.innerHTML = `\u23F3 Executing...`;
@@ -64822,7 +64881,9 @@ var MySQLPlugin = class extends import_obsidian5.Plugin {
       ResultRenderer.render({ success: false, error: e.message }, container, this.app, this);
     }
     btn.disabled = false;
-    btn.innerHTML = `\u25B6\uFE0F Run`;
+    btn.empty();
+    (0, import_obsidian6.setIcon)(btn, "play");
+    btn.createSpan({ text: "Run" });
   }
   injectParams(query, params) {
     let injected = query;
@@ -64838,7 +64899,12 @@ var MySQLPlugin = class extends import_obsidian5.Plugin {
     try {
       const tables = (0, import_alasql4.default)("SHOW TABLES");
       if (tables.length === 0) {
-        new import_obsidian5.Notice("No tables found");
+        container.empty();
+        const infoState = container.createDiv({ cls: "mysql-info-state" });
+        const iconWrapper = infoState.createDiv({ cls: "mysql-info-icon" });
+        (0, import_obsidian6.setIcon)(iconWrapper, "info");
+        infoState.createEl("p", { text: "No tables found in database", cls: "mysql-info-text" });
+        new import_obsidian6.Notice("No tables found");
         return;
       }
       container.empty();
@@ -64851,39 +64917,52 @@ var MySQLPlugin = class extends import_obsidian5.Plugin {
           container.empty();
           const header = container.createEl("div", { cls: "mysql-table-header" });
           const back = header.createEl("button", {
-            text: "\u2190 Back",
             cls: "mysql-btn"
           });
+          (0, import_obsidian6.setIcon)(back, "arrow-left");
+          back.createSpan({ text: "Back" });
           back.onclick = () => btn.click();
           header.createEl("h6", { text: `Table: ${t.tableid}` });
           const exportBtn = header.createEl("button", {
-            cls: "mysql-btn",
-            text: "\u{1F4E4} Export CSV"
+            cls: "mysql-btn"
           });
+          (0, import_obsidian6.setIcon)(exportBtn, "file-output");
+          exportBtn.createSpan({ text: "Export CSV" });
           exportBtn.onclick = () => this.csvManager.exportTable(t.tableid);
           const result = await QueryExecutor.execute(`SELECT * FROM ${t.tableid}`);
           ResultRenderer.render(result, container, this.app, this, t.tableid);
         };
       });
     } catch (error) {
-      new import_obsidian5.Notice("Error showing tables: " + error.message);
+      new import_obsidian6.Notice("Error showing tables: " + error.message);
     }
   }
   async resetDatabase(container) {
-    if (!confirm("\u26A0\uFE0F This will delete ALL databases and tables. Are you sure?")) {
-      return;
-    }
-    try {
-      await this.dbManager.reset();
-      container.empty();
-      container.createEl("p", {
-        text: "\u2713 All databases reset successfully",
-        cls: "mysql-success"
-      });
-      new import_obsidian5.Notice("Database reset completed");
-    } catch (error) {
-      new import_obsidian5.Notice("Reset failed: " + error.message);
-    }
+    new ConfirmationModal(
+      this.app,
+      "Reset Database",
+      "This will delete ALL databases and tables. This action cannot be undone. Are you sure?",
+      async (confirmed) => {
+        if (confirmed) {
+          try {
+            await this.dbManager.reset();
+            container.empty();
+            const successState = container.createDiv({ cls: "mysql-success-state" });
+            const iconWrapper = successState.createDiv({ cls: "mysql-success-icon" });
+            (0, import_obsidian6.setIcon)(iconWrapper, "check-circle");
+            successState.createEl("p", {
+              text: "All databases reset successfully",
+              cls: "mysql-success"
+            });
+            new import_obsidian6.Notice("Database reset completed");
+          } catch (error) {
+            new import_obsidian6.Notice("Reset failed: " + error.message);
+          }
+        }
+      },
+      "Reset Everything",
+      "Keep Data"
+    ).open();
   }
 };
 /*! Bundled license information:

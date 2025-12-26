@@ -9,6 +9,7 @@
 /* UI & Utils */
 @import "./ui/syntax.css";
 @import "./ui/error.css";
+@import "./ui/modals.css";
 @import "./ui/responsive.css";
 
 /* Components */

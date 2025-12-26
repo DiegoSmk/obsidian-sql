@@ -1,15 +1,46 @@
 .mysql-error {
+    margin: 20px;
     padding: 16px 20px;
     border: 1px solid var(--color-red);
-    background-color: rgba(233, 49, 71, 0.08);
-    border-radius: var(--mysql-radius-sm);
+    background-color: rgba(var(--color-red-rgb), 0.05);
+    border-radius: var(--mysql-radius-md);
     color: var(--color-red);
-    font-family: var(--font-monospace);
-    font-size: 0.875em;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 12px;
     animation: fadeInUp var(--mysql-transition-normal);
+}
+
+.mysql-error-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(var(--color-red-rgb), 0.2);
+    padding-bottom: 8px;
+}
+
+.mysql-error-icon {
+    display: flex;
+    align-items: center;
+}
+
+.mysql-error-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.mysql-error-title {
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.mysql-error-message {
+    font-family: var(--font-monospace);
+    font-size: 0.9em;
+    line-height: 1.5;
+    white-space: pre-wrap;
 }
 
 .mysql-empty-state {
@@ -57,4 +88,64 @@
 
 .mysql-compatibility-list {
     color: var(--text-muted);
+}
+
+/* Success & Info Message Components */
+.mysql-success-state,
+.mysql-info-state {
+    padding: 12px 24px;
+    background-color: var(--background-secondary-alt);
+    border-radius: var(--mysql-radius-md);
+    margin: 16px 20px;
+    animation: fadeInUp var(--mysql-transition-normal);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: 1px dashed var(--mysql-border-color, var(--background-modifier-border));
+}
+
+.mysql-success-state {
+    border-color: var(--mysql-accent-purple);
+}
+
+.mysql-info-state {
+    border-color: var(--text-muted);
+}
+
+.mysql-success,
+.mysql-info-text {
+    font-weight: 500;
+    font-size: 0.95em;
+    margin: 0 !important;
+}
+
+.mysql-success {
+    color: var(--mysql-accent-purple);
+}
+
+.mysql-info-text {
+    color: var(--text-muted);
+}
+
+.mysql-success-icon,
+.mysql-info-icon {
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+}
+
+.mysql-success-icon {
+    color: var(--mysql-accent-purple);
+}
+
+.mysql-info-icon {
+    color: var(--text-muted);
+}
+
+.mysql-success-icon svg,
+.mysql-info-icon svg {
+    width: 18px;
+    height: 18px;
 }

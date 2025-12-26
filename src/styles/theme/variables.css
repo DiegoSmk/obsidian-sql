@@ -1,16 +1,34 @@
 :root {
     --mysql-transition-fast: 0.15s ease;
     --mysql-transition-normal: 0.3s ease;
-    --mysql-radius-sm: 6px;
-    --mysql-radius-md: 8px;
+    --mysql-radius-sm: 8px;
+    --mysql-radius-md: 14px;
+    /* More rounded as in v1.1.0 */
+    --mysql-accent-purple: #9d7cd8;
+    /* Professional Purple Accent */
     --mysql-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
     --mysql-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --mysql-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
 
+/* Premium Surface Colors from v0.2.2b */
+.theme-dark {
+    --mysql-bg-workbench: rgba(30, 30, 35, 0.65);
+    --mysql-workbench-blur: blur(12px);
+    --mysql-border-color: rgba(255, 255, 255, 0.1);
+}
+
+.theme-light {
+    --mysql-bg-workbench: rgba(255, 255, 255, 0.85);
+    --mysql-workbench-blur: blur(10px);
+    --mysql-border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Fallback for system appearance */
 @media (prefers-color-scheme: dark) {
-    .mysql-workbench-container {
-        --mysql-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
-        --mysql-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.4);
+    :root:not(.theme-light) {
+        --mysql-bg-workbench: rgba(30, 30, 35, 0.65);
+        --mysql-workbench-blur: blur(12px);
+        --mysql-border-color: rgba(255, 255, 255, 0.1);
     }
 }

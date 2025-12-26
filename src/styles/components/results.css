@@ -3,6 +3,12 @@
     background-color: var(--background-primary);
 }
 
+.mysql-result-content {
+    background-color: var(--background-primary);
+    padding: 16px 20px;
+    /* Added horizontal spacing */
+}
+
 .mysql-result-section {
     padding: 20px;
     border-bottom: 1px solid var(--background-modifier-border);
@@ -15,7 +21,7 @@
 
 .mysql-result-title {
     margin: 24px 20px 16px 20px;
-    color: var(--text-accent);
+    color: var(--mysql-accent-purple);
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -29,8 +35,8 @@
     content: '';
     display: block;
     width: 4px;
-    height: 1em;
-    background-color: var(--interactive-accent);
+    height: 1.25em;
+    background-color: var(--mysql-accent-purple);
     border-radius: 2px;
     flex-shrink: 0;
 }
@@ -39,52 +45,121 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 20px;
-    background-color: var(--background-secondary);
+    padding: 10px 16px;
+    background-color: var(--background-secondary-alt);
     border-bottom: 1px solid var(--background-modifier-border);
+    gap: 12px;
+}
+
+.mysql-header-left,
+.mysql-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mysql-result-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.mysql-header-left svg {
+    width: 16px;
+    height: 16px;
+    color: var(--mysql-accent-purple);
+}
+
+.mysql-metadata-compact {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    background-color: var(--background-primary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+}
+
+.mysql-metadata-compact svg {
+    width: 12px;
+    height: 12px;
+    color: var(--mysql-accent-purple);
 }
 
 .mysql-metadata {
+    display: none;
+    /* Replaced by compact header version */
+}
+
+.mysql-meta-icon {
+    display: flex;
+    align-items: center;
+    color: var(--mysql-accent-purple);
+}
+
+.mysql-meta-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.mysql-meta-label {
+    font-weight: 400;
+}
+
+.mysql-msg-compact {
+    margin: 12px 20px !important;
+    padding: 8px 16px !important;
+    justify-content: flex-start !important;
+}
+
+.mysql-row-count-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 20px;
     color: var(--text-muted);
-    font-style: italic;
-    margin: 0;
-    padding: 10px 16px;
-    background-color: var(--background-secondary);
-    border-left: 4px solid var(--interactive-accent);
-    border-radius: 0 var(--mysql-radius-sm) var(--mysql-radius-sm) 0;
-    font-size: 0.875em;
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.mysql-count-icon {
+    display: flex;
+    align-items: center;
+    color: var(--mysql-accent-purple);
+}
+
+.mysql-count-icon svg {
+    width: 14px;
+    height: 14px;
 }
 
 .mysql-success-inline {
-    color: var(--text-success);
-    font-weight: 500;
-    margin: 8px 16px;
-    padding: 6px 12px;
-    background-color: rgba(var(--color-green-rgb), 0.1);
-    border-radius: var(--mysql-radius-sm);
-    border-left: 3px solid var(--text-success);
+    display: none;
+    /* Replaced by mysql-msg-compact */
+}
+
+.mysql-info {
+    display: none;
+    /* Replaced by mysql-msg-compact */
 }
 
 .mysql-error-inline {
     color: var(--text-error);
-    font-weight: 500;
-    margin: 8px 16px;
-    padding: 6px 12px;
     background-color: rgba(var(--color-red-rgb), 0.1);
+    border: 1px solid var(--color-red);
     border-radius: var(--mysql-radius-sm);
-    border-left: 3px solid var(--text-error);
-}
-
-.mysql-info {
-    color: var(--text-muted);
-    margin: 8px 16px;
-    font-style: italic;
+    padding: 10px 16px;
+    margin: 12px 20px;
+    font-size: 0.85rem;
+    line-height: 1.4;
 }
 
 .mysql-scalar-value {
     font-size: 1.25em;
     font-weight: 700;
-    color: var(--text-accent);
+    color: var(--mysql-accent-purple);
     padding: 16px 20px;
     background-color: var(--background-secondary-alt);
     border-radius: var(--mysql-radius-sm);
@@ -105,6 +180,32 @@
     align-items: center;
     gap: 8px;
     border: 1px dashed var(--background-modifier-border);
+}
+
+.mysql-result-actions {
+    display: flex;
+    gap: 4px;
+    background-color: transparent;
+    align-items: center;
+    padding: 0;
+}
+
+.mysql-action-btn {
+    border: 1px solid var(--background-modifier-border) !important;
+    color: var(--text-muted) !important;
+    opacity: 0.9;
+}
+
+.mysql-action-btn:hover {
+    opacity: 1;
+    color: var(--mysql-accent-purple) !important;
+    border-color: var(--mysql-accent-purple) !important;
+    background-color: var(--background-modifier-hover) !important;
+}
+
+.mysql-action-btn svg {
+    width: 14px !important;
+    height: 14px !important;
 }
 
 .mysql-execution-log b {

@@ -1,4 +1,4 @@
-import { App, MarkdownView, Notice } from 'obsidian';
+import { App, MarkdownView, Notice, setIcon } from 'obsidian';
 import html2canvas from 'html2canvas';
 import { IMySQLPlugin, QueryResult } from '../types';
 
@@ -12,15 +12,9 @@ export class ResultRenderer {
         }
 
         const data = result.data || [];
-        const wrapper = container.createEl("div", { cls: "mysql-result-wrapper" });
+        const wrapper = container.createEl("div", { cls: "mysql-result-container" });
 
-        // Metadata
-        if (result.executionTime !== undefined) {
-            const meta = wrapper.createEl("div", { cls: "mysql-metadata" });
-            meta.innerHTML = `⏱️ Execution time: <strong>${result.executionTime}ms</strong>`;
-        }
-
-        this.renderData(data, wrapper, app, plugin, tableName);
+        this.renderData(data, wrapper, app, plugin, tableName, result.executionTime);
     }
 
     private static addActionButtons(
@@ -36,7 +30,8 @@ export class ResultRenderer {
             cls: "mysql-action-btn",
             attr: { title: "Copy result to clipboard" }
         });
-        copyBtn.innerHTML = `📋 Copy`;
+        setIcon(copyBtn, "copy");
+        copyBtn.createSpan({ text: "Copy" });
         copyBtn.onclick = () => this.copyToClipboard(data);
 
         // Botão: Screenshot
@@ -44,7 +39,8 @@ export class ResultRenderer {
             cls: "mysql-action-btn",
             attr: { title: "Take screenshot of result" }
         });
-        screenshotBtn.innerHTML = `📸 Screenshot`;
+        setIcon(screenshotBtn, "camera");
+        screenshotBtn.createSpan({ text: "Screenshot" });
         screenshotBtn.onclick = () => this.takeScreenshot(resultWrapper);
 
         // Botão: Inserir na nota
@@ -52,7 +48,8 @@ export class ResultRenderer {
             cls: "mysql-action-btn",
             attr: { title: "Insert result into note" }
         });
-        insertBtn.innerHTML = `📝 Insert`;
+        setIcon(insertBtn, "file-plus");
+        insertBtn.createSpan({ text: "Add to Note" });
         insertBtn.onclick = () => this.insertIntoNote(data, app);
 
         // Botão: Export CSV (If table name is known)
@@ -61,20 +58,9 @@ export class ResultRenderer {
                 cls: "mysql-action-btn",
                 attr: { title: "Export result to CSV" }
             });
-            exportBtn.innerHTML = `📤 Export CSV`;
+            setIcon(exportBtn, "file-output");
+            exportBtn.createSpan({ text: "Export CSV" });
             exportBtn.onclick = async () => {
-                // We use the plugin's CSVManager logic via accessing plugin instance
-                // But ResultRenderer is static... we passed plugin instance.
-                // We can't access private 'csvManager' if not exposed in interface?
-                // The interface IMySQLPlugin might explicitly need csvManager in types or we cast.
-                // Or better, we can assume 'tableName' refers to a real table and re-query via CSVManager,
-                // OR simpler: export current *data* to CSV.
-                // CSVManager.exportTable exports the *TABLE* from AlaSQL.
-                // If we have data here, we can export this data directly to CSV without querying again?
-                // But the user requested "Export CSV button... of existing AlaSQL table".
-                // So calling CSVManager.exportTable(tableName) is the correct behavior.
-                // As 'plugin' is IMySQLPlugin, we can cast to any to access csvManager if we didn't put it in interface.
-                // I will update interface in next step if needed, or cast here.
                 const csvManager = (plugin as any).csvManager;
                 if (csvManager && csvManager.exportTable) {
                     await csvManager.exportTable(tableName);
@@ -90,7 +76,6 @@ export class ResultRenderer {
             let textToCopy = '';
 
             if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object') {
-                // Tabela -> formato TSV (Tab Separated Values)
                 const keys = Object.keys(data[0]);
                 textToCopy = keys.join('\t') + '\n';
 
@@ -102,10 +87,8 @@ export class ResultRenderer {
                     textToCopy += values.join('\t') + '\n';
                 });
             } else if (typeof data !== 'object' || data === null) {
-                // Scalar value -> plain text
                 textToCopy = String(data);
             } else {
-                // JSON generic object
                 textToCopy = JSON.stringify(data, null, 2);
             }
 
@@ -120,7 +103,7 @@ export class ResultRenderer {
         try {
             const canvas = await html2canvas(element, {
                 backgroundColor: getComputedStyle(element).backgroundColor || '#ffffff',
-                scale: 2, // Higher quality
+                scale: 2,
                 logging: false
             });
 
@@ -136,7 +119,6 @@ export class ResultRenderer {
                     ]);
                     new Notice('✓ Screenshot copied to clipboard!');
                 } catch (clipboardError) {
-                    // Fallback: download como arquivo
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
@@ -164,22 +146,17 @@ export class ResultRenderer {
             const editor = activeView.editor;
             let textToInsert = '';
 
-            // Gerar markdown apropriado
             if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object') {
-                // Tabela -> Markdown table
                 textToInsert = this.dataToMarkdownTable(data);
             } else if (typeof data === 'number') {
                 textToInsert = `**Result:** ${data} row(s) affected`;
             } else {
-                // JSON em code block
                 textToInsert = '```json\n' + JSON.stringify(data, null, 2) + '\n```';
             }
 
-            // Inserir no cursor
             const cursor = editor.getCursor();
             editor.replaceRange('\n' + textToInsert + '\n', cursor);
 
-            // Mover cursor para depois do texto inserido
             const lines = textToInsert.split('\n').length;
             editor.setCursor({ line: cursor.line + lines + 1, ch: 0 });
 
@@ -193,19 +170,13 @@ export class ResultRenderer {
         if (rows.length === 0) return '_No data_';
 
         const keys = Object.keys(rows[0]);
-
-        // Header
         let md = '| ' + keys.join(' | ') + ' |\n';
-
-        // Separator
         md += '| ' + keys.map(() => '---').join(' | ') + ' |\n';
 
-        // Rows
         rows.forEach(row => {
             const values = keys.map(k => {
                 const val = row[k];
                 if (val === null || val === undefined) return '';
-                // Escapar pipes no conteúdo
                 return String(val).replace(/\|/g, '\\|');
             });
             md += '| ' + values.join(' | ') + ' |\n';
@@ -214,7 +185,7 @@ export class ResultRenderer {
         return md;
     }
 
-    private static renderData(results: any[], container: HTMLElement, app: App, plugin: IMySQLPlugin, tableName?: string): void {
+    private static renderData(results: any[], container: HTMLElement, app: App, plugin: IMySQLPlugin, tableName?: string, executionTime?: number): void {
         if (!Array.isArray(results) || results.length === 0) {
             container.createEl("p", {
                 text: "Query executed successfully (no result set)",
@@ -225,30 +196,47 @@ export class ResultRenderer {
 
         results.forEach((rs, idx) => {
             const rsWrapper = container.createEl("div", { cls: "mysql-result-set" });
-            if (results.length > 1) {
-                rsWrapper.createEl("h4", { text: `Result #${idx + 1}`, cls: "mysql-result-header" });
+
+            // Unified Result Header
+            const header = rsWrapper.createDiv({ cls: "mysql-result-header" });
+
+            // Content Wrapper (This is what will be screenshotted)
+            const contentWrapper = rsWrapper.createDiv({ cls: "mysql-result-content" });
+
+            // Left: Title / Source
+            const left = header.createDiv({ cls: "mysql-header-left" });
+            setIcon(left, results.length > 1 ? "list" : "database");
+            const labelText = results.length > 1 ? `Result #${idx + 1}` : (tableName ? `Table: ${tableName}` : "Query Result");
+            left.createSpan({ text: labelText, cls: "mysql-result-label" });
+
+            // Right: Meta + Actions
+            const right = header.createDiv({ cls: "mysql-header-right" });
+
+            // Add Time to the first result set's toolbar
+            if (idx === 0 && executionTime !== undefined) {
+                const meta = right.createDiv({ cls: "mysql-metadata-compact" });
+                setIcon(meta, "timer");
+                meta.createSpan({ text: `${executionTime}ms` });
             }
 
-            // Local Actions for this specific result set
             if (rs.type === 'table' || rs.type === 'scalar') {
-                const actions = rsWrapper.createEl("div", { cls: "mysql-result-actions" });
-                this.addActionButtons(actions, rs.data, rsWrapper, app, plugin, rs.type === 'table' ? tableName : undefined);
+                const actions = right.createDiv({ cls: "mysql-result-actions" });
+                // We'll pass the content wrapper to capture ONLY the data
+                this.addActionButtons(actions, rs.data, contentWrapper, app, plugin, rs.type === 'table' ? tableName : undefined);
             }
 
             switch (rs.type) {
                 case 'table':
-                    this.renderTable(rs.data, rsWrapper);
+                    this.renderTable(rs.data, contentWrapper);
                     break;
                 case 'scalar':
                     if (typeof rs.data === 'number') {
-                        // Semantic labeling: if it's a batch we likely filtered status codes,
-                        // so a lone scalar is likely a COUNT or specific value.
-                        rsWrapper.createEl("div", {
+                        contentWrapper.createEl("div", {
                             text: String(rs.data),
                             cls: "mysql-scalar-value"
                         });
                     } else {
-                        rsWrapper.createEl("pre", {
+                        contentWrapper.createEl("pre", {
                             text: JSON.stringify(rs.data, null, 2),
                             cls: "mysql-json-result"
                         });
@@ -257,16 +245,28 @@ export class ResultRenderer {
                 case 'message':
                 case 'error':
                     const isDML = rs.type === 'message' && rs.message && rs.message.includes('affected');
-                    rsWrapper.createEl("p", {
-                        text: rs.message || "Done",
-                        cls: rs.type === 'error' ? "mysql-error-inline" : (isDML ? "mysql-success-inline" : "mysql-info")
+                    const msgWrapper = contentWrapper.createDiv({
+                        cls: rs.type === 'error' ? 'mysql-error-inline' : (isDML ? 'mysql-success-state mysql-msg-compact' : 'mysql-info-state mysql-msg-compact')
                     });
+
+                    if (rs.type === 'error') {
+                        msgWrapper.createEl("p", { text: rs.message || "Error" });
+                    } else {
+                        const iconWrapper = msgWrapper.createDiv({ cls: isDML ? "mysql-success-icon" : "mysql-info-icon" });
+                        setIcon(iconWrapper, isDML ? "database" : "info");
+                        msgWrapper.createDiv({
+                            text: rs.message || "Done",
+                            cls: isDML ? "mysql-success" : "mysql-info-text"
+                        });
+                    }
                     break;
             }
 
             if (rs.rowCount !== undefined && rs.type === 'table') {
-                const rowInfo = rsWrapper.createEl("div", { cls: "mysql-row-count" });
-                rowInfo.setText(`(${rs.rowCount} rows)`);
+                const rowInfo = contentWrapper.createDiv({ cls: "mysql-row-count-wrapper" });
+                const countIcon = rowInfo.createDiv({ cls: "mysql-count-icon" });
+                setIcon(countIcon, "list-ordered");
+                rowInfo.createSpan({ text: `${rs.rowCount} rows found`, cls: "mysql-row-count-text" });
             }
         });
     }
@@ -275,12 +275,10 @@ export class ResultRenderer {
         const keys = Object.keys(rows[0]);
         const table = container.createEl("table", { cls: "mysql-table" });
 
-        // Header
         const thead = table.createEl("thead");
         const headerRow = thead.createEl("tr");
         keys.forEach(key => headerRow.createEl("th", { text: key }));
 
-        // Body
         const tbody = table.createEl("tbody");
         let currentCount = 0;
 
@@ -296,12 +294,10 @@ export class ResultRenderer {
             });
         };
 
-        // Renderizar primeiro lote
         const initialBatch = rows.slice(0, batchSize);
         renderBatch(initialBatch);
         currentCount += initialBatch.length;
 
-        // Controles de paginação
         if (rows.length > batchSize) {
             const controls = container.createEl("div", { cls: "mysql-pagination" });
             controls.createEl("span", { text: `Shows ${currentCount} / ${rows.length} rows ` });
@@ -317,8 +313,13 @@ export class ResultRenderer {
     }
 
     private static renderError(message: string, container: HTMLElement): void {
-        const errorDiv = container.createEl("div", { cls: "mysql-error" });
-        errorDiv.createEl("strong", { text: "Error: " });
-        errorDiv.createEl("span", { text: message });
+        const errorDiv = container.createDiv({ cls: "mysql-error" });
+
+        const header = errorDiv.createDiv({ cls: "mysql-error-header" });
+        const iconWrapper = header.createDiv({ cls: "mysql-error-icon" });
+        setIcon(iconWrapper, "alert-circle");
+        header.createSpan({ text: "Execution Error", cls: "mysql-error-title" });
+
+        errorDiv.createDiv({ text: message, cls: "mysql-error-message" });
     }
 }

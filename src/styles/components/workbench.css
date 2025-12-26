@@ -1,47 +1,49 @@
-.mysql-workbench-container {
-    border: 1px solid var(--background-modifier-border);
-    border-radius: var(--mysql-radius-md);
-    background-color: var(--background-primary);
-    overflow: hidden;
-    margin-bottom: 24px;
+div.mysql-workbench-container {
+    border: 1px solid var(--mysql-border-color, var(--background-modifier-border));
+    border-radius: 16px !important;
+    background-color: var(--mysql-bg-workbench, var(--background-primary));
+    backdrop-filter: var(--mysql-workbench-blur, none);
+    -webkit-backdrop-filter: var(--mysql-workbench-blur, none);
+    overflow: hidden !important;
+    margin: 1.5em 0;
     box-shadow: var(--mysql-shadow-md);
     transition: all var(--mysql-transition-normal);
     will-change: box-shadow, border-color;
+    box-sizing: border-box;
 }
 
-.mysql-workbench-container:hover {
+div.mysql-workbench-container:hover {
     box-shadow: var(--mysql-shadow-lg);
-    border-color: var(--interactive-accent);
+    border: 1px solid var(--mysql-accent-purple) !important;
 }
 
 .mysql-source-code {
-    background-color: var(--background-secondary) !important;
-    padding: 20px !important;
+    background-color: rgba(0, 0, 0, 0.1) !important;
+    padding: 24px !important;
     margin: 0 !important;
     border-radius: 0 !important;
-    border-bottom: 1px solid var(--background-modifier-border);
-    font-family: 'Fira Code', 'JetBrains Mono', 'Consolas', var(--font-monospace);
-    font-size: 0.9em;
-    line-height: 1.6;
+    border-bottom: 1px solid var(--mysql-border-color, var(--background-modifier-border));
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', var(--font-monospace);
+    font-size: 0.95em;
+    line-height: 1.7;
     overflow-x: auto;
-    tab-size: 4;
+    color: var(--text-normal);
 }
 
 .mysql-source-code::-webkit-scrollbar {
     height: 8px;
-}
-
-.mysql-source-code::-webkit-scrollbar-track {
-    background: var(--background-primary);
+    width: 8px;
 }
 
 .mysql-source-code::-webkit-scrollbar-thumb {
-    background: var(--background-modifier-border);
-    border-radius: 4px;
+    background: var(--mysql-accent-purple);
+    border-radius: 10px;
+    opacity: 0.3;
 }
 
 .mysql-source-code::-webkit-scrollbar-thumb:hover {
-    background: var(--text-muted);
+    background: var(--mysql-accent-purple);
+    opacity: 1;
 }
 
 .cm-lang-mysql:hover {

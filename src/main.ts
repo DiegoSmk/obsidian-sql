@@ -1,4 +1,4 @@
-import { Plugin, TFile, Notice, debounce, Debouncer } from 'obsidian';
+import { Plugin, TFile, Notice, debounce, Debouncer, setIcon } from 'obsidian';
 // @ts-ignore
 import alasql from 'alasql';
 import Prism from 'prismjs';
@@ -16,6 +16,7 @@ import { QueryExecutor } from './core/QueryExecutor';
 import { ResultRenderer } from './ui/ResultRenderer';
 import { CSVSelectionModal } from './ui/CSVSelectionModal';
 import { MySQLSettingTab } from './settings';
+import { ConfirmationModal } from './ui/ConfirmationModal';
 
 export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     settings: MySQLSettings;
@@ -120,33 +121,40 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     // ========================================================================
 
     async processSQLBlock(source: string, el: HTMLElement, ctx: any) {
+        el.empty();
+        el.addClass("mysql-block-parent");
+        const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
+
         // Safe Code Highlighting
-        const codeBlock = el.createEl("pre", { cls: "mysql-source-code" });
+        const codeBlock = workbench.createEl("pre", { cls: "mysql-source-code" });
         codeBlock.innerHTML = `<code class="language-sql">${this.safeHighlight(source)}</code>`;
 
-        const controls = el.createEl("div", { cls: "mysql-controls" });
-        const runBtn = controls.createEl("button", {
-            cls: "mysql-btn",
-            text: "▶️ Run"
-        });
+        const controls = workbench.createEl("div", { cls: "mysql-controls" });
+
+        // Run Button
+        const runBtn = controls.createEl("button", { cls: "mysql-btn mysql-btn-run" });
+        setIcon(runBtn, "play");
+        runBtn.createSpan({ text: "Run" });
+
+        // Container for right-aligned buttons
+        const rightControls = controls.createEl("div", { cls: "mysql-controls-right" });
 
         // Add Tables Button
-        const showTablesBtn = controls.createEl("button", {
-            cls: "mysql-btn",
-            text: "📊 Tables"
-        });
+        const showTablesBtn = rightControls.createEl("button", { cls: "mysql-btn" });
+        setIcon(showTablesBtn, "table");
+        showTablesBtn.createSpan({ text: "Tables" });
 
         // Add Import CSV Button
-        const importBtn = controls.createEl("button", {
-            cls: "mysql-btn",
-            text: "📥 Import CSV"
-        });
+        const importBtn = rightControls.createEl("button", { cls: "mysql-btn" });
+        setIcon(importBtn, "file-up");
+        importBtn.createSpan({ text: "Import CSV" });
 
         // Add Reset Button
-        const resetBtn = controls.createEl("button", {
-            cls: "mysql-btn mysql-btn-danger",
-            text: "🗑️ Reset"
-        });
+        const resetBtn = rightControls.createEl("button", { cls: "mysql-btn mysql-btn-danger" });
+        setIcon(resetBtn, "trash-2");
+        resetBtn.createSpan({ text: "Reset" });
+
+        const resultContainer = workbench.createEl("div", { cls: "mysql-result-container" });
 
         importBtn.onclick = () => {
             new CSVSelectionModal(this.app, async (file) => {
@@ -158,8 +166,6 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 }
             }).open();
         };
-
-        const resultContainer = el.createEl("div", { cls: "mysql-result" });
 
         // Event Handlers for new buttons
         showTablesBtn.onclick = () => this.showTables(resultContainer, showTablesBtn);
@@ -241,9 +247,12 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
         // Add Cancel Button
         const cancelBtn = container.parentElement?.querySelector('.mysql-controls')?.createEl("button", {
-            cls: "mysql-btn mysql-btn-warn",
-            text: "🛑 Cancel"
+            cls: "mysql-btn mysql-btn-warn"
         });
+        if (cancelBtn) {
+            setIcon(cancelBtn, "stop-circle");
+            cancelBtn.createSpan({ text: "Cancel" });
+        }
 
         const abortController = new AbortController();
 
@@ -319,7 +328,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         }
 
         btn.disabled = false;
-        btn.innerHTML = `▶️ Run`;
+        btn.empty();
+        setIcon(btn, "play");
+        btn.createSpan({ text: "Run" });
     }
 
     private injectParams(query: string, params: Record<string, any>): string {
@@ -344,6 +355,11 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             const tables = alasql("SHOW TABLES") as any[];
 
             if (tables.length === 0) {
+                container.empty();
+                const infoState = container.createDiv({ cls: "mysql-info-state" });
+                const iconWrapper = infoState.createDiv({ cls: "mysql-info-icon" });
+                setIcon(iconWrapper, "info");
+                infoState.createEl("p", { text: "No tables found in database", cls: "mysql-info-text" });
                 new Notice("No tables found");
                 return;
             }
@@ -363,17 +379,19 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                     const header = container.createEl("div", { cls: "mysql-table-header" });
 
                     const back = header.createEl("button", {
-                        text: "← Back",
                         cls: "mysql-btn"
                     });
+                    setIcon(back, "arrow-left");
+                    back.createSpan({ text: "Back" });
                     back.onclick = () => btn.click();
 
                     header.createEl("h6", { text: `Table: ${t.tableid}` });
 
                     const exportBtn = header.createEl("button", {
-                        cls: "mysql-btn",
-                        text: "📤 Export CSV"
+                        cls: "mysql-btn"
                     });
+                    setIcon(exportBtn, "file-output");
+                    exportBtn.createSpan({ text: "Export CSV" });
                     exportBtn.onclick = () => this.csvManager.exportTable(t.tableid);
 
                     const result = await QueryExecutor.execute(`SELECT * FROM ${t.tableid}`);
@@ -386,20 +404,33 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     }
 
     private async resetDatabase(container: HTMLElement): Promise<void> {
-        if (!confirm("⚠️ This will delete ALL databases and tables. Are you sure?")) {
-            return;
-        }
+        new ConfirmationModal(
+            this.app,
+            "Reset Database",
+            "This will delete ALL databases and tables. This action cannot be undone. Are you sure?",
+            async (confirmed) => {
+                if (confirmed) {
+                    try {
+                        await this.dbManager.reset();
+                        container.empty();
 
-        try {
-            await this.dbManager.reset();
-            container.empty();
-            container.createEl("p", {
-                text: "✓ All databases reset successfully",
-                cls: "mysql-success"
-            });
-            new Notice("Database reset completed");
-        } catch (error) {
-            new Notice("Reset failed: " + error.message);
-        }
+                        const successState = container.createDiv({ cls: "mysql-success-state" });
+                        const iconWrapper = successState.createDiv({ cls: "mysql-success-icon" });
+                        setIcon(iconWrapper, "check-circle");
+
+                        successState.createEl("p", {
+                            text: "All databases reset successfully",
+                            cls: "mysql-success"
+                        });
+
+                        new Notice("Database reset completed");
+                    } catch (error) {
+                        new Notice("Reset failed: " + error.message);
+                    }
+                }
+            },
+            "Reset Everything",
+            "Keep Data"
+        ).open();
     }
 }

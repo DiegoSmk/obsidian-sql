@@ -1,0 +1,70 @@
+.mysql-confirmation-modal {
+    max-width: 400px !important;
+    border-radius: 16px !important;
+}
+
+.mysql-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.mysql-modal-icon {
+    color: var(--color-red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mysql-modal-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.mysql-modal-title {
+    margin: 0 !important;
+    font-size: 1.25em !important;
+    color: var(--text-normal);
+}
+
+.mysql-modal-body {
+    font-size: 1.05em;
+    color: var(--text-muted);
+    line-height: 1.6;
+    margin-bottom: 24px !important;
+}
+
+.mysql-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.mysql-modal-btn-cancel {
+    background-color: transparent !important;
+    border: 1px solid var(--background-modifier-border) !important;
+    color: var(--text-muted) !important;
+}
+
+.mysql-modal-btn-cancel:hover {
+    background-color: var(--background-modifier-hover) !important;
+    color: var(--text-normal) !important;
+}
+
+.mysql-modal-btn-confirm {
+    background-color: var(--color-red) !important;
+    color: white !important;
+    font-weight: 600 !important;
+}
+
+.mysql-modal-btn-confirm:hover {
+    filter: brightness(0.9);
+}
+
+/* Hide original modal header if needed, but we used contentEl */
+.mysql-confirmation-modal .modal-title {
+    display: none;
+}

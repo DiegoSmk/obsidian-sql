@@ -1,27 +1,53 @@
 .mysql-controls {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
-    padding: 14px 20px;
+    gap: 12px;
+    padding: 12px 20px;
     background-color: var(--background-primary-alt);
     border-bottom: 1px solid var(--background-modifier-border);
     align-items: center;
+    justify-content: space-between;
+    /* Push Run to left, Rest to right */
 }
 
-.mysql-controls button {
+.mysql-controls-right {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.mysql-controls button,
+.mysql-action-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 8px 16px;
+    gap: 8px;
+    padding: 6px 14px;
     border-radius: var(--mysql-radius-sm);
-    font-weight: 600;
+    font-weight: 500;
     font-size: 0.85rem;
     cursor: pointer;
     transition: all var(--mysql-transition-fast);
-    border: 1px solid transparent;
+    border: 1px solid var(--background-modifier-border);
     white-space: nowrap;
     user-select: none;
+    background-color: var(--background-secondary);
+    color: var(--text-normal);
+    box-sizing: border-box;
+}
+
+.mysql-controls button svg,
+.mysql-action-btn svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.mysql-controls button:hover:not(:disabled),
+.mysql-action-btn:hover:not(:disabled) {
+    border: 1px solid var(--mysql-accent-purple) !important;
+    background-color: var(--background-modifier-hover);
+    color: var(--mysql-accent-purple);
 }
 
 .mysql-controls button:disabled {
@@ -30,15 +56,19 @@
 }
 
 .mysql-btn-run {
-    background-color: var(--interactive-accent);
-    color: var(--text-on-accent);
-    box-shadow: var(--mysql-shadow-sm);
+    background-color: var(--mysql-accent-purple) !important;
+    border: 1px solid var(--mysql-accent-purple) !important;
+    color: white !important;
+    font-weight: 600 !important;
 }
 
 .mysql-btn-run:hover:not(:disabled) {
-    background-color: var(--interactive-accent-hover);
+    background-color: #5b35b1 !important;
+    /* Deeper purple on hover */
+    border: 1px solid #5b35b1 !important;
     transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    color: white !important;
 }
 
 .mysql-btn-run:active:not(:disabled) {
@@ -52,10 +82,6 @@
     border: 1px solid var(--background-modifier-border);
 }
 
-.mysql-btn:hover:not(:disabled) {
-    background-color: var(--background-modifier-hover);
-    border-color: var(--interactive-accent);
-}
 
 .mysql-btn-back {
     margin: 16px 20px 8px 20px;
@@ -71,9 +97,8 @@
 }
 
 .mysql-btn-back:hover {
-    color: var(--text-normal);
+    color: var(--mysql-accent-purple);
     background-color: var(--background-modifier-hover);
-    border-color: var(--interactive-accent);
 }
 
 .mysql-reset-btn {
@@ -83,16 +108,17 @@
     margin-left: auto;
 }
 
-.mysql-reset-btn:hover:not(:disabled) {
-    background-color: var(--background-modifier-error-hover);
-    color: var(--text-on-accent);
-    border-color: var(--color-red);
+.mysql-controls button.mysql-btn-danger:hover:not(:disabled) {
+    background-color: var(--background-modifier-hover) !important;
+    border: 1px solid var(--color-red) !important;
+    color: var(--color-red) !important;
+    box-shadow: none !important;
 }
 
 .mysql-link-btn {
     background: none;
     border: none;
-    color: var(--text-accent);
+    color: var(--mysql-accent-purple);
     cursor: pointer;
     padding: 6px 12px;
     font-size: 0.85em;
@@ -104,4 +130,38 @@
 .mysql-link-btn:hover {
     background-color: var(--background-modifier-hover);
     text-decoration: none;
+}
+
+/* Obsidian Edit Block Button Integration */
+.mysql-block-parent {
+    position: relative;
+}
+
+.mysql-block-parent .edit-block-button {
+    background-color: var(--background-secondary) !important;
+    border: 1px solid var(--background-modifier-border) !important;
+    color: var(--text-muted) !important;
+    border-radius: var(--mysql-radius-sm) !important;
+    padding: 4px 10px !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    box-shadow: var(--mysql-shadow-sm) !important;
+    transition: all var(--mysql-transition-fast) !important;
+    opacity: 0 !important;
+    /* Hide by default, show on parent hover */
+    height: auto !important;
+    position: absolute !important;
+    top: 10px !important;
+    right: 10px !important;
+    z-index: 10 !important;
+}
+
+.mysql-block-parent:hover .edit-block-button {
+    opacity: 1 !important;
+}
+
+.mysql-block-parent .edit-block-button:hover {
+    border: 1px solid var(--mysql-accent-purple) !important;
+    color: var(--mysql-accent-purple) !important;
+    background-color: var(--background-modifier-hover) !important;
 }
