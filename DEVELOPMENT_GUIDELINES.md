@@ -16,67 +16,45 @@ Sempre que atuar neste repositório, **atue como um Engenheiro de Software Sêni
 ---
 
 ## 1. Git Workflow (Professional Flow)
-... (fluxo de branches e commits)
 
-We follow a strict branching model:
+Seguimos um modelo rigoroso de branches:
 
-- **`master`**: Only stable, production-ready code. No direct commits.
-- **`develop`**: Integration branch for new features.
-- **`feature/xxx`**: Dedicated branch for new features, branched from `develop`.
-- **`fix/xxx`**: Dedicated branch for bug fixes, branched from `develop` or `master` (hotfix).
+- **`master`**: Apenas código estável e pronto para produção (Lançamentos de Release).
+- **`develop`**: Branch de integração para novas funcionalidades.
+- **`feature/xxx`**: Branch dedicada para novas features, derivada de `develop`.
+- **`fix/xxx`**: Branch dedicada para correções de bugs.
 
-### Commit Message Standard (Conventional Commits)
-Format: `<type>: <description>`
-- `feat`: New feature for the user.
-- `fix`: Bug fix for the user.
-- `refactor`: Refactoring that doesn't change behavior.
-- `chore`: Maintenance tasks (build scripts, dependencies).
-- `docs`: Documentation changes.
-- `test`: Adding or correcting tests.
+### Padrão de Commits (Conventional Commits)
+Formato: `<type>: <description>`
+- `feat`: Nova funcionalidade.
+- `fix`: Correção de bug.
+- `refactor`: Refatoração sem mudança de comportamento.
+- `chore`: Manutenção (build, dependências, CI/CD).
+- `docs`: Documentação.
 
 ---
 
-## 2. Architecture & Modularization
+## 2. Arquitetura & Modularização
 
-The project is modularized in `src/` to prevent monolithic growth:
+O projeto é modularizado em `src/` para evitar crescimento monolítico:
 
-- **`src/core`**: Business logic.
-    - `QueryExecutor`: SQL parsing, safety checks, and execution.
-    - `DatabaseManager`: Persistence and snapshotting.
-    - `CSVManager`: Import/Export logic.
-- **`src/ui`**: Rendering and user interaction.
-    - `ResultRenderer`: Decoupled rendering logic (must consume `ResultSet[]`).
-- **`src/utils`**: Cross-cutting concerns.
-    - `Logger`, `SQLSanitizer`, `PerformanceMonitor`.
-- **`src/types`**: Unified type definitions to prevent circular dependencies.
+- **`src/core`**: Lógica de negócio (QueryExecutor, DatabaseManager, CSVManager).
+- **`src/ui`**: Renderização e interação (ResultRenderer).
+- **`src/utils`**: Utilitários transversais (Logger, Sanitizer).
+- **`src/types`**: Definições de tipos globais.
 
 ---
 
-## 3. Engineering Rules (High Robustness)
+## 3. Regras de Engenharia (Alta Robustez)
 
-### SQL Parsing & Security
-1. **Unsafe Manipulation**: Never use naive `.split(';')` to parse SQL. Use AlaSQL's AST or conservative single-statement checks.
-2. **LIMIT Injection**: Only inject `LIMIT 1000` to top-level `SELECT` statements that are clearly single-statement queries and lack a `LIMIT`.
-3. **Safe Mode**: Always use Regex patterns for command detection (e.g., `/\bDROP\s+TABLE\b/i`) to avoid bypasses via whitespace/newlines.
-
-### Result Normalization
-1. **Normalization Layer**: Always use `QueryExecutor.normalizeResult` before sending data to the UI.
-2. **ResultSet Integrity**: Do not filter out numeric results (DML status). Convert them to `type: "message"` with "X rows affected".
-3. **UI Decoupling**: The UI must remain agnostic to AlaSQL internals. It only understands `table`, `scalar`, `message`, and `error` types.
+1.  **SQL Parsing**: Nunca use `.split(';')` ingênuo. Use o AST do AlaSQL ou verificações conservadoras de comando único.
+2.  **LIMIT Injection**: Apenas injete `LIMIT 1000` em `SELECT` de nível superior que sejam claramente queries únicas e sem LIMIT manual.
+3.  **Safe Mode**: Utilize Regex robustos para detecção de comandos bloqueados.
 
 ---
 
-## 4. UI/UX Standards
-- **Localized Actions**: Action buttons (Copy, Screenshot, Insert) must be scoped to individual result sets, not the global container.
-- **Clipboard Management**: 
-    - Tables -> TSV format.
-    - Scalars -> Plain text value.
-    - Objects -> Prettified JSON.
-- **Performance**: Use batch rendering for large tables and avoid main-thread blocking for heavy operations.
-
----
-
-## 5. Development Rituals
-1. **Build**: Always run `npm run build` after changes.
-2. **Artifacts**: Production builds should be copied to `versions/X.X.X/`.
-3. **Verification**: Verify multi-statement scripts and subqueries whenever changing the engine logic.
+## 4. Rituais de Desenvolvimento & Release
+1.  **Build**: Sempre execute `npm run build` após alterações para validar o bundle.
+2.  **Versionamento**: Atualize a versão no `package.json` e `manifest.json` antes de lançar.
+3.  **Release Automática**: O lançamento é disparado por **Git Tags** (`vX.X.X`). O Gitea Actions cuida do empacotamento (`sql-notebook.zip`) e da publicação da Release via API.
+4.  **Limpeza**: Binários não devem ser submetidos ao Git. Utilize a aba de Releases do Gitea para download de versões compiladas.
