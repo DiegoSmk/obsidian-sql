@@ -33,7 +33,7 @@ jobs:
 
       - name: Create Gitea Release
         run: |
-          curl -X POST "http://192.168.1.217:3003/api/v1/repos/Diego/sql-notebook/releases" \
+          curl -X POST "http://192.168.1.217:3003/api/v1/repos/Diego/obsidian-sql/releases" \
             -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d "{
@@ -45,9 +45,9 @@ jobs:
       - name: Upload asset
         run: |
           RELEASE_ID=$(curl -s -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" \
-            http://192.168.1.217:3003/api/v1/repos/Diego/sql-notebook/releases/tags/${{ gitea.ref_name }} | jq .id)
+            http://192.168.1.217:3003/api/v1/repos/Diego/obsidian-sql/releases/tags/${{ gitea.ref_name }} | jq .id)
 
           curl -X POST \
             -H "Authorization: token ${{ secrets.RELEASE_TOKEN }}" \
             -F "attachment=@sql-notebook.zip" \
-            "http://192.168.1.217:3003/api/v1/repos/Diego/sql-notebook/releases/$RELEASE_ID/assets?name=sql-notebook.zip"
+            "http://192.168.1.217:3003/api/v1/repos/Diego/obsidian-sql/releases/$RELEASE_ID/assets?name=sql-notebook.zip"
