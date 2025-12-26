@@ -2,6 +2,8 @@
 
 Este documento descreve como gerenciar o repositório e o ciclo de vida de versões (releases) utilizando o servidor Gitea local.
 
+> 💡 **Dica Sênior**: Para automação completa de Builds e Releases, consulte o guia [Gitea Actions](./gitea-actions.md).
+
 ## 1. Conexão com o Servidor
 O repositório está configurado para o servidor Gitea em:
 - **HTTP**: `http://192.168.1.217:3003/Diego/obsidian-sql.git`
