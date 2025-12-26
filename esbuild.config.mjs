@@ -41,10 +41,13 @@ const context = await esbuild.context({
         "@codemirror/text",
         "@codemirror/tooltip",
         "@codemirror/view",
+        "react-native-fs",
+        "react-native-fetch-blob",
         ...builtins
     ],
     format: "cjs",
     target: "es2018",
+    platform: "node",
     logLevel: "info",
     sourcemap: prod ? false : "inline",
     treeShaking: true,
