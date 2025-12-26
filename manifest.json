@@ -1,7 +1,7 @@
 {
     "id": "obsidian-mysql-runner",
     "name": "MySQL Runner",
-    "version": "1.2.0",
+    "version": "1.2.2",
     "minAppVersion": "0.15.0",
     "description": "Execute MySQL queries directly from your notes.",
     "author": "Diego Pena",
