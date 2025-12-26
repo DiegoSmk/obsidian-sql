@@ -1,0 +1,31 @@
+@media (max-width: 768px) {
+    .mysql-controls {
+        padding: 12px 16px;
+        gap: 8px;
+    }
+
+    .mysql-controls button {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+    }
+
+    .mysql-table-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+        padding: 16px;
+    }
+
+    .mysql-table {
+        font-size: 0.85em;
+    }
+
+    .mysql-table th,
+    .mysql-table td {
+        padding: 10px 12px;
+    }
+
+    .mysql-source-code {
+        font-size: 0.85em;
+        padding: 16px !important;
+    }
+}
