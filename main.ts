@@ -313,7 +313,9 @@ export default class MySQLPlugin extends Plugin {
                     // Strict: Ensure we have the expected structure
                     if (!db.tables && !db.schema) continue;
 
-                    await alasql.promise(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
+                    if (!alasql.databases[dbName]) {
+                        await alasql.promise(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
+                    }
                     await alasql.promise(`USE ${dbName}`);
 
                     const tables = db.tables || {};
