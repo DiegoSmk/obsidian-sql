@@ -45,7 +45,17 @@ O projeto é modularizado em `src/` para evitar crescimento monolítico:
 
 ---
 
-## 3. Regras de Engenharia (Alta Robustez)
+## 3. Arquitetura CSS (Design Modular)
+
+Para manter a consistência e escalabilidade do design, não utilizamos um único arquivo CSS monolítico. Em vez disso, adotamos uma abordagem modular em `src/styles/`:
+
+- **Design System**: Todos os tokens de design (cores, fontes, tamanhos) são centralizados em `src/styles/theme/variables.css`.
+- **Estilos de Componentes**: Cada componente principal da UI possui seu próprio arquivo CSS em `src/styles/components/`.
+- **Bundling**: O arquivo `styles.css` final é gerado pelo sistema de build a partir do ponto de entrada `src/styles/index.css`.
+
+---
+
+## 4. Regras de Engenharia (Alta Robustez)
 
 1.  **SQL Parsing**: Nunca use `.split(';')` ingênuo. Use o AST do AlaSQL ou verificações conservadoras de comando único.
 2.  **LIMIT Injection**: Apenas injete `LIMIT 1000` em `SELECT` de nível superior que sejam claramente queries únicas e sem LIMIT manual.
@@ -53,7 +63,7 @@ O projeto é modularizado em `src/` para evitar crescimento monolítico:
 
 ---
 
-## 4. Rituais de Desenvolvimento & Release
+## 5. Rituais de Desenvolvimento & Release
 1.  **Build**: Sempre execute `npm run build` após alterações para validar o bundle.
 2.  **Versionamento**: Atualize a versão no `package.json` e `manifest.json` antes de lançar.
 3.  **Release Automática**: O lançamento é disparado por **Git Tags** (`vX.X.X`). O Gitea Actions cuida do empacotamento (`sql-notebook.zip`) e da publicação da Release via API.
