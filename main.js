@@ -64696,7 +64696,7 @@ var MySQLPlugin = class extends import_obsidian6.Plugin {
   async onload() {
     console.log("Loading MySQL Runner Plugin");
     await this.loadSettings();
-    import_alasql4.default.options.autocommit = false;
+    import_alasql4.default.options.autocommit = true;
     import_alasql4.default.options.mysql = true;
     import_alasql4.default.promise = (sql, params) => {
       return new Promise((resolve, reject) => {

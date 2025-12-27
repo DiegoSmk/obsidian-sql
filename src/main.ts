@@ -31,7 +31,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         await this.loadSettings();
 
         // Initialize alasql
-        alasql.options.autocommit = false;
+        alasql.options.autocommit = true;
         alasql.options.mysql = true;
         alasql.promise = (sql: string, params?: any[]) => {
             return new Promise((resolve, reject) => {
