@@ -23,6 +23,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     settings: MySQLSettings;
     public dbManager: DatabaseManager;
     public csvManager: CSVManager;
+    public activeDatabase: string = 'dbo';
     // @ts-ignore
     private debouncedSave: Debouncer<[], Promise<void>>;
 
@@ -316,6 +317,10 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
             // Render Result
             ResultRenderer.render(result, container, this.app, this);
+
+            // Sync active database
+            // @ts-ignore
+            this.activeDatabase = alasql.useid;
 
             // Update Footer Time
             if (footer && result.executionTime !== undefined) {

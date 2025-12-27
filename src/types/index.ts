@@ -10,7 +10,7 @@ export interface MySQLSettings {
 export interface DatabaseSnapshot {
     version?: number;
     createdAt?: number;
-    currentDB: string;
+    activeDatabase: string;
     databases: Record<string, DatabaseContent>;
 }
 
@@ -40,5 +40,6 @@ import { Plugin } from 'obsidian';
 
 export interface IMySQLPlugin extends Plugin {
     settings: MySQLSettings;
+    activeDatabase: string;
     saveSettings(): Promise<void>;
 }

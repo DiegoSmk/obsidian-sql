@@ -63978,7 +63978,7 @@ var DatabaseManager = class {
         delete backupData.backup;
         existingData.backup = {
           databases: backupData.databases,
-          currentDB: backupData.currentDB,
+          activeDatabase: backupData.activeDatabase || backupData.currentDB,
           version: backupData.version,
           createdAt: backupData.createdAt
         };
@@ -63997,12 +63997,12 @@ var DatabaseManager = class {
     }
   }
   async createSnapshot() {
-    const currentDB = import_alasql.default.useid || "dbo";
+    const activeDatabase = import_alasql.default.useid || "dbo";
     const databases = Object.keys(import_alasql.default.databases).filter((d) => d !== "alasql");
     const snapshot = {
       version: 1,
       createdAt: Date.now(),
-      currentDB,
+      activeDatabase,
       databases: {}
     };
     for (const dbName of databases) {
@@ -64037,8 +64037,8 @@ var DatabaseManager = class {
         console.error(`Failed to snapshot database ${dbName}:`, error);
       }
     }
-    if (import_alasql.default.databases[currentDB]) {
-      (0, import_alasql.default)(`USE ${currentDB}`);
+    if (import_alasql.default.databases[activeDatabase]) {
+      (0, import_alasql.default)(`USE ${activeDatabase}`);
     }
     return snapshot;
   }
@@ -64046,7 +64046,7 @@ var DatabaseManager = class {
     const data = await this.plugin.loadData();
     if (!(data == null ? void 0 : data.databases)) return;
     try {
-      const activeDB = data.currentDB || "dbo";
+      const activeDB = data.activeDatabase || data.currentDB || "dbo";
       for (const [dbName, content] of Object.entries(data.databases)) {
         const db = content;
         if (!db.tables && !db.schema) continue;
@@ -64080,7 +64080,14 @@ var DatabaseManager = class {
       }
       if (import_alasql.default.databases[activeDB]) {
         await import_alasql.default.promise(`USE ${activeDB}`);
-        this.plugin.currentDB = activeDB;
+        this.plugin.activeDatabase = activeDB;
+      } else {
+        const availableDBs = Object.keys(import_alasql.default.databases).filter((d) => d !== "alasql");
+        if (availableDBs.length > 0) {
+          const fallbackDB = availableDBs[0];
+          await import_alasql.default.promise(`USE ${fallbackDB}`);
+          this.plugin.activeDatabase = fallbackDB;
+        }
       }
       console.log("MySQL Plugin: Database loaded successfully");
     } catch (error) {
@@ -64100,10 +64107,10 @@ var DatabaseManager = class {
       (0, import_alasql.default)("CREATE DATABASE dbo");
     }
     (0, import_alasql.default)("USE dbo");
-    this.plugin.currentDB = "dbo";
+    this.plugin.activeDatabase = "dbo";
     const newData = {
       ...this.plugin.settings,
-      currentDB: "dbo",
+      activeDatabase: "dbo",
       databases: {}
     };
     await this.plugin.saveData(newData);
@@ -64716,6 +64723,10 @@ var WorkbenchFooter = class {
 
 // src/main.ts
 var MySQLPlugin = class extends import_obsidian7.Plugin {
+  constructor() {
+    super(...arguments);
+    this.activeDatabase = "dbo";
+  }
   async onload() {
     console.log("Loading MySQL Runner Plugin");
     await this.loadSettings();
@@ -64899,6 +64910,7 @@ var MySQLPlugin = class extends import_obsidian7.Plugin {
       });
       if (cancelBtn) cancelBtn.remove();
       ResultRenderer.render(result, container, this.app, this);
+      this.activeDatabase = import_alasql4.default.useid;
       if (footer && result.executionTime !== void 0) {
         footer.updateTime(result.executionTime);
       }

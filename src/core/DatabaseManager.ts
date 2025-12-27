@@ -32,7 +32,7 @@ export class DatabaseManager {
 
                 existingData.backup = {
                     databases: backupData.databases,
-                    currentDB: backupData.currentDB,
+                    activeDatabase: backupData.activeDatabase || backupData.currentDB,
                     version: backupData.version,
                     createdAt: backupData.createdAt
                 };
@@ -58,12 +58,12 @@ export class DatabaseManager {
     }
 
     private async createSnapshot(): Promise<DatabaseSnapshot> {
-        const currentDB = alasql.useid || 'dbo';
+        const activeDatabase = alasql.useid || 'dbo';
         const databases = Object.keys(alasql.databases).filter(d => d !== 'alasql');
         const snapshot: DatabaseSnapshot = {
             version: 1,
             createdAt: Date.now(),
-            currentDB,
+            activeDatabase,
             databases: {}
         };
 
@@ -109,8 +109,8 @@ export class DatabaseManager {
         }
 
         // Restaurar contexto
-        if (alasql.databases[currentDB]) {
-            alasql(`USE ${currentDB}`);
+        if (alasql.databases[activeDatabase]) {
+            alasql(`USE ${activeDatabase}`);
         }
 
         return snapshot;
@@ -121,7 +121,7 @@ export class DatabaseManager {
         if (!data?.databases) return;
 
         try {
-            const activeDB = data.currentDB || 'dbo';
+            const activeDB = data.activeDatabase || data.currentDB || 'dbo';
 
             for (const [dbName, content] of Object.entries(data.databases)) {
                 const db = content as DatabaseContent;
@@ -165,8 +165,15 @@ export class DatabaseManager {
 
             if (alasql.databases[activeDB]) {
                 await alasql.promise(`USE ${activeDB}`);
-                // @ts-ignore
-                this.plugin.currentDB = activeDB;
+                this.plugin.activeDatabase = activeDB;
+            } else {
+                // Fallback: If saved DB doesn't exist, use the first available one
+                const availableDBs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
+                if (availableDBs.length > 0) {
+                    const fallbackDB = availableDBs[0];
+                    await alasql.promise(`USE ${fallbackDB}`);
+                    this.plugin.activeDatabase = fallbackDB;
+                }
             }
 
             console.log('MySQL Plugin: Database loaded successfully');
@@ -190,12 +197,11 @@ export class DatabaseManager {
             alasql('CREATE DATABASE dbo');
         }
         alasql('USE dbo');
-        // @ts-ignore
-        this.plugin.currentDB = 'dbo';
+        this.plugin.activeDatabase = 'dbo';
 
         const newData = {
             ...this.plugin.settings,
-            currentDB: 'dbo',
+            activeDatabase: 'dbo',
             databases: {}
         };
         await this.plugin.saveData(newData);
