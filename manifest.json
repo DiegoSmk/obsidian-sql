@@ -1,7 +1,7 @@
 {
     "id": "sql-notebook",
     "name": "SQL Notebook",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "minAppVersion": "0.15.0",
     "description": "Execute MySQL queries directly from your notes.",
     "author": "Diego Pena",

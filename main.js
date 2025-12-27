@@ -63961,15 +63961,17 @@ var import_alasql = __toESM(require_alasql_fs());
 var DatabaseManager = class {
   constructor(plugin) {
     this.plugin = plugin;
-    this.saveQueue = /* @__PURE__ */ new Set();
     this.isSaving = false;
+    this.pendingSave = false;
   }
   async save() {
     if (this.isSaving) {
-      console.log("MySQL Plugin: Save already in progress, skipping...");
+      console.log("MySQL Plugin: Save already in progress, marking pending...");
+      this.pendingSave = true;
       return;
     }
     this.isSaving = true;
+    this.pendingSave = false;
     try {
       const snapshot = await this.createSnapshot();
       const existingData = await this.plugin.loadData() || {};
@@ -63994,11 +63996,15 @@ var DatabaseManager = class {
       throw error;
     } finally {
       this.isSaving = false;
+      if (this.pendingSave) {
+        console.log("MySQL Plugin: Processing pending save...");
+        this.save();
+      }
     }
   }
   async createSnapshot() {
-    const activeDatabase = import_alasql.default.useid || "dbo";
-    const databases = Object.keys(import_alasql.default.databases).filter((d) => d !== "alasql");
+    const activeDatabase = import_alasql.default.useid || "alasql";
+    const databases = Object.keys(import_alasql.default.databases);
     const snapshot = {
       version: 1,
       createdAt: Date.now(),
@@ -64023,16 +64029,46 @@ var DatabaseManager = class {
             const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${tableName}`);
             if (createRes == null ? void 0 : createRes[0]) {
               const createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
-              if (createSQL) dbSchema[tableName] = createSQL;
+              if (createSQL) {
+                dbSchema[tableName] = createSQL;
+                console.log(`MySQL Plugin: Schema saved for '${tableName}' via SHOW CREATE TABLE`);
+                continue;
+              }
             }
           } catch (e) {
-            console.warn(`Could not save schema for ${tableName}`);
+          }
+          try {
+            if (rows.length > 0) {
+              const firstRow = rows[0];
+              const columns = Object.keys(firstRow).map((col) => {
+                const value = firstRow[col];
+                let type = "VARCHAR";
+                if (value === null || value === void 0) {
+                  type = "VARCHAR";
+                } else if (typeof value === "number") {
+                  type = Number.isInteger(value) ? "INT" : "FLOAT";
+                } else if (typeof value === "boolean") {
+                  type = "BOOLEAN";
+                } else if (value instanceof Date) {
+                  type = "DATE";
+                }
+                return `\`${col}\` ${type}`;
+              }).join(", ");
+              const createSQL = `CREATE TABLE \`${tableName}\` (${columns})`;
+              dbSchema[tableName] = createSQL;
+              console.log(`MySQL Plugin: Schema generated for '${tableName}': ${createSQL}`);
+            } else {
+              console.warn(`MySQL Plugin: Cannot generate schema for empty table '${tableName}'`);
+            }
+          } catch (e) {
+            console.error(`MySQL Plugin: Failed to generate schema for '${tableName}':`, e);
           }
         }
         snapshot.databases[dbName] = {
           tables: dbData,
           schema: dbSchema
         };
+        console.log(`MySQL Plugin: Snapshot created for '${dbName}' - ${Object.keys(dbData).length} tables, ${Object.keys(dbSchema).length} schemas`);
       } catch (error) {
         console.error(`Failed to snapshot database ${dbName}:`, error);
       }
@@ -64044,54 +64080,120 @@ var DatabaseManager = class {
   }
   async load() {
     const data = await this.plugin.loadData();
-    if (!(data == null ? void 0 : data.databases)) return;
+    console.log("MySQL Plugin: Starting database load...");
+    console.log("MySQL Plugin: Data structure:", {
+      hasData: !!data,
+      hasDatabases: !!(data == null ? void 0 : data.databases),
+      databaseNames: (data == null ? void 0 : data.databases) ? Object.keys(data.databases) : []
+    });
+    if (!(data == null ? void 0 : data.databases)) {
+      console.log("MySQL Plugin: No databases found in saved data");
+      return;
+    }
     try {
       const activeDB = data.activeDatabase || data.currentDB || "dbo";
+      let restoredTablesCount = 0;
       for (const [dbName, content] of Object.entries(data.databases)) {
         const db = content;
-        if (!db.tables && !db.schema) continue;
+        console.log(`MySQL Plugin: Processing database '${dbName}'`, {
+          hasTables: !!db.tables,
+          hasSchema: !!db.schema,
+          tableCount: db.tables ? Object.keys(db.tables).length : 0,
+          schemaCount: db.schema ? Object.keys(db.schema).length : 0
+        });
+        if (!db.tables && !db.schema) {
+          console.warn(`MySQL Plugin: Skipping empty database '${dbName}'`);
+          continue;
+        }
         if (!import_alasql.default.databases[dbName]) {
           await import_alasql.default.promise(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
+          console.log(`MySQL Plugin: Created database '${dbName}'`);
         }
         await import_alasql.default.promise(`USE ${dbName}`);
-        for (const [tableName, sql] of Object.entries(db.schema || {})) {
-          try {
-            await import_alasql.default.promise(`DROP TABLE IF EXISTS ${tableName}`);
-            await import_alasql.default.promise(String(sql));
-          } catch (e) {
-            console.error(`Error restoring schema for ${tableName}:`, e);
+        if (db.schema && Object.keys(db.schema).length > 0) {
+          for (const [tableName, sql] of Object.entries(db.schema)) {
+            try {
+              await import_alasql.default.promise(`DROP TABLE IF EXISTS ${tableName}`);
+              await import_alasql.default.promise(String(sql));
+              const verifyTable = await import_alasql.default.promise(`SHOW TABLES LIKE '${tableName}'`);
+              if (verifyTable.length > 0) {
+                console.log(`MySQL Plugin: \u2713 Schema restored for '${tableName}'`);
+                restoredTablesCount++;
+              } else {
+                console.error(`MySQL Plugin: \u2717 Schema failed for '${tableName}' - table not found after creation`);
+              }
+            } catch (e) {
+              console.error(`MySQL Plugin: Error restoring schema for '${tableName}':`, e);
+            }
           }
+        } else {
+          console.warn(`MySQL Plugin: No schemas found for database '${dbName}', will use fallback creation`);
         }
-        for (const [tableName, rows] of Object.entries(db.tables || {})) {
-          if (rows.length === 0) continue;
-          try {
-            const exists = await import_alasql.default.promise(`SHOW TABLES LIKE '${tableName}'`);
-            if (exists.length > 0) {
+        if (db.tables) {
+          for (const [tableName, rows] of Object.entries(db.tables)) {
+            if (!rows || rows.length === 0) {
+              console.log(`MySQL Plugin: Skipping empty table '${tableName}'`);
+              continue;
+            }
+            try {
+              const exists = await import_alasql.default.promise(`SHOW TABLES LIKE '${tableName}'`);
+              if (exists.length === 0) {
+                console.warn(`MySQL Plugin: Table '${tableName}' missing, attempting fallback creation`);
+                const columns = Object.keys(rows[0]);
+                const columnDefs = columns.map((col) => {
+                  const value = rows[0][col];
+                  let type = "VARCHAR";
+                  if (value === null || value === void 0) {
+                    type = "VARCHAR";
+                  } else if (typeof value === "number") {
+                    type = Number.isInteger(value) ? "INT" : "FLOAT";
+                  } else if (typeof value === "boolean") {
+                    type = "BOOLEAN";
+                  } else if (value instanceof Date) {
+                    type = "DATE";
+                  }
+                  return `\`${col}\` ${type}`;
+                }).join(", ");
+                await import_alasql.default.promise(`CREATE TABLE \`${tableName}\` (${columnDefs})`);
+                console.log(`MySQL Plugin: Fallback table created for '${tableName}'`);
+                restoredTablesCount++;
+              }
               const batchSize = 1e3;
+              let insertedRows = 0;
               for (let i = 0; i < rows.length; i += batchSize) {
                 const batch = rows.slice(i, i + batchSize);
                 await import_alasql.default.promise(`INSERT INTO ${tableName} SELECT * FROM ?`, [batch]);
+                insertedRows += batch.length;
               }
+              console.log(`MySQL Plugin: \u2713 Loaded ${insertedRows} rows into '${tableName}'`);
+            } catch (e) {
+              console.error(`MySQL Plugin: Error loading data for '${tableName}':`, e);
             }
-          } catch (e) {
-            console.error(`Error loading data for ${tableName}:`, e);
           }
         }
       }
       if (import_alasql.default.databases[activeDB]) {
         await import_alasql.default.promise(`USE ${activeDB}`);
         this.plugin.activeDatabase = activeDB;
+        console.log(`MySQL Plugin: Active database set to '${activeDB}'`);
       } else {
-        const availableDBs = Object.keys(import_alasql.default.databases).filter((d) => d !== "alasql");
+        const availableDBs = Object.keys(import_alasql.default.databases);
         if (availableDBs.length > 0) {
-          const fallbackDB = availableDBs[0];
+          const fallbackDB = availableDBs.includes("dbo") ? "dbo" : availableDBs[0];
           await import_alasql.default.promise(`USE ${fallbackDB}`);
           this.plugin.activeDatabase = fallbackDB;
+          console.log(`MySQL Plugin: Using fallback database '${fallbackDB}'`);
         }
       }
-      console.log("MySQL Plugin: Database loaded successfully");
+      const finalTables = (0, import_alasql.default)("SHOW TABLES");
+      console.log(`MySQL Plugin: \u2713 Database loaded successfully - ${restoredTablesCount} tables restored`);
+      console.log(`MySQL Plugin: Current database '${this.plugin.activeDatabase}' has ${finalTables.length} tables`);
+      if (finalTables.length === 0 && restoredTablesCount > 0) {
+        console.error("MySQL Plugin: WARNING - Tables were restored but current database appears empty!");
+      }
     } catch (error) {
       console.error("MySQL Plugin: Load failed", error);
+      throw error;
     }
   }
   async reset() {
@@ -64114,6 +64216,7 @@ var DatabaseManager = class {
       databases: {}
     };
     await this.plugin.saveData(newData);
+    console.log("MySQL Plugin: Database reset completed");
   }
 };
 
