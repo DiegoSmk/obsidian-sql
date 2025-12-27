@@ -708,46 +708,48 @@ div.mysql-workbench-container:hover {
 }
 
 /* src/styles/components/table.css */
-.mysql-table {
-  border-collapse: separate;
-  border-spacing: 0;
+.markdown-preview-view .mysql-table,
+.markdown-rendered .mysql-table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
   width: 100%;
   font-size: 0.9em;
   border-radius: var(--mysql-radius-sm);
   overflow: hidden;
-  border: 1px solid var(--background-modifier-border);
+  border: 1px solid var(--background-modifier-border) !important;
 }
-.mysql-table th,
-.mysql-table td {
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid var(--background-modifier-border);
-}
-.mysql-table th {
-  background-color: var(--background-secondary-alt);
-  font-weight: 700;
-  color: var(--mysql-accent-purple);
+.markdown-preview-view .mysql-table th,
+.markdown-rendered .mysql-table th {
+  padding: 12px 16px !important;
+  background-color: var(--background-secondary-alt) !important;
+  color: var(--mysql-accent-purple) !important;
   text-transform: uppercase;
   font-size: 0.75em;
+  font-weight: 700;
   letter-spacing: 0.08em;
-  border-right: 1px solid var(--background-modifier-border);
+  border-right: 1px solid var(--background-modifier-border) !important;
+  border-bottom: 1px solid var(--background-modifier-border) !important;
   position: sticky;
   top: 0;
   z-index: 10;
 }
-.mysql-table th:last-child {
-  border-right: none;
-}
-.mysql-table td {
-  border-right: 1px solid var(--background-modifier-border);
+.markdown-preview-view .mysql-table td,
+.markdown-rendered .mysql-table td {
+  padding: 10px 16px !important;
+  border-right: 1px solid var(--background-modifier-border) !important;
+  border-bottom: 1px solid var(--background-modifier-border) !important;
   font-family: var(--font-monospace);
   color: var(--text-normal);
 }
-.mysql-table td:last-child {
-  border-right: none;
+.markdown-preview-view .mysql-table th:last-child,
+.markdown-rendered .mysql-table th:last-child,
+.markdown-preview-view .mysql-table td:last-child,
+.markdown-rendered .mysql-table td:last-child {
+  border-right: none !important;
 }
-.mysql-table tr:last-child td {
-  border-bottom: none;
+.markdown-preview-view .mysql-table tr:last-child td,
+.markdown-rendered .mysql-table tr:last-child td {
+  border-bottom: none !important;
 }
 .mysql-table tr:nth-child(even) {
   background-color: var(--background-primary-alt);
