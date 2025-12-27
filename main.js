@@ -63939,7 +63939,6 @@ var Logger = class {
     const consoleMsg = `[MySQL Plugin] ${msg}`;
     if (level === "ERROR") console.error(consoleMsg, data);
     else if (level === "WARN") console.warn(consoleMsg, data);
-    else console.log(consoleMsg, data || "");
   }
   static info(msg, data) {
     this.log("INFO", msg, data);
@@ -63967,7 +63966,6 @@ var DatabaseManager = class {
   }
   async save() {
     if (this.isSaving) {
-      console.log("MySQL Plugin: Save already in progress, marking pending...");
       this.pendingSave = true;
       return;
     }
@@ -63991,21 +63989,19 @@ var DatabaseManager = class {
       const finalData = { ...tempData };
       delete finalData._temp;
       await this.plugin.saveData(finalData);
-      console.log("MySQL Plugin: Database saved successfully (Atomic)");
     } catch (error) {
       console.error("MySQL Plugin: Save failed", error);
       throw error;
     } finally {
       this.isSaving = false;
       if (this.pendingSave) {
-        console.log("MySQL Plugin: Processing pending save...");
         this.save();
       }
     }
   }
   async createSnapshot() {
-    const activeDatabase = import_alasql.default.useid || "alasql";
-    const databases = Object.keys(import_alasql.default.databases);
+    const activeDatabase = this.plugin.activeDatabase || "dbo";
+    const databases = Object.keys(import_alasql.default.databases).filter((d) => d !== "alasql");
     const snapshot = {
       version: 1,
       createdAt: Date.now(),
@@ -64058,33 +64054,32 @@ var DatabaseManager = class {
         console.error(`Failed to snapshot database ${dbName}:`, error);
       }
     }
-    if (import_alasql.default.databases[activeDatabase]) {
-      (0, import_alasql.default)(`USE ${activeDatabase}`);
-    }
     return snapshot;
   }
   async load() {
     const data = await this.plugin.loadData();
-    console.log("MySQL Plugin: Starting database load...");
     if (!(data == null ? void 0 : data.databases)) {
-      console.log("MySQL Plugin: No databases found in saved data");
       return;
     }
     try {
       const activeDB = data.activeDatabase || data.currentDB || "dbo";
       let restoredTablesCount = 0;
       for (const [dbName, content] of Object.entries(data.databases)) {
+        if (dbName === "alasql") continue;
         const db = content;
         if (!db.tables && !db.schema) continue;
         if (!import_alasql.default.databases[dbName]) {
           await import_alasql.default.promise(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
         }
-        await import_alasql.default.promise(`USE ${dbName}`);
         if (db.schema) {
           for (const [tableName, sql] of Object.entries(db.schema)) {
             try {
-              await import_alasql.default.promise(`DROP TABLE IF EXISTS ${tableName}`);
-              await import_alasql.default.promise(String(sql));
+              await import_alasql.default.promise(`DROP TABLE IF EXISTS ${dbName}.${tableName}`);
+              let createSQL = String(sql);
+              if (createSQL.toUpperCase().startsWith("CREATE TABLE")) {
+                createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-zA-Z0-9_]+)`?/i, `CREATE TABLE ${dbName}.$1`);
+              }
+              await import_alasql.default.promise(createSQL);
               restoredTablesCount++;
             } catch (e) {
               console.error(`Error restoring schema for '${tableName}':`, e);
@@ -64095,12 +64090,12 @@ var DatabaseManager = class {
           for (const [tableName, rows] of Object.entries(db.tables)) {
             if (!rows || rows.length === 0) continue;
             try {
-              const exists = await import_alasql.default.promise(`SHOW TABLES LIKE '${tableName}'`);
+              const exists = await import_alasql.default.promise(`SHOW TABLES FROM ${dbName} LIKE '${tableName}'`);
               if (exists.length > 0) {
                 const batchSize = 1e3;
                 for (let i = 0; i < rows.length; i += batchSize) {
                   const batch = rows.slice(i, i + batchSize);
-                  await import_alasql.default.promise(`INSERT INTO ${tableName} SELECT * FROM ?`, [batch]);
+                  await import_alasql.default.promise(`INSERT INTO ${dbName}.${tableName} SELECT * FROM ?`, [batch]);
                 }
               }
             } catch (e) {
@@ -64109,22 +64104,10 @@ var DatabaseManager = class {
           }
         }
       }
-      if (import_alasql.default.databases[activeDB]) {
-        await import_alasql.default.promise(`USE ${activeDB}`);
-        this.plugin.activeDatabase = activeDB;
-      } else {
-        const availableDBs = Object.keys(import_alasql.default.databases).filter((d) => d !== "alasql");
-        if (availableDBs.length > 0) {
-          const fallbackDB = availableDBs.includes("dbo") ? "dbo" : availableDBs[0];
-          await import_alasql.default.promise(`USE ${fallbackDB}`);
-          this.plugin.activeDatabase = fallbackDB;
-        } else {
-          await import_alasql.default.promise("CREATE DATABASE dbo");
-          await import_alasql.default.promise("USE dbo");
-          this.plugin.activeDatabase = "dbo";
-        }
+      this.plugin.activeDatabase = activeDB;
+      if (!import_alasql.default.databases["dbo"]) {
+        await import_alasql.default.promise("CREATE DATABASE dbo");
       }
-      console.log(`MySQL Plugin: Loaded. Active: ${this.plugin.activeDatabase}, Alasql useid: ${import_alasql.default.useid}`);
     } catch (error) {
       console.error("MySQL Plugin: Load failed", error);
       throw error;
@@ -64165,79 +64148,67 @@ var DatabaseManager = class {
     };
   }
   async clearDatabase(dbName) {
-    const currentDB = import_alasql.default.useid;
-    await import_alasql.default.promise(`USE ${dbName}`);
-    const tables = (0, import_alasql.default)("SHOW TABLES");
+    const tables = (0, import_alasql.default)(`SHOW TABLES FROM ${dbName}`);
     for (const t of tables) {
-      await import_alasql.default.promise(`DROP TABLE ${t.tableid}`);
+      await import_alasql.default.promise(`DROP TABLE ${dbName}.${t.tableid}`);
     }
-    if (currentDB) await import_alasql.default.promise(`USE ${currentDB}`);
     await this.save();
   }
   async renameDatabase(oldName, newName) {
     if (import_alasql.default.databases[newName]) throw new Error(`Database ${newName} already exists`);
     try {
-      const currentDB = import_alasql.default.useid;
-      await import_alasql.default.promise(`USE ${oldName}`);
-      const tables = (0, import_alasql.default)("SHOW TABLES");
-      const collectedData = [];
+      await import_alasql.default.promise(`CREATE DATABASE ${newName}`);
+      const tables = (0, import_alasql.default)(`SHOW TABLES FROM ${oldName}`);
       for (const t of tables) {
         const tableName = t.tableid;
-        const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${tableName}`);
-        let createSQL = "";
+        const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${oldName}.${tableName}`);
         if (createRes == null ? void 0 : createRes[0]) {
-          createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
-        }
-        if (!createSQL) {
-          console.warn(`Could not get schema for ${tableName}, skipping copy.`);
-          continue;
-        }
-        const data = await import_alasql.default.promise(`SELECT * FROM ${tableName}`);
-        collectedData.push({ tableName, createSQL, data });
-      }
-      await import_alasql.default.promise(`CREATE DATABASE ${newName}`);
-      await import_alasql.default.promise(`USE ${newName}`);
-      for (const item of collectedData) {
-        await import_alasql.default.promise(item.createSQL);
-        if (item.data.length > 0) {
-          await import_alasql.default.promise(`INSERT INTO ${item.tableName} SELECT * FROM ?`, [item.data]);
-        }
-      }
-      if (this.plugin.activeDatabase === oldName) {
-        this.plugin.activeDatabase = newName;
-      } else {
-        if (currentDB === oldName) {
-          await import_alasql.default.promise(`USE ${newName}`);
-        } else if (currentDB) {
-          await import_alasql.default.promise(`USE ${currentDB}`);
+          let createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
+          if (createSQL.toUpperCase().startsWith("CREATE TABLE")) {
+            createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)`?([a-zA-Z0-9_]+)`?/i, `CREATE TABLE ${newName}.$1`);
+          }
+          await import_alasql.default.promise(createSQL);
+          await import_alasql.default.promise(`INSERT INTO ${newName}.${tableName} SELECT * FROM ${oldName}.${tableName}`);
         }
       }
       await import_alasql.default.promise(`DROP DATABASE ${oldName}`);
+      if (this.plugin.activeDatabase === oldName) {
+        this.plugin.activeDatabase = newName;
+      }
       await this.save();
     } catch (error) {
       console.error(`Failed to rename database from ${oldName} to ${newName}:`, error);
-      if (import_alasql.default.databases[newName]) {
-        await import_alasql.default.promise(`DROP DATABASE ${newName}`);
+      try {
+        await import_alasql.default.promise(`DROP DATABASE IF EXISTS ${newName}`);
+      } catch (e) {
       }
       throw error;
     }
   }
   async duplicateDatabase(dbName, newName) {
     if (import_alasql.default.databases[newName]) throw new Error(`Database ${newName} already exists`);
-    const currentDB = import_alasql.default.useid;
     await import_alasql.default.promise(`CREATE DATABASE ${newName}`);
     const tables = (0, import_alasql.default)(`SHOW TABLES FROM ${dbName}`);
     for (const t of tables) {
       const tableName = t.tableid;
       const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${dbName}.${tableName}`);
       if (createRes == null ? void 0 : createRes[0]) {
-        const createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
-        await import_alasql.default.promise(`USE ${newName}`);
+        let createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
+        if (createSQL.toUpperCase().startsWith("CREATE TABLE")) {
+          createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)`?([a-zA-Z0-9_]+)`?/i, `CREATE TABLE ${newName}.$1`);
+        }
         await import_alasql.default.promise(createSQL);
         await import_alasql.default.promise(`INSERT INTO ${newName}.${tableName} SELECT * FROM ${dbName}.${tableName}`);
       }
     }
-    if (currentDB) await import_alasql.default.promise(`USE ${currentDB}`);
+    await this.save();
+  }
+  async createDatabase(dbName) {
+    if (import_alasql.default.databases[dbName]) throw new Error(`Database ${dbName} already exists`);
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(dbName)) {
+      throw new Error("Invalid database name. Use alphanumeric characters and underscores only.");
+    }
+    await import_alasql.default.promise(`CREATE DATABASE ${dbName}`);
     await this.save();
   }
   async deleteDatabase(dbName) {
@@ -64246,6 +64217,67 @@ var DatabaseManager = class {
     if (this.plugin.activeDatabase === dbName) throw new Error("Cannot delete active database. Switch first.");
     await import_alasql.default.promise(`DROP DATABASE ${dbName}`);
     await this.save();
+  }
+  async exportDatabase(dbName) {
+    if (!import_alasql.default.databases[dbName]) throw new Error(`Database ${dbName} does not exist`);
+    let dump = `-- Database Export: ${dbName}
+-- Date: ${(/* @__PURE__ */ new Date()).toISOString()}
+
+`;
+    dump += `CREATE DATABASE IF NOT EXISTS ${dbName};
+USE ${dbName};
+
+`;
+    const tables = (0, import_alasql.default)(`SHOW TABLES FROM ${dbName}`);
+    for (const t of tables) {
+      const tableName = t.tableid;
+      const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${dbName}.${tableName}`);
+      if (createRes == null ? void 0 : createRes[0]) {
+        let createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
+        dump += `${createSQL};
+`;
+      }
+      const data = (0, import_alasql.default)(`SELECT * FROM ${dbName}.${tableName}`);
+      if (data.length > 0) {
+        const batchSize = 100;
+        for (let i = 0; i < data.length; i += batchSize) {
+          const batch = data.slice(i, i + batchSize);
+          const values = batch.map((row) => {
+            const vals = Object.values(row).map((v) => {
+              if (v === null || v === void 0) return "NULL";
+              if (typeof v === "string") return `'${v.replace(/'/g, "''")}'`;
+              if (v instanceof Date) return `'${v.toISOString()}'`;
+              return v;
+            });
+            return `(${vals.join(", ")})`;
+          }).join(",\n");
+          dump += `INSERT INTO ${tableName} VALUES 
+${values};
+`;
+        }
+      }
+      dump += "\n";
+    }
+    return dump;
+  }
+  async importDatabase(sql) {
+    try {
+      const previousDB = this.plugin.activeDatabase;
+      const statements = sql.split(";").map((s) => s.trim()).filter((s) => s.length > 0 && !s.startsWith("--"));
+      for (const stmt of statements) {
+        if (stmt.startsWith("BEGIN") || stmt.startsWith("COMMIT")) continue;
+        await import_alasql.default.promise(stmt);
+      }
+      if (import_alasql.default.useid && import_alasql.default.useid !== "alasql") {
+        this.plugin.activeDatabase = import_alasql.default.useid;
+      } else if (previousDB) {
+        this.plugin.activeDatabase = previousDB;
+      }
+      await this.save();
+    } catch (e) {
+      console.error("Import failed", e);
+      throw new Error("Failed to import database: " + e.message);
+    }
   }
 };
 
@@ -64285,7 +64317,6 @@ var CSVManager = class {
           return obj;
         });
         await import_alasql2.default.promise(`INSERT INTO ${tableName} SELECT * FROM ?`, [mappedData]);
-        console.log(`Imported batch ${Math.floor(i / BATCH_SIZE) + 1}/${totalBatches}`);
       }
       new import_obsidian.Notice(`Successfully imported ${dataLines.length} rows into table '${tableName}'`);
       return true;
@@ -64409,30 +64440,17 @@ var QueryExecutor = class {
           const useMatch2 = stmt.match(/^\s*USE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$/i);
           if (useMatch2) {
             const newDB = useMatch2[1];
-            console.log(`[QueryExecutor] \u{1F3AF} Intercepted USE ${newDB} - managing context ourselves`);
             if (!import_alasql3.default.databases[newDB]) {
               throw new Error(`Database '${newDB}' does not exist`);
             }
             currentDB = newDB;
             results.push(1);
-            console.log(`[QueryExecutor] Current database context: ${currentDB}`);
             continue;
           }
           stmt = this.prefixTablesWithDatabase(stmt, currentDB);
-          console.log(`[QueryExecutor] Executing [${i + 1}/${statements.length}] in context '${currentDB}':`, stmt.substring(0, 80));
           const result = await this.executeWithTimeout(stmt, params, 3e4, options.signal);
           results.push(result);
           if (upperStmt.startsWith("CREATE TABLE") || upperStmt.startsWith("DROP TABLE")) {
-            const allDBs = Object.keys(import_alasql3.default.databases).filter((d) => d !== "alasql");
-            console.log(`[QueryExecutor] After ${upperStmt.substring(0, 20)}... - Database state:`);
-            for (const db of allDBs) {
-              try {
-                const tables = (0, import_alasql3.default)(`SHOW TABLES FROM ${db}`);
-                console.log(`  \u2514\u2500 ${db}: [${tables.map((t) => t.tableid).join(", ")}]`);
-              } catch (e) {
-                console.log(`  \u2514\u2500 ${db}: error`);
-              }
-            }
           }
         }
         const normalizedData2 = this.normalizeResult(results);
@@ -64454,7 +64472,6 @@ var QueryExecutor = class {
         if (!import_alasql3.default.databases[newDB]) {
           throw new Error(`Database '${newDB}' does not exist`);
         }
-        console.log(`[QueryExecutor] \u{1F3AF} Intercepted USE ${newDB}`);
         return {
           success: true,
           data: [{ type: "message", data: null, message: `Database changed to '${newDB}'` }],
@@ -64516,28 +64533,24 @@ var QueryExecutor = class {
     sql = sql.replace(
       /CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
       (match, ifNotExists, tableName) => {
-        console.log(`[QueryExecutor] \u{1F527} Prefixing CREATE TABLE: ${database}.${tableName}`);
         return `CREATE TABLE ${ifNotExists || ""}${database}.${tableName}`;
       }
     );
     sql = sql.replace(
       /INSERT\s+INTO\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
       (match, tableName) => {
-        console.log(`[QueryExecutor] \u{1F527} Prefixing INSERT INTO: ${database}.${tableName}`);
         return `INSERT INTO ${database}.${tableName}`;
       }
     );
     sql = sql.replace(
       /UPDATE\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)\s+SET/gi,
       (match, tableName) => {
-        console.log(`[QueryExecutor] \u{1F527} Prefixing UPDATE: ${database}.${tableName}`);
         return `UPDATE ${database}.${tableName} SET`;
       }
     );
     sql = sql.replace(
       /DELETE\s+FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
       (match, tableName) => {
-        console.log(`[QueryExecutor] \u{1F527} Prefixing DELETE FROM: ${database}.${tableName}`);
         return `DELETE FROM ${database}.${tableName}`;
       }
     );
@@ -64547,14 +64560,12 @@ var QueryExecutor = class {
         if (["SELECT", "VALUES", "("].some((kw) => tableName.toUpperCase().includes(kw))) {
           return match;
         }
-        console.log(`[QueryExecutor] \u{1F527} Prefixing FROM: ${database}.${tableName}`);
         return `FROM ${database}.${tableName}`;
       }
     );
     sql = sql.replace(
       /JOIN\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
       (match, tableName) => {
-        console.log(`[QueryExecutor] \u{1F527} Prefixing JOIN: ${database}.${tableName}`);
         return `JOIN ${database}.${tableName}`;
       }
     );
@@ -65063,11 +65074,54 @@ var RenameDatabaseModal = class extends import_obsidian5.Modal {
     this.contentEl.empty();
   }
 };
+var CreateDatabaseModal = class extends import_obsidian5.Modal {
+  constructor(app, plugin, onSuccess) {
+    super(app);
+    this.plugin = plugin;
+    this.onSuccess = onSuccess;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass("mysql-create-db-modal");
+    contentEl.createEl("h2", { text: "Create New Database" });
+    const input = new import_obsidian5.TextComponent(contentEl).setPlaceholder("Database name (e.g., my_project)").setValue("");
+    input.inputEl.style.width = "100%";
+    input.inputEl.style.marginBottom = "20px";
+    const buttons = contentEl.createDiv({ cls: "mysql-modal-footer" });
+    new import_obsidian5.ButtonComponent(buttons).setButtonText("Cancel").onClick(() => this.close());
+    const confirmBtn = new import_obsidian5.ButtonComponent(buttons).setButtonText("Create").setCta().onClick(async () => {
+      const dbName = input.getValue().trim();
+      if (!dbName) {
+        new import_obsidian5.Notice("Database name cannot be empty.");
+        return;
+      }
+      try {
+        const dbManager = this.plugin.dbManager;
+        await dbManager.createDatabase(dbName);
+        new import_obsidian5.Notice(`Database "${dbName}" created.`);
+        this.plugin.activeDatabase = dbName;
+        await dbManager.save();
+        new import_obsidian5.Notice(`Switched to "${dbName}"`);
+        this.onSuccess();
+        this.close();
+      } catch (e) {
+        new import_obsidian5.Notice(`Error: ${e.message}`);
+      }
+    });
+    setTimeout(() => input.inputEl.focus(), 50);
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
 var DatabaseTablesModal = class extends import_obsidian5.Modal {
   constructor(app, plugin, dbName) {
+    var _a;
     super(app);
     this.plugin = plugin;
     this.dbName = dbName;
+    (_a = this.modalEl.querySelector(".modal-close-button")) == null ? void 0 : _a.remove();
   }
   onOpen() {
     this.renderList();
@@ -65104,27 +65158,69 @@ var DatabaseTablesModal = class extends import_obsidian5.Modal {
   async showTableData(tableName) {
     const { contentEl } = this;
     contentEl.empty();
-    const header = contentEl.createDiv({ cls: "mysql-modal-header" });
-    header.style.display = "flex";
-    header.style.justifyContent = "space-between";
-    header.style.alignItems = "center";
-    header.style.marginBottom = "16px";
-    const left = header.createDiv();
+    const header = contentEl.createDiv({ cls: "mysql-table-detail-header" });
+    const left = header.createDiv({ cls: "mysql-table-detail-title" });
     left.style.display = "flex";
     left.style.alignItems = "center";
     left.style.gap = "8px";
-    const backBtn = new import_obsidian5.ButtonComponent(left).setIcon("arrow-left").setTooltip("Back to Tables List").onClick(() => this.renderList());
+    new import_obsidian5.ButtonComponent(left).setIcon("arrow-left").setTooltip("Back to Tables List").onClick(() => this.renderList());
     const title = left.createEl("h3", { text: tableName });
     title.style.margin = "0";
-    const right = header.createDiv();
-    new import_obsidian5.ButtonComponent(right).setButtonText("Export CSV").setIcon("file-down").onClick(() => {
-      if (this.plugin.csvManager) {
-        this.plugin.csvManager.exportTable(tableName);
-      } else {
-        new import_obsidian5.Notice("CSV Manager not available");
+    const actions = header.createDiv({ cls: "mysql-table-detail-actions" });
+    new import_obsidian5.ButtonComponent(actions).setIcon("copy").setTooltip("Copy to clipboard").onClick(async () => {
+      try {
+        const query = `SELECT * FROM ${this.dbName}.${tableName}`;
+        const result = await QueryExecutor.execute(query);
+        if (result.success && result.data && result.data[0] && result.data[0].data) {
+          await this.copyToClipboard(result.data[0].data);
+        } else {
+          new import_obsidian5.Notice("No data to copy");
+        }
+      } catch (e) {
+        new import_obsidian5.Notice(`Copy failed: ${e.message}`);
       }
     });
-    const dataContainer = contentEl.createDiv({ cls: "mysql-table-detail-view mysql-workbench-container" });
+    new import_obsidian5.ButtonComponent(actions).setIcon("camera").setTooltip("Take screenshot").onClick(async () => {
+      try {
+        const tableElement = dataContainer.querySelector(".mysql-direct-table-wrapper");
+        if (tableElement) {
+          await this.takeScreenshot(tableElement);
+        } else {
+          new import_obsidian5.Notice("No table to screenshot");
+        }
+      } catch (e) {
+        new import_obsidian5.Notice(`Screenshot failed: ${e.message}`);
+      }
+    });
+    new import_obsidian5.ButtonComponent(actions).setIcon("file-plus").setTooltip("Add to note").onClick(async () => {
+      try {
+        const query = `SELECT * FROM ${this.dbName}.${tableName}`;
+        const result = await QueryExecutor.execute(query);
+        if (result.success && result.data && result.data[0] && result.data[0].data) {
+          await this.insertIntoNote(result.data[0].data);
+        } else {
+          new import_obsidian5.Notice("No data to insert");
+        }
+      } catch (e) {
+        new import_obsidian5.Notice(`Insert failed: ${e.message}`);
+      }
+    });
+    new import_obsidian5.ButtonComponent(actions).setIcon("download").setTooltip("Export CSV").onClick(async () => {
+      try {
+        const query = `SELECT * FROM ${this.dbName}.${tableName}`;
+        const result = await QueryExecutor.execute(query);
+        if (result.success && result.data && result.data[0] && result.data[0].data) {
+          await this.exportTableData(tableName, result.data[0].data);
+        } else {
+          new import_obsidian5.Notice("No data to export");
+        }
+      } catch (e) {
+        new import_obsidian5.Notice(`Export failed: ${e.message}`);
+      }
+    });
+    new import_obsidian5.ButtonComponent(actions).setIcon("x").setTooltip("Close").onClick(() => this.close());
+    const separator = contentEl.createDiv({ cls: "mysql-table-detail-separator" });
+    const dataContainer = contentEl.createDiv({ cls: "mysql-table-detail-content" });
     const loadingMsg = dataContainer.createEl("p", { text: "Loading data..." });
     loadingMsg.style.color = "var(--text-muted)";
     try {
@@ -65132,16 +65228,12 @@ var DatabaseTablesModal = class extends import_obsidian5.Modal {
       const result = await QueryExecutor.execute(query);
       dataContainer.empty();
       if (result.success) {
-        const resultWrapper = dataContainer.createDiv({ cls: "mysql-result-content" });
-        ResultRenderer.render(result, resultWrapper, this.app, this.plugin);
+        this.renderTableDataDirect(result, dataContainer, tableName);
         if (result.data && result.data[0] && result.data[0].rowCount >= 100) {
-          const note = resultWrapper.createDiv({
-            text: "Showing first 100 rows only."
+          const note = dataContainer.createDiv({
+            text: "Showing first 100 rows only.",
+            cls: "mysql-table-limit-note"
           });
-          note.style.fontSize = "0.8em";
-          note.style.color = "var(--text-muted)";
-          note.style.marginTop = "8px";
-          note.style.fontStyle = "italic";
         }
       } else {
         dataContainer.createDiv({ text: `Error: ${result.error}`, cls: "mysql-error-text" });
@@ -65150,6 +65242,181 @@ var DatabaseTablesModal = class extends import_obsidian5.Modal {
       dataContainer.empty();
       dataContainer.createDiv({ text: `Error loading data: ${e.message}`, cls: "mysql-error-text" });
     }
+  }
+  renderTableDataDirect(result, container, tableName) {
+    if (!result.success || !result.data || result.data.length === 0) {
+      container.createEl("p", { text: "No data found", cls: "mysql-empty-state" });
+      return;
+    }
+    const data = result.data[0];
+    if (data.type === "table" && data.data && data.data.length > 0) {
+      const tableWrapper = container.createDiv({ cls: "mysql-direct-table-wrapper" });
+      const keys = Object.keys(data.data[0]);
+      const table = tableWrapper.createEl("table", { cls: "mysql-table mysql-direct-table" });
+      const thead = table.createEl("thead");
+      const headerRow = thead.createEl("tr");
+      keys.forEach((key) => headerRow.createEl("th", { text: key }));
+      const tbody = table.createEl("tbody");
+      const batchSize = 100;
+      let currentCount = 0;
+      const renderBatch = (batch) => {
+        batch.forEach((row) => {
+          const tr = tbody.createEl("tr");
+          keys.forEach((key) => {
+            const val = row[key];
+            tr.createEl("td", {
+              text: val === null || val === void 0 ? "NULL" : String(val)
+            });
+          });
+        });
+      };
+      const initialBatch = data.data.slice(0, batchSize);
+      renderBatch(initialBatch);
+      currentCount += initialBatch.length;
+      if (data.data.length > batchSize) {
+        const controls = tableWrapper.createEl("div", { cls: "mysql-direct-pagination" });
+        const statusSpan = controls.createEl("span", {
+          text: `Showing ${currentCount} of ${data.data.length} rows`,
+          cls: "mysql-pagination-status"
+        });
+        const showAllBtn = controls.createEl("button", {
+          text: "Show All Rows",
+          cls: "mysql-pagination-btn"
+        });
+        showAllBtn.onclick = () => {
+          const remaining = data.data.slice(currentCount);
+          renderBatch(remaining);
+          showAllBtn.remove();
+          statusSpan.setText(`Showing all ${data.data.length} rows`);
+        };
+      }
+    } else {
+      container.createEl("p", { text: "No table data found", cls: "mysql-empty-state" });
+    }
+  }
+  async copyToClipboard(data) {
+    try {
+      if (!data || data.length === 0) {
+        new import_obsidian5.Notice("No data to copy");
+        return;
+      }
+      const keys = Object.keys(data[0]);
+      let textToCopy = keys.join("	") + "\n";
+      data.forEach((row) => {
+        const values = keys.map((k) => {
+          const val = row[k];
+          return val === null || val === void 0 ? "" : String(val);
+        });
+        textToCopy += values.join("	") + "\n";
+      });
+      await navigator.clipboard.writeText(textToCopy);
+      new import_obsidian5.Notice("Table data copied to clipboard!");
+    } catch (error) {
+      new import_obsidian5.Notice("Failed to copy: " + error.message);
+    }
+  }
+  async takeScreenshot(element) {
+    try {
+      const html2canvas2 = (await Promise.resolve().then(() => __toESM(require_html2canvas()))).default;
+      const canvas = await html2canvas2(element, {
+        backgroundColor: getComputedStyle(element).backgroundColor || "#ffffff",
+        scale: 2,
+        logging: false
+      });
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          new import_obsidian5.Notice("Failed to create screenshot");
+          return;
+        }
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ "image/png": blob })
+          ]);
+          new import_obsidian5.Notice("Screenshot copied to clipboard!");
+        } catch (clipboardError) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `table-screenshot-${Date.now()}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+          new import_obsidian5.Notice("Screenshot downloaded!");
+        }
+      });
+    } catch (error) {
+      new import_obsidian5.Notice("Screenshot failed: " + error.message);
+      console.error("Screenshot error:", error);
+    }
+  }
+  async insertIntoNote(data) {
+    try {
+      const { MarkdownView: MarkdownView2 } = await import("obsidian");
+      const activeView = this.app.workspace.getActiveViewOfType(MarkdownView2);
+      if (!activeView) {
+        new import_obsidian5.Notice("No active note found");
+        return;
+      }
+      const editor = activeView.editor;
+      const textToInsert = this.dataToMarkdownTable(data);
+      const cursor = editor.getCursor();
+      editor.replaceRange("\n" + textToInsert + "\n", cursor);
+      const lines = textToInsert.split("\n").length;
+      editor.setCursor({ line: cursor.line + lines + 1, ch: 0 });
+      new import_obsidian5.Notice("Table inserted into note!");
+    } catch (error) {
+      new import_obsidian5.Notice("Failed to insert: " + error.message);
+    }
+  }
+  async exportTableData(tableName, data) {
+    try {
+      if (!data || data.length === 0) {
+        new import_obsidian5.Notice("Table is empty");
+        return;
+      }
+      const csv = this.jsonToCSV(data);
+      const exportFolder = this.plugin.settings.exportFolderName || "sql-exports";
+      if (!await this.plugin.app.vault.adapter.exists(exportFolder)) {
+        await this.plugin.app.vault.createFolder(exportFolder);
+      }
+      const fileName = `${exportFolder}/${tableName}_${Date.now()}.csv`;
+      await this.plugin.app.vault.create(fileName, csv);
+      new import_obsidian5.Notice(`Table exported to ${fileName}`);
+    } catch (error) {
+      console.error("CSV Export Error:", error);
+      new import_obsidian5.Notice(`Export failed: ${error.message}`);
+    }
+  }
+  jsonToCSV(data) {
+    if (data.length === 0) return "";
+    const keys = Object.keys(data[0]);
+    const header = keys.join(",") + "\n";
+    const rows = data.map(
+      (row) => keys.map((k) => {
+        const val = row[k];
+        if (val === null || val === void 0) return "";
+        const str = String(val);
+        if (str.match(/[,"]/)) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      }).join(",")
+    );
+    return header + rows.join("\n");
+  }
+  dataToMarkdownTable(rows) {
+    if (!rows || rows.length === 0) return "_No data_";
+    const keys = Object.keys(rows[0]);
+    let md = "| " + keys.join(" | ") + " |\n";
+    md += "| " + keys.map(() => "---").join(" | ") + " |\n";
+    rows.forEach((row) => {
+      const values = keys.map((k) => {
+        const val = row[k];
+        if (val === null || val === void 0) return "";
+        return String(val).replace(/\|/g, "\\|");
+      });
+      md += "| " + values.join(" | ") + " |\n";
+    });
+    return md;
   }
   formatBytes(bytes) {
     if (bytes === 0) return "0 B";
@@ -65309,6 +65576,7 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
     });
     const actions = card.createDiv({ cls: "mysql-db-card-actions" });
     new import_obsidian6.ButtonComponent(actions).setButtonText("Switch").onClick(() => this.openSwitcherModal());
+    new import_obsidian6.ButtonComponent(actions).setButtonText("Create").setIcon("plus").onClick(() => this.openCreateModal());
     const renameBtn = new import_obsidian6.ButtonComponent(actions).setButtonText("Rename").onClick(() => this.openRenameModal());
     if (activeDB === "dbo") {
       renameBtn.setDisabled(true);
@@ -65316,6 +65584,25 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
       renameBtn.buttonEl.classList.add("is-disabled-explicit");
     }
     new import_obsidian6.ButtonComponent(actions).setButtonText("Tables").setIcon("table").onClick(() => this.openTablesModal());
+    new import_obsidian6.ButtonComponent(actions).setButtonText("Export").setIcon("download").setTooltip("Export database structure and data to SQL file").onClick(async () => {
+      await this.exportDatabaseSQL(activeDB);
+    });
+    const importBtnContainer = actions.createDiv({ cls: "mysql-import-wrapper" });
+    const importInput = importBtnContainer.createEl("input", {
+      type: "file",
+      attr: { accept: ".sql" }
+    });
+    importInput.style.display = "none";
+    importInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        await this.importDatabaseSQL(file);
+        importInput.value = "";
+      }
+    };
+    new import_obsidian6.ButtonComponent(importBtnContainer).setButtonText("Import").setIcon("upload").setTooltip("Import database from SQL file").onClick(() => {
+      importInput.click();
+    });
     const separator = actions.createDiv({ cls: "mysql-action-separator" });
     new import_obsidian6.ButtonComponent(actions).setButtonText("Clear").setWarning().onClick(() => this.openClearConfirm());
   }
@@ -65347,6 +65634,10 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
   }
   openSwitcherModal() {
     const modal = new DatabaseSwitcherModal(this.app, this.plugin, () => this.display());
+    modal.open();
+  }
+  openCreateModal() {
+    const modal = new CreateDatabaseModal(this.app, this.plugin, () => this.display());
     modal.open();
   }
   openRenameModal() {
@@ -65394,6 +65685,42 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
       "Delete Database",
       "Cancel"
     ).open();
+  }
+  async exportDatabaseSQL(dbName) {
+    try {
+      const dbManager = this.plugin.dbManager;
+      const sql = await dbManager.exportDatabase(dbName);
+      const exportFolder = this.plugin.settings.exportFolderName || "sql-exports";
+      if (!await this.plugin.app.vault.adapter.exists(exportFolder)) {
+        await this.plugin.app.vault.createFolder(exportFolder);
+      }
+      const fileName = `${exportFolder}/${dbName}_backup_${Date.now()}.sql`;
+      await this.plugin.app.vault.create(fileName, sql);
+      new import_obsidian6.Notice(`Exported to ${fileName}`);
+    } catch (e) {
+      new import_obsidian6.Notice(`Export failed: ${e.message}`);
+      console.error(e);
+    }
+  }
+  async importDatabaseSQL(file) {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      var _a;
+      const sql = (_a = e.target) == null ? void 0 : _a.result;
+      if (typeof sql === "string") {
+        try {
+          new import_obsidian6.Notice("Importing database...");
+          const dbManager = this.plugin.dbManager;
+          await dbManager.importDatabase(sql);
+          new import_obsidian6.Notice("Database imported successfully!");
+          this.display();
+        } catch (err) {
+          new import_obsidian6.Notice(`Import failed: ${err.message}`);
+          console.error(err);
+        }
+      }
+    };
+    reader.readAsText(file);
   }
 };
 
@@ -65448,7 +65775,6 @@ var MySQLPlugin = class extends import_obsidian8.Plugin {
     this.activeDatabase = "dbo";
   }
   async onload() {
-    console.log("Loading MySQL Runner Plugin");
     await this.loadSettings();
     this.applyTheme();
     import_alasql6.default.options.autocommit = true;
@@ -65491,7 +65817,6 @@ var MySQLPlugin = class extends import_obsidian8.Plugin {
     );
   }
   async onunload() {
-    console.log("Unloading MySQL Runner Plugin");
     if (this.settings.autoSave) {
       await this.dbManager.save();
     }

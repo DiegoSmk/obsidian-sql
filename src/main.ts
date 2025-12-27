@@ -28,8 +28,6 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     private debouncedSave: Debouncer<[], Promise<void>>;
 
     async onload() {
-        console.log('Loading MySQL Runner Plugin');
-
         await this.loadSettings();
 
         // Apply theme
@@ -98,7 +96,6 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     }
 
     async onunload() {
-        console.log('Unloading MySQL Runner Plugin');
         if (this.settings.autoSave) {
             await this.dbManager.save();
         }

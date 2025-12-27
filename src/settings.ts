@@ -3,7 +3,7 @@ import { App, PluginSettingTab, Setting, Notice, setIcon, ButtonComponent } from
 import alasql from 'alasql';
 import { IMySQLPlugin } from './types';
 import { ConfirmationModal } from './ui/ConfirmationModal';
-import { DatabaseSwitcherModal, RenameDatabaseModal, DatabaseTablesModal } from './ui/DatabaseModals';
+import { DatabaseSwitcherModal, RenameDatabaseModal, DatabaseTablesModal, CreateDatabaseModal } from './ui/DatabaseModals';
 
 export class MySQLSettingTab extends PluginSettingTab {
     plugin: IMySQLPlugin;
@@ -246,6 +246,11 @@ export class MySQLSettingTab extends PluginSettingTab {
             .setButtonText("Switch")
             .onClick(() => this.openSwitcherModal());
 
+        new ButtonComponent(actions)
+            .setButtonText("Create")
+            .setIcon("plus")
+            .onClick(() => this.openCreateModal());
+
         const renameBtn = new ButtonComponent(actions)
             .setButtonText("Rename")
             .onClick(() => this.openRenameModal());
@@ -262,6 +267,39 @@ export class MySQLSettingTab extends PluginSettingTab {
             .setIcon("table")
             .onClick(() => this.openTablesModal());
 
+        // New: Export SQL
+        new ButtonComponent(actions)
+            .setButtonText("Export")
+            .setIcon("download")
+            .setTooltip("Export database structure and data to SQL file")
+            .onClick(async () => {
+                await this.exportDatabaseSQL(activeDB);
+            });
+
+        // New: Import SQL (Hidden Input trick)
+        const importBtnContainer = actions.createDiv({ cls: 'mysql-import-wrapper' }); // Wrapper if styling needed
+        const importInput = importBtnContainer.createEl('input', {
+            type: 'file',
+            attr: { accept: '.sql' }
+        });
+        importInput.style.display = 'none';
+        importInput.onchange = async (e: any) => {
+            const file = e.target.files[0];
+            if (file) {
+                await this.importDatabaseSQL(file);
+                // Reset input
+                importInput.value = '';
+            }
+        };
+
+        new ButtonComponent(importBtnContainer)
+            .setButtonText("Import")
+            .setIcon("upload")
+            .setTooltip("Import database from SQL file")
+            .onClick(() => {
+                importInput.click();
+            });
+
         // Secondary / Destructive
         const separator = actions.createDiv({ cls: 'mysql-action-separator' }); // CSS to push items to right if flex-grow
 
@@ -269,8 +307,6 @@ export class MySQLSettingTab extends PluginSettingTab {
             .setButtonText("Clear")
             .setWarning()
             .onClick(() => this.openClearConfirm());
-
-        // Delete button removed from here as per v0.3.8 requirements
     }
 
     private addStat(parent: HTMLElement, label: string, value: string, iconName?: string): void {
@@ -304,6 +340,11 @@ export class MySQLSettingTab extends PluginSettingTab {
 
     private openSwitcherModal(): void {
         const modal = new DatabaseSwitcherModal(this.app, this.plugin, () => this.display());
+        modal.open();
+    }
+
+    private openCreateModal(): void {
+        const modal = new CreateDatabaseModal(this.app, this.plugin, () => this.display());
         modal.open();
     }
 
@@ -355,5 +396,44 @@ export class MySQLSettingTab extends PluginSettingTab {
             "Delete Database",
             "Cancel"
         ).open();
+    }
+
+    private async exportDatabaseSQL(dbName: string): Promise<void> {
+        try {
+            const dbManager = (this.plugin as any).dbManager;
+            const sql = await dbManager.exportDatabase(dbName);
+
+            const exportFolder = this.plugin.settings.exportFolderName || 'sql-exports';
+            if (!(await this.plugin.app.vault.adapter.exists(exportFolder))) {
+                await this.plugin.app.vault.createFolder(exportFolder);
+            }
+
+            const fileName = `${exportFolder}/${dbName}_backup_${Date.now()}.sql`;
+            await this.plugin.app.vault.create(fileName, sql);
+            new Notice(`Exported to ${fileName}`);
+        } catch (e) {
+            new Notice(`Export failed: ${e.message}`);
+            console.error(e);
+        }
+    }
+
+    private async importDatabaseSQL(file: File): Promise<void> {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            const sql = e.target?.result;
+            if (typeof sql === 'string') {
+                try {
+                    new Notice("Importing database...");
+                    const dbManager = (this.plugin as any).dbManager;
+                    await dbManager.importDatabase(sql);
+                    new Notice("Database imported successfully!");
+                    this.display();
+                } catch (err) {
+                    new Notice(`Import failed: ${err.message}`);
+                    console.error(err);
+                }
+            }
+        };
+        reader.readAsText(file);
     }
 }

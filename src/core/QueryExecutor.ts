@@ -92,7 +92,6 @@ export class QueryExecutor {
                     const useMatch = stmt.match(/^\s*USE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$/i);
                     if (useMatch) {
                         const newDB = useMatch[1];
-                        console.log(`[QueryExecutor] 🎯 Intercepted USE ${newDB} - managing context ourselves`);
 
                         // Verify database exists
                         if (!alasql.databases[newDB]) {
@@ -102,30 +101,18 @@ export class QueryExecutor {
                         currentDB = newDB;
                         // Return a success message instead of executing USE
                         results.push(1);
-                        console.log(`[QueryExecutor] Current database context: ${currentDB}`);
                         continue;
                     }
 
                     // AUTO-PREFIX table names with current database if not already prefixed
                     stmt = this.prefixTablesWithDatabase(stmt, currentDB);
 
-                    console.log(`[QueryExecutor] Executing [${i + 1}/${statements.length}] in context '${currentDB}':`, stmt.substring(0, 80));
-
                     const result = await this.executeWithTimeout(stmt, params, 30000, options.signal);
                     results.push(result);
 
                     // Debug: Check which tables exist after execution
                     if (upperStmt.startsWith('CREATE TABLE') || upperStmt.startsWith('DROP TABLE')) {
-                        const allDBs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
-                        console.log(`[QueryExecutor] After ${upperStmt.substring(0, 20)}... - Database state:`);
-                        for (const db of allDBs) {
-                            try {
-                                const tables = alasql(`SHOW TABLES FROM ${db}`) as any[];
-                                console.log(`  └─ ${db}: [${tables.map(t => t.tableid).join(', ')}]`);
-                            } catch (e) {
-                                console.log(`  └─ ${db}: error`);
-                            }
-                        }
+                        // Database state tracking removed for cleaner logs
                     }
                 }
 
@@ -154,7 +141,6 @@ export class QueryExecutor {
                     throw new Error(`Database '${newDB}' does not exist`);
                 }
                 // We don't actually execute USE, we just track it
-                console.log(`[QueryExecutor] 🎯 Intercepted USE ${newDB}`);
                 return {
                     success: true,
                     data: [{ type: 'message', data: null, message: `Database changed to '${newDB}'` }],
@@ -235,7 +221,6 @@ export class QueryExecutor {
         sql = sql.replace(
             /CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
             (match, ifNotExists, tableName) => {
-                console.log(`[QueryExecutor] 🔧 Prefixing CREATE TABLE: ${database}.${tableName}`);
                 return `CREATE TABLE ${ifNotExists || ''}${database}.${tableName}`;
             }
         );
@@ -244,7 +229,6 @@ export class QueryExecutor {
         sql = sql.replace(
             /INSERT\s+INTO\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
             (match, tableName) => {
-                console.log(`[QueryExecutor] 🔧 Prefixing INSERT INTO: ${database}.${tableName}`);
                 return `INSERT INTO ${database}.${tableName}`;
             }
         );
@@ -253,7 +237,6 @@ export class QueryExecutor {
         sql = sql.replace(
             /UPDATE\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)\s+SET/gi,
             (match, tableName) => {
-                console.log(`[QueryExecutor] 🔧 Prefixing UPDATE: ${database}.${tableName}`);
                 return `UPDATE ${database}.${tableName} SET`;
             }
         );
@@ -262,7 +245,6 @@ export class QueryExecutor {
         sql = sql.replace(
             /DELETE\s+FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
             (match, tableName) => {
-                console.log(`[QueryExecutor] 🔧 Prefixing DELETE FROM: ${database}.${tableName}`);
                 return `DELETE FROM ${database}.${tableName}`;
             }
         );
@@ -275,7 +257,6 @@ export class QueryExecutor {
                 if (['SELECT', 'VALUES', '('].some(kw => tableName.toUpperCase().includes(kw))) {
                     return match;
                 }
-                console.log(`[QueryExecutor] 🔧 Prefixing FROM: ${database}.${tableName}`);
                 return `FROM ${database}.${tableName}`;
             }
         );
@@ -284,7 +265,6 @@ export class QueryExecutor {
         sql = sql.replace(
             /JOIN\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
             (match, tableName) => {
-                console.log(`[QueryExecutor] 🔧 Prefixing JOIN: ${database}.${tableName}`);
                 return `JOIN ${database}.${tableName}`;
             }
         );

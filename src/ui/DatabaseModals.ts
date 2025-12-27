@@ -178,6 +178,67 @@ export class RenameDatabaseModal extends Modal {
     }
 }
 
+export class CreateDatabaseModal extends Modal {
+    constructor(app: App, private plugin: IMySQLPlugin, private onSuccess: () => void) {
+        super(app);
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+        contentEl.addClass('mysql-create-db-modal'); // Reusing or adding class
+        contentEl.createEl('h2', { text: "Create New Database" });
+
+        const input = new TextComponent(contentEl)
+            .setPlaceholder("Database name (e.g., my_project)")
+            .setValue("");
+
+        input.inputEl.style.width = '100%';
+        input.inputEl.style.marginBottom = '20px';
+
+        const buttons = contentEl.createDiv({ cls: 'mysql-modal-footer' });
+
+        new ButtonComponent(buttons)
+            .setButtonText("Cancel")
+            .onClick(() => this.close());
+
+        const confirmBtn = new ButtonComponent(buttons)
+            .setButtonText("Create")
+            .setCta()
+            .onClick(async () => {
+                const dbName = input.getValue().trim();
+                if (!dbName) {
+                    new Notice("Database name cannot be empty.");
+                    return;
+                }
+
+                try {
+                    const dbManager = (this.plugin as any).dbManager;
+                    await dbManager.createDatabase(dbName);
+                    new Notice(`Database "${dbName}" created.`);
+
+                    // Automatically switch to it?
+                    // Usually yes, user creates DB to use it.
+                    this.plugin.activeDatabase = dbName;
+                    await dbManager.save();
+                    new Notice(`Switched to "${dbName}"`);
+
+                    this.onSuccess();
+                    this.close();
+                } catch (e) {
+                    new Notice(`Error: ${e.message}`);
+                }
+            });
+
+        // Focus input
+        setTimeout(() => input.inputEl.focus(), 50);
+    }
+
+    onClose() {
+        this.contentEl.empty();
+    }
+}
+
 export class DatabaseTablesModal extends Modal {
     constructor(app: App, private plugin: IMySQLPlugin, private dbName: string) {
         super(app);
@@ -235,7 +296,7 @@ export class DatabaseTablesModal extends Modal {
 
         // Header with improved button layout
         const header = contentEl.createDiv({ cls: 'mysql-table-detail-header' });
-        
+
         const left = header.createDiv({ cls: 'mysql-table-detail-title' });
         left.style.display = 'flex';
         left.style.alignItems = 'center';
@@ -251,7 +312,7 @@ export class DatabaseTablesModal extends Modal {
 
         // Actions on the right with better spacing
         const actions = header.createDiv({ cls: 'mysql-table-detail-actions' });
-        
+
         // Copy button
         new ButtonComponent(actions)
             .setIcon("copy")
@@ -260,7 +321,7 @@ export class DatabaseTablesModal extends Modal {
                 try {
                     const query = `SELECT * FROM ${this.dbName}.${tableName}`;
                     const result = await QueryExecutor.execute(query);
-                    
+
                     if (result.success && result.data && result.data[0] && result.data[0].data) {
                         await this.copyToClipboard(result.data[0].data);
                     } else {
@@ -296,7 +357,7 @@ export class DatabaseTablesModal extends Modal {
                 try {
                     const query = `SELECT * FROM ${this.dbName}.${tableName}`;
                     const result = await QueryExecutor.execute(query);
-                    
+
                     if (result.success && result.data && result.data[0] && result.data[0].data) {
                         await this.insertIntoNote(result.data[0].data);
                     } else {
@@ -306,7 +367,7 @@ export class DatabaseTablesModal extends Modal {
                     new Notice(`Insert failed: ${e.message}`);
                 }
             });
-        
+
         // Export button with correct icon
         new ButtonComponent(actions)
             .setIcon("download")
@@ -316,7 +377,7 @@ export class DatabaseTablesModal extends Modal {
                     // Get the table data and export manually since CSVManager doesn't handle database context
                     const query = `SELECT * FROM ${this.dbName}.${tableName}`;
                     const result = await QueryExecutor.execute(query);
-                    
+
                     if (result.success && result.data && result.data[0] && result.data[0].data) {
                         await this.exportTableData(tableName, result.data[0].data);
                     } else {
@@ -375,7 +436,7 @@ export class DatabaseTablesModal extends Modal {
         if (data.type === 'table' && data.data && data.data.length > 0) {
             // Create table directly without the result wrapper styling
             const tableWrapper = container.createDiv({ cls: 'mysql-direct-table-wrapper' });
-            
+
             const keys = Object.keys(data.data[0]);
             const table = tableWrapper.createEl("table", { cls: "mysql-table mysql-direct-table" });
 
@@ -405,17 +466,17 @@ export class DatabaseTablesModal extends Modal {
 
             if (data.data.length > batchSize) {
                 const controls = tableWrapper.createEl("div", { cls: "mysql-direct-pagination" });
-                
-                const statusSpan = controls.createEl("span", { 
+
+                const statusSpan = controls.createEl("span", {
                     text: `Showing ${currentCount} of ${data.data.length} rows`,
                     cls: "mysql-pagination-status"
                 });
 
-                const showAllBtn = controls.createEl("button", { 
+                const showAllBtn = controls.createEl("button", {
                     text: "Show All Rows",
                     cls: "mysql-pagination-btn"
                 });
-                
+
                 showAllBtn.onclick = () => {
                     const remaining = data.data.slice(currentCount);
                     renderBatch(remaining);
@@ -457,7 +518,7 @@ export class DatabaseTablesModal extends Modal {
         try {
             // Dynamic import to avoid bundling issues
             const html2canvas = (await import('html2canvas')).default;
-            
+
             const canvas = await html2canvas(element, {
                 backgroundColor: getComputedStyle(element).backgroundColor || '#ffffff',
                 scale: 2,
