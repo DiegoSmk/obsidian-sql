@@ -58,7 +58,7 @@ export class DatabaseManager {
     }
 
     private async createSnapshot(): Promise<DatabaseSnapshot> {
-        const activeDatabase = alasql.useid || 'alasql';
+        const activeDatabase = this.plugin.activeDatabase || 'dbo';
         const databases = Object.keys(alasql.databases);
         const snapshot: DatabaseSnapshot = {
             version: 1,
