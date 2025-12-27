@@ -59,7 +59,8 @@ export class DatabaseManager {
 
     private async createSnapshot(): Promise<DatabaseSnapshot> {
         const activeDatabase = this.plugin.activeDatabase || 'dbo';
-        const databases = Object.keys(alasql.databases);
+        // Filter out default alasql database to prevent duplication/pollution
+        const databases = Object.keys(alasql.databases).filter(d => d !== 'alasql');
         const snapshot: DatabaseSnapshot = {
             version: 1,
             createdAt: Date.now(),
@@ -129,9 +130,7 @@ export class DatabaseManager {
             }
         }
 
-        if (alasql.databases[activeDatabase]) {
-            alasql(`USE ${activeDatabase}`);
-        }
+
 
         return snapshot;
     }
@@ -150,6 +149,8 @@ export class DatabaseManager {
             let restoredTablesCount = 0;
 
             for (const [dbName, content] of Object.entries(data.databases)) {
+                if (dbName === 'alasql') continue; // Skip default/system db
+
                 const db = content as any;
 
                 if (!db.tables && !db.schema) continue;
