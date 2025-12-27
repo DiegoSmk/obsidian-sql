@@ -32,6 +32,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
         await this.loadSettings();
 
+        // Apply theme
+        this.applyTheme();
+
         // Initialize alasql
         alasql.options.autocommit = true;
         alasql.options.mysql = true;
@@ -115,6 +118,12 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 true
             );
         }
+
+        this.applyTheme();
+    }
+
+    applyTheme() {
+        document.body.style.setProperty('--mysql-accent-purple', this.settings.themeColor);
     }
 
     // ========================================================================

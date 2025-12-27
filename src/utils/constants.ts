@@ -6,7 +6,8 @@ export const DEFAULT_SETTINGS: MySQLSettings = {
     batchSize: 100,
     autoSaveDelay: 2000,
     safeMode: false,
-    snapshotRowLimit: 10000
+    snapshotRowLimit: 10000,
+    themeColor: '#9d7cd8'
 };
 
 export const SQL_CLEANUP_PATTERNS = [

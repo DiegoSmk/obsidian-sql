@@ -61,10 +61,49 @@
 }
 
 .mysql-modal-btn-confirm:hover {
-    filter: brightness(0.9);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    filter: saturate(1.4);
 }
 
 /* Hide original modal header if needed, but we used contentEl */
 .mysql-confirmation-modal .modal-title {
     display: none;
+}
+
+/* Settings Menu Refinements */
+.mysql-settings-modal .setting-item-control button {
+    transition: all var(--mysql-transition-fast);
+}
+
+.mysql-settings-modal .setting-item-control button:hover {
+    border-color: var(--mysql-accent-purple) !important;
+    color: var(--mysql-accent-purple) !important;
+    transform: translateY(-1px);
+    background-color: var(--background-modifier-hover) !important;
+    filter: saturate(1.4);
+}
+
+.mysql-settings-modal .setting-item-control button.mod-warning:hover {
+    border-color: var(--color-red) !important;
+    color: var(--color-red) !important;
+    filter: saturate(1.6);
+}
+
+.mysql-settings-modal .setting-item-control button:active {
+    transform: translateY(0);
+}
+
+/* Color Circle Feedback */
+.mysql-color-circle {
+    transition: all var(--mysql-transition-fast);
+}
+
+.mysql-color-circle:hover {
+    filter: saturate(1.5);
+    transform: scale(1.1);
+}
+
+.mysql-color-circle:active {
+    transform: scale(0.95);
 }

@@ -5,6 +5,7 @@ export interface MySQLSettings {
     autoSaveDelay: number;
     safeMode: boolean;
     snapshotRowLimit: number;
+    themeColor: string;
 }
 
 export interface DatabaseSnapshot {
