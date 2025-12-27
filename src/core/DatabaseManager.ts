@@ -96,7 +96,7 @@ export class DatabaseManager {
                             // Method 1: Try stored create sql if alasql keeps it (unlikely but possible)
                             // Method 2: Generate from data structure
                             if (rows.length > 0) {
-                                const firstRow = rows[0];
+                                const firstRow = rows[0] as any;
                                 const columns = Object.keys(firstRow).map(col => {
                                     const value = firstRow[col];
                                     let type = 'VARCHAR';

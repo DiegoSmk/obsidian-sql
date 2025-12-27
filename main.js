@@ -64375,16 +64375,98 @@ var QueryExecutor = class {
     const monitor = new PerformanceMonitor();
     monitor.start();
     try {
-      if (options.activeDatabase && import_alasql3.default.databases[options.activeDatabase]) {
-        await import_alasql3.default.promise(`USE ${options.activeDatabase}`);
-      }
       let cleanQuery = SQLSanitizer.clean(query);
+      const statements = cleanQuery.split(";").map((s) => s.trim()).filter((s) => s.length > 0);
+      let currentDB = options.activeDatabase || "dbo";
+      if (statements.length > 1) {
+        const results = [];
+        for (let i = 0; i < statements.length; i++) {
+          let stmt = statements[i];
+          const upperStmt = stmt.toUpperCase().trim();
+          const SECURITY_BLOCKED2 = [
+            /\bDROP\s+DATABASE\b/i,
+            /\bSHUTDOWN\b/i,
+            /\bALTER\s+SYSTEM\b/i
+          ];
+          for (const pattern of SECURITY_BLOCKED2) {
+            if (pattern.test(stmt)) {
+              throw new Error(`Blocked SQL command: ${pattern.source.replace("\\s+", " ")}`);
+            }
+          }
+          if (options.safeMode) {
+            const BLOCKED_IN_SAFE_MODE = [
+              /\bDROP\s+TABLE\b/i,
+              /\bTRUNCATE\s+TABLE\b/i,
+              /\bTRUNCATE\b/i,
+              /\bALTER\s+TABLE\b/i
+            ];
+            for (const pattern of BLOCKED_IN_SAFE_MODE) {
+              if (pattern.test(stmt)) {
+                throw new Error(`Safe Mode Block: Structural destruction (${pattern.source.replace("\\s+", " ")}) is disabled.`);
+              }
+            }
+          }
+          const useMatch2 = stmt.match(/^\s*USE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$/i);
+          if (useMatch2) {
+            const newDB = useMatch2[1];
+            console.log(`[QueryExecutor] \u{1F3AF} Intercepted USE ${newDB} - managing context ourselves`);
+            if (!import_alasql3.default.databases[newDB]) {
+              throw new Error(`Database '${newDB}' does not exist`);
+            }
+            currentDB = newDB;
+            results.push(1);
+            console.log(`[QueryExecutor] Current database context: ${currentDB}`);
+            continue;
+          }
+          stmt = this.prefixTablesWithDatabase(stmt, currentDB);
+          console.log(`[QueryExecutor] Executing [${i + 1}/${statements.length}] in context '${currentDB}':`, stmt.substring(0, 80));
+          const result = await this.executeWithTimeout(stmt, params, 3e4, options.signal);
+          results.push(result);
+          if (upperStmt.startsWith("CREATE TABLE") || upperStmt.startsWith("DROP TABLE")) {
+            const allDBs = Object.keys(import_alasql3.default.databases).filter((d) => d !== "alasql");
+            console.log(`[QueryExecutor] After ${upperStmt.substring(0, 20)}... - Database state:`);
+            for (const db of allDBs) {
+              try {
+                const tables = (0, import_alasql3.default)(`SHOW TABLES FROM ${db}`);
+                console.log(`  \u2514\u2500 ${db}: [${tables.map((t) => t.tableid).join(", ")}]`);
+              } catch (e) {
+                console.log(`  \u2514\u2500 ${db}: error`);
+              }
+            }
+          }
+        }
+        const normalizedData2 = this.normalizeResult(results);
+        Logger.info(`Batch query executed (${statements.length} statements)`, {
+          executionTime: monitor.end(),
+          finalDatabase: currentDB
+        });
+        return {
+          success: true,
+          data: normalizedData2,
+          executionTime: monitor.end(),
+          activeDatabase: currentDB
+        };
+      }
       const trimmed = cleanQuery.trim().replace(/;$/, "");
+      const useMatch = trimmed.match(/^\s*USE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$/i);
+      if (useMatch) {
+        const newDB = useMatch[1];
+        if (!import_alasql3.default.databases[newDB]) {
+          throw new Error(`Database '${newDB}' does not exist`);
+        }
+        console.log(`[QueryExecutor] \u{1F3AF} Intercepted USE ${newDB}`);
+        return {
+          success: true,
+          data: [{ type: "message", data: null, message: `Database changed to '${newDB}'` }],
+          executionTime: monitor.end(),
+          activeDatabase: newDB
+        };
+      }
       const looksLikeSingleSelect = trimmed.toUpperCase().startsWith("SELECT") && !trimmed.includes(";") && !trimmed.toUpperCase().includes("LIMIT");
       if (looksLikeSingleSelect) {
         cleanQuery = trimmed + " LIMIT 1000;";
       }
-      const upperQuery = cleanQuery.toUpperCase();
+      cleanQuery = this.prefixTablesWithDatabase(cleanQuery, currentDB);
       if (options.safeMode) {
         const BLOCKED_IN_SAFE_MODE = [
           /\bDROP\s+TABLE\b/i,
@@ -64414,7 +64496,8 @@ var QueryExecutor = class {
       return {
         success: true,
         data: normalizedData,
-        executionTime: monitor.end()
+        executionTime: monitor.end(),
+        activeDatabase: currentDB
       };
     } catch (error) {
       Logger.error("Query execution failed", error);
@@ -64425,16 +64508,68 @@ var QueryExecutor = class {
       };
     }
   }
+  /**
+   * Automatically prefix table names with database name to avoid AlaSQL context bugs
+   */
+  static prefixTablesWithDatabase(sql, database) {
+    if (!database || database === "alasql") return sql;
+    sql = sql.replace(
+      /CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+      (match, ifNotExists, tableName) => {
+        console.log(`[QueryExecutor] \u{1F527} Prefixing CREATE TABLE: ${database}.${tableName}`);
+        return `CREATE TABLE ${ifNotExists || ""}${database}.${tableName}`;
+      }
+    );
+    sql = sql.replace(
+      /INSERT\s+INTO\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+      (match, tableName) => {
+        console.log(`[QueryExecutor] \u{1F527} Prefixing INSERT INTO: ${database}.${tableName}`);
+        return `INSERT INTO ${database}.${tableName}`;
+      }
+    );
+    sql = sql.replace(
+      /UPDATE\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)\s+SET/gi,
+      (match, tableName) => {
+        console.log(`[QueryExecutor] \u{1F527} Prefixing UPDATE: ${database}.${tableName}`);
+        return `UPDATE ${database}.${tableName} SET`;
+      }
+    );
+    sql = sql.replace(
+      /DELETE\s+FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+      (match, tableName) => {
+        console.log(`[QueryExecutor] \u{1F527} Prefixing DELETE FROM: ${database}.${tableName}`);
+        return `DELETE FROM ${database}.${tableName}`;
+      }
+    );
+    sql = sql.replace(
+      /FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+      (match, tableName) => {
+        if (["SELECT", "VALUES", "("].some((kw) => tableName.toUpperCase().includes(kw))) {
+          return match;
+        }
+        console.log(`[QueryExecutor] \u{1F527} Prefixing FROM: ${database}.${tableName}`);
+        return `FROM ${database}.${tableName}`;
+      }
+    );
+    sql = sql.replace(
+      /JOIN\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+      (match, tableName) => {
+        console.log(`[QueryExecutor] \u{1F527} Prefixing JOIN: ${database}.${tableName}`);
+        return `JOIN ${database}.${tableName}`;
+      }
+    );
+    return sql;
+  }
   static normalizeResult(raw) {
     if (raw === void 0 || raw === null) return [];
-    if (Array.isArray(raw) && raw.some((r) => Array.isArray(r))) {
+    if (Array.isArray(raw) && raw.some((r) => Array.isArray(r) || typeof r === "number")) {
       return raw.map((res) => this.createResultSet(res));
     }
     return [this.createResultSet(raw)];
   }
   static createResultSet(res) {
     if (res === void 0 || res === null) {
-      return { type: "message", data: null, message: "Command executed" };
+      return { type: "message", data: null, message: "Command executed successfully" };
     }
     if (Array.isArray(res)) {
       if (res.length === 0) {
@@ -65500,13 +65635,8 @@ var MySQLPlugin = class extends import_obsidian8.Plugin {
       });
       if (cancelBtn) cancelBtn.remove();
       ResultRenderer.render(result, container, this.app, this);
-      if (import_alasql6.default.useid) {
-        this.activeDatabase = import_alasql6.default.useid;
-      } else {
-        if (import_alasql6.default.databases["dbo"]) {
-          this.activeDatabase = "dbo";
-          (0, import_alasql6.default)("USE dbo");
-        }
+      if (result.activeDatabase) {
+        this.activeDatabase = result.activeDatabase;
       }
       if (footer && result.executionTime !== void 0) {
         footer.updateTime(result.executionTime);

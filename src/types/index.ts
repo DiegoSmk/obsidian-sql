@@ -43,6 +43,7 @@ export interface QueryResult {
     data?: ResultSet[];
     error?: string;
     executionTime?: number;
+    activeDatabase?: string;
 }
 
 import { Plugin } from 'obsidian';

@@ -327,18 +327,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             // Render Result
             ResultRenderer.render(result, container, this.app, this);
 
-            // Sync active database safe check
-            // @ts-ignore
-            if (alasql.useid) {
-                // @ts-ignore
-                this.activeDatabase = alasql.useid;
-            } else {
-                // If context is lost (e.g. DROP DATABASE current), fallback to dbo
-                // @ts-ignore
-                if (alasql.databases['dbo']) {
-                    this.activeDatabase = 'dbo';
-                    alasql('USE dbo');
-                }
+            // Sync active database from execution result
+            if (result.activeDatabase) {
+                this.activeDatabase = result.activeDatabase;
             }
 
             // Update Footer Time
