@@ -247,6 +247,11 @@ export class ResultRenderer {
     }
 
     private static renderTable(rows: any[], container: HTMLElement, batchSize: number = 100): void {
+        if (!rows || rows.length === 0) {
+            container.createEl("p", { text: "No data found", cls: "mysql-empty-state" });
+            return;
+        }
+
         const keys = Object.keys(rows[0]);
         const table = container.createEl("table", { cls: "mysql-table" });
 
@@ -275,14 +280,40 @@ export class ResultRenderer {
 
         if (rows.length > batchSize) {
             const controls = container.createEl("div", { cls: "mysql-pagination" });
-            controls.createEl("span", { text: `Shows ${currentCount} / ${rows.length} rows ` });
+            controls.style.padding = "12px 16px";
+            controls.style.backgroundColor = "var(--background-secondary-alt)";
+            controls.style.borderTop = "1px solid var(--background-modifier-border)";
+            controls.style.display = "flex";
+            controls.style.alignItems = "center";
+            controls.style.gap = "12px";
+            controls.style.fontSize = "0.85em";
+            
+            const statusSpan = controls.createEl("span", { 
+                text: `Showing ${currentCount} of ${rows.length} rows`,
+                cls: "mysql-pagination-status"
+            });
+            statusSpan.style.color = "var(--text-muted)";
+            statusSpan.style.fontWeight = "600";
+            statusSpan.style.marginRight = "auto";
 
-            const showAllBtn = controls.createEl("button", { text: "Show All" });
+            const showAllBtn = controls.createEl("button", { 
+                text: "Show All Rows",
+                cls: "mysql-pagination-btn"
+            });
+            showAllBtn.style.padding = "6px 12px";
+            showAllBtn.style.backgroundColor = "var(--interactive-accent)";
+            showAllBtn.style.color = "white";
+            showAllBtn.style.border = "none";
+            showAllBtn.style.borderRadius = "4px";
+            showAllBtn.style.cursor = "pointer";
+            showAllBtn.style.fontSize = "0.8em";
+            showAllBtn.style.fontWeight = "600";
+            
             showAllBtn.onclick = () => {
                 const remaining = rows.slice(currentCount);
                 renderBatch(remaining);
                 showAllBtn.remove();
-                controls.querySelector("span")!.setText(`Shows ${rows.length} / ${rows.length} rows `);
+                statusSpan.setText(`Showing all ${rows.length} rows`);
             };
         }
     }

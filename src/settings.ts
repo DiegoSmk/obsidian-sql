@@ -1,6 +1,9 @@
-import { App, PluginSettingTab, Setting, Notice } from 'obsidian';
+import { App, PluginSettingTab, Setting, Notice, setIcon, ButtonComponent } from 'obsidian';
+// @ts-ignore
+import alasql from 'alasql';
 import { IMySQLPlugin } from './types';
 import { ConfirmationModal } from './ui/ConfirmationModal';
+import { DatabaseSwitcherModal, RenameDatabaseModal, DatabaseTablesModal } from './ui/DatabaseModals';
 
 export class MySQLSettingTab extends PluginSettingTab {
     plugin: IMySQLPlugin;
@@ -29,9 +32,12 @@ export class MySQLSettingTab extends PluginSettingTab {
         const title = header.createEl('h2', { text: 'SQL Notebook' });
         title.style.margin = '0';
 
+        // --- Database Management Section (Now at Top) ---
+        this.createSectionHeader(containerEl, 'Database Management', 'database');
+        this.renderActiveDatabaseCard(containerEl);
 
         // --- Appearance Section ---
-        containerEl.createEl('h3', { text: 'Appearance' });
+        this.createSectionHeader(containerEl, 'Appearance', 'palette');
 
         const colors = [
             { name: 'Purple (Default)', value: '#9d7cd8' },
@@ -78,7 +84,7 @@ export class MySQLSettingTab extends PluginSettingTab {
             });
 
         // --- General Section ---
-        containerEl.createEl('h3', { text: 'General' });
+        this.createSectionHeader(containerEl, 'General', 'sliders');
 
         new Setting(containerEl)
             .setName('Auto-save')
@@ -116,7 +122,7 @@ export class MySQLSettingTab extends PluginSettingTab {
                 }));
 
         // --- Data & Security Section ---
-        containerEl.createEl('h3', { text: 'Data & Security' });
+        this.createSectionHeader(containerEl, 'Data & Security', 'shield');
 
         new Setting(containerEl)
             .setName('Safe Mode')
@@ -185,5 +191,169 @@ export class MySQLSettingTab extends PluginSettingTab {
                     ).open();
                 });
             });
+    }
+
+    private createSectionHeader(container: HTMLElement, text: string, icon: string) {
+        const header = container.createDiv({ cls: 'mysql-settings-section-header' });
+        setIcon(header.createDiv({ cls: 'mysql-section-icon' }), icon);
+        header.createEl('h3', { text });
+    }
+
+    private renderActiveDatabaseCard(containerEl: HTMLElement): void {
+        const activeDB = this.plugin.activeDatabase;
+        const dbManager = (this.plugin as any).dbManager;
+        const stats = dbManager.getDatabaseStats(activeDB);
+
+        // Calculate total databases (excluding alasql system DB)
+        // @ts-ignore
+        const totalDBs = Object.keys(alasql.databases).filter(d => d !== 'alasql').length;
+
+        const card = containerEl.createDiv({ cls: 'mysql-db-card' });
+
+        // Header
+        const header = card.createDiv({ cls: 'mysql-db-card-header' });
+
+        // Title Row
+        const titleRow = header.createDiv({ cls: 'mysql-db-card-title-row' });
+        setIcon(titleRow.createDiv({ cls: 'mysql-db-card-icon' }), "database");
+        titleRow.createEl('span', { text: activeDB, cls: 'mysql-db-card-name' });
+
+        // System Badge
+        if (activeDB === 'alasql') {
+            titleRow.createEl('span', { text: 'SYSTEM', cls: 'mysql-db-system-badge' });
+        }
+
+        // Database Count Badge (Right Aligned)
+        const countBadge = header.createDiv({ cls: 'mysql-db-count-badge' });
+        countBadge.createSpan({ text: `${totalDBs} Databases` });
+
+        // Stats Grid
+        const statsGrid = card.createDiv({ cls: 'mysql-db-stats-grid' });
+        this.addStat(statsGrid, "Tables", stats.tables.toString(), "table");
+        this.addStat(statsGrid, "Rows", stats.rows.toLocaleString(), "list");
+        this.addStat(statsGrid, "Size", this.formatBytes(stats.sizeBytes), "hard-drive");
+
+        const lastMod = containerEl.createDiv({
+            text: `Last updated: ${this.timeAgo(stats.lastUpdated)}`,
+            cls: 'mysql-db-card-last-updated'
+        });
+
+        // Footer / Actions
+        const actions = card.createDiv({ cls: 'mysql-db-card-actions' });
+
+        // Primary Actions
+        new ButtonComponent(actions)
+            .setButtonText("Switch")
+            .onClick(() => this.openSwitcherModal());
+
+        const renameBtn = new ButtonComponent(actions)
+            .setButtonText("Rename")
+            .onClick(() => this.openRenameModal());
+
+        if (activeDB === 'dbo') {
+            renameBtn.setDisabled(true);
+            renameBtn.setTooltip("Default database cannot be renamed");
+            renameBtn.buttonEl.classList.add('is-disabled-explicit');
+        }
+
+        // New: View Tables
+        new ButtonComponent(actions)
+            .setButtonText("Tables")
+            .setIcon("table")
+            .onClick(() => this.openTablesModal());
+
+        // Secondary / Destructive
+        const separator = actions.createDiv({ cls: 'mysql-action-separator' }); // CSS to push items to right if flex-grow
+
+        new ButtonComponent(actions)
+            .setButtonText("Clear")
+            .setWarning()
+            .onClick(() => this.openClearConfirm());
+
+        // Delete button removed from here as per v0.3.8 requirements
+    }
+
+    private addStat(parent: HTMLElement, label: string, value: string, iconName?: string): void {
+        const item = parent.createDiv({ cls: 'mysql-db-stat-item' });
+        if (iconName) {
+            const icon = item.createDiv({ cls: 'mysql-db-stat-icon' });
+            setIcon(icon, iconName);
+        }
+        item.createDiv({ text: label, cls: 'mysql-db-stat-label' });
+        item.createDiv({ text: value, cls: 'mysql-db-stat-value' });
+    }
+
+    private formatBytes(bytes: number): string {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    private timeAgo(timestamp: number): string {
+        if (!timestamp) return "Never";
+        const seconds = Math.floor((Date.now() - timestamp) / 1000);
+        if (seconds < 60) return "Just now";
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return `${minutes} min ago`;
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return `${hours}h ago`;
+        return new Date(timestamp).toLocaleDateString();
+    }
+
+    private openSwitcherModal(): void {
+        const modal = new DatabaseSwitcherModal(this.app, this.plugin, () => this.display());
+        modal.open();
+    }
+
+    private openRenameModal(): void {
+        const modal = new RenameDatabaseModal(this.app, this.plugin, this.plugin.activeDatabase, () => this.display());
+        modal.open();
+    }
+
+    private openTablesModal(): void {
+        const modal = new DatabaseTablesModal(this.app, this.plugin, this.plugin.activeDatabase);
+        modal.open();
+    }
+
+    private openClearConfirm(): void {
+        const activeDB = this.plugin.activeDatabase;
+        new ConfirmationModal(
+            this.app,
+            "Clear Database",
+            `Are you sure you want to clear all tables in "${activeDB}"? This keeps the database but deletes all data.`,
+            async (confirmed) => {
+                if (confirmed) {
+                    await (this.plugin as any).dbManager.clearDatabase(activeDB);
+                    new Notice(`Database "${activeDB}" cleared.`);
+                    this.display();
+                }
+            },
+            "Clear all data",
+            "Cancel"
+        ).open();
+    }
+
+    private confirmDelete(dbName: string): void {
+        new ConfirmationModal(
+            this.app,
+            "Delete Database",
+            `You are about to delete database "${dbName}". This action cannot be undone. All tables and data will be lost.`,
+            async (confirmed) => {
+                if (confirmed) {
+                    try {
+                        const dbManager = (this.plugin as any).dbManager;
+                        await dbManager.deleteDatabase(dbName);
+                        new Notice(`Database "${dbName}" deleted.`);
+                        this.display();
+                    } catch (e) {
+                        new Notice(`Error: ${e.message}`);
+                    }
+                }
+            },
+            "Delete Database",
+            "Cancel"
+        ).open();
     }
 }

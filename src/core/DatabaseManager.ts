@@ -69,78 +69,61 @@ export class DatabaseManager {
 
         for (const dbName of databases) {
             try {
-                alasql(`USE ${dbName}`);
-                const tables = alasql("SHOW TABLES") as any[];
+                // Direct access - Safer than switching context
+                const dbInstance = alasql.databases[dbName];
+                if (!dbInstance) continue;
+
                 const dbData: Record<string, any[]> = {};
                 const dbSchema: Record<string, string> = {};
 
-                for (const table of tables) {
-                    const tableName = table.tableid;
+                if (dbInstance.tables) {
+                    for (const tableName of Object.keys(dbInstance.tables)) {
+                        const tableObj = dbInstance.tables[tableName];
+                        const rows = tableObj.data || [];
 
-                    const limit = this.plugin.settings.snapshotRowLimit || 10000;
-                    const rows = (await alasql.promise(`SELECT * FROM ${tableName} LIMIT ${limit}`)) as any[];
+                        const limit = this.plugin.settings.snapshotRowLimit || 10000;
 
-                    if (rows.length === limit) {
-                        Logger.warn(`Snapshot for table '${tableName}' truncated to limit of ${limit} rows.`);
-                    }
-
-                    dbData[tableName] = rows;
-
-                    // FIXED: Generate schema from table structure instead of SHOW CREATE TABLE
-                    try {
-                        // Method 1: Try SHOW CREATE TABLE (might not work in AlaSQL)
-                        const createRes = alasql(`SHOW CREATE TABLE ${tableName}`) as any[];
-                        if (createRes?.[0]) {
-                            const createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
-                            if (createSQL) {
-                                dbSchema[tableName] = createSQL;
-                                console.log(`MySQL Plugin: Schema saved for '${tableName}' via SHOW CREATE TABLE`);
-                                continue;
-                            }
-                        }
-                    } catch (e) {
-                        // Fallback: Generate schema from data structure
-                    }
-
-                    // Method 2: Generate schema from table structure
-                    try {
-                        if (rows.length > 0) {
-                            const firstRow = rows[0];
-                            const columns = Object.keys(firstRow).map(col => {
-                                const value = firstRow[col];
-                                let type = 'VARCHAR';
-
-                                if (value === null || value === undefined) {
-                                    // Default to VARCHAR for nulls to be safe
-                                    type = 'VARCHAR';
-                                } else if (typeof value === 'number') {
-                                    type = Number.isInteger(value) ? 'INT' : 'FLOAT';
-                                } else if (typeof value === 'boolean') {
-                                    type = 'BOOLEAN';
-                                } else if (value instanceof Date) {
-                                    type = 'DATE';
-                                }
-
-                                return `\`${col}\` ${type}`;
-                            }).join(', ');
-
-                            const createSQL = `CREATE TABLE \`${tableName}\` (${columns})`;
-                            dbSchema[tableName] = createSQL;
-                            console.log(`MySQL Plugin: Schema generated for '${tableName}': ${createSQL}`);
+                        // Copy data (sliced to limit)
+                        if (rows.length > limit) {
+                            Logger.warn(`Snapshot for table '${tableName}' truncated to limit of ${limit} rows.`);
+                            dbData[tableName] = rows.slice(0, limit);
                         } else {
-                            console.warn(`MySQL Plugin: Cannot generate schema for empty table '${tableName}'`);
+                            dbData[tableName] = rows;
                         }
-                    } catch (e) {
-                        console.error(`MySQL Plugin: Failed to generate schema for '${tableName}':`, e);
+
+                        // Generate Schema
+                        try {
+                            // Method 1: Try stored create sql if alasql keeps it (unlikely but possible)
+                            // Method 2: Generate from data structure
+                            if (rows.length > 0) {
+                                const firstRow = rows[0];
+                                const columns = Object.keys(firstRow).map(col => {
+                                    const value = firstRow[col];
+                                    let type = 'VARCHAR';
+
+                                    if (value === null || value === undefined) type = 'VARCHAR';
+                                    else if (typeof value === 'number') type = Number.isInteger(value) ? 'INT' : 'FLOAT';
+                                    else if (typeof value === 'boolean') type = 'BOOLEAN';
+                                    else if (value instanceof Date) type = 'DATE';
+
+                                    return `\`${col}\` ${type}`;
+                                }).join(', ');
+
+                                const createSQL = `CREATE TABLE \`${tableName}\` (${columns})`;
+                                dbSchema[tableName] = createSQL;
+                            }
+                        } catch (e) {
+                            console.error(`MySQL Plugin: Failed to generate schema for '${tableName}':`, e);
+                        }
                     }
                 }
 
                 snapshot.databases[dbName] = {
                     tables: dbData,
-                    schema: dbSchema
+                    schema: dbSchema,
+                    lastUpdated: Date.now()
                 };
 
-                console.log(`MySQL Plugin: Snapshot created for '${dbName}' - ${Object.keys(dbData).length} tables, ${Object.keys(dbSchema).length} schemas`);
             } catch (error) {
                 console.error(`Failed to snapshot database ${dbName}:`, error);
             }
@@ -157,12 +140,6 @@ export class DatabaseManager {
         const data = await this.plugin.loadData();
 
         console.log('MySQL Plugin: Starting database load...');
-        console.log('MySQL Plugin: Data structure:', {
-            hasData: !!data,
-            hasDatabases: !!data?.databases,
-            databaseNames: data?.databases ? Object.keys(data.databases) : []
-        });
-
         if (!data?.databases) {
             console.log('MySQL Plugin: No databases found in saved data');
             return;
@@ -173,131 +150,66 @@ export class DatabaseManager {
             let restoredTablesCount = 0;
 
             for (const [dbName, content] of Object.entries(data.databases)) {
-                const db = content as DatabaseContent;
+                const db = content as any;
 
-                console.log(`MySQL Plugin: Processing database '${dbName}'`, {
-                    hasTables: !!db.tables,
-                    hasSchema: !!db.schema,
-                    tableCount: db.tables ? Object.keys(db.tables).length : 0,
-                    schemaCount: db.schema ? Object.keys(db.schema).length : 0
-                });
+                if (!db.tables && !db.schema) continue;
 
-                if (!db.tables && !db.schema) {
-                    console.warn(`MySQL Plugin: Skipping empty database '${dbName}'`);
-                    continue;
-                }
-
-                // Ensure database exists
                 if (!alasql.databases[dbName]) {
                     await alasql.promise(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
-                    console.log(`MySQL Plugin: Created database '${dbName}'`);
                 }
                 await alasql.promise(`USE ${dbName}`);
 
-                // Restore schemas with validation
-                if (db.schema && Object.keys(db.schema).length > 0) {
+                if (db.schema) {
                     for (const [tableName, sql] of Object.entries(db.schema)) {
                         try {
                             await alasql.promise(`DROP TABLE IF EXISTS ${tableName}`);
                             await alasql.promise(String(sql));
-
-                            // Verify table was created
-                            const verifyTable = await alasql.promise(`SHOW TABLES LIKE '${tableName}'`) as any[];
-                            if (verifyTable.length > 0) {
-                                console.log(`MySQL Plugin: ✓ Schema restored for '${tableName}'`);
-                                restoredTablesCount++;
-                            } else {
-                                console.error(`MySQL Plugin: ✗ Schema failed for '${tableName}' - table not found after creation`);
-                            }
+                            restoredTablesCount++;
                         } catch (e) {
-                            console.error(`MySQL Plugin: Error restoring schema for '${tableName}':`, e);
+                            console.error(`Error restoring schema for '${tableName}':`, e);
                         }
                     }
-                } else {
-                    console.warn(`MySQL Plugin: No schemas found for database '${dbName}', will use fallback creation`);
                 }
 
-                // Load data in batches with validation
                 if (db.tables) {
                     for (const [tableName, rows] of Object.entries(db.tables)) {
-                        if (!rows || rows.length === 0) {
-                            console.log(`MySQL Plugin: Skipping empty table '${tableName}'`);
-                            continue;
-                        }
-
+                        if (!rows || (rows as any[]).length === 0) continue;
                         try {
-                            // Check if table exists before inserting
                             const exists = await alasql.promise(`SHOW TABLES LIKE '${tableName}'`) as any[];
-
-                            if (exists.length === 0) {
-                                // Schema didn't create it, use fallback creation
-                                console.warn(`MySQL Plugin: Table '${tableName}' missing, attempting fallback creation`);
-
-                                const columns = Object.keys(rows[0]);
-                                const columnDefs = columns.map(col => {
-                                    const value = rows[0][col];
-                                    let type = 'VARCHAR';
-
-                                    if (value === null || value === undefined) {
-                                        type = 'VARCHAR';
-                                    } else if (typeof value === 'number') {
-                                        type = Number.isInteger(value) ? 'INT' : 'FLOAT';
-                                    } else if (typeof value === 'boolean') {
-                                        type = 'BOOLEAN';
-                                    } else if (value instanceof Date) {
-                                        type = 'DATE';
-                                    }
-
-                                    return `\`${col}\` ${type}`;
-                                }).join(', ');
-
-                                await alasql.promise(`CREATE TABLE \`${tableName}\` (${columnDefs})`);
-                                console.log(`MySQL Plugin: Fallback table created for '${tableName}'`);
-                                restoredTablesCount++;
+                            if (exists.length > 0) {
+                                const batchSize = 1000;
+                                for (let i = 0; i < (rows as any[]).length; i += batchSize) {
+                                    const batch = (rows as any[]).slice(i, i + batchSize);
+                                    await alasql.promise(`INSERT INTO ${tableName} SELECT * FROM ?`, [batch]);
+                                }
                             }
-
-                            // Insert data in batches
-                            const batchSize = 1000;
-                            let insertedRows = 0;
-
-                            for (let i = 0; i < rows.length; i += batchSize) {
-                                const batch = rows.slice(i, i + batchSize);
-                                await alasql.promise(`INSERT INTO ${tableName} SELECT * FROM ?`, [batch]);
-                                insertedRows += batch.length;
-                            }
-
-                            console.log(`MySQL Plugin: ✓ Loaded ${insertedRows} rows into '${tableName}'`);
                         } catch (e) {
-                            console.error(`MySQL Plugin: Error loading data for '${tableName}':`, e);
+                            console.error(`Error loading data for '${tableName}':`, e);
                         }
                     }
                 }
             }
 
-            // Set active database
             if (alasql.databases[activeDB]) {
                 await alasql.promise(`USE ${activeDB}`);
                 this.plugin.activeDatabase = activeDB;
-                console.log(`MySQL Plugin: Active database set to '${activeDB}'`);
             } else {
-                const availableDBs = Object.keys(alasql.databases);
+                const availableDBs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
                 if (availableDBs.length > 0) {
+                    // Fix: prefer dbo if available as fallback
                     const fallbackDB = availableDBs.includes('dbo') ? 'dbo' : availableDBs[0];
                     await alasql.promise(`USE ${fallbackDB}`);
                     this.plugin.activeDatabase = fallbackDB;
-                    console.log(`MySQL Plugin: Using fallback database '${fallbackDB}'`);
+                } else {
+                    // Create dbo if nothing exists
+                    await alasql.promise('CREATE DATABASE dbo');
+                    await alasql.promise('USE dbo');
+                    this.plugin.activeDatabase = 'dbo';
                 }
             }
 
-            // Final verification
-            const finalTables = alasql("SHOW TABLES") as any[];
-            console.log(`MySQL Plugin: ✓ Database loaded successfully - ${restoredTablesCount} tables restored`);
-            console.log(`MySQL Plugin: Current database '${this.plugin.activeDatabase}' has ${finalTables.length} tables`);
-
-            if (finalTables.length === 0 && restoredTablesCount > 0) {
-                console.error('MySQL Plugin: WARNING - Tables were restored but current database appears empty!');
-            }
-
+            // Explicitly sync alasql context with plugin state to prevent leakage
+            console.log(`MySQL Plugin: Loaded. Active: ${this.plugin.activeDatabase}, Alasql useid: ${alasql.useid}`);
         } catch (error) {
             console.error('MySQL Plugin: Load failed', error);
             throw error;
@@ -306,28 +218,159 @@ export class DatabaseManager {
 
     async reset(): Promise<void> {
         const dbs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
-
         for (const db of dbs) {
             try {
                 alasql(`DROP DATABASE IF EXISTS ${db}`);
-            } catch (e) {
-                console.error(`Failed to drop ${db}:`, e);
-            }
+            } catch (e) { }
         }
 
-        if (!alasql.databases.dbo) {
-            alasql('CREATE DATABASE dbo');
-        }
+        if (!alasql.databases.dbo) alasql('CREATE DATABASE dbo');
         alasql('USE dbo');
         this.plugin.activeDatabase = 'dbo';
 
-        const newData = {
-            ...this.plugin.settings,
-            activeDatabase: 'dbo',
-            databases: {}
-        };
+        const newData = { ...this.plugin.settings, activeDatabase: 'dbo', databases: {} };
         await this.plugin.saveData(newData);
+    }
 
-        console.log('MySQL Plugin: Database reset completed');
+    // --- New Database Management Methods ---
+
+    getDatabaseStats(dbName: string): any {
+        const db = alasql.databases[dbName];
+        if (!db) return null;
+
+        const tableNames = Object.keys(db.tables);
+        let totalRows = 0;
+        tableNames.forEach(t => {
+            if (db.tables[t].data) {
+                totalRows += db.tables[t].data.length;
+            }
+        });
+
+        // Size estimation: approximate based on stringified data
+        const approxSize = JSON.stringify(db.tables).length;
+
+        return {
+            tables: tableNames.length,
+            rows: totalRows,
+            sizeBytes: approxSize,
+            lastUpdated: Date.now() // Ideally this would come from the last save, but for UI we use current
+        };
+    }
+
+    async clearDatabase(dbName: string): Promise<void> {
+        const currentDB = alasql.useid;
+        await alasql.promise(`USE ${dbName}`);
+        const tables = alasql("SHOW TABLES") as any[];
+        for (const t of tables) {
+            await alasql.promise(`DROP TABLE ${t.tableid}`);
+        }
+        if (currentDB) await alasql.promise(`USE ${currentDB}`);
+        await this.save();
+    }
+
+    async renameDatabase(oldName: string, newName: string): Promise<void> {
+        if (alasql.databases[newName]) throw new Error(`Database ${newName} already exists`);
+
+        try {
+            const currentDB = alasql.useid; // Capture original context
+
+            // 1. Switch to old DB and collect all data/schemas first
+            // This prevents context confusion during the creation phase
+            await alasql.promise(`USE ${oldName}`);
+            const tables = alasql("SHOW TABLES") as any[];
+
+            const collectedData: Array<{ tableName: string, createSQL: string, data: any[] }> = [];
+
+            for (const t of tables) {
+                const tableName = t.tableid;
+
+                // Get Schema
+                const createRes = alasql(`SHOW CREATE TABLE ${tableName}`) as any[];
+                let createSQL = "";
+
+                if (createRes?.[0]) {
+                    createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
+                }
+
+                if (!createSQL) {
+                    // Fallback if SHOW CREATE fails (shouldn't happen if we are in correct context)
+                    console.warn(`Could not get schema for ${tableName}, skipping copy.`);
+                    continue;
+                }
+
+                // Get Data
+                const data = (await alasql.promise(`SELECT * FROM ${tableName}`)) as any[];
+                collectedData.push({ tableName, createSQL, data });
+            }
+
+            // 2. Create new database
+            await alasql.promise(`CREATE DATABASE ${newName}`);
+            await alasql.promise(`USE ${newName}`);
+
+            // 3. Restore tables and data in new DB
+            for (const item of collectedData) {
+                await alasql.promise(item.createSQL);
+                if (item.data.length > 0) {
+                    await alasql.promise(`INSERT INTO ${item.tableName} SELECT * FROM ?`, [item.data]);
+                }
+            }
+
+            // 4. Update plugin state if needed
+            if (this.plugin.activeDatabase === oldName) {
+                this.plugin.activeDatabase = newName;
+                // Already in newName from step 2
+            } else {
+                // Restore previous context if it wasn't the one we renamed
+                if (currentDB === oldName) {
+                    await alasql.promise(`USE ${newName}`);
+                } else if (currentDB) {
+                    await alasql.promise(`USE ${currentDB}`);
+                }
+            }
+
+            // 5. Drop old
+            await alasql.promise(`DROP DATABASE ${oldName}`);
+
+            // 6. Save snapshot
+            await this.save();
+        } catch (error) {
+            console.error(`Failed to rename database from ${oldName} to ${newName}:`, error);
+            // Attempt rollback: Drop new database if it was created
+            if (alasql.databases[newName]) {
+                await alasql.promise(`DROP DATABASE ${newName}`);
+            }
+            throw error;
+        }
+    }
+
+    async duplicateDatabase(dbName: string, newName: string): Promise<void> {
+        if (alasql.databases[newName]) throw new Error(`Database ${newName} already exists`);
+
+        const currentDB = alasql.useid;
+        await alasql.promise(`CREATE DATABASE ${newName}`);
+
+        const tables = alasql(`SHOW TABLES FROM ${dbName}`) as any[];
+        for (const t of tables) {
+            const tableName = t.tableid;
+            const createRes = alasql(`SHOW CREATE TABLE ${dbName}.${tableName}`) as any[];
+            if (createRes?.[0]) {
+                const createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
+                await alasql.promise(`USE ${newName}`);
+                await alasql.promise(createSQL);
+                await alasql.promise(`INSERT INTO ${newName}.${tableName} SELECT * FROM ${dbName}.${tableName}`);
+            }
+        }
+
+        if (currentDB) await alasql.promise(`USE ${currentDB}`);
+        await this.save();
+    }
+
+    async deleteDatabase(dbName: string): Promise<void> {
+        if (!alasql.databases[dbName]) return;
+        if (dbName === 'alasql') throw new Error("Cannot delete default alasql database");
+        if (this.plugin.activeDatabase === dbName) throw new Error("Cannot delete active database. Switch first.");
+
+        await alasql.promise(`DROP DATABASE ${dbName}`);
+        await this.save();
     }
 }

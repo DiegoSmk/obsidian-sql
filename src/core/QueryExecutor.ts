@@ -35,11 +35,15 @@ export class QueryExecutor {
         });
     }
 
-    static async execute(query: string, params?: any[], options: { safeMode?: boolean, signal?: AbortSignal } = {}): Promise<QueryResult> {
+    static async execute(query: string, params?: any[], options: { safeMode?: boolean, signal?: AbortSignal, activeDatabase?: string } = {}): Promise<QueryResult> {
         const monitor = new PerformanceMonitor();
         monitor.start();
 
         try {
+            if (options.activeDatabase && alasql.databases[options.activeDatabase]) {
+                await alasql.promise(`USE ${options.activeDatabase}`);
+            }
+
             let cleanQuery = SQLSanitizer.clean(query);
 
             // 2.1 Multi-query LIMIT Injection (Safe Version)

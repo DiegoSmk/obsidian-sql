@@ -875,4 +875,369 @@ div.mysql-workbench-container:hover {
   margin-right: auto;
 }
 
+/* src/styles/components/database.css */
+.mysql-db-card {
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--mysql-radius-md);
+  padding: 0;
+  margin: 16px 0;
+  transition: all var(--mysql-transition-normal);
+  overflow: hidden;
+}
+.mysql-db-card:hover {
+  box-shadow: var(--mysql-shadow-md);
+  border-color: var(--background-modifier-border-hover);
+}
+.mysql-db-card-header {
+  background-color: var(--background-secondary);
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.mysql-db-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.mysql-db-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background-color: rgba(var(--color-purple-rgb), 0.1);
+  color: var(--mysql-accent-purple);
+  border-radius: 8px;
+}
+.mysql-db-card-icon svg {
+  width: 18px;
+  height: 18px;
+}
+.mysql-db-card-name {
+  font-size: 1.1em;
+  font-weight: 700;
+  color: var(--text-normal);
+}
+.mysql-db-system-badge {
+  background-color: var(--text-muted);
+  color: var(--background-primary);
+  font-size: 0.6em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-left: 8px;
+  text-transform: uppercase;
+}
+.mysql-db-count-badge {
+  margin-left: auto;
+  background-color: rgba(var(--color-purple-rgb), 0.1);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--color-purple-rgb), 0.2);
+  font-weight: 600;
+}
+.mysql-db-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background-color: var(--background-modifier-border);
+  padding-bottom: 1px;
+}
+.mysql-db-stat-item {
+  background-color: var(--background-primary);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.mysql-db-stat-icon {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+.mysql-db-stat-icon svg {
+  width: 16px;
+  height: 16px;
+}
+.mysql-db-stat-label {
+  font-size: 0.7em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.mysql-db-stat-value {
+  font-size: 1.4em;
+  font-weight: 700;
+  color: var(--text-normal);
+  line-height: 1;
+}
+.mysql-db-card-last-updated {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 8px 0;
+  background-color: var(--background-secondary-alt);
+  border-top: 1px solid var(--background-modifier-border);
+  font-style: italic;
+  opacity: 0.7;
+}
+.mysql-db-card-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  background-color: var(--background-primary);
+}
+.mysql-action-separator {
+  flex-grow: 1;
+}
+.mysql-db-card-actions button {
+  font-weight: 600 !important;
+}
+.mysql-settings-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--background-modifier-border);
+}
+.mysql-settings-section-header h3 {
+  margin: 0 !important;
+}
+.mysql-section-icon {
+  display: flex;
+  align-items: center;
+  color: var(--mysql-accent-purple);
+}
+.mysql-section-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.mysql-switcher-modal {
+  max-width: 500px !important;
+}
+.mysql-db-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 20px;
+}
+.mysql-db-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-radius: var(--mysql-radius-sm);
+  border: 1px solid transparent;
+  background-color: var(--background-secondary);
+  transition: all var(--mysql-transition-fast);
+}
+.mysql-db-list-item:hover {
+  background-color: var(--background-modifier-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--mysql-shadow-sm);
+}
+.mysql-db-list-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+}
+.mysql-db-list-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mysql-db-list-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 4px;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+.mysql-db-list-delete-btn:hover {
+  background-color: rgba(233, 53, 53, 0.15);
+  color: #e93535;
+}
+.mysql-db-list-delete-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.mysql-db-list-item.is-active {
+  background-color: rgba(var(--color-purple-rgb), 0.1);
+  border: 1px solid var(--mysql-accent-purple);
+}
+.mysql-db-list-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.mysql-db-list-name {
+  font-weight: 700;
+  color: var(--text-normal);
+}
+.mysql-db-list-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.mysql-db-list-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 4px 8px;
+  background-color: var(--mysql-accent-purple);
+  color: white;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  box-shadow: 0 2px 4px rgba(var(--color-purple-rgb), 0.3);
+}
+.mysql-rename-input {
+  font-size: 1.1rem !important;
+  padding: 10px 14px !important;
+}
+.mysql-tables-modal {
+  max-width: 800px !important;
+  min-height: 400px !important;
+}
+.mysql-table-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 400px;
+  overflow-y: auto;
+  margin-top: 16px;
+}
+.mysql-table-list-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: var(--mysql-radius-sm);
+  transition: background-color var(--mysql-transition-fast);
+}
+.mysql-table-list-item:hover {
+  background-color: var(--background-secondary);
+}
+.mysql-table-icon {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+.mysql-table-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.mysql-table-name {
+  font-weight: 600;
+  color: var(--text-normal);
+}
+.mysql-table-meta {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.mysql-table-detail-view {
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--mysql-radius-sm);
+  background-color: var(--background-primary);
+}
+.mysql-table-detail-view.mysql-workbench-container .mysql-result-content table.mysql-table {
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  font-size: 0.9em !important;
+  border-radius: var(--mysql-radius-sm) !important;
+  overflow: hidden !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  table-layout: auto !important;
+  background-color: var(--background-primary) !important;
+}
+.mysql-table-detail-view.mysql-workbench-container .mysql-result-content table.mysql-table thead,
+.mysql-table-detail-view.mysql-workbench-container .mysql-result-content table.mysql-table tbody,
+.mysql-table-detail-view.mysql-workbench-container .mysql-result-content table.mysql-table tr {
+  background-color: transparent !important;
+  border: none !important;
+}
+.mysql-table-detail-view.mysql-workbench-container .mysql-result-content table.mysql-table th {
+  padding: 12px 16px !important;
+  background-color: var(--background-secondary-alt) !important;
+  color: var(--mysql-accent-purple) !important;
+  text-transform: uppercase !important;
+  font-size: 0.75em !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.08em !important;
+  border-right: 1px solid var(--background-modifier-border) !important;
+  border-bottom: 2px solid var(--mysql-accent-purple) !important;
+  text-align: left !important;
+}
+.mysql-table-detail-view.mysql-workbench-container .mysql-result-content table.mysql-table td {
+  padding: 10px 16px !important;
+  border-right: 1px solid var(--background-modifier-border) !important;
+  border-bottom: 1px solid var(--background-modifier-border) !important;
+  font-family: var(--font-monospace) !important;
+  color: var(--text-normal) !important;
+  background-color: transparent !important;
+  text-align: left !important;
+}
+.mysql-table-detail-view.mysql-workbench-container .mysql-result-content table.mysql-table th:last-child,
+.mysql-table-detail-view.mysql-workbench-container .mysql-result-content table.mysql-table td:last-child {
+  border-right: none !important;
+}
+.mysql-table-detail-view.mysql-workbench-container .mysql-result-content table.mysql-table tr:last-child td {
+  border-bottom: none !important;
+}
+.mysql-table-detail-view.mysql-workbench-container .mysql-result-content table.mysql-table tr:nth-child(even) td {
+  background-color: var(--background-primary-alt) !important;
+}
+.mysql-table-detail-view.mysql-workbench-container .mysql-result-content table.mysql-table tr:hover td {
+  background-color: var(--background-modifier-hover) !important;
+}
+.mysql-table-detail-view .mysql-pagination {
+  padding: 12px 16px !important;
+  background-color: var(--background-secondary-alt) !important;
+  border-top: 1px solid var(--background-modifier-border) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  font-size: 0.85em !important;
+}
+.mysql-table-detail-view .mysql-pagination-status {
+  color: var(--text-muted) !important;
+  font-weight: 600 !important;
+  margin-right: auto !important;
+}
+.mysql-table-detail-view .mysql-pagination-btn {
+  padding: 6px 12px !important;
+  background-color: var(--interactive-accent) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  font-size: 0.8em !important;
+  font-weight: 600 !important;
+  transition: all var(--mysql-transition-fast) !important;
+}
+.mysql-table-detail-view .mysql-pagination-btn:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
 /* src/styles/index.css */

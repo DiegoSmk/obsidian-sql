@@ -18,6 +18,14 @@ export interface DatabaseSnapshot {
 export interface DatabaseContent {
     tables: Record<string, any[]>;
     schema: Record<string, string>;
+    lastUpdated?: number;
+}
+
+export interface DatabaseStats {
+    tables: number;
+    rows: number;
+    sizeBytes: number;
+    lastUpdated: number;
 }
 
 export type Row = Record<string, any>;
