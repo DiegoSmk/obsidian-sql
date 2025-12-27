@@ -2,7 +2,6 @@ import { App, Modal, ButtonComponent, TextComponent, Notice, setIcon } from 'obs
 import { IMySQLPlugin } from '../types';
 import { ConfirmationModal } from './ConfirmationModal';
 import { QueryExecutor } from '../core/QueryExecutor';
-import { ResultRenderer } from './ResultRenderer';
 // @ts-ignore
 import alasql from 'alasql';
 
@@ -182,6 +181,8 @@ export class RenameDatabaseModal extends Modal {
 export class DatabaseTablesModal extends Modal {
     constructor(app: App, private plugin: IMySQLPlugin, private dbName: string) {
         super(app);
+        // Remove the default close button
+        this.modalEl.querySelector('.modal-close-button')?.remove();
     }
 
     onOpen() {
@@ -232,44 +233,111 @@ export class DatabaseTablesModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
 
-        // Header with Back Button
-        const header = contentEl.createDiv({ cls: 'mysql-modal-header' });
-        header.style.display = 'flex';
-        header.style.justifyContent = 'space-between';
-        header.style.alignItems = 'center';
-        header.style.marginBottom = '16px';
-
-        const left = header.createDiv();
+        // Header with improved button layout
+        const header = contentEl.createDiv({ cls: 'mysql-table-detail-header' });
+        
+        const left = header.createDiv({ cls: 'mysql-table-detail-title' });
         left.style.display = 'flex';
         left.style.alignItems = 'center';
         left.style.gap = '8px';
 
-        const backBtn = new ButtonComponent(left)
+        new ButtonComponent(left)
             .setIcon('arrow-left')
             .setTooltip('Back to Tables List')
             .onClick(() => this.renderList());
 
-        // Using setAttribute/style property instead of 'style' option to avoid lint error
         const title = left.createEl('h3', { text: tableName });
         title.style.margin = '0';
 
-        // Export Action
-        const right = header.createDiv();
-        new ButtonComponent(right)
-            .setButtonText("Export CSV")
-            .setIcon("file-down")
-            .onClick(() => {
-                // @ts-ignore
-                if (this.plugin.csvManager) {
-                    // @ts-ignore
-                    this.plugin.csvManager.exportTable(tableName);
-                } else {
-                    new Notice("CSV Manager not available");
+        // Actions on the right with better spacing
+        const actions = header.createDiv({ cls: 'mysql-table-detail-actions' });
+        
+        // Copy button
+        new ButtonComponent(actions)
+            .setIcon("copy")
+            .setTooltip('Copy to clipboard')
+            .onClick(async () => {
+                try {
+                    const query = `SELECT * FROM ${this.dbName}.${tableName}`;
+                    const result = await QueryExecutor.execute(query);
+                    
+                    if (result.success && result.data && result.data[0] && result.data[0].data) {
+                        await this.copyToClipboard(result.data[0].data);
+                    } else {
+                        new Notice("No data to copy");
+                    }
+                } catch (e) {
+                    new Notice(`Copy failed: ${e.message}`);
                 }
             });
 
-        // Data Container - Add workbench container class for proper styling
-        const dataContainer = contentEl.createDiv({ cls: 'mysql-table-detail-view mysql-workbench-container' });
+        // Screenshot button
+        new ButtonComponent(actions)
+            .setIcon("camera")
+            .setTooltip('Take screenshot')
+            .onClick(async () => {
+                try {
+                    const tableElement = dataContainer.querySelector('.mysql-direct-table-wrapper');
+                    if (tableElement) {
+                        await this.takeScreenshot(tableElement as HTMLElement);
+                    } else {
+                        new Notice("No table to screenshot");
+                    }
+                } catch (e) {
+                    new Notice(`Screenshot failed: ${e.message}`);
+                }
+            });
+
+        // Add to note button
+        new ButtonComponent(actions)
+            .setIcon("file-plus")
+            .setTooltip('Add to note')
+            .onClick(async () => {
+                try {
+                    const query = `SELECT * FROM ${this.dbName}.${tableName}`;
+                    const result = await QueryExecutor.execute(query);
+                    
+                    if (result.success && result.data && result.data[0] && result.data[0].data) {
+                        await this.insertIntoNote(result.data[0].data);
+                    } else {
+                        new Notice("No data to insert");
+                    }
+                } catch (e) {
+                    new Notice(`Insert failed: ${e.message}`);
+                }
+            });
+        
+        // Export button with correct icon
+        new ButtonComponent(actions)
+            .setIcon("download")
+            .setTooltip('Export CSV')
+            .onClick(async () => {
+                try {
+                    // Get the table data and export manually since CSVManager doesn't handle database context
+                    const query = `SELECT * FROM ${this.dbName}.${tableName}`;
+                    const result = await QueryExecutor.execute(query);
+                    
+                    if (result.success && result.data && result.data[0] && result.data[0].data) {
+                        await this.exportTableData(tableName, result.data[0].data);
+                    } else {
+                        new Notice("No data to export");
+                    }
+                } catch (e) {
+                    new Notice(`Export failed: ${e.message}`);
+                }
+            });
+
+        // Close button
+        new ButtonComponent(actions)
+            .setIcon('x')
+            .setTooltip('Close')
+            .onClick(() => this.close());
+
+        // Separator line
+        const separator = contentEl.createDiv({ cls: 'mysql-table-detail-separator' });
+
+        // Data Container without extra margins
+        const dataContainer = contentEl.createDiv({ cls: 'mysql-table-detail-content' });
         const loadingMsg = dataContainer.createEl('p', { text: 'Loading data...' });
         loadingMsg.style.color = 'var(--text-muted)';
 
@@ -279,18 +347,14 @@ export class DatabaseTablesModal extends Modal {
 
             dataContainer.empty();
             if (result.success) {
-                // Create a result content wrapper to match workbench structure
-                const resultWrapper = dataContainer.createDiv({ cls: 'mysql-result-content' });
-                ResultRenderer.render(result, resultWrapper, this.app, this.plugin);
+                // Render directly without the result wrapper that adds borders
+                this.renderTableDataDirect(result, dataContainer, tableName);
 
                 if (result.data && result.data[0] && result.data[0].rowCount >= 100) {
-                    const note = resultWrapper.createDiv({
+                    const note = dataContainer.createDiv({
                         text: "Showing first 100 rows only.",
+                        cls: 'mysql-table-limit-note'
                     });
-                    note.style.fontSize = "0.8em";
-                    note.style.color = "var(--text-muted)";
-                    note.style.marginTop = "8px";
-                    note.style.fontStyle = "italic";
                 }
             } else {
                 dataContainer.createDiv({ text: `Error: ${result.error}`, cls: 'mysql-error-text' });
@@ -299,6 +363,221 @@ export class DatabaseTablesModal extends Modal {
             dataContainer.empty();
             dataContainer.createDiv({ text: `Error loading data: ${e.message}`, cls: 'mysql-error-text' });
         }
+    }
+
+    private renderTableDataDirect(result: any, container: HTMLElement, tableName: string) {
+        if (!result.success || !result.data || result.data.length === 0) {
+            container.createEl("p", { text: "No data found", cls: "mysql-empty-state" });
+            return;
+        }
+
+        const data = result.data[0];
+        if (data.type === 'table' && data.data && data.data.length > 0) {
+            // Create table directly without the result wrapper styling
+            const tableWrapper = container.createDiv({ cls: 'mysql-direct-table-wrapper' });
+            
+            const keys = Object.keys(data.data[0]);
+            const table = tableWrapper.createEl("table", { cls: "mysql-table mysql-direct-table" });
+
+            const thead = table.createEl("thead");
+            const headerRow = thead.createEl("tr");
+            keys.forEach(key => headerRow.createEl("th", { text: key }));
+
+            const tbody = table.createEl("tbody");
+            const batchSize = 100;
+            let currentCount = 0;
+
+            const renderBatch = (batch: any[]) => {
+                batch.forEach(row => {
+                    const tr = tbody.createEl("tr");
+                    keys.forEach(key => {
+                        const val = row[key];
+                        tr.createEl("td", {
+                            text: val === null || val === undefined ? "NULL" : String(val)
+                        });
+                    });
+                });
+            };
+
+            const initialBatch = data.data.slice(0, batchSize);
+            renderBatch(initialBatch);
+            currentCount += initialBatch.length;
+
+            if (data.data.length > batchSize) {
+                const controls = tableWrapper.createEl("div", { cls: "mysql-direct-pagination" });
+                
+                const statusSpan = controls.createEl("span", { 
+                    text: `Showing ${currentCount} of ${data.data.length} rows`,
+                    cls: "mysql-pagination-status"
+                });
+
+                const showAllBtn = controls.createEl("button", { 
+                    text: "Show All Rows",
+                    cls: "mysql-pagination-btn"
+                });
+                
+                showAllBtn.onclick = () => {
+                    const remaining = data.data.slice(currentCount);
+                    renderBatch(remaining);
+                    showAllBtn.remove();
+                    statusSpan.setText(`Showing all ${data.data.length} rows`);
+                };
+            }
+        } else {
+            container.createEl("p", { text: "No table data found", cls: "mysql-empty-state" });
+        }
+    }
+
+    private async copyToClipboard(data: any[]): Promise<void> {
+        try {
+            if (!data || data.length === 0) {
+                new Notice('No data to copy');
+                return;
+            }
+
+            const keys = Object.keys(data[0]);
+            let textToCopy = keys.join('\t') + '\n';
+
+            data.forEach(row => {
+                const values = keys.map(k => {
+                    const val = row[k];
+                    return val === null || val === undefined ? '' : String(val);
+                });
+                textToCopy += values.join('\t') + '\n';
+            });
+
+            await navigator.clipboard.writeText(textToCopy);
+            new Notice('Table data copied to clipboard!');
+        } catch (error) {
+            new Notice('Failed to copy: ' + error.message);
+        }
+    }
+
+    private async takeScreenshot(element: HTMLElement): Promise<void> {
+        try {
+            // Dynamic import to avoid bundling issues
+            const html2canvas = (await import('html2canvas')).default;
+            
+            const canvas = await html2canvas(element, {
+                backgroundColor: getComputedStyle(element).backgroundColor || '#ffffff',
+                scale: 2,
+                logging: false
+            });
+
+            canvas.toBlob(async (blob: Blob | null) => {
+                if (!blob) {
+                    new Notice('Failed to create screenshot');
+                    return;
+                }
+
+                try {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({ 'image/png': blob })
+                    ]);
+                    new Notice('Screenshot copied to clipboard!');
+                } catch (clipboardError) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `table-screenshot-${Date.now()}.png`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    new Notice('Screenshot downloaded!');
+                }
+            });
+        } catch (error) {
+            new Notice('Screenshot failed: ' + error.message);
+            console.error('Screenshot error:', error);
+        }
+    }
+
+    private async insertIntoNote(data: any[]): Promise<void> {
+        try {
+            const { MarkdownView } = await import('obsidian');
+            const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+
+            if (!activeView) {
+                new Notice('No active note found');
+                return;
+            }
+
+            const editor = activeView.editor;
+            const textToInsert = this.dataToMarkdownTable(data);
+
+            const cursor = editor.getCursor();
+            editor.replaceRange('\n' + textToInsert + '\n', cursor);
+
+            const lines = textToInsert.split('\n').length;
+            editor.setCursor({ line: cursor.line + lines + 1, ch: 0 });
+
+            new Notice('Table inserted into note!');
+        } catch (error) {
+            new Notice('Failed to insert: ' + error.message);
+        }
+    }
+
+    private async exportTableData(tableName: string, data: any[]): Promise<void> {
+        try {
+            if (!data || data.length === 0) {
+                new Notice("Table is empty");
+                return;
+            }
+
+            // Convert to CSV
+            const csv = this.jsonToCSV(data);
+
+            // Ensure export directory exists
+            const exportFolder = this.plugin.settings.exportFolderName || 'sql-exports';
+            if (!(await this.plugin.app.vault.adapter.exists(exportFolder))) {
+                await this.plugin.app.vault.createFolder(exportFolder);
+            }
+
+            const fileName = `${exportFolder}/${tableName}_${Date.now()}.csv`;
+            await this.plugin.app.vault.create(fileName, csv);
+
+            new Notice(`Table exported to ${fileName}`);
+        } catch (error) {
+            console.error("CSV Export Error:", error);
+            new Notice(`Export failed: ${error.message}`);
+        }
+    }
+
+    private jsonToCSV(data: any[]): string {
+        if (data.length === 0) return '';
+        const keys = Object.keys(data[0]);
+        const header = keys.join(',') + '\n';
+        const rows = data.map(row =>
+            keys.map(k => {
+                const val = row[k];
+                if (val === null || val === undefined) return '';
+                const str = String(val);
+                // Quote if contains comma, quote or newline
+                if (str.match(/[,"]/)) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            }).join(',')
+        );
+        return header + rows.join('\n');
+    }
+
+    private dataToMarkdownTable(rows: any[]): string {
+        if (!rows || rows.length === 0) return '_No data_';
+
+        const keys = Object.keys(rows[0]);
+        let md = '| ' + keys.join(' | ') + ' |\n';
+        md += '| ' + keys.map(() => '---').join(' | ') + ' |\n';
+
+        rows.forEach(row => {
+            const values = keys.map(k => {
+                const val = row[k];
+                if (val === null || val === undefined) return '';
+                return String(val).replace(/\|/g, '\\|');
+            });
+            md += '| ' + values.join(' | ') + ' |\n';
+        });
+
+        return md;
     }
 
     private formatBytes(bytes: number): string {

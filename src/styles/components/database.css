@@ -336,6 +336,187 @@
     background-color: var(--background-primary);
 }
 
+/* New improved table detail layout */
+.mysql-table-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background-color: var(--background-secondary);
+    border-bottom: 1px solid var(--background-modifier-border);
+    margin: 0 !important;
+    /* Remove any margins to touch modal edges */
+}
+
+.mysql-table-detail-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mysql-table-detail-title h3 {
+    margin: 0 !important;
+    font-size: 1.1em;
+    color: var(--text-normal);
+}
+
+.mysql-table-detail-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.mysql-table-detail-actions button {
+    min-width: 32px !important;
+    height: 32px !important;
+    padding: 6px !important;
+    border-radius: 6px !important;
+    border: 1px solid var(--background-modifier-border) !important;
+    background-color: var(--background-secondary) !important;
+    color: var(--text-muted) !important;
+    transition: all var(--mysql-transition-fast) !important;
+}
+
+.mysql-table-detail-actions button:hover {
+    background-color: var(--background-modifier-hover) !important;
+    color: var(--mysql-accent-purple) !important;
+    border-color: var(--mysql-accent-purple) !important;
+    transform: translateY(-1px) !important;
+}
+
+.mysql-table-detail-actions button svg {
+    width: 16px !important;
+    height: 16px !important;
+}
+
+.mysql-table-detail-separator {
+    height: 1px;
+    background-color: var(--background-modifier-border);
+    margin: 0;
+}
+
+.mysql-table-detail-content {
+    background-color: var(--background-primary);
+    padding: 16px 0 0 0;
+    /* Add top padding to create space between header and table */
+}
+
+/* Direct table rendering without result wrapper */
+.mysql-direct-table-wrapper {
+    border-radius: var(--mysql-radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--background-modifier-border);
+    background-color: var(--background-primary);
+    margin: 0 16px;
+    /* Add horizontal margins to create space from modal edges */
+}
+
+.mysql-direct-table {
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    font-size: 0.9em !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    table-layout: auto !important;
+    background-color: var(--background-primary) !important;
+    border: none !important;
+}
+
+.mysql-direct-table thead,
+.mysql-direct-table tbody,
+.mysql-direct-table tr {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.mysql-direct-table th {
+    padding: 12px 16px !important;
+    background-color: var(--background-secondary-alt) !important;
+    color: var(--mysql-accent-purple) !important;
+    text-transform: uppercase !important;
+    font-size: 0.75em !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.08em !important;
+    border-right: 1px solid var(--background-modifier-border) !important;
+    border-bottom: 2px solid var(--mysql-accent-purple) !important;
+    text-align: left !important;
+}
+
+.mysql-direct-table td {
+    padding: 10px 16px !important;
+    border-right: 1px solid var(--background-modifier-border) !important;
+    border-bottom: 1px solid var(--background-modifier-border) !important;
+    font-family: var(--font-monospace) !important;
+    color: var(--text-normal) !important;
+    background-color: transparent !important;
+    text-align: left !important;
+}
+
+.mysql-direct-table th:last-child,
+.mysql-direct-table td:last-child {
+    border-right: none !important;
+}
+
+.mysql-direct-table tr:last-child td {
+    border-bottom: none !important;
+}
+
+.mysql-direct-table tr:nth-child(even) td {
+    background-color: var(--background-primary-alt) !important;
+}
+
+.mysql-direct-table tr:hover td {
+    background-color: var(--background-modifier-hover) !important;
+}
+
+/* Direct pagination styling */
+.mysql-direct-pagination {
+    padding: 12px 16px !important;
+    background-color: var(--background-secondary-alt) !important;
+    border-top: 1px solid var(--background-modifier-border) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    font-size: 0.85em !important;
+}
+
+.mysql-direct-pagination .mysql-pagination-status {
+    color: var(--text-muted) !important;
+    font-weight: 600 !important;
+    margin-right: auto !important;
+}
+
+.mysql-direct-pagination .mysql-pagination-btn {
+    padding: 6px 12px !important;
+    background-color: var(--interactive-accent) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    font-size: 0.8em !important;
+    font-weight: 600 !important;
+    transition: all var(--mysql-transition-fast) !important;
+}
+
+.mysql-direct-pagination .mysql-pagination-btn:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+.mysql-table-limit-note {
+    font-size: 0.8em !important;
+    color: var(--text-muted) !important;
+    margin: 8px 16px 0 16px !important;
+    /* Match table wrapper margins */
+    font-style: italic !important;
+    padding: 8px 16px !important;
+    background-color: var(--background-secondary-alt) !important;
+    border-top: 1px solid var(--background-modifier-border) !important;
+    border-radius: 0 0 var(--mysql-radius-sm) var(--mysql-radius-sm) !important;
+}
+
 /* Ensure table styles work in modal context */
 .mysql-table-detail-view.mysql-workbench-container .mysql-result-content table.mysql-table {
     border-collapse: separate !important;
