@@ -64736,9 +64736,7 @@ var MySQLPlugin = class extends import_obsidian7.Plugin {
       this.settings.autoSaveDelay,
       true
     );
-    this.app.workspace.onLayoutReady(async () => {
-      await this.dbManager.load();
-    });
+    await this.dbManager.load();
     this.registerMarkdownCodeBlockProcessor("mysql", (source, el, ctx) => {
       this.processSQLBlock(source, el, ctx);
     });

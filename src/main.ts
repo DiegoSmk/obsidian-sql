@@ -52,9 +52,8 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             true
         );
 
-        this.app.workspace.onLayoutReady(async () => {
-            await this.dbManager.load();
-        });
+        // CRITICAL: restore database before UI or processors
+        await this.dbManager.load();
 
         // Register SQL code block
         this.registerMarkdownCodeBlockProcessor("mysql", (source, el, ctx) => {
