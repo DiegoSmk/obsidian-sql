@@ -80,32 +80,32 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
-    padding: 20px 16px;
+    gap: 8px;
+    padding: 16px;
     border: 1px solid var(--background-modifier-border);
     border-radius: var(--mysql-radius-md);
-    background-color: var(--background-secondary);
+    background-color: var(--background-secondary-alt);
     cursor: pointer;
     transition: all var(--mysql-transition-fast);
     text-align: center;
-    color: var(--text-normal);
-    font-weight: 500;
 }
 
 .mysql-table-card:hover {
     background-color: var(--background-primary);
     border-color: var(--mysql-accent-purple);
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+    box-shadow: var(--mysql-shadow-md);
 }
 
-.mysql-table-card svg {
-    color: var(--text-muted);
-    transition: color var(--mysql-transition-fast);
-}
-
-.mysql-table-card:hover svg {
+.mysql-card-icon {
     color: var(--mysql-accent-purple);
+    opacity: 0.7;
+}
+
+.mysql-table-card strong {
+    font-size: 0.85rem;
+    color: var(--text-normal);
+    word-break: break-all;
 }
 
 .mysql-pagination-controls {

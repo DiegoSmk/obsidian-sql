@@ -14,7 +14,7 @@ export class ResultRenderer {
         const data = result.data || [];
         const wrapper = container.createEl("div", { cls: "mysql-result-container" });
 
-        this.renderData(data, wrapper, app, plugin, tableName, result.executionTime);
+        this.renderData(data, wrapper, app, plugin, tableName);
     }
 
     private static addActionButtons(
@@ -51,24 +51,6 @@ export class ResultRenderer {
         setIcon(insertBtn, "file-plus");
         insertBtn.createSpan({ text: "Add to Note" });
         insertBtn.onclick = () => this.insertIntoNote(data, app);
-
-        // Botão: Export CSV (If table name is known)
-        if (tableName) {
-            const exportBtn = container.createEl("button", {
-                cls: "mysql-action-btn",
-                attr: { title: "Export result to CSV" }
-            });
-            setIcon(exportBtn, "file-output");
-            exportBtn.createSpan({ text: "Export CSV" });
-            exportBtn.onclick = async () => {
-                const csvManager = (plugin as any).csvManager;
-                if (csvManager && csvManager.exportTable) {
-                    await csvManager.exportTable(tableName);
-                } else {
-                    new Notice("CSV Manager not available");
-                }
-            };
-        }
     }
 
     private static async copyToClipboard(data: any): Promise<void> {
@@ -185,7 +167,7 @@ export class ResultRenderer {
         return md;
     }
 
-    private static renderData(results: any[], container: HTMLElement, app: App, plugin: IMySQLPlugin, tableName?: string, executionTime?: number): void {
+    private static renderData(results: any[], container: HTMLElement, app: App, plugin: IMySQLPlugin, tableName?: string): void {
         if (!Array.isArray(results) || results.length === 0) {
             container.createEl("p", {
                 text: "Query executed successfully (no result set)",
@@ -211,13 +193,6 @@ export class ResultRenderer {
 
             // Right: Meta + Actions
             const right = header.createDiv({ cls: "mysql-header-right" });
-
-            // Add Time to the first result set's toolbar
-            if (idx === 0 && executionTime !== undefined) {
-                const meta = right.createDiv({ cls: "mysql-metadata-compact" });
-                setIcon(meta, "timer");
-                meta.createSpan({ text: `${executionTime}ms` });
-            }
 
             if (rs.type === 'table' || rs.type === 'scalar') {
                 const actions = right.createDiv({ cls: "mysql-result-actions" });

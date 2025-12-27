@@ -17,6 +17,7 @@ import { ResultRenderer } from './ui/ResultRenderer';
 import { CSVSelectionModal } from './ui/CSVSelectionModal';
 import { MySQLSettingTab } from './settings';
 import { ConfirmationModal } from './ui/ConfirmationModal';
+import { WorkbenchFooter } from './ui/WorkbenchFooter';
 
 export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     settings: MySQLSettings;
@@ -156,6 +157,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
         const resultContainer = workbench.createEl("div", { cls: "mysql-result-container" });
 
+        // VS Code Inspired Footer
+        const footer = new WorkbenchFooter(workbench);
+
         importBtn.onclick = () => {
             new CSVSelectionModal(this.app, async (file) => {
                 const success = await this.csvManager.importCSV(file);
@@ -177,11 +181,11 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
         if (Object.keys(params).length > 0) {
             this.renderParameterInputs(params, controls, runBtn, (newParams) => {
-                this.executeQuery(source, newParams, runBtn, resultContainer);
+                this.executeQuery(source, newParams, runBtn, resultContainer, footer);
             });
         }
 
-        runBtn.onclick = () => this.executeQuery(source, params, runBtn, resultContainer);
+        runBtn.onclick = () => this.executeQuery(source, params, runBtn, resultContainer, footer);
     }
 
     private safeHighlight(code: string): string {
@@ -241,7 +245,8 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         query: string,
         params: Record<string, any>,
         btn: HTMLButtonElement,
-        container: HTMLElement
+        container: HTMLElement,
+        footer?: WorkbenchFooter
     ): Promise<void> {
         btn.disabled = true;
 
@@ -261,12 +266,20 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 abortController.abort();
                 cancelBtn.remove();
                 btn.disabled = false;
-                btn.innerHTML = `▶️ Run`;
+                btn.empty();
+                setIcon(btn, "play");
+                btn.createSpan({ text: "Run" });
+                if (footer) {
+                    footer.setAborted();
+                }
                 new Notice("Query aborted by user");
             };
         }
 
         btn.innerHTML = `⏳ Executing...`;
+        if (footer) {
+            footer.setStatus("Executing...", true);
+        }
 
         // Handle Special Commands like SHOW TABLES (custom view?)
         // The original code handled SHOW TABLES normally via AlaSQL, but wrapped it?
@@ -305,6 +318,11 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             // Render Result
             ResultRenderer.render(result, container, this.app, this);
 
+            // Update Footer Time
+            if (footer && result.executionTime !== undefined) {
+                footer.updateTime(result.executionTime);
+            }
+
             // Determine if we should add "Export CSV" button if result looks like a single table select or check logic
             // The request said: "Export CSV button was added to the table detail view (accessed by clicking on a table in the "Tables" list)."
             // This implies there is a "Tables list" view.
@@ -325,6 +343,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             if (cancelBtn) cancelBtn.remove();
             Logger.error("Execute Query Error", e);
             ResultRenderer.render({ success: false, error: e.message }, container, this.app, this);
+            if (footer) {
+                footer.setError();
+            }
         }
 
         btn.disabled = false;
@@ -365,37 +386,50 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             }
 
             container.empty();
-            container.createEl("h6", { text: "📊 Active Tables" });
+
+            // Unified Header for Explorer
+            const explorerHeader = container.createDiv({ cls: "mysql-result-header" });
+            const headerLeft = explorerHeader.createDiv({ cls: "mysql-header-left" });
+            setIcon(headerLeft, "database");
+            headerLeft.createSpan({ text: "Active Tables", cls: "mysql-result-label" });
 
             const grid = container.createEl("div", { cls: "mysql-table-grid" });
 
             tables.forEach(t => {
                 const card = grid.createEl("div", { cls: "mysql-table-card" });
-                card.innerHTML = `<strong>${t.tableid}</strong>`;
+                const iconSlot = card.createDiv({ cls: "mysql-card-icon" });
+                setIcon(iconSlot, "table");
+                card.createEl("strong", { text: t.tableid });
 
                 card.onclick = async () => {
                     container.empty();
 
-                    const header = container.createEl("div", { cls: "mysql-table-header" });
+                    const header = container.createEl("div", { cls: "mysql-result-header" });
 
-                    const back = header.createEl("button", {
-                        cls: "mysql-btn"
+                    const left = header.createDiv({ cls: "mysql-header-left" });
+                    const back = left.createEl("button", {
+                        cls: "mysql-action-btn",
+                        attr: { title: "Go back to tables list" }
                     });
                     setIcon(back, "arrow-left");
                     back.createSpan({ text: "Back" });
-                    back.onclick = () => btn.click();
+                    back.onclick = (e) => {
+                        e.stopPropagation();
+                        btn.click();
+                    };
 
-                    header.createEl("h6", { text: `Table: ${t.tableid}` });
-
-                    const exportBtn = header.createEl("button", {
-                        cls: "mysql-btn"
+                    const right = header.createDiv({ cls: "mysql-header-right" });
+                    const exportBtn = right.createEl("button", {
+                        cls: "mysql-action-btn"
                     });
                     setIcon(exportBtn, "file-output");
                     exportBtn.createSpan({ text: "Export CSV" });
                     exportBtn.onclick = () => this.csvManager.exportTable(t.tableid);
 
+                    // Dedicated container for results so RenderRenderer doesn't empty our header
+                    const dataContainer = container.createDiv({ cls: "mysql-table-detail-content" });
                     const result = await QueryExecutor.execute(`SELECT * FROM ${t.tableid}`);
-                    ResultRenderer.render(result, container, this.app, this, t.tableid);
+                    ResultRenderer.render(result, dataContainer, this.app, this, t.tableid);
                 };
             });
         } catch (error) {

@@ -70,44 +70,6 @@
     color: var(--mysql-accent-purple);
 }
 
-.mysql-metadata-compact {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    background-color: var(--background-primary);
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid var(--background-modifier-border);
-}
-
-.mysql-metadata-compact svg {
-    width: 12px;
-    height: 12px;
-    color: var(--mysql-accent-purple);
-}
-
-.mysql-metadata {
-    display: none;
-    /* Replaced by compact header version */
-}
-
-.mysql-meta-icon {
-    display: flex;
-    align-items: center;
-    color: var(--mysql-accent-purple);
-}
-
-.mysql-meta-icon svg {
-    width: 14px;
-    height: 14px;
-}
-
-.mysql-meta-label {
-    font-weight: 400;
-}
-
 .mysql-msg-compact {
     margin: 12px 20px !important;
     padding: 8px 16px !important;

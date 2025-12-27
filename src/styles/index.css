@@ -11,6 +11,7 @@
 @import "./ui/error.css";
 @import "./ui/modals.css";
 @import "./ui/responsive.css";
+@import "./ui/footer.css";
 
 /* Components */
 @import "./components/workbench.css";
