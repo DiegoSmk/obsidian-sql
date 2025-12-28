@@ -71,7 +71,14 @@ def main():
             print(f'Erro ao postar comentário: {res_comment.status_code}')
 
     except Exception as e:
-        print(f'Ocorreu um erro inesperado: {str(e)}')
+        error_msg = f'Ocorreu um erro inesperado na revisão de IA: {str(e)}'
+        print(error_msg)
+        # Tenta postar o erro no PR para dar visibilidade
+        try:
+            comment_payload = {'body': f'⚠️ **AI Code Review Falhou**\n\n{error_msg}'}
+            requests.post(comment_url, json=comment_payload, headers=headers, timeout=10)
+        except:
+            pass
         sys.exit(1)
 
 if __name__ == '__main__':
