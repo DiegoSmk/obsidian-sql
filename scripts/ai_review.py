@@ -48,7 +48,7 @@ def main():
         # 2. Ask Gemini
         prompt = f"Atue como um desenvolvedor Senior. Revise o seguinte Diff de código e aponte bugs, falhas de segurança ou melhorias. Seja direto e técnico:\n\n{diff_data[:30000]}" # Limit to avoid token limits
         
-        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={gemini_key}"
+        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
         payload = {'contents': [{'parts': [{'text': prompt}]}]}
         
         response_req = requests.post(api_url, json=payload)
