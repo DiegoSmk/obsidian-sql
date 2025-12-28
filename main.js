@@ -38476,12 +38476,12 @@ var require_alasql_fs = __commonJS({
       }
     })(exports2, function() {
       var _Search_instances, doSearch_fn, _a;
-      let alasql5 = function(sql, params, cb, scope) {
+      let alasql7 = function(sql, params, cb, scope) {
         params = params || [];
-        if (typeof importScripts !== "function" && alasql5.webworker) {
-          var id = alasql5.lastid++;
-          alasql5.buffer[id] = cb;
-          alasql5.webworker.postMessage({ id, sql, params });
+        if (typeof importScripts !== "function" && alasql7.webworker) {
+          var id = alasql7.lastid++;
+          alasql7.buffer[id] = cb;
+          alasql7.webworker.postMessage({ id, sql, params });
           return;
         }
         if (arguments.length === 0) {
@@ -38491,7 +38491,7 @@ var require_alasql_fs = __commonJS({
           });
         } else if (arguments.length === 1) {
           if (sql.constructor === Array) {
-            return alasql5.promise(sql);
+            return alasql7.promise(sql);
           }
         }
         if (typeof params === "function") {
@@ -38510,11 +38510,11 @@ var require_alasql_fs = __commonJS({
           sql = sql.toString();
           sql = (/\/\*([\S\s]+)\*\//m.exec(sql) || ["", "Function given as SQL. Plese Provide SQL string or have a /* ... */ syle comment with SQL in the function."])[1];
         }
-        return alasql5.exec(sql, params, cb, scope);
+        return alasql7.exec(sql, params, cb, scope);
       };
-      alasql5.version = "4.15.0";
-      alasql5.build = "develop-ff717ec7";
-      alasql5.debug = void 0;
+      alasql7.version = "4.15.0";
+      alasql7.build = "develop-ff717ec7";
+      alasql7.debug = void 0;
       var alasqlparser = (function() {
         var o = function(k, v, o2, l) {
           for (o2 = o2 || {}, l = k.length; l--; o2[k[l]] = v) ;
@@ -38531,7 +38531,7 @@ var require_alasql_fs = __commonJS({
             var $0 = $$.length - 1;
             switch (yystate) {
               case 1:
-                if (alasql5.options.casesensitive) this.$ = $$[$0];
+                if (alasql7.options.casesensitive) this.$ = $$[$0];
                 else this.$ = $$[$0].toLowerCase();
                 break;
               case 2:
@@ -39538,7 +39538,7 @@ var require_alasql_fs = __commonJS({
                 var exprlist = $$[$0 - 2];
                 if (exprlist.length > 1 && (funcid.toUpperCase() == "MIN" || funcid.toUpperCase() == "MAX")) {
                   this.$ = new yy2.FuncValue({ funcid, args: exprlist, over: $$[$0] });
-                } else if (alasql5.aggr[$$[$0 - 5]]) {
+                } else if (alasql7.aggr[$$[$0 - 5]]) {
                   this.$ = new yy2.AggrValue({
                     aggregatorid: "REDUCE",
                     funcid,
@@ -42336,15 +42336,15 @@ var require_alasql_fs = __commonJS({
           exports2.main(process.argv.slice(1));
         }
       }
-      alasql5.prettyflag = false;
-      alasql5.pretty = function(sql, flag) {
-        var pf = alasql5.prettyflag;
-        alasql5.prettyflag = !flag;
-        var s = alasql5.parse(sql).toString();
-        alasql5.prettyflag = pf;
+      alasql7.prettyflag = false;
+      alasql7.pretty = function(sql, flag) {
+        var pf = alasql7.prettyflag;
+        alasql7.prettyflag = !flag;
+        var s = alasql7.parse(sql).toString();
+        alasql7.prettyflag = pf;
         return s;
       };
-      var utils = alasql5.utils = {};
+      var utils = alasql7.utils = {};
       function nanToUndefined(s) {
         return "(y=" + s + ",y===y?y:undefined)";
       }
@@ -42764,7 +42764,7 @@ var require_alasql_fs = __commonJS({
             var opt = {
               disableAutoBom: false
             };
-            alasql5.utils.extend(opt, opts);
+            alasql7.utils.extend(opt, opts);
             var blob = new Blob([data], { type: "text/plain;charset=utf-8" });
             saveAs2(blob, path, opt.disableAutoBom);
             if (cb) {
@@ -42921,7 +42921,7 @@ var require_alasql_fs = __commonJS({
         if (!a || 0 === a.length) {
           return [];
         }
-        if (typeof a === "object" && a instanceof alasql5.Recordset) {
+        if (typeof a === "object" && a instanceof alasql7.Recordset) {
           return a.data.map(function(ai) {
             return getValueOf(ai[a.columns[0].columnid]);
           });
@@ -43065,21 +43065,21 @@ var require_alasql_fs = __commonJS({
         return "";
       };
       var getXLSX = function() {
-        var XLSX = alasql5.private.externalXlsxLib || utils.global.XLSX || null;
+        var XLSX = alasql7.private.externalXlsxLib || utils.global.XLSX || null;
         if (XLSX) {
           return XLSX;
         }
         if (utils.isNode || utils.isBrowserify || utils.isMeteorServer) {
           XLSX = require_xlsx() || null;
-          alasql5.private.externalXlsxLib = XLSX;
+          alasql7.private.externalXlsxLib = XLSX;
         }
         if (!XLSX) {
           throw new Error("Please include the xlsx.js library");
         }
         return XLSX;
       };
-      alasql5.path = alasql5.utils.findAlaSQLPath();
-      alasql5.utils.uncomment = function(str) {
+      alasql7.path = alasql7.utils.findAlaSQLPath();
+      alasql7.utils.uncomment = function(str) {
         str = ("__" + str + "__").split("");
         var quote = false, quoteSign, blockComment = false, lineComment = false;
         for (var i2 = 0, l = str.length; i2 < l; i2++) {
@@ -43120,17 +43120,17 @@ var require_alasql_fs = __commonJS({
         str = str.join("").slice(2, -2);
         return str;
       };
-      alasql5.parser = alasqlparser;
-      alasql5.parser.parseError = function(str, hash2) {
+      alasql7.parser = alasqlparser;
+      alasql7.parser.parseError = function(str, hash2) {
         throw new Error("Have you used a reserved keyword without `escaping` it?\n" + str);
       };
-      alasql5.parse = function(sql) {
-        return alasqlparser.parse(alasql5.utils.uncomment(sql));
+      alasql7.parse = function(sql) {
+        return alasqlparser.parse(alasql7.utils.uncomment(sql));
       };
-      alasql5.engines = {};
-      alasql5.databases = {};
-      alasql5.databasenum = 0;
-      alasql5.options = {
+      alasql7.engines = {};
+      alasql7.databases = {};
+      alasql7.databasenum = 0;
+      alasql7.options = {
         /** Log or throw error */
         errorlog: false,
         /** Use valueof in orderfn */
@@ -43183,46 +43183,46 @@ var require_alasql_fs = __commonJS({
         /** Whether GETDATE() and NOW() return dates as string. If false, then a Date object is returned */
         dateAsString: true
       };
-      alasql5.vars = {};
-      alasql5.declares = {};
-      alasql5.prompthistory = [];
-      alasql5.plugins = {};
-      alasql5.from = {};
-      alasql5.into = {};
-      alasql5.fn = {};
-      alasql5.aggr = {};
-      alasql5.busy = 0;
-      alasql5.MAXSQLCACHESIZE = 1e4;
-      alasql5.DEFAULTDATABASEID = "alasql";
-      alasql5.lastid = 0;
-      alasql5.buffer = {};
-      alasql5.private = {
+      alasql7.vars = {};
+      alasql7.declares = {};
+      alasql7.prompthistory = [];
+      alasql7.plugins = {};
+      alasql7.from = {};
+      alasql7.into = {};
+      alasql7.fn = {};
+      alasql7.aggr = {};
+      alasql7.busy = 0;
+      alasql7.MAXSQLCACHESIZE = 1e4;
+      alasql7.DEFAULTDATABASEID = "alasql";
+      alasql7.lastid = 0;
+      alasql7.buffer = {};
+      alasql7.private = {
         externalXlsxLib: null
       };
-      alasql5.setXLSX = function(XLSX) {
-        alasql5.private.externalXlsxLib = XLSX;
+      alasql7.setXLSX = function(XLSX) {
+        alasql7.private.externalXlsxLib = XLSX;
       };
-      alasql5.use = function(databaseid) {
+      alasql7.use = function(databaseid) {
         if (!databaseid) {
-          databaseid = alasql5.DEFAULTDATABASEID;
+          databaseid = alasql7.DEFAULTDATABASEID;
         }
-        if (alasql5.useid === databaseid) {
+        if (alasql7.useid === databaseid) {
           return;
         }
-        if (alasql5.databases[databaseid] !== void 0) {
-          alasql5.useid = databaseid;
-          let db = alasql5.databases[alasql5.useid];
-          alasql5.tables = db.tables;
+        if (alasql7.databases[databaseid] !== void 0) {
+          alasql7.useid = databaseid;
+          let db = alasql7.databases[alasql7.useid];
+          alasql7.tables = db.tables;
           db.resetSqlCache();
-          if (alasql5.options.usedbo) {
-            alasql5.databases.dbo = db;
+          if (alasql7.options.usedbo) {
+            alasql7.databases.dbo = db;
           }
         } else {
           throw Error("Database does not exist: " + databaseid);
         }
       };
-      alasql5.autoval = function(tablename, colname, getNext, databaseid) {
-        var db = databaseid ? alasql5.databases[databaseid] : alasql5.databases[alasql5.useid];
+      alasql7.autoval = function(tablename, colname, getNext, databaseid) {
+        var db = databaseid ? alasql7.databases[databaseid] : alasql7.databases[alasql7.useid];
         if (!db.tables[tablename]) {
           throw new Error("Tablename not found: " + tablename);
         }
@@ -43234,42 +43234,42 @@ var require_alasql_fs = __commonJS({
         }
         return db.tables[tablename].identities[colname].value - db.tables[tablename].identities[colname].step || null;
       };
-      alasql5.exec = function(sql, params, cb, scope) {
+      alasql7.exec = function(sql, params, cb, scope) {
         if (typeof params === "function") {
           scope = cb;
           cb = params;
           params = {};
         }
-        delete alasql5.error;
+        delete alasql7.error;
         params = params || {};
-        if (alasql5.options.errorlog) {
+        if (alasql7.options.errorlog) {
           try {
-            return alasql5.dexec(alasql5.useid, sql, params, cb, scope);
+            return alasql7.dexec(alasql7.useid, sql, params, cb, scope);
           } catch (err) {
-            alasql5.error = err;
+            alasql7.error = err;
             if (cb) {
-              cb(null, alasql5.error);
+              cb(null, alasql7.error);
             }
           }
         } else {
-          return alasql5.dexec(alasql5.useid, sql, params, cb, scope);
+          return alasql7.dexec(alasql7.useid, sql, params, cb, scope);
         }
       };
       function cleanupCache(statement) {
         if (!statement) {
           return;
         }
-        if (!alasql5.options.cache) {
+        if (!alasql7.options.cache) {
           return;
         }
         if (statement && statement.query && statement.query.data) {
           statement.query.data = [];
         }
       }
-      alasql5.dexec = function(databaseid, sql, params, cb, scope) {
-        var db = alasql5.databases[databaseid];
-        var hh = hash(sql + "|joinstar:" + alasql5.options.joinstar);
-        if (alasql5.options.cache) {
+      alasql7.dexec = function(databaseid, sql, params, cb, scope) {
+        var db = alasql7.databases[databaseid];
+        var hh = hash(sql + "|joinstar:" + alasql7.options.joinstar);
+        if (alasql7.options.cache) {
           let statement2 = db.sqlCache[hh];
           if (statement2 && db.dbversion === statement2.dbversion) {
             var res = statement2(params, cb);
@@ -43278,13 +43278,13 @@ var require_alasql_fs = __commonJS({
           }
         }
         let ast = db.astCache[hh];
-        if (alasql5.options.cache && !ast) {
-          ast = alasql5.parse(sql);
+        if (alasql7.options.cache && !ast) {
+          ast = alasql7.parse(sql);
           if (ast) {
             db.astCache[hh] = ast;
           }
         } else {
-          ast = alasql5.parse(sql);
+          ast = alasql7.parse(sql);
         }
         if (!ast.statements) {
           return;
@@ -43300,62 +43300,62 @@ var require_alasql_fs = __commonJS({
             }
             statement.sql = sql;
             statement.dbversion = db.dbversion;
-            if (alasql5.options.cache) {
-              if (db.sqlCacheSize > alasql5.MAXSQLCACHESIZE) {
+            if (alasql7.options.cache) {
+              if (db.sqlCacheSize > alasql7.MAXSQLCACHESIZE) {
                 db.resetSqlCache();
               }
               db.sqlCacheSize++;
               db.sqlCache[hh] = statement;
             }
-            var res = alasql5.res = statement(params, cb, scope);
+            var res = alasql7.res = statement(params, cb, scope);
             cleanupCache(statement);
             return res;
           }
-          alasql5.precompile(ast.statements[0], alasql5.useid, params);
-          var res = alasql5.res = ast.statements[0].execute(databaseid, params, cb, scope);
+          alasql7.precompile(ast.statements[0], alasql7.useid, params);
+          var res = alasql7.res = ast.statements[0].execute(databaseid, params, cb, scope);
           return res;
         }
         if (cb) {
-          alasql5.adrun(databaseid, ast, params, cb, scope);
+          alasql7.adrun(databaseid, ast, params, cb, scope);
           return;
         }
-        return alasql5.drun(databaseid, ast, params, cb, scope);
+        return alasql7.drun(databaseid, ast, params, cb, scope);
       };
-      alasql5.drun = function(databaseid, ast, params, cb, scope) {
-        var useid = alasql5.useid;
+      alasql7.drun = function(databaseid, ast, params, cb, scope) {
+        var useid = alasql7.useid;
         if (useid !== databaseid) {
-          alasql5.use(databaseid);
+          alasql7.use(databaseid);
         }
         var res = [];
         for (var i2 = 0, ilen = ast.statements.length; i2 < ilen; i2++) {
           if (ast.statements[i2]) {
             if (ast.statements[i2].compile) {
-              var statement = ast.statements[i2].compile(alasql5.useid);
-              res.push(alasql5.res = statement(params, null, scope));
+              var statement = ast.statements[i2].compile(alasql7.useid);
+              res.push(alasql7.res = statement(params, null, scope));
             } else {
-              alasql5.precompile(ast.statements[i2], alasql5.useid, params);
-              res.push(alasql5.res = ast.statements[i2].execute(alasql5.useid, params));
+              alasql7.precompile(ast.statements[i2], alasql7.useid, params);
+              res.push(alasql7.res = ast.statements[i2].execute(alasql7.useid, params));
             }
           }
         }
         if (useid !== databaseid) {
-          alasql5.use(useid);
+          alasql7.use(useid);
         }
         if (cb) {
           cb(res);
         }
-        alasql5.res = res;
+        alasql7.res = res;
         return res;
       };
-      alasql5.adrun = function(databaseid, ast, params, cb, scope) {
+      alasql7.adrun = function(databaseid, ast, params, cb, scope) {
         var idx = 0;
         var noqueries = ast.statements.length;
-        if (alasql5.options.progress !== false) {
-          alasql5.options.progress(noqueries, idx++);
+        if (alasql7.options.progress !== false) {
+          alasql7.options.progress(noqueries, idx++);
         }
-        var useid = alasql5.useid;
+        var useid = alasql7.useid;
         if (useid !== databaseid) {
-          alasql5.use(databaseid);
+          alasql7.use(databaseid);
         }
         var res = [];
         function adrunone(data) {
@@ -43365,30 +43365,30 @@ var require_alasql_fs = __commonJS({
           var astatement = ast.statements.shift();
           if (!astatement) {
             if (useid !== databaseid) {
-              alasql5.use(useid);
+              alasql7.use(useid);
             }
             cb(res);
             return;
           }
           if (astatement.compile) {
-            var statement = astatement.compile(alasql5.useid);
+            var statement = astatement.compile(alasql7.useid);
             statement(params, adrunone, scope);
-            if (alasql5.options.progress !== false) {
-              alasql5.options.progress(noqueries, idx++);
+            if (alasql7.options.progress !== false) {
+              alasql7.options.progress(noqueries, idx++);
             }
             return;
           }
-          alasql5.precompile(ast.statements[0], alasql5.useid, params);
-          astatement.execute(alasql5.useid, params, adrunone);
-          if (alasql5.options.progress !== false) {
-            alasql5.options.progress(noqueries, idx++);
+          alasql7.precompile(ast.statements[0], alasql7.useid, params);
+          astatement.execute(alasql7.useid, params, adrunone);
+          if (alasql7.options.progress !== false) {
+            alasql7.options.progress(noqueries, idx++);
           }
         }
         adrunone();
       };
-      alasql5.compile = function(sql, databaseid) {
-        databaseid = databaseid || alasql5.useid;
-        let ast = alasql5.parse(sql);
+      alasql7.compile = function(sql, databaseid) {
+        databaseid = databaseid || alasql7.useid;
+        let ast = alasql7.parse(sql);
         if (1 !== ast.statements.length)
           throw new Error("Cannot compile, because number of statements in SQL is not equal to 1");
         var statement = ast.statements[0].compile(databaseid);
@@ -43410,12 +43410,12 @@ var require_alasql_fs = __commonJS({
       }
       var promiseExec = function(sql, params, counterStep, counterTotal) {
         return new utils.global.Promise(function(resolve, reject) {
-          alasql5(sql, params, function(data, err) {
+          alasql7(sql, params, function(data, err) {
             if (err) {
               reject(err);
             } else {
-              if (counterStep && counterTotal && alasql5.options.progress !== false) {
-                alasql5.options.progress(counterStep, counterTotal);
+              if (counterStep && counterTotal && alasql7.options.progress !== false) {
+                alasql7.options.progress(counterStep, counterTotal);
               }
               resolve(data);
             }
@@ -43456,7 +43456,7 @@ var require_alasql_fs = __commonJS({
         }
         return sequentialPromiseResolver(execArray, utils.global.Promise);
       };
-      alasql5.promise = function(sql, params) {
+      alasql7.promise = function(sql, params) {
         if (typeof Promise === "undefined") {
           throw new Error("Please include a Promise/A+ library");
         }
@@ -43468,27 +43468,27 @@ var require_alasql_fs = __commonJS({
         }
         return promiseAll(sql);
       };
-      var Database = alasql5.Database = function(databaseid) {
+      var Database = alasql7.Database = function(databaseid) {
         var self2 = this;
-        if (self2 === alasql5) {
+        if (self2 === alasql7) {
           if (databaseid) {
-            self2 = alasql5.databases[databaseid];
-            alasql5.databases[databaseid] = self2;
+            self2 = alasql7.databases[databaseid];
+            alasql7.databases[databaseid] = self2;
             if (!self2) {
               throw new Error(`Database ${databaseid} not found`);
             }
           } else {
-            self2 = alasql5.databases.alasql;
-            if (alasql5.options.tsql) {
-              alasql5.databases.tempdb = alasql5.databases.alasql;
+            self2 = alasql7.databases.alasql;
+            if (alasql7.options.tsql) {
+              alasql7.databases.tempdb = alasql7.databases.alasql;
             }
           }
         }
         if (!databaseid) {
-          databaseid = "db" + alasql5.databasenum++;
+          databaseid = "db" + alasql7.databasenum++;
         }
         self2.databaseid = databaseid;
-        alasql5.databases[databaseid] = self2;
+        alasql7.databases[databaseid] = self2;
         self2.dbversion = 0;
         self2.tables = {};
         self2.views = {};
@@ -43505,13 +43505,13 @@ var require_alasql_fs = __commonJS({
         this.astCache = {};
       };
       Database.prototype.exec = function(sql, params, cb) {
-        return alasql5.dexec(this.databaseid, sql, params, cb);
+        return alasql7.dexec(this.databaseid, sql, params, cb);
       };
       Database.prototype.autoval = function(tablename, colname, getNext) {
-        return alasql5.autoval(tablename, colname, getNext, this.databaseid);
+        return alasql7.autoval(tablename, colname, getNext, this.databaseid);
       };
       Database.prototype.transaction = function(cb) {
-        var tx = new alasql5.Transaction(this.databaseid);
+        var tx = new alasql7.Transaction(this.databaseid);
         var res = cb(tx);
         return res;
       };
@@ -43522,19 +43522,19 @@ var require_alasql_fs = __commonJS({
           /** @type {string | undefined} */
           __publicField(this, "bank");
           this.databaseid = databaseid;
-          this.dbversion = alasql5.databases[databaseid].dbversion;
-          this.bank = JSON.stringify(alasql5.databases[databaseid]);
+          this.dbversion = alasql7.databases[databaseid].dbversion;
+          this.bank = JSON.stringify(alasql7.databases[databaseid]);
         }
         /** Commit transaction */
         commit() {
           this.committed = true;
-          alasql5.databases[this.databaseid].dbversion = Date.now();
+          alasql7.databases[this.databaseid].dbversion = Date.now();
           delete this.bank;
         }
         /** Rollback transaction */
         rollback() {
           if (!this.committed) {
-            alasql5.databases[this.databaseid] = JSON.parse(this.bank);
+            alasql7.databases[this.databaseid] = JSON.parse(this.bank);
             delete this.bank;
           } else {
             throw new Error("Transaction already commited");
@@ -43548,7 +43548,7 @@ var require_alasql_fs = __commonJS({
          * @return result
          */
         exec(sql, params, cb) {
-          return alasql5.dexec(this.databaseid, sql, params, cb);
+          return alasql7.dexec(this.databaseid, sql, params, cb);
         }
         /*
         	queryArray (sql, params, cb) {
@@ -43570,8 +43570,8 @@ var require_alasql_fs = __commonJS({
         	*/
       }
       Transaction.prototype.executeSQL = Transaction.prototype.exec;
-      alasql5.Transaction = Transaction;
-      var Table = alasql5.Table = function(params) {
+      alasql7.Transaction = Transaction;
+      var Table = alasql7.Table = function(params) {
         this.data = [];
         this.columns = [];
         this.xcolumns = {};
@@ -43608,10 +43608,10 @@ var require_alasql_fs = __commonJS({
           Object.assign(this, params);
         }
       }
-      alasql5.View = View;
+      alasql7.View = View;
       class Query {
         constructor(params) {
-          this.alasql = alasql5;
+          this.alasql = alasql7;
           this.columns = [];
           this.xcolumns = {};
           this.selectGroup = [];
@@ -43624,8 +43624,8 @@ var require_alasql_fs = __commonJS({
           Object.assign(this, params);
         }
       }
-      alasql5.Recordset = Recordset;
-      alasql5.Query = Query;
+      alasql7.Recordset = Recordset;
+      alasql7.Query = Query;
       class Base {
         constructor(params) {
           Object.assign(this, params);
@@ -43646,7 +43646,7 @@ var require_alasql_fs = __commonJS({
         /** @deprecated use `Object.assign` instead */
         extend: Object.assign,
         // Option for case sensitive
-        casesensitive: alasql5.options.casesensitive,
+        casesensitive: alasql7.options.casesensitive,
         Base,
         // Helper for ParamValue handling in UPDATE/DELETE/INSERT
         compileParamValue: function(paramIndex, operation, needsSync, databaseid, self2, refProp) {
@@ -43658,8 +43658,8 @@ var require_alasql_fs = __commonJS({
               throw err;
             }
             var tmpid = "__p" + paramIndex + "_" + Date.now();
-            var db = alasql5.databases[databaseid || "alasql"];
-            db.tables[tmpid] = new alasql5.Table({ tableid: tmpid });
+            var db = alasql7.databases[databaseid || "alasql"];
+            db.tables[tmpid] = new alasql7.Table({ tableid: tmpid });
             db.tables[tmpid].data = data;
             try {
               var origRef = self2[refProp];
@@ -43682,7 +43682,7 @@ var require_alasql_fs = __commonJS({
           };
         }
       };
-      alasqlparser.yy = alasql5.yy = yy;
+      alasqlparser.yy = alasql7.yy = yy;
       yy.Statements = class Statements {
         constructor(params) {
           Object.assign(this, params);
@@ -43735,12 +43735,12 @@ var require_alasql_fs = __commonJS({
         var selectors = cloneDeep(this.selectors);
         function processSelector(selectors2, sidx, value) {
           var val, nest, r, sel = selectors2[sidx];
-          var INFINITE_LOOP_BREAK = alasql5.options.loopbreak || 1e5;
+          var INFINITE_LOOP_BREAK = alasql7.options.loopbreak || 1e5;
           if (sel.selid) {
             if (sel.selid === "PATH") {
               var queue = [{ node: value, stack: [] }];
               var visited = {};
-              var objects = alasql5.databases[alasql5.useid].objects;
+              var objects = alasql7.databases[alasql7.useid].objects;
               while (queue.length > 0) {
                 var q = queue.shift();
                 var node = q.node;
@@ -43913,7 +43913,7 @@ var require_alasql_fs = __commonJS({
                   retval = [value];
                 } else {
                   if (lvar) {
-                    alasql5.vars[lvar] = 0;
+                    alasql7.vars[lvar] = 0;
                   }
                   retval = retval.concat(processSelector(selectors2, sidx + 1, value));
                 }
@@ -43926,7 +43926,7 @@ var require_alasql_fs = __commonJS({
                   nests.shift();
                   if (nest.lvl <= lmax) {
                     if (lvar) {
-                      alasql5.vars[lvar] = nest.lvl;
+                      alasql7.vars[lvar] = nest.lvl;
                     }
                     var nest1 = processSelector(sel.sels, 0, nest.value);
                     nest1.forEach(function(n) {
@@ -43955,13 +43955,13 @@ var require_alasql_fs = __commonJS({
               } else {
                 var r1 = [];
                 Object.keys(value).forEach(function(keyv) {
-                  alasql5.vars[sel.args[0].variable] = keyv;
+                  alasql7.vars[sel.args[0].variable] = keyv;
                   r1 = r1.concat(processSelector(selectors2, sidx + 1, value[keyv]));
                 });
                 return r1;
               }
             } else if (sel.selid === "TO") {
-              var oldv = alasql5.vars[sel.args[0]];
+              var oldv = alasql7.vars[sel.args[0]];
               var newv = [];
               if (oldv !== void 0) {
                 newv = oldv.slice(0);
@@ -43972,9 +43972,9 @@ var require_alasql_fs = __commonJS({
               if (sidx + 1 + 1 > selectors2.length) {
                 return [value];
               } else {
-                alasql5.vars[sel.args[0]] = newv;
+                alasql7.vars[sel.args[0]] = newv;
                 var r1 = processSelector(selectors2, sidx + 1, value);
-                alasql5.vars[sel.args[0]] = oldv;
+                alasql7.vars[sel.args[0]] = oldv;
                 return r1;
               }
             } else if (sel.selid === "ARRAY") {
@@ -44163,7 +44163,7 @@ var require_alasql_fs = __commonJS({
               throw new Error("Wrong selector " + sel.selid);
             }
           } else if (sel.srchid) {
-            var r = alasql5.srch[sel.srchid.toUpperCase()](value, sel.args, stope, params);
+            var r = alasql7.srch[sel.srchid.toUpperCase()](value, sel.args, stope, params);
           } else {
             throw new Error("Selector not found");
           }
@@ -44203,19 +44203,19 @@ var require_alasql_fs = __commonJS({
         }
         if (this.from instanceof yy.Column) {
           var dbid = this.from.databaseid || databaseid;
-          fromdata = alasql5.databases[dbid].tables[this.from.columnid].data;
-        } else if (this.from instanceof yy.FuncValue && alasql5.from[this.from.funcid.toUpperCase()]) {
+          fromdata = alasql7.databases[dbid].tables[this.from.columnid].data;
+        } else if (this.from instanceof yy.FuncValue && alasql7.from[this.from.funcid.toUpperCase()]) {
           var args = this.from.args.map(function(arg) {
             var as = arg.toJS();
             var fn = new Function("params,alasql", "var y;return " + as).bind(this);
-            return fn(params, alasql5);
+            return fn(params, alasql7);
           });
-          fromdata = alasql5.from[this.from.funcid.toUpperCase()].apply(this, args);
+          fromdata = alasql7.from[this.from.funcid.toUpperCase()].apply(this, args);
         } else if (typeof this.from === "undefined") {
-          fromdata = alasql5.databases[databaseid].objects;
+          fromdata = alasql7.databases[databaseid].objects;
         } else {
           var fromfn = new Function("params,alasql", "var y;return " + this.from.toJS());
-          fromdata = fromfn(params, alasql5);
+          fromdata = fromfn(params, alasql7);
           if (typeof Mongo === "object" && typeof Mongo.Collection !== "object" && fromdata instanceof Mongo.Collection) {
             fromdata = fromdata.find().fetch();
           }
@@ -44224,7 +44224,7 @@ var require_alasql_fs = __commonJS({
           if (false) {
             selectors.forEach(function(selector) {
               if (selector.srchid === "TO") {
-                alasql5.vars[selector.args[0]] = [];
+                alasql7.vars[selector.args[0]] = [];
               }
             });
           }
@@ -44241,23 +44241,23 @@ var require_alasql_fs = __commonJS({
             }
             if (cb) res = cb(res);
           } else if (this.into instanceof yy.VarValue) {
-            alasql5.vars[this.into.variable] = res;
+            alasql7.vars[this.into.variable] = res;
             if (cb) res = cb(res);
           } else {
             var a1, a2;
             if (typeof this.into.args[0] !== "undefined") {
               a1 = new Function("params,alasql", "var y;return " + this.into.args[0].toJS())(
                 params,
-                alasql5
+                alasql7
               );
             }
             if (typeof this.into.args[1] !== "undefined") {
               a2 = new Function("params,alasql", "var y;return " + this.into.args[1].toJS())(
                 params,
-                alasql5
+                alasql7
               );
             }
-            res = alasql5.into[this.into.funcid.toUpperCase()](a1, a2, res, [], cb);
+            res = alasql7.into[this.into.funcid.toUpperCase()](a1, a2, res, [], cb);
           }
         } else {
           if (stope.value && res.length > 0) {
@@ -44269,7 +44269,7 @@ var require_alasql_fs = __commonJS({
         }
         return res;
       }, _a);
-      alasql5.srch = {
+      alasql7.srch = {
         PROP(val, args, stope) {
           if (stope.mode === "XML") {
             const values = val.children.filter((v) => v.name.toUpperCase() === args[0].toUpperCase());
@@ -44295,7 +44295,7 @@ var require_alasql_fs = __commonJS({
         EQ(val, args, stope, params) {
           var exprs = args[0].toJS("x", "");
           var exprfn = new Function("x,alasql,params", "return " + exprs);
-          if (val === exprfn(val, alasql5, params)) {
+          if (val === exprfn(val, alasql7, params)) {
             return { status: 1, values: [val] };
           } else {
             return { status: -1, values: [] };
@@ -44307,7 +44307,7 @@ var require_alasql_fs = __commonJS({
           var exprfn = new Function("x,alasql,params", "return " + exprs);
           if (val.toUpperCase().match(
             new RegExp(
-              "^" + exprfn(val, alasql5, params).toUpperCase().replace(/%/g, ".*").replace(/\?|_/g, ".") + "$"
+              "^" + exprfn(val, alasql7, params).toUpperCase().replace(/%/g, ".*").replace(/\?|_/g, ".") + "$"
             ),
             "g"
           )) {
@@ -44338,7 +44338,7 @@ var require_alasql_fs = __commonJS({
           return { status: 1, values: [val.content] };
         },
         SHARP(val, args) {
-          const obj = alasql5.databases[alasql5.useid].objects[args[0]];
+          const obj = alasql7.databases[alasql7.useid].objects[args[0]];
           if (val !== void 0 && val === obj) {
             return { status: 1, values: [val] };
           } else {
@@ -44386,7 +44386,7 @@ var require_alasql_fs = __commonJS({
         WHERE(val, args, stope, params) {
           var exprs = args[0].toJS("x", "");
           var exprfn = new Function("x,alasql,params", "return " + exprs);
-          if (exprfn(val, alasql5, params)) {
+          if (exprfn(val, alasql7, params)) {
             return { status: 1, values: [val] };
           } else {
             return { status: -1, values: [] };
@@ -44416,7 +44416,7 @@ var require_alasql_fs = __commonJS({
         },
         // Transform expression
         INSTANCEOF(val, args) {
-          if (val instanceof alasql5.fn[args[0]]) {
+          if (val instanceof alasql7.fn[args[0]]) {
             return { status: 1, values: [val] };
           } else {
             return { status: -1, values: [] };
@@ -44434,7 +44434,7 @@ var require_alasql_fs = __commonJS({
         EX(val, args, stope, params) {
           var exprs = args[0].toJS("x", "");
           var exprfn = new Function("x,alasql,params", "return " + exprs);
-          return { status: 1, values: [exprfn(val, alasql5, params)] };
+          return { status: 1, values: [exprfn(val, alasql7, params)] };
         },
         // Transform expression
         RETURN(val, args, stope, params) {
@@ -44446,20 +44446,20 @@ var require_alasql_fs = __commonJS({
               if (typeof arg.as === "undefined") {
                 arg.as = arg.toString();
               }
-              res[arg.as] = exprfn(val, alasql5, params);
+              res[arg.as] = exprfn(val, alasql7, params);
             });
           }
           return { status: 1, values: [res] };
         },
         // Transform expression
         REF(val) {
-          return { status: 1, values: [alasql5.databases[alasql5.useid].objects[val]] };
+          return { status: 1, values: [alasql7.databases[alasql7.useid].objects[val]] };
         },
         // Transform expression
         OUT(val) {
           if (val.$out && val.$out.length > 0) {
             var res = val.$out.map(function(v) {
-              return alasql5.databases[alasql5.useid].objects[v];
+              return alasql7.databases[alasql7.useid].objects[v];
             });
             return { status: 1, values: res };
           } else {
@@ -44470,10 +44470,10 @@ var require_alasql_fs = __commonJS({
           if (val.$out && val.$out.length > 0) {
             var res = [];
             val.$out.forEach(function(v) {
-              var av = alasql5.databases[alasql5.useid].objects[v];
+              var av = alasql7.databases[alasql7.useid].objects[v];
               if (av && av.$out && av.$out.length > 0) {
                 av.$out.forEach(function(vv) {
-                  res = res.concat(alasql5.databases[alasql5.useid].objects[vv]);
+                  res = res.concat(alasql7.databases[alasql7.useid].objects[vv]);
                 });
               }
             });
@@ -44486,7 +44486,7 @@ var require_alasql_fs = __commonJS({
         IN(val) {
           if (val.$in && val.$in.length > 0) {
             var res = val.$in.map(function(v) {
-              return alasql5.databases[alasql5.useid].objects[v];
+              return alasql7.databases[alasql7.useid].objects[v];
             });
             return { status: 1, values: res };
           } else {
@@ -44497,10 +44497,10 @@ var require_alasql_fs = __commonJS({
           if (val.$in && val.$in.length > 0) {
             var res = [];
             val.$in.forEach(function(v) {
-              var av = alasql5.databases[alasql5.useid].objects[v];
+              var av = alasql7.databases[alasql7.useid].objects[v];
               if (av && av.$in && av.$in.length > 0) {
                 av.$in.forEach(function(vv) {
-                  res = res.concat(alasql5.databases[alasql5.useid].objects[vv]);
+                  res = res.concat(alasql7.databases[alasql7.useid].objects[vv]);
                 });
               }
             });
@@ -44511,12 +44511,12 @@ var require_alasql_fs = __commonJS({
         },
         // Transform expression
         AS(val, args) {
-          alasql5.vars[args[0]] = val;
+          alasql7.vars[args[0]] = val;
           return { status: 1, values: [val] };
         },
         // Transform expression
         AT(val, args) {
-          var v = alasql5.vars[args[0]];
+          var v = alasql7.vars[args[0]];
           return { status: 1, values: [v] };
         },
         // Transform expression
@@ -44542,7 +44542,7 @@ var require_alasql_fs = __commonJS({
             }
           }).join(";");
           var setfn = new Function("x,params,alasql", s);
-          setfn(val, params, alasql5);
+          setfn(val, params, alasql7);
           return { status: 1, values: [val] };
         },
         ROW(val, args, stope, params) {
@@ -44550,7 +44550,7 @@ var require_alasql_fs = __commonJS({
           s += args.map((arg) => arg.toJS("x", "")).join(",");
           s += "]";
           var setfn = new Function("x,params,alasql", s);
-          var rv = setfn(val, params, alasql5);
+          var rv = setfn(val, params, alasql7);
           return { status: 1, values: [rv] };
         },
         D3(val) {
@@ -44590,7 +44590,7 @@ var require_alasql_fs = __commonJS({
             }
             if (ord.expression instanceof yy.Column) {
               var columnid = ord.expression.columnid;
-              if (alasql5.options.valueof) {
+              if (alasql7.options.valueof) {
                 dg = ".valueOf()";
               }
               if (ord.nocase) {
@@ -44659,7 +44659,7 @@ var require_alasql_fs = __commonJS({
         let result;
         query.sources.forEach(function(source, idx) {
           source.query = query;
-          var rs = source.datafn(query, query.params, queryfn2, idx, alasql5);
+          var rs = source.datafn(query, query.params, queryfn2, idx, alasql7);
           if (typeof rs !== "undefined") {
             if ((query.intofn || query.intoallfn) && Array.isArray(rs) && !query.preserveArrayResult) {
               rs = rs.length;
@@ -44732,9 +44732,9 @@ var require_alasql_fs = __commonJS({
           }
           for (var i2 = 0, ilen = query.groups.length; i2 < ilen; i2++) {
             var g = query.groups[i2];
-            if (gfn) gfn(g, query.params, alasql5);
-            if (!query.havingfn || query.havingfn(g, query.params, alasql5)) {
-              var d = query.selectgfn(g, query.params, alasql5);
+            if (gfn) gfn(g, query.params, alasql7);
+            if (!query.havingfn || query.havingfn(g, query.params, alasql7)) {
+              var d = query.selectgfn(g, query.params, alasql7);
               for (const key2 in query.groupColumns) {
                 if (query.groupColumns[key2] !== key2 && d[query.groupColumns[key2]] && !query.groupColumns[query.groupColumns[key2]]) {
                   var nick = query.groupColumns[key2];
@@ -44914,7 +44914,7 @@ var require_alasql_fs = __commonJS({
             r = query.data[i2];
             for (var k in r) {
               for (j = 0; j < query.removeLikeKeys.length; j++) {
-                if (alasql5.utils.like(query.removeLikeKeys[j], k)) {
+                if (alasql7.utils.like(query.removeLikeKeys[j], k)) {
                   delete r[k];
                 }
               }
@@ -44924,7 +44924,7 @@ var require_alasql_fs = __commonJS({
             query.columns = query.columns.filter(function(column) {
               var found = false;
               removeLikeKeys.forEach(function(key2) {
-                if (alasql5.utils.like(key2, column.columnid)) {
+                if (alasql7.utils.like(key2, column.columnid)) {
                   found = true;
                 }
               });
@@ -44989,11 +44989,11 @@ var require_alasql_fs = __commonJS({
           delete source.ix;
           var scope, i2, ilen, dataw, ixx, addr, group, res;
           if (k > 0 && source.optimization == "ix" && source.onleftfn && source.onrightfn) {
-            if (source.databaseid && alasql5.databases[source.databaseid].tables[source.tableid]) {
-              if (!alasql5.databases[source.databaseid].tables[source.tableid].indices)
+            if (source.databaseid && alasql7.databases[source.databaseid].tables[source.tableid]) {
+              if (!alasql7.databases[source.databaseid].tables[source.tableid].indices)
                 query.database.tables[source.tableid].indices = {};
-              ixx = alasql5.databases[source.databaseid].tables[source.tableid].indices[hash(source.onrightfns + "`" + source.srcwherefns)];
-              if (!alasql5.databases[source.databaseid].tables[source.tableid].dirty && ixx) {
+              ixx = alasql7.databases[source.databaseid].tables[source.tableid].indices[hash(source.onrightfns + "`" + source.srcwherefns)];
+              if (!alasql7.databases[source.databaseid].tables[source.tableid].dirty && ixx) {
                 source.ix = ixx;
               }
             }
@@ -45005,8 +45005,8 @@ var require_alasql_fs = __commonJS({
               while ((dataw = source.data[i2]) || source.getfn && (dataw = source.getfn(i2)) || i2 < ilen) {
                 if (source.getfn && !source.dontcache) source.data[i2] = dataw;
                 scope[source.alias || source.tableid] = dataw;
-                if (source.srcwherefn(scope, query.params, alasql5)) {
-                  var addr = source.onrightfn(scope, query.params, alasql5);
+                if (source.srcwherefn(scope, query.params, alasql7)) {
+                  var addr = source.onrightfn(scope, query.params, alasql7);
                   var group = source.ix[addr];
                   if (!group) {
                     group = source.ix[addr] = [];
@@ -45015,17 +45015,17 @@ var require_alasql_fs = __commonJS({
                 }
                 i2++;
               }
-              if (source.databaseid && alasql5.databases[source.databaseid].tables[source.tableid]) {
-                alasql5.databases[source.databaseid].tables[source.tableid].indices[hash(source.onrightfns + "`" + source.srcwherefns)] = source.ix;
+              if (source.databaseid && alasql7.databases[source.databaseid].tables[source.tableid]) {
+                alasql7.databases[source.databaseid].tables[source.tableid].indices[hash(source.onrightfns + "`" + source.srcwherefns)] = source.ix;
               }
             }
           } else if (source.wxleftfn) {
-            if (!alasql5.databases[source.databaseid].engineid) {
-              ixx = alasql5.databases[source.databaseid].tables[source.tableid].indices[hash(source.wxleftfns + "`")];
+            if (!alasql7.databases[source.databaseid].engineid) {
+              ixx = alasql7.databases[source.databaseid].tables[source.tableid].indices[hash(source.wxleftfns + "`")];
             }
-            if (!alasql5.databases[source.databaseid].tables[source.tableid].dirty && ixx) {
+            if (!alasql7.databases[source.databaseid].tables[source.tableid].dirty && ixx) {
               source.ix = ixx;
-              source.data = source.ix[source.wxrightfn(null, query.params, alasql5)];
+              source.data = source.ix[source.wxrightfn(null, query.params, alasql7)];
             } else {
               source.ix = {};
               scope = {};
@@ -45035,7 +45035,7 @@ var require_alasql_fs = __commonJS({
               while ((dataw = source.data[i2]) || source.getfn && (dataw = source.getfn(i2)) || i2 < ilen) {
                 if (source.getfn && !source.dontcache) source.data[i2] = dataw;
                 scope[source.alias || source.tableid] = source.data[i2];
-                addr = source.wxleftfn(scope, query.params, alasql5);
+                addr = source.wxleftfn(scope, query.params, alasql7);
                 group = source.ix[addr];
                 if (!group) {
                   group = source.ix[addr] = [];
@@ -45043,8 +45043,8 @@ var require_alasql_fs = __commonJS({
                 group.push(source.data[i2]);
                 i2++;
               }
-              if (!alasql5.databases[source.databaseid].engineid) {
-                alasql5.databases[source.databaseid].tables[source.tableid].indices[hash(source.wxleftfns + "`")] = source.ix;
+              if (!alasql7.databases[source.databaseid].engineid) {
+                alasql7.databases[source.databaseid].tables[source.tableid].indices[hash(source.wxleftfns + "`")] = source.ix;
               }
             }
             if (source.srcwherefns) {
@@ -45052,7 +45052,7 @@ var require_alasql_fs = __commonJS({
                 scope = {};
                 source.data = source.data.filter(function(r) {
                   scope[source.alias] = r;
-                  return source.srcwherefn(scope, query.params, alasql5);
+                  return source.srcwherefn(scope, query.params, alasql7);
                 });
               } else {
                 source.data = [];
@@ -45063,7 +45063,7 @@ var require_alasql_fs = __commonJS({
               scope = {};
               source.data = source.data.filter(function(r) {
                 scope[source.alias] = r;
-                return source.srcwherefn(scope, query.params, alasql5);
+                return source.srcwherefn(scope, query.params, alasql7);
               });
               scope = {};
               i2 = 0;
@@ -45072,7 +45072,7 @@ var require_alasql_fs = __commonJS({
               while ((dataw = source.data[i2]) || source.getfn && (dataw = source.getfn(i2)) || i2 < ilen) {
                 if (source.getfn && !source.dontcache) source.data[i2] = dataw;
                 scope[source.alias] = dataw;
-                if (source.srcwherefn(scope, query.params, alasql5)) res.push(dataw);
+                if (source.srcwherefn(scope, query.params, alasql7)) res.push(dataw);
                 i2++;
               }
               source.data = res;
@@ -45080,18 +45080,18 @@ var require_alasql_fs = __commonJS({
               source.data = [];
             }
           }
-          if (source.databaseid && alasql5.databases[source.databaseid].tables[source.tableid]) {
+          if (source.databaseid && alasql7.databases[source.databaseid].tables[source.tableid]) {
           } else {
           }
         }
       };
       function doJoin(query, scope, h) {
         if (h >= query.sources.length) {
-          if (query.wherefn(scope, query.params, alasql5)) {
+          if (query.wherefn(scope, query.params, alasql7)) {
             if (query.groupfn) {
-              query.groupfn(scope, query.params, alasql5);
+              query.groupfn(scope, query.params, alasql7);
             } else {
-              query.data.push(query.selectfn(scope, query.params, alasql5));
+              query.data.push(query.selectfn(scope, query.params, alasql7));
             }
           }
         } else if (query.sources[h].applyselect) {
@@ -45122,7 +45122,7 @@ var require_alasql_fs = __commonJS({
           let opt = false;
           if (!source2.getfn || source2.getfn && !source2.dontcache) {
             if (source2.joinmode != "RIGHT" && source2.joinmode != "OUTER" && source2.joinmode != "ANTI" && source2.optimization == "ix") {
-              data = source2.ix[source2.onleftfn(scope, query.params, alasql5)] || [];
+              data = source2.ix[source2.onleftfn(scope, query.params, alasql7)] || [];
               opt = true;
             }
           }
@@ -45137,14 +45137,14 @@ var require_alasql_fs = __commonJS({
             scope[tableid] = dataw;
             var usingPassed = !source2.onleftfn;
             if (!usingPassed) {
-              var left = source2.onleftfn(scope, query.params, alasql5);
-              var right = source2.onrightfn(scope, query.params, alasql5);
+              var left = source2.onleftfn(scope, query.params, alasql7);
+              var right = source2.onrightfn(scope, query.params, alasql7);
               if (left instanceof String || left instanceof Number) left = left.valueOf();
               if (right instanceof String || right instanceof Number) right = left.valueOf();
               usingPassed = left == right;
             }
             if (usingPassed) {
-              if (source2.onmiddlefn(scope, query.params, alasql5)) {
+              if (source2.onmiddlefn(scope, query.params, alasql7)) {
                 if (source2.joinmode != "SEMI" && source2.joinmode != "ANTI") {
                   doJoin(query, scope, h + 1);
                 }
@@ -45261,7 +45261,7 @@ var require_alasql_fs = __commonJS({
                 ss += "JOIN " + jn.table.toString();
               } else if (jn.select) {
                 ss += "JOIN (" + jn.select.toString() + ")";
-              } else if (jn instanceof alasql5.yy.Apply) {
+              } else if (jn instanceof alasql7.yy.Apply) {
                 ss += jn.toString();
               } else {
                 throw new Error("Wrong type in JOIN mode");
@@ -45323,7 +45323,7 @@ var require_alasql_fs = __commonJS({
         }
         // Compile SELECT statement
         compile(databaseid, params) {
-          var db = alasql5.databases[databaseid];
+          var db = alasql7.databases[databaseid];
           var query = new Query();
           query.removeKeys = [];
           query.aggrKeys = [];
@@ -45406,9 +45406,9 @@ var require_alasql_fs = __commonJS({
           }
           if (this.into) {
             if (this.into instanceof yy.Table) {
-              if (alasql5.options.autocommit && alasql5.databases[this.into.databaseid || databaseid].engineid) {
+              if (alasql7.options.autocommit && alasql7.databases[this.into.databaseid || databaseid].engineid) {
                 query.intoallfns = `return alasql
-								.engines[${JSON.stringify(alasql5.databases[this.into.databaseid || databaseid].engineid)}]
+								.engines[${JSON.stringify(alasql7.databases[this.into.databaseid || databaseid].engineid)}]
 								.intoTable(
 									${JSON.stringify(this.into.databaseid || databaseid)},
 									${JSON.stringify(this.into.tableid)},
@@ -45574,11 +45574,11 @@ var require_alasql_fs = __commonJS({
         if (typeof res === "undefined" || typeof res === "number" || typeof res === "string" || typeof res === "boolean") {
           return res;
         }
-        var modifier = query.modifier || alasql5.options.modifier;
+        var modifier = query.modifier || alasql7.options.modifier;
         var columns = query.columns;
         if (query.dirtyColumns && res.length > 0) {
           var allcol = {};
-          for (var i2 = Math.min(res.length, alasql5.options.columnlookup || 10) - 1; 0 <= i2; i2--) {
+          for (var i2 = Math.min(res.length, alasql7.options.columnlookup || 10) - 1; 0 <= i2; i2--) {
             for (var key in res[i2]) {
               allcol[key] = true;
             }
@@ -45602,7 +45602,7 @@ var require_alasql_fs = __commonJS({
         } else if (typeof columns === "undefined" || columns.length === 0) {
           if (res.length > 0) {
             var allcol = {};
-            for (var i2 = Math.min(res.length, alasql5.options.columnlookup || 10) - 1; 0 <= i2; i2--) {
+            for (var i2 = Math.min(res.length, alasql7.options.columnlookup || 10) - 1; 0 <= i2; i2--) {
               for (var key in res[i2]) {
                 allcol[key] = true;
               }
@@ -45642,7 +45642,7 @@ var require_alasql_fs = __commonJS({
               ar.push(res[i2][key2]);
             }
             if (query.distinct) {
-              ar = alasql5.utils.distinctArray(ar);
+              ar = alasql7.utils.distinctArray(ar);
             }
             return ar;
           case "MATRIX":
@@ -45654,7 +45654,7 @@ var require_alasql_fs = __commonJS({
             const valIndex = columns && columns.length > 1 ? columns[1].columnid : Object.keys(res[0])[1];
             return res.reduce((acc, row) => ({ ...acc, [row[keyIndex]]: row[valIndex] }), {});
           case "RECORDSET":
-            return new alasql5.Recordset({ columns, data: res });
+            return new alasql7.Recordset({ columns, data: res });
           case "TEXTSTRING":
             if (res.length === 0) return void 0;
             const keyTextString = columns && columns.length > 0 ? columns[0].columnid : Object.keys(res[0])[0];
@@ -45682,7 +45682,7 @@ var require_alasql_fs = __commonJS({
           return `!!this.existsfn[${this.existsidx}](params, null, ${context}).data.length`;
         }
       };
-      alasql5.precompile = function(statement, databaseid, params) {
+      alasql7.precompile = function(statement, databaseid, params) {
         if (!statement) return;
         statement.params = params;
         if (statement.view && statement.select && statement.queries) {
@@ -45747,10 +45747,10 @@ var require_alasql_fs = __commonJS({
             srcwherefn: returnTrue
           };
           if (tq instanceof yy.Table) {
-            source.columns = alasql5.databases[source.databaseid].tables[source.tableid].columns;
-            if (alasql5.options.autocommit && alasql5.databases[source.databaseid].engineid && !alasql5.databases[source.databaseid].tables[source.tableid].view) {
-              source.datafn = (query2, params, cb, idx, alasql6) => {
-                return alasql6.engines[alasql6.databases[source.databaseid].engineid].fromTable(
+            source.columns = alasql7.databases[source.databaseid].tables[source.tableid].columns;
+            if (alasql7.options.autocommit && alasql7.databases[source.databaseid].engineid && !alasql7.databases[source.databaseid].tables[source.tableid].view) {
+              source.datafn = (query2, params, cb, idx, alasql8) => {
+                return alasql8.engines[alasql8.databases[source.databaseid].engineid].fromTable(
                   source.databaseid,
                   source.tableid,
                   cb,
@@ -45758,9 +45758,9 @@ var require_alasql_fs = __commonJS({
                   query2
                 );
               };
-            } else if (alasql5.databases[source.databaseid].tables[source.tableid].view) {
-              source.datafn = (query2, params, cb, idx, alasql6) => {
-                let table = alasql6.databases[source.databaseid].tables[source.tableid];
+            } else if (alasql7.databases[source.databaseid].tables[source.tableid].view) {
+              source.datafn = (query2, params, cb, idx, alasql8) => {
+                let table = alasql8.databases[source.databaseid].tables[source.tableid];
                 if (!table.select && table.viewSelect) {
                   table.select = table.viewSelect.compile(table.viewDatabaseid);
                 }
@@ -45769,8 +45769,8 @@ var require_alasql_fs = __commonJS({
                 return res;
               };
             } else {
-              source.datafn = (query2, params, cb, idx, alasql6) => {
-                let res = alasql6.databases[source.databaseid].tables[source.tableid].data;
+              source.datafn = (query2, params, cb, idx, alasql8) => {
+                let res = alasql8.databases[source.databaseid].tables[source.tableid].data;
                 if (cb) res = cb(res, idx, query2);
                 return res;
               };
@@ -45781,7 +45781,7 @@ var require_alasql_fs = __commonJS({
               source.subquery.query.modifier = "RECORDSET";
             }
             source.columns = source.subquery.query.columns;
-            source.datafn = (query2, params, cb, idx, alasql6) => {
+            source.datafn = (query2, params, cb, idx, alasql8) => {
               let res;
               source.subquery(query2.params, (data) => {
                 res = data.data;
@@ -45792,7 +45792,7 @@ var require_alasql_fs = __commonJS({
           } else if (tq instanceof yy.Search) {
             source.subsearch = tq;
             source.columns = [];
-            source.datafn = (query2, params, cb, idx, alasql6) => {
+            source.datafn = (query2, params, cb, idx, alasql8) => {
               let res;
               source.subsearch.execute(query2.database.databaseid, query2.params, (data) => {
                 res = data;
@@ -45839,7 +45839,7 @@ var require_alasql_fs = __commonJS({
             ps += "cb,idx,query); return res";
             source.datafn = new Function("query,params,cb,idx,alasql", ps);
           } else if (tq instanceof yy.FromData) {
-            source.datafn = (query2, params, cb, idx, alasql6) => {
+            source.datafn = (query2, params, cb, idx, alasql8) => {
               let res = tq.data;
               if (cb) res = cb(res, idx, query2);
               return res;
@@ -45851,7 +45851,7 @@ var require_alasql_fs = __commonJS({
         });
         query.defaultTableid = query.sources[0].alias;
       };
-      alasql5.prepareFromData = function(data, array) {
+      alasql7.prepareFromData = function(data, array) {
         let res = data;
         if (typeof data === "string") {
           res = data.split(/\r?\n/);
@@ -45892,7 +45892,7 @@ var require_alasql_fs = __commonJS({
             };
             source.applyselect = jn.select.compile(query.database.databaseid);
             source.columns = source.applyselect.query.columns;
-            source.datafn = function(query2, params, cb, idx, alasql6) {
+            source.datafn = function(query2, params, cb, idx, alasql8) {
               let res;
               if (cb) res = cb(res, idx, query2);
               return res;
@@ -45913,15 +45913,15 @@ var require_alasql_fs = __commonJS({
               srcwherefn: returnTrue,
               columns: []
             };
-            if (!alasql5.databases[source.databaseid].tables[source.tableid]) {
+            if (!alasql7.databases[source.databaseid].tables[source.tableid]) {
               throw new Error(
                 "Table '" + source.tableid + "' is not exists in database '" + source.databaseid + "'"
               );
             }
-            source.columns = alasql5.databases[source.databaseid].tables[source.tableid].columns;
-            if (alasql5.options.autocommit && alasql5.databases[source.databaseid].engineid) {
-              source.datafn = function(query2, params, cb, idx, alasql6) {
-                return alasql6.engines[alasql6.databases[source.databaseid].engineid].fromTable(
+            source.columns = alasql7.databases[source.databaseid].tables[source.tableid].columns;
+            if (alasql7.options.autocommit && alasql7.databases[source.databaseid].engineid) {
+              source.datafn = function(query2, params, cb, idx, alasql8) {
+                return alasql8.engines[alasql8.databases[source.databaseid].engineid].fromTable(
                   source.databaseid,
                   source.tableid,
                   cb,
@@ -45929,15 +45929,15 @@ var require_alasql_fs = __commonJS({
                   query2
                 );
               };
-            } else if (alasql5.databases[source.databaseid].tables[source.tableid].view) {
-              source.datafn = function(query2, params, cb, idx, alasql6) {
-                let res = alasql6.databases[source.databaseid].tables[source.tableid].select(params);
+            } else if (alasql7.databases[source.databaseid].tables[source.tableid].view) {
+              source.datafn = function(query2, params, cb, idx, alasql8) {
+                let res = alasql8.databases[source.databaseid].tables[source.tableid].select(params);
                 if (cb) res = cb(res, idx, query2);
                 return res;
               };
             } else {
-              source.datafn = function(query2, params, cb, idx, alasql6) {
-                let res = alasql6.databases[source.databaseid].tables[source.tableid].data;
+              source.datafn = function(query2, params, cb, idx, alasql8) {
+                let res = alasql8.databases[source.databaseid].tables[source.tableid].data;
                 if (cb) res = cb(res, idx, query2);
                 return res;
               };
@@ -45962,7 +45962,7 @@ var require_alasql_fs = __commonJS({
               source.subquery.query.modifier = "RECORDSET";
             }
             source.columns = source.subquery.query.columns;
-            source.datafn = function(query2, params, cb, idx, alasql6) {
+            source.datafn = function(query2, params, cb, idx, alasql8) {
               source.data = source.subquery(query2.params, null, cb, idx).data;
               let res = source.data;
               if (cb) res = cb(res, idx, query2);
@@ -46034,8 +46034,8 @@ var require_alasql_fs = __commonJS({
             } else {
               if (query.sources.length > 0) {
                 const prevSource = query.sources[query.sources.length - 1];
-                const prevTable = alasql5.databases[prevSource.databaseid].tables[prevSource.tableid];
-                const table = alasql5.databases[source.databaseid].tables[source.tableid];
+                const prevTable = alasql7.databases[prevSource.databaseid].tables[prevSource.tableid];
+                const table = alasql7.databases[source.databaseid].tables[source.tableid];
                 if (prevTable && table) {
                   const c1 = prevTable.columns.map((col) => col.columnid);
                   const c2 = table.columns.map((col) => col.columnid);
@@ -46644,17 +46644,17 @@ var require_alasql_fs = __commonJS({
           if (query.ixsources[alias]) {
             var columns = query.ixsources[alias].columns;
           }
-          if (joinstar && alasql5.options.joinstar == "json") {
+          if (joinstar && alasql7.options.joinstar == "json") {
             sp += "r['" + alias + "']={};";
           }
           if (columns && columns.length > 0) {
             columns.forEach(function(tcol) {
               const escapedColumnId = escapeq(tcol.columnid);
-              if (joinstar && alasql5.options.joinstar == "underscore") {
+              if (joinstar && alasql7.options.joinstar == "underscore") {
                 ss.push(
                   "'" + alias + "_" + escapedColumnId + "':p['" + alias + "']['" + escapedColumnId + "']"
                 );
-              } else if (joinstar && alasql5.options.joinstar == "json") {
+              } else if (joinstar && alasql7.options.joinstar == "json") {
                 sp += "r['" + alias + "']['" + escapedColumnId + "']=p['" + alias + "']['" + escapedColumnId + "'];";
               } else {
                 var value = "p['" + alias + "']['" + escapedColumnId + "']";
@@ -46684,9 +46684,9 @@ var require_alasql_fs = __commonJS({
               query.xcolumns[coldef.columnid] = coldef;
             });
           } else {
-            if (joinstar && alasql5.options.joinstar == "json") {
+            if (joinstar && alasql7.options.joinstar == "json") {
               sp += "r['" + escapeq(alias) + "']=p['" + escapeq(alias) + "'];";
-            } else if (joinstar && alasql5.options.joinstar == "underscore") {
+            } else if (joinstar && alasql7.options.joinstar == "underscore") {
               sp += 'var w=p["' + escapeq(alias) + '"];for(var k in w){r["' + escapeq(alias) + '_"+k]=w[k]};';
             } else {
               sp += 'var w=p["' + escapeq(alias) + '"];for(var k in w){r[k]=w[k]};';
@@ -46783,11 +46783,11 @@ var require_alasql_fs = __commonJS({
               }
               query.selectColumns[escapeq(col.as || col.columnid)] = true;
               if (query.aliases[tbid] && query.aliases[tbid].type === "table") {
-                if (!alasql5.databases[dbid].tables[query.aliases[tbid].tableid]) {
+                if (!alasql7.databases[dbid].tables[query.aliases[tbid].tableid]) {
                   throw new Error("Table '" + tbid + "' does not exist in database");
                 }
-                var columns = alasql5.databases[dbid].tables[query.aliases[tbid].tableid].columns;
-                var xcolumns = alasql5.databases[dbid].tables[query.aliases[tbid].tableid].xcolumns;
+                var columns = alasql7.databases[dbid].tables[query.aliases[tbid].tableid].columns;
+                var xcolumns = alasql7.databases[dbid].tables[query.aliases[tbid].tableid].xcolumns;
                 if (xcolumns && columns.length > 0) {
                   var tcol = xcolumns[col.columnid];
                   if (void 0 === tcol) {
@@ -47121,7 +47121,7 @@ var require_alasql_fs = __commonJS({
               columnid = ord.expression.value;
             }
             if (columnid) {
-              if (alasql5.options.valueof) {
+              if (alasql7.options.valueof) {
                 dg = ".valueOf()";
               } else if (query.xcolumns[columnid]) {
                 var dbtypeid = query.xcolumns[columnid].dbtypeid;
@@ -47250,11 +47250,11 @@ var require_alasql_fs = __commonJS({
               }
             } else if (aggr == "LAST") {
               g[pivotColValue2] = aggValue;
-            } else if (alasql5.aggr[aggr]) {
+            } else if (alasql7.aggr[aggr]) {
               if (typeof g[pivotColValue2] === "undefined") {
-                g[pivotColValue2] = alasql5.aggr[aggr](aggValue, void 0, 1);
+                g[pivotColValue2] = alasql7.aggr[aggr](aggValue, void 0, 1);
               } else {
-                g[pivotColValue2] = alasql5.aggr[aggr](aggValue, g[pivotColValue2], 2);
+                g[pivotColValue2] = alasql7.aggr[aggr](aggValue, g[pivotColValue2], 2);
               }
             } else {
               throw new Error("Unknown aggregator in PIVOT clause: " + aggr);
@@ -47285,8 +47285,8 @@ var require_alasql_fs = __commonJS({
           if (!aggColDef && query2.sources && query2.sources.length > 0) {
             let sourceTableId = query2.sources[0].tableid;
             let sourceDbId = query2.sources[0].databaseid;
-            if (sourceTableId && sourceDbId && ((_c = (_b = (_a2 = alasql5.databases[sourceDbId]) == null ? void 0 : _a2.tables) == null ? void 0 : _b[sourceTableId]) == null ? void 0 : _c.xcolumns)) {
-              aggColDef = alasql5.databases[sourceDbId].tables[sourceTableId].xcolumns[exprcolid];
+            if (sourceTableId && sourceDbId && ((_c = (_b = (_a2 = alasql7.databases[sourceDbId]) == null ? void 0 : _a2.tables) == null ? void 0 : _b[sourceTableId]) == null ? void 0 : _c.xcolumns)) {
+              aggColDef = alasql7.databases[sourceDbId].tables[sourceTableId].xcolumns[exprcolid];
             }
           }
           aggColDef = aggColDef || { columnid: exprcolid, dbtypeid: "OBJECT" };
@@ -47462,7 +47462,7 @@ var require_alasql_fs = __commonJS({
             defcols["."][fr.as || fr.tableid] = true;
             if (fr instanceof yy.Table) {
               var alias = fr.as || fr.tableid;
-              var table = alasql5.databases[fr.databaseid || databaseid].tables[fr.tableid];
+              var table = alasql7.databases[fr.databaseid || databaseid].tables[fr.tableid];
               if (void 0 === table) {
                 throw new Error("Table does not exist: " + fr.tableid);
               }
@@ -47494,7 +47494,7 @@ var require_alasql_fs = __commonJS({
             if (jn.table) {
               var alias = jn.as || jn.table.tableid;
               var databaseId = jn.table.databaseid || databaseid;
-              var database = alasql5.databases[databaseId];
+              var database = alasql7.databases[databaseId];
               if (database === void 0) {
                 throw new Error("Database does not exist: " + databaseId);
               }
@@ -47584,12 +47584,12 @@ var require_alasql_fs = __commonJS({
           */
           execute(databaseid, params, cb) {
             if (this.expression) {
-              alasql5.precompile(this, databaseid, params);
+              alasql7.precompile(this, databaseid, params);
               var exprfn = new Function(
                 "params,alasql,p",
                 "var y;return " + this.expression.toJS("({})", "", null)
               ).bind(this);
-              var res = exprfn(params, alasql5);
+              var res = exprfn(params, alasql7);
               if (cb) {
                 res = cb(res);
               }
@@ -47668,7 +47668,7 @@ var require_alasql_fs = __commonJS({
           execute(databaseid, params, cb) {
             var res = 1;
             var expr = new Function("params,alasql,p", this.value);
-            expr(params, alasql5);
+            expr(params, alasql7);
             if (cb) {
               res = cb(res);
             }
@@ -47890,13 +47890,13 @@ var require_alasql_fs = __commonJS({
                   leftJS();
                   s = "false";
                   skipNullCheck = true;
-                } else if (!alasql5.options.cache || this.right.some((value) => value instanceof yy.ParamValue)) {
+                } else if (!alasql7.options.cache || this.right.some((value) => value instanceof yy.ParamValue)) {
                   s = `(new Set([${this.right.map(ref).join(",")}]).has(alasql.utils.getValueOf(${leftJS()})))`;
                 } else {
-                  alasql5.sets = alasql5.sets || {};
+                  alasql7.sets = alasql7.sets || {};
                   const allValues = this.right.map((value) => value.value);
                   const allValuesStr = allValues.join(",");
-                  alasql5.sets[allValuesStr] = alasql5.sets[allValuesStr] || new Set(allValues);
+                  alasql7.sets[allValuesStr] = alasql7.sets[allValuesStr] || new Set(allValues);
                   s = `alasql.sets["${allValuesStr}"].has(alasql.utils.getValueOf(${leftJS()}))`;
                 }
               } else {
@@ -47914,13 +47914,13 @@ var require_alasql_fs = __commonJS({
                   leftJS();
                   s = "true";
                   skipNullCheck = true;
-                } else if (!alasql5.options.cache || this.right.some((value) => value instanceof yy.ParamValue)) {
+                } else if (!alasql7.options.cache || this.right.some((value) => value instanceof yy.ParamValue)) {
                   s = `(!(new Set([${this.right.map(ref).join(",")}]).has(alasql.utils.getValueOf(${leftJS()}))))`;
                 } else {
-                  alasql5.sets = alasql5.sets || {};
+                  alasql7.sets = alasql7.sets || {};
                   const allValues = this.right.map((value) => value.value);
                   const allValuesStr = allValues.join(",");
-                  alasql5.sets[allValuesStr] = alasql5.sets[allValuesStr] || new Set(allValues);
+                  alasql7.sets[allValuesStr] = alasql7.sets[allValuesStr] || new Set(allValues);
                   s = `!alasql.sets["${allValuesStr}"].has(alasql.utils.getValueOf(${leftJS()}))`;
                 }
               } else {
@@ -48293,20 +48293,20 @@ var require_alasql_fs = __commonJS({
       };
       yy.Select.prototype.exec = function(params, cb) {
         if (this.preparams) params = this.preparams.concat(params);
-        var databaseid = alasql5.useid;
-        var db = alasql5.databases[databaseid];
+        var databaseid = alasql7.useid;
+        var db = alasql7.databases[databaseid];
         var sql = this.toString();
         var hh = hash(sql);
         var statement = this.compile(databaseid);
         if (!statement) return;
         statement.sql = sql;
         statement.dbversion = db.dbversion;
-        if (db.sqlCacheSize > alasql5.MAXSQLCACHESIZE) {
+        if (db.sqlCacheSize > alasql7.MAXSQLCACHESIZE) {
           db.resetSqlCache();
         }
         db.sqlCacheSize++;
         db.sqlCache[hh] = statement;
-        var res = alasql5.res = statement(params, cb);
+        var res = alasql7.res = statement(params, cb);
         return res;
       };
       yy.Select.prototype.Select = function() {
@@ -48427,9 +48427,9 @@ var require_alasql_fs = __commonJS({
       let re_invalidFnNameChars = /[^0-9A-Z_$]+/i;
       yy.FuncValue.prototype.toString = function() {
         let s = "";
-        if (alasql5.fn[this.funcid]) s += this.funcid;
-        else if (alasql5.aggr[this.funcid]) s += this.funcid;
-        else if (alasql5.stdlib[this.funcid.toUpperCase()] || alasql5.stdfn[this.funcid.toUpperCase()])
+        if (alasql7.fn[this.funcid]) s += this.funcid;
+        else if (alasql7.aggr[this.funcid]) s += this.funcid;
+        else if (alasql7.stdlib[this.funcid.toUpperCase()] || alasql7.stdfn[this.funcid.toUpperCase()])
           s += this.funcid.toUpperCase().replace(re_invalidFnNameChars, "");
         if (this.funcid !== "CURRENT_TIMESTAMP") {
           s += "(";
@@ -48447,9 +48447,9 @@ var require_alasql_fs = __commonJS({
       };
       yy.FuncValue.prototype.execute = function(databaseid, params, cb) {
         let res = 1;
-        alasql5.precompile(this, databaseid, params);
+        alasql7.precompile(this, databaseid, params);
         let expr = new Function("params,alasql", "var y;return " + this.toJS("", "", null));
-        expr(params, alasql5);
+        expr(params, alasql7);
         if (cb) res = cb(res);
         return res;
       };
@@ -48463,18 +48463,18 @@ var require_alasql_fs = __commonJS({
       yy.FuncValue.prototype.toJS = function(context, tableid, defcols) {
         var s = "";
         var funcid = this.funcid;
-        if (!alasql5.fn[funcid] && alasql5.stdlib[funcid.toUpperCase()]) {
+        if (!alasql7.fn[funcid] && alasql7.stdlib[funcid.toUpperCase()]) {
           if (this.args && this.args.length > 0) {
-            s += alasql5.stdlib[funcid.toUpperCase()].apply(
+            s += alasql7.stdlib[funcid.toUpperCase()].apply(
               this,
               this.args.map(function(arg) {
                 return arg.toJS(context, tableid);
               })
             );
           } else {
-            s += alasql5.stdlib[funcid.toUpperCase()]();
+            s += alasql7.stdlib[funcid.toUpperCase()]();
           }
-        } else if (!alasql5.fn[funcid] && alasql5.stdfn[funcid.toUpperCase()]) {
+        } else if (!alasql7.fn[funcid] && alasql7.stdfn[funcid.toUpperCase()]) {
           if (this.newid) s += "new ";
           s += "alasql.stdfn[" + JSON.stringify(this.funcid.toUpperCase()) + "](";
           if (this.args && this.args.length > 0) {
@@ -48495,8 +48495,8 @@ var require_alasql_fs = __commonJS({
         }
         return s;
       };
-      var stdlib = alasql5.stdlib = {};
-      var stdfn = alasql5.stdfn = {};
+      var stdlib = alasql7.stdlib = {};
+      var stdfn = alasql7.stdfn = {};
       stdlib.ABS = function(a) {
         return "Math.abs(" + a + ")";
       };
@@ -48597,7 +48597,7 @@ var require_alasql_fs = __commonJS({
         args = args.filter((x) => !(x === null || typeof x === "undefined"));
         return args.slice(1, args.length).join(args[0] || "");
       };
-      alasql5.aggr.group_concat = alasql5.aggr.GROUP_CONCAT = function(v, s, stage) {
+      alasql7.aggr.group_concat = alasql7.aggr.GROUP_CONCAT = function(v, s, stage) {
         if (stage === 1) {
           if (v === null || v === void 0) {
             return null;
@@ -48615,7 +48615,7 @@ var require_alasql_fs = __commonJS({
         }
         return s;
       };
-      alasql5.aggr.median = alasql5.aggr.MEDIAN = function(v, s, stage) {
+      alasql7.aggr.median = alasql7.aggr.MEDIAN = function(v, s, stage) {
         if (stage === 2) {
           if (v !== null) {
             s.push(v);
@@ -48645,7 +48645,7 @@ var require_alasql_fs = __commonJS({
           return (el + r[middleFloor]) / 2;
         }
       };
-      alasql5.aggr.QUART = function(v, s, stage, nth) {
+      alasql7.aggr.QUART = function(v, s, stage, nth) {
         if (stage === 2) {
           if (v !== null) {
             s.push(v);
@@ -48673,13 +48673,13 @@ var require_alasql_fs = __commonJS({
         }
         return r[Math.floor(p)];
       };
-      alasql5.aggr.QUART2 = function(v, s, stage) {
-        return alasql5.aggr.QUART(v, s, stage, 2);
+      alasql7.aggr.QUART2 = function(v, s, stage) {
+        return alasql7.aggr.QUART(v, s, stage, 2);
       };
-      alasql5.aggr.QUART3 = function(v, s, stage) {
-        return alasql5.aggr.QUART(v, s, stage, 3);
+      alasql7.aggr.QUART3 = function(v, s, stage) {
+        return alasql7.aggr.QUART(v, s, stage, 3);
       };
-      alasql5.aggr.VAR = function(v, s, stage) {
+      alasql7.aggr.VAR = function(v, s, stage) {
         if (stage === 1) {
           return v === null ? { sum: 0, sumSq: 0, count: 0 } : { sum: v, sumSq: v * v, count: 1 };
         } else if (stage === 2) {
@@ -48697,21 +48697,21 @@ var require_alasql_fs = __commonJS({
           }
         }
       };
-      alasql5.aggr.STDEV = function(v, s, stage) {
+      alasql7.aggr.STDEV = function(v, s, stage) {
         if (stage === 1 || stage === 2) {
-          return alasql5.aggr.VAR(v, s, stage);
+          return alasql7.aggr.VAR(v, s, stage);
         } else {
-          return Math.sqrt(alasql5.aggr.VAR(v, s, stage));
+          return Math.sqrt(alasql7.aggr.VAR(v, s, stage));
         }
       };
-      alasql5.aggr.STDEV = function(v, s, stage) {
+      alasql7.aggr.STDEV = function(v, s, stage) {
         if (stage === 1 || stage === 2) {
-          return alasql5.aggr.VAR(v, s, stage);
+          return alasql7.aggr.VAR(v, s, stage);
         } else {
-          return Math.sqrt(alasql5.aggr.VAR(v, s, stage));
+          return Math.sqrt(alasql7.aggr.VAR(v, s, stage));
         }
       };
-      alasql5.aggr.VARP = function(value, accumulator, stage) {
+      alasql7.aggr.VARP = function(value, accumulator, stage) {
         if (stage === 1) {
           return { count: 1, sum: value, sumSq: value * value };
         } else if (stage === 2) {
@@ -48729,19 +48729,19 @@ var require_alasql_fs = __commonJS({
           }
         }
       };
-      alasql5.aggr.STD = alasql5.aggr.STDDEV = alasql5.aggr.STDEVP = function(v, s, stage) {
+      alasql7.aggr.STD = alasql7.aggr.STDDEV = alasql7.aggr.STDEVP = function(v, s, stage) {
         if (stage == 1 || stage == 2) {
-          return alasql5.aggr.VARP(v, s, stage);
+          return alasql7.aggr.VARP(v, s, stage);
         } else {
-          return Math.sqrt(alasql5.aggr.VARP(v, s, stage));
+          return Math.sqrt(alasql7.aggr.VARP(v, s, stage));
         }
       };
-      alasql5._aggrOriginal = alasql5.aggr;
-      alasql5.aggr = {};
-      Object.keys(alasql5._aggrOriginal).forEach(function(k) {
-        alasql5.aggr[k] = function(v, s, stage) {
+      alasql7._aggrOriginal = alasql7.aggr;
+      alasql7.aggr = {};
+      Object.keys(alasql7._aggrOriginal).forEach(function(k) {
+        alasql7.aggr[k] = function(v, s, stage) {
           if (stage === 3 && typeof s === "undefined") return void 0;
-          return alasql5._aggrOriginal[k].apply(null, arguments);
+          return alasql7._aggrOriginal[k].apply(null, arguments);
         };
       });
       stdfn.REPLACE = function(target, pattern, replacement) {
@@ -48814,7 +48814,7 @@ var require_alasql_fs = __commonJS({
         s += "";
         return s;
       };
-      const JSONtoString = alasql5.utils.JSONtoString = function(obj) {
+      const JSONtoString = alasql7.utils.JSONtoString = function(obj) {
         if (typeof obj === "string") return `"${obj}"`;
         if (typeof obj === "number" || typeof obj === "boolean") return String(obj);
         if (typeof obj === "bigint") return `${obj.toString()}n`;
@@ -48921,7 +48921,7 @@ var require_alasql_fs = __commonJS({
           formattedMilliseconds
         };
       }
-      alasql5.stdfn.CONVERT = function(value, args) {
+      alasql7.stdfn.CONVERT = function(value, args) {
         var _a2;
         var val = value;
         var udbtypeid = (_a2 = args.dbtypeid) == null ? void 0 : _a2.toUpperCase();
@@ -49103,7 +49103,7 @@ var require_alasql_fs = __commonJS({
         return s;
       };
       yy.CreateTable.prototype.execute = function(databaseid, params, cb) {
-        var db = alasql5.databases[this.table.databaseid || databaseid];
+        var db = alasql7.databases[this.table.databaseid || databaseid];
         var tableid = this.table.tableid;
         if (!tableid) {
           throw new Error("Table name is not defined");
@@ -49118,7 +49118,7 @@ var require_alasql_fs = __commonJS({
             "Can not create table '" + tableid + "', because it already exists in the database '" + db.databaseid + "'"
           );
         }
-        var table = db.tables[tableid] = new alasql5.Table();
+        var table = db.tables[tableid] = new alasql7.Table();
         if (this.class) {
           table.isclass = true;
         }
@@ -49127,7 +49127,7 @@ var require_alasql_fs = __commonJS({
         if (columns) {
           columns.forEach(function(col) {
             var dbtypeid = col.dbtypeid;
-            if (!alasql5.fn[dbtypeid]) {
+            if (!alasql7.fn[dbtypeid]) {
               dbtypeid = dbtypeid.toUpperCase();
             }
             if (["SERIAL", "SMALLSERIAL", "BIGSERIAL"].indexOf(dbtypeid) > -1) {
@@ -49178,7 +49178,7 @@ var require_alasql_fs = __commonJS({
             }
             if (col.foreignkey) {
               var fk = col.foreignkey.table;
-              var fktable = alasql5.databases[fk.databaseid || databaseid].tables[fk.tableid];
+              var fktable = alasql7.databases[fk.databaseid || databaseid].tables[fk.tableid];
               if (typeof fk.columnid === "undefined") {
                 if (fktable.pk.columns && fktable.pk.columns.length > 0) {
                   fk.columnid = fktable.pk.columns[0];
@@ -49250,7 +49250,7 @@ var require_alasql_fs = __commonJS({
             if (con.fkcolumns && con.fkcolumns.length > 0) {
               fk.fkcolumns = con.fkcolumns;
             }
-            var fktable = alasql5.databases[fk.databaseid || databaseid].tables[fk.tableid];
+            var fktable = alasql7.databases[fk.databaseid || databaseid].tables[fk.tableid];
             if (typeof fk.fkcolumns === "undefined") {
               fk.fkcolumns = fktable.pk.columns;
             }
@@ -49281,7 +49281,7 @@ var require_alasql_fs = __commonJS({
               if (Object.keys(rr).length !== fk.columns.length) {
                 throw new Error("Invalid foreign key on table " + table.tableid);
               }
-              var fktable2 = alasql5.databases[fk.databaseid || databaseid].tables[fk.tableid];
+              var fktable2 = alasql7.databases[fk.databaseid || databaseid].tables[fk.tableid];
               var addr = fktable2.pk.onrightfn(rr);
               if (!fktable2.uniqs[fktable2.pk.hh][addr]) {
                 var keyValues = fk.columns.map(function(col) {
@@ -49314,7 +49314,7 @@ var require_alasql_fs = __commonJS({
           table.viewDatabaseid = this.table.databaseid || databaseid;
         }
         if (db.engineid) {
-          return alasql5.engines[db.engineid].createTable(
+          return alasql7.engines[db.engineid].createTable(
             this.table.databaseid || databaseid,
             tableid,
             this.ifnotexists,
@@ -49322,8 +49322,8 @@ var require_alasql_fs = __commonJS({
           );
         }
         table.insert = function(r, orreplace, ignore) {
-          var oldinserted = alasql5.inserted;
-          alasql5.inserted = [r];
+          var oldinserted = alasql7.inserted;
+          alasql7.inserted = [r];
           var table2 = this;
           if (orreplace && ignore) {
             ignore = false;
@@ -49333,7 +49333,7 @@ var require_alasql_fs = __commonJS({
           for (var tr in table2.beforeinsert) {
             var trigger = table2.beforeinsert[tr];
             if (trigger) {
-              if (alasql5.executeTrigger(trigger, databaseid, r) === false) {
+              if (alasql7.executeTrigger(trigger, databaseid, r) === false) {
                 prevent = prevent || true;
               }
             }
@@ -49344,7 +49344,7 @@ var require_alasql_fs = __commonJS({
             escape = true;
             trigger = table2.insteadofinsert[tr];
             if (trigger) {
-              alasql5.executeTrigger(trigger, databaseid, r);
+              alasql7.executeTrigger(trigger, databaseid, r);
             }
           }
           if (escape) return;
@@ -49356,7 +49356,7 @@ var require_alasql_fs = __commonJS({
           }
           if (table2.checks && table2.checks.length > 0) {
             table2.checks.forEach(function(check) {
-              if (check.fn(r, {}, alasql5) === false) {
+              if (check.fn(r, {}, alasql7) === false) {
                 throw new Error("Violation of CHECK constraint " + (check.id || ""));
               }
             });
@@ -49372,7 +49372,7 @@ var require_alasql_fs = __commonJS({
             if (typeof table2.uniqs[pk.hh][addr] !== "undefined") {
               if (orreplace) toreplace = table2.uniqs[pk.hh][addr];
               else if (ignore) {
-                alasql5.inserted = oldinserted;
+                alasql7.inserted = oldinserted;
                 return false;
               } else
                 throw new Error("Cannot insert record, because it already exists in primary key index");
@@ -49386,7 +49386,7 @@ var require_alasql_fs = __commonJS({
                 if (orreplace) {
                   toreplace = table2.uniqs[uk.hh][ukaddr];
                 } else if (ignore) {
-                  alasql5.inserted = oldinserted;
+                  alasql7.inserted = oldinserted;
                   return false;
                 } else {
                   throw new Error("Cannot insert record, because it already exists in unique index");
@@ -49431,7 +49431,7 @@ var require_alasql_fs = __commonJS({
                   var addr = new Function("r,params,alasql", "return " + indexdef.rightfns)(
                     r,
                     params,
-                    alasql5
+                    alasql7
                   );
                   if (!table2.indices[hh][addr]) {
                     table2.indices[hh][addr] = [];
@@ -49444,10 +49444,10 @@ var require_alasql_fs = __commonJS({
           for (var tr in table2.afterinsert) {
             var trigger = table2.afterinsert[tr];
             if (trigger) {
-              alasql5.executeTrigger(trigger, databaseid, r);
+              alasql7.executeTrigger(trigger, databaseid, r);
             }
           }
-          alasql5.inserted = oldinserted;
+          alasql7.inserted = oldinserted;
         };
         table.delete = function(index) {
           var table2 = this;
@@ -49456,7 +49456,7 @@ var require_alasql_fs = __commonJS({
           for (var tr in table2.beforedelete) {
             var trigger = table2.beforedelete[tr];
             if (trigger) {
-              if (alasql5.executeTrigger(trigger, databaseid, r) === false) {
+              if (alasql7.executeTrigger(trigger, databaseid, r) === false) {
                 prevent = prevent || true;
               }
             }
@@ -49467,7 +49467,7 @@ var require_alasql_fs = __commonJS({
             escape = true;
             var trigger = table2.insteadofdelete[tr];
             if (trigger) {
-              alasql5.executeTrigger(trigger, databaseid, r);
+              alasql7.executeTrigger(trigger, databaseid, r);
             }
           }
           if (escape) return;
@@ -49529,12 +49529,12 @@ var require_alasql_fs = __commonJS({
               }
             });
           }
-          assignfn(r, params2, alasql5);
+          assignfn(r, params2, alasql7);
           var prevent = false;
           for (var tr in table.beforeupdate) {
             var trigger = table.beforeupdate[tr];
             if (trigger) {
-              if (alasql5.executeTrigger(trigger, databaseid, this.data[i2], r) === false) {
+              if (alasql7.executeTrigger(trigger, databaseid, this.data[i2], r) === false) {
                 prevent = prevent || true;
               }
             }
@@ -49545,13 +49545,13 @@ var require_alasql_fs = __commonJS({
             escape = true;
             var trigger = table.insteadofupdate[tr];
             if (trigger) {
-              alasql5.executeTrigger(trigger, databaseid, this.data[i2], r);
+              alasql7.executeTrigger(trigger, databaseid, this.data[i2], r);
             }
           }
           if (escape) return;
           if (table.checks && table.checks.length > 0) {
             table.checks.forEach(function(check) {
-              if (check.fn(r, params2, alasql5) === false) {
+              if (check.fn(r, params2, alasql7) === false) {
                 throw new Error("Violation of CHECK constraint " + (check.id || ""));
               }
             });
@@ -49589,23 +49589,23 @@ var require_alasql_fs = __commonJS({
           for (var tr in table.afterupdate) {
             var trigger = table.afterupdate[tr];
             if (trigger) {
-              alasql5.executeTrigger(trigger, databaseid, this.data[i2], r);
+              alasql7.executeTrigger(trigger, databaseid, this.data[i2], r);
             }
           }
         };
         var res;
-        if (!alasql5.options.nocount) {
+        if (!alasql7.options.nocount) {
           res = 1;
         }
         if (cb) res = cb(res);
         return res;
       };
-      alasql5.fn.Date = Object;
-      alasql5.fn.Date = Date;
-      alasql5.fn.Number = Number;
-      alasql5.fn.String = String;
-      alasql5.fn.Boolean = Boolean;
-      stdfn.EXTEND = alasql5.utils.extend;
+      alasql7.fn.Date = Object;
+      alasql7.fn.Date = Date;
+      alasql7.fn.Number = Number;
+      alasql7.fn.String = String;
+      alasql7.fn.Boolean = Boolean;
+      stdfn.EXTEND = alasql7.utils.extend;
       stdfn.CHAR = String.fromCharCode.bind(String);
       stdfn.ASCII = function(a) {
         return a.charCodeAt(0);
@@ -49623,7 +49623,7 @@ var require_alasql_fs = __commonJS({
         return "alasql";
       };
       stdfn.OBJECT_ID = function(objid) {
-        return !!alasql5.tables[objid];
+        return !!alasql7.tables[objid];
       };
       stdfn.DATE = function(d) {
         if (!isNaN(d) && d.length === 8)
@@ -49631,7 +49631,7 @@ var require_alasql_fs = __commonJS({
         return newDate(d);
       };
       stdfn.NOW = function() {
-        if (alasql5.options.dateAsString) {
+        if (alasql7.options.dateAsString) {
           var d = /* @__PURE__ */ new Date();
           var s = d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).substr(-2) + "-" + ("0" + d.getDate()).substr(-2);
           s += " " + ("0" + d.getHours()).substr(-2) + ":" + ("0" + d.getMinutes()).substr(-2) + ":" + ("0" + d.getSeconds()).substr(-2);
@@ -49645,7 +49645,7 @@ var require_alasql_fs = __commonJS({
       stdfn.CURDATE = stdfn.CURRENT_DATE = function() {
         var date = /* @__PURE__ */ new Date();
         date.setHours(0, 0, 0, 0);
-        if (alasql5.options.dateAsString) {
+        if (alasql7.options.dateAsString) {
           var s = date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).substr(-2) + "-" + ("0" + date.getDate()).substr(-2);
           return s;
         }
@@ -49693,11 +49693,11 @@ var require_alasql_fs = __commonJS({
         millisecond: 1,
         microsecond: 1e-3
       };
-      alasql5.stdfn.DATEDIFF = function(period, d1, d2) {
+      alasql7.stdfn.DATEDIFF = function(period, d1, d2) {
         var interval = newDate(d2).getTime() - newDate(d1).getTime();
         return interval / PERIODS[period.toLowerCase()] | 0;
       };
-      alasql5.stdfn.DATEADD = function(period, interval, d) {
+      alasql7.stdfn.DATEADD = function(period, interval, d) {
         var nd = newDate(d);
         var period = period.toLowerCase();
         switch (period) {
@@ -49716,14 +49716,14 @@ var require_alasql_fs = __commonJS({
         }
         return nd;
       };
-      alasql5.stdfn.INTERVAL = function(interval, period) {
+      alasql7.stdfn.INTERVAL = function(interval, period) {
         return interval * PERIODS[period.toLowerCase()];
       };
-      alasql5.stdfn.DATE_ADD = alasql5.stdfn.ADDDATE = function(d, interval) {
+      alasql7.stdfn.DATE_ADD = alasql7.stdfn.ADDDATE = function(d, interval) {
         var nd = newDate(d).getTime() + interval;
         return new Date(nd);
       };
-      alasql5.stdfn.DATE_SUB = alasql5.stdfn.SUBDATE = function(d, interval) {
+      alasql7.stdfn.DATE_SUB = alasql7.stdfn.SUBDATE = function(d, interval) {
         var nd = newDate(d).getTime() - interval;
         return new Date(nd);
       };
@@ -49753,11 +49753,11 @@ var require_alasql_fs = __commonJS({
         var count = 0;
         var tlen = this.tables.length;
         this.tables.forEach(function(table) {
-          var db = alasql5.databases[table.databaseid || databaseid];
+          var db = alasql7.databases[table.databaseid || databaseid];
           var tableid = table.tableid;
           if (!ifexists || ifexists && db.tables[tableid]) {
             if (!db.tables[tableid]) {
-              if (!alasql5.options.dropifnotexists) {
+              if (!alasql7.options.dropifnotexists) {
                 throw new Error(
                   `Can not drop table ${JSON.stringify(
                     table.tableid
@@ -49766,7 +49766,7 @@ var require_alasql_fs = __commonJS({
               }
             } else {
               if (db.engineid) {
-                alasql5.engines[db.engineid].dropTable(
+                alasql7.engines[db.engineid].dropTable(
                   table.databaseid || databaseid,
                   tableid,
                   ifexists,
@@ -49800,10 +49800,10 @@ var require_alasql_fs = __commonJS({
         return s;
       };
       yy.TruncateTable.prototype.execute = function(databaseid, params, cb) {
-        var db = alasql5.databases[this.table.databaseid || databaseid];
+        var db = alasql7.databases[this.table.databaseid || databaseid];
         var tableid = this.table.tableid;
         if (db.engineid) {
-          return alasql5.engines[db.engineid].truncateTable(
+          return alasql7.engines[db.engineid].truncateTable(
             this.table.databaseid || databaseid,
             tableid,
             this.ifexists,
@@ -49856,7 +49856,7 @@ var require_alasql_fs = __commonJS({
         }
         var statement = function(params, cb) {
           var res;
-          var db = alasql5.databases[dbid];
+          var db = alasql7.databases[dbid];
           var id;
           if (typeof sharp !== "undefined") {
             id = sharp;
@@ -49870,7 +49870,7 @@ var require_alasql_fs = __commonJS({
             namefn(vertex);
           }
           if (setfn) {
-            setfn(vertex, params, alasql5);
+            setfn(vertex, params, alasql7);
           }
           if (cb) {
             res = cb(res);
@@ -49909,10 +49909,10 @@ var require_alasql_fs = __commonJS({
         }
         const statement = (params, cb) => {
           let res = 0;
-          let db = alasql5.databases[dbid];
+          let db = alasql7.databases[dbid];
           let edge = { $id: db.counter++, $node: "EDGE" };
-          let v1 = fromfn(params, alasql5);
-          let v2 = tofn(params, alasql5);
+          let v1 = fromfn(params, alasql7);
+          let v2 = tofn(params, alasql7);
           edge.$in = [v1.$id];
           edge.$out = [v2.$id];
           v1.$out = v1.$out || [];
@@ -49922,7 +49922,7 @@ var require_alasql_fs = __commonJS({
           db.objects[edge.$id] = edge;
           res = edge;
           namefn == null ? void 0 : namefn(edge);
-          setfn == null ? void 0 : setfn(edge, params, alasql5);
+          setfn == null ? void 0 : setfn(edge, params, alasql7);
           return cb ? cb(res) : res;
         };
         return statement;
@@ -49940,8 +49940,8 @@ var require_alasql_fs = __commonJS({
       yy.CreateGraph.prototype.execute = function(databaseid, params, cb) {
         var res = [];
         if (this.from) {
-          if (alasql5.from[this.from.funcid]) {
-            this.graph = alasql5.from[this.from.funcid.toUpperCase()];
+          if (alasql7.from[this.from.funcid]) {
+            this.graph = alasql7.from[this.from.funcid.toUpperCase()];
           }
         }
         this.graph.forEach((g) => {
@@ -49949,26 +49949,26 @@ var require_alasql_fs = __commonJS({
             createVertex(g);
           } else {
             let e = {};
-            if (g.as !== void 0) alasql5.vars[g.as] = e;
+            if (g.as !== void 0) alasql7.vars[g.as] = e;
             if (g.prop !== void 0) e.name = g.prop;
             if (g.sharp !== void 0) e.$id = g.sharp;
             if (g.name !== void 0) e.name = g.name;
             if (g.class !== void 0) e.$class = g.class;
-            let db = alasql5.databases[databaseid];
+            let db = alasql7.databases[databaseid];
             e.$id = e.$id !== void 0 ? e.$id : db.counter++;
             e.$node = "EDGE";
             if (g.json !== void 0) {
-              Object.assign(e, new Function("params, alasql", `return ${g.json.toJS()}`)(params, alasql5));
+              Object.assign(e, new Function("params, alasql", `return ${g.json.toJS()}`)(params, alasql7));
             }
             const resolveVertex = (sourceOrTarget, isSource) => {
               let vertex, vo;
               if (sourceOrTarget.vars) {
-                vo = alasql5.vars[sourceOrTarget.vars];
+                vo = alasql7.vars[sourceOrTarget.vars];
                 vertex = typeof vo === "object" ? vo : db.objects[vo];
               } else {
                 let av = sourceOrTarget.sharp || sourceOrTarget.prop;
                 vertex = db.objects[av];
-                if (vertex === void 0 && alasql5.options.autovertex && (sourceOrTarget.prop || sourceOrTarget.name)) {
+                if (vertex === void 0 && alasql7.options.autovertex && (sourceOrTarget.prop || sourceOrTarget.name)) {
                   vertex = findVertex(sourceOrTarget.prop || sourceOrTarget.name) || createVertex(sourceOrTarget);
                 }
               }
@@ -49984,7 +49984,7 @@ var require_alasql_fs = __commonJS({
             v2.$in.push(e.$id);
             db.objects[e.$id] = e;
             if (e.$class !== void 0) {
-              let classTable = alasql5.databases[databaseid].tables[e.$class];
+              let classTable = alasql7.databases[databaseid].tables[e.$class];
               if (classTable === void 0) {
                 throw new Error("No such class. Please use CREATE CLASS");
               } else {
@@ -49999,7 +49999,7 @@ var require_alasql_fs = __commonJS({
         }
         return res;
         function findVertex(name) {
-          var objects = alasql5.databases[alasql5.useid].objects;
+          var objects = alasql7.databases[alasql7.useid].objects;
           for (var k in objects) {
             if (objects[k].name === name) {
               return objects[k];
@@ -50010,7 +50010,7 @@ var require_alasql_fs = __commonJS({
         function createVertex(g) {
           var v = {};
           if (typeof g.as !== "undefined") {
-            alasql5.vars[g.as] = v;
+            alasql7.vars[g.as] = v;
           }
           if (typeof g.prop !== "undefined") {
             v.$id = g.prop;
@@ -50025,20 +50025,20 @@ var require_alasql_fs = __commonJS({
           if (typeof g.class !== "undefined") {
             v.$class = g.class;
           }
-          var db = alasql5.databases[databaseid];
+          var db = alasql7.databases[databaseid];
           if (typeof v.$id === "undefined") {
             v.$id = db.counter++;
           }
           v.$node = "VERTEX";
           if (typeof g.json !== "undefined") {
-            extend(v, new Function("params,alasql", "var y;return " + g.json.toJS())(params, alasql5));
+            extend(v, new Function("params,alasql", "var y;return " + g.json.toJS())(params, alasql7));
           }
           db.objects[v.$id] = v;
           if (typeof v.$class !== "undefined") {
-            if (typeof alasql5.databases[databaseid].tables[v.$class] === "undefined") {
+            if (typeof alasql7.databases[databaseid].tables[v.$class] === "undefined") {
               throw new Error("No such class. Pleace use CREATE CLASS");
             } else {
-              alasql5.databases[databaseid].tables[v.$class].data.push(v);
+              alasql7.databases[databaseid].tables[v.$class].data.push(v);
             }
           }
           res.push(v.$id);
@@ -50060,10 +50060,10 @@ var require_alasql_fs = __commonJS({
         }
         const statement = (params, cb) => {
           let res = 0;
-          const db = alasql5.databases[dbid];
+          const db = alasql7.databases[dbid];
           const edge = { $id: db.counter++, $node: "EDGE" };
-          const v1 = fromfn(params, alasql5);
-          const v2 = tofn(params, alasql5);
+          const v1 = fromfn(params, alasql7);
+          const v2 = tofn(params, alasql7);
           edge.$in = [v1.$id];
           edge.$out = [v2.$id];
           v1.$out = v1.$out || [];
@@ -50076,7 +50076,7 @@ var require_alasql_fs = __commonJS({
             namefn(edge);
           }
           if (setfn) {
-            setfn(edge, params, alasql5);
+            setfn(edge, params, alasql7);
           }
           if (cb) {
             res = cb(res);
@@ -50094,7 +50094,7 @@ var require_alasql_fs = __commonJS({
         return s;
       };
       yy.AlterTable.prototype.execute = function(databaseid, params, cb) {
-        let db = alasql5.databases[databaseid];
+        let db = alasql7.databases[databaseid];
         db.dbversion = Date.now();
         if (this.renameto) {
           var oldtableid = this.table.tableid;
@@ -50115,7 +50115,7 @@ var require_alasql_fs = __commonJS({
           return res;
         }
         if (this.addcolumn) {
-          db = alasql5.databases[this.table.databaseid || databaseid];
+          db = alasql7.databases[this.table.databaseid || databaseid];
           db.dbversion++;
           var tableid = this.table.tableid;
           var table = db.tables[tableid];
@@ -50144,7 +50144,7 @@ var require_alasql_fs = __commonJS({
           return cb ? cb(1) : 1;
         }
         if (this.modifycolumn) {
-          let db2 = alasql5.databases[this.table.databaseid || databaseid];
+          let db2 = alasql7.databases[this.table.databaseid || databaseid];
           db2.dbversion++;
           var tableid = this.table.tableid;
           var table = db2.tables[tableid];
@@ -50162,7 +50162,7 @@ var require_alasql_fs = __commonJS({
           return cb ? cb(1) : 1;
         }
         if (this.renamecolumn) {
-          let db2 = alasql5.databases[this.table.databaseid || databaseid];
+          let db2 = alasql7.databases[this.table.databaseid || databaseid];
           db2.dbversion++;
           var tableid = this.table.tableid;
           var table = db2.tables[tableid];
@@ -50192,7 +50192,7 @@ var require_alasql_fs = __commonJS({
           return cb ? cb(0) : 0;
         }
         if (this.dropcolumn) {
-          let db2 = alasql5.databases[this.table.databaseid || databaseid];
+          let db2 = alasql7.databases[this.table.databaseid || databaseid];
           db2.dbversion++;
           var tableid = this.table.tableid;
           var table = db2.tables[tableid];
@@ -50229,7 +50229,7 @@ var require_alasql_fs = __commonJS({
         return s;
       };
       yy.CreateIndex.prototype.execute = function(databaseid, params, cb) {
-        var db = alasql5.databases[this.table.databaseid || databaseid];
+        var db = alasql7.databases[this.table.databaseid || databaseid];
         var tableid = this.table.tableid;
         var table = db.tables[tableid];
         var indexid = this.indexid;
@@ -50253,7 +50253,7 @@ var require_alasql_fs = __commonJS({
           table.uniqs[uniqueConstraint.hh] = {};
           if (table.data.length > 0) {
             for (var i2 = 0, ilen = table.data.length; i2 < ilen; i2++) {
-              var addr = rightfn(table.data[i2], params, alasql5);
+              var addr = rightfn(table.data[i2], params, alasql7);
               if (typeof table.uniqs[uniqueConstraint.hh][addr] !== "undefined") {
                 throw new Error("Cannot create unique index with duplicate values");
               }
@@ -50267,7 +50267,7 @@ var require_alasql_fs = __commonJS({
           var ix = table.indices[hh] = {};
           if (table.data.length > 0) {
             for (var i2 = 0, ilen = table.data.length; i2 < ilen; i2++) {
-              var addr = rightfn(table.data[i2], params, alasql5);
+              var addr = rightfn(table.data[i2], params, alasql7);
               if (!ix[addr]) {
                 ix[addr] = [];
               }
@@ -50287,7 +50287,7 @@ var require_alasql_fs = __commonJS({
         return s;
       };
       yy.Reindex.prototype.execute = function(databaseid, params, cb) {
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         var indexid = this.indexid;
         var tableid = db.indices[indexid];
         var table = db.tables[tableid];
@@ -50326,8 +50326,8 @@ var require_alasql_fs = __commonJS({
         return s;
       };
       function executeRecursiveCTE(w, databaseid, params) {
-        var maxIterations = alasql5.options.maxCteIterations || 1e3;
-        var db = alasql5.databases[databaseid];
+        var maxIterations = alasql7.options.maxCteIterations || 1e3;
+        var db = alasql7.databases[databaseid];
         var tableName = w.name;
         var tb = db.tables[tableName] = new Table({
           tableid: tableName
@@ -50408,11 +50408,11 @@ var require_alasql_fs = __commonJS({
         var self2 = this;
         var savedTables = [];
         self2.withs.forEach(function(w) {
-          savedTables.push(alasql5.databases[databaseid].tables[w.name]);
+          savedTables.push(alasql7.databases[databaseid].tables[w.name]);
           if (w.recursive) {
             executeRecursiveCTE(w, databaseid, params);
           } else {
-            var tb = alasql5.databases[databaseid].tables[w.name] = new Table({
+            var tb = alasql7.databases[databaseid].tables[w.name] = new Table({
               tableid: w.name
             });
             tb.data = w.select.execute(databaseid, params);
@@ -50424,8 +50424,8 @@ var require_alasql_fs = __commonJS({
         var res = 1;
         res = this.select.execute(databaseid, params, function(data) {
           self2.withs.forEach(function(w, idx) {
-            if (savedTables[idx]) alasql5.databases[databaseid].tables[w.name] = savedTables[idx];
-            else delete alasql5.databases[databaseid].tables[w.name];
+            if (savedTables[idx]) alasql7.databases[databaseid].tables[w.name] = savedTables[idx];
+            else delete alasql7.databases[databaseid].tables[w.name];
           });
           if (cb) data = cb(data);
           return data;
@@ -50448,7 +50448,7 @@ var require_alasql_fs = __commonJS({
           "params,alasql,p",
           "var y;return " + this.expression.toJS("({})", "", null)
         ).bind(this);
-        if (fn(params, alasql5)) res = this.thenstat.execute(databaseid, params, cb);
+        if (fn(params, alasql7)) res = this.thenstat.execute(databaseid, params, cb);
         else {
           if (this.elsestat) res = this.elsestat.execute(databaseid, params, cb);
           else {
@@ -50489,7 +50489,7 @@ var require_alasql_fs = __commonJS({
               first = true;
             }
             setTimeout(function() {
-              if (fn(params, alasql5)) {
+              if (fn(params, alasql7)) {
                 self2.loopstat.execute(databaseid, params, loop);
               } else {
                 res = cb(res);
@@ -50498,7 +50498,7 @@ var require_alasql_fs = __commonJS({
           };
           loop();
         } else {
-          while (fn(params, alasql5)) {
+          while (fn(params, alasql7)) {
             try {
               var res1 = self2.loopstat.execute(databaseid, params);
               res.push(res1);
@@ -50609,7 +50609,7 @@ var require_alasql_fs = __commonJS({
           return yy.compileParamValue(self2.into.param, "INSERT", true, databaseid, self2, "into");
         }
         databaseid = self2.into.databaseid || databaseid;
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         var tableid = self2.into.tableid;
         var table = db.tables[tableid];
         if (!table) {
@@ -50651,7 +50651,7 @@ var require_alasql_fs = __commonJS({
                 if (table.xcolumns && table.xcolumns[col.columnid]) {
                   if (["INT", "FLOAT", "NUMBER", "MONEY"].indexOf(table.xcolumns[col.columnid].dbtypeid) >= 0) {
                     q += "(x=" + values[idx].toJS() + ",x==undefined?undefined:+x)";
-                  } else if (alasql5.fn[table.xcolumns[col.columnid].dbtypeid]) {
+                  } else if (alasql7.fn[table.xcolumns[col.columnid].dbtypeid]) {
                     q += "(new " + table.xcolumns[col.columnid].dbtypeid + "(";
                     q += values[idx].toJS();
                     q += "))";
@@ -50674,7 +50674,7 @@ var require_alasql_fs = __commonJS({
                   var q = "'" + col.columnid + "':";
                   if (["INT", "FLOAT", "NUMBER", "MONEY"].indexOf(col.dbtypeid) >= 0) {
                     q += "+" + values[idx].toJS();
-                  } else if (alasql5.fn[col.dbtypeid]) {
+                  } else if (alasql7.fn[col.dbtypeid]) {
                     q += "(new " + col.dbtypeid + "(";
                     q += values[idx].toJS();
                     q += "))";
@@ -50764,23 +50764,23 @@ var require_alasql_fs = __commonJS({
             this.select.queries = this.queries;
           }
           var selectfn = this.select.compile(databaseid);
-          if (db.engineid && alasql5.engines[db.engineid].intoTable) {
+          if (db.engineid && alasql7.engines[db.engineid].intoTable) {
             var statement = function(params, cb) {
               var aa = selectfn(params);
-              var res = alasql5.engines[db.engineid].intoTable(db.databaseid, tableid, aa.data, null, cb);
+              var res = alasql7.engines[db.engineid].intoTable(db.databaseid, tableid, aa.data, null, cb);
               return res;
             };
             return statement;
           } else {
             var defaultfns = "var defaults={" + table.defaultfns + "};for(var key in defaults){if(!(key in r)){r[key]=defaults[key]}}return r";
             var defaultfn = new Function("r,db,params,alasql", defaultfns);
-            var insertfn = function(db2, params, alasql6) {
+            var insertfn = function(db2, params, alasql8) {
               var res = selectfn(params).data;
               var insertedRows = [];
               if (db2.tables[tableid].insert) {
                 for (var i2 = 0, ilen = res.length; i2 < ilen; i2++) {
                   var r = cloneDeep(res[i2]);
-                  defaultfn(r, db2, params, alasql6);
+                  defaultfn(r, db2, params, alasql8);
                   db2.tables[tableid].insert(r, self2.orreplace, self2.ignore);
                   insertedRows.push(r);
                 }
@@ -50807,7 +50807,7 @@ var require_alasql_fs = __commonJS({
                 }
                 return output;
               }
-              if (alasql6.options.nocount) return;
+              if (alasql8.options.nocount) return;
               else return res.length;
             };
           }
@@ -50835,23 +50835,23 @@ var require_alasql_fs = __commonJS({
         } else {
           throw new Error("Wrong INSERT parameters");
         }
-        if (db.engineid && alasql5.engines[db.engineid].intoTable && alasql5.options.autocommit) {
+        if (db.engineid && alasql7.engines[db.engineid].intoTable && alasql7.options.autocommit) {
           var statement = function(params, cb) {
-            var aa = new Function("db,params,alasql", "var y;" + s33 + "return aa;")(db, params, alasql5);
-            var res = alasql5.engines[db.engineid].intoTable(db.databaseid, tableid, aa, null, cb);
+            var aa = new Function("db,params,alasql", "var y;" + s33 + "return aa;")(db, params, alasql7);
+            var res = alasql7.engines[db.engineid].intoTable(db.databaseid, tableid, aa, null, cb);
             return res;
           };
         } else {
           var statement = function(params, cb) {
-            var db2 = alasql5.databases[databaseid];
-            if (alasql5.options.autocommit && db2.engineid) {
-              alasql5.engines[db2.engineid].loadTableData(databaseid, tableid);
+            var db2 = alasql7.databases[databaseid];
+            if (alasql7.options.autocommit && db2.engineid) {
+              alasql7.engines[db2.engineid].loadTableData(databaseid, tableid);
             }
-            var res = insertfn(db2, params, alasql5);
-            if (alasql5.options.autocommit && db2.engineid) {
-              alasql5.engines[db2.engineid].saveTableData(databaseid, tableid);
+            var res = insertfn(db2, params, alasql7);
+            if (alasql7.options.autocommit && db2.engineid) {
+              alasql7.engines[db2.engineid].saveTableData(databaseid, tableid);
             }
-            if (alasql5.options.nocount) res = void 0;
+            if (alasql7.options.nocount) res = void 0;
             if (cb) cb(res);
             return res;
           };
@@ -50888,7 +50888,7 @@ var require_alasql_fs = __commonJS({
         let res = 1;
         const triggerid = this.trigger;
         databaseid = this.table.databaseid || databaseid;
-        const db = alasql5.databases[databaseid];
+        const db = alasql7.databases[databaseid];
         const { tableid } = this.table;
         const trigger = {
           action: this.action,
@@ -50916,7 +50916,7 @@ var require_alasql_fs = __commonJS({
       };
       yy.DropTrigger.prototype.execute = function(databaseid, params, cb) {
         let res = 0;
-        const db = alasql5.databases[databaseid];
+        const db = alasql7.databases[databaseid];
         const triggerid = this.trigger;
         const trigger = db.triggers[triggerid];
         if (trigger) {
@@ -50936,13 +50936,13 @@ var require_alasql_fs = __commonJS({
         if (cb) res = cb(res);
         return res;
       };
-      alasql5.executeTrigger = function(trigger, databaseid, ...args) {
+      alasql7.executeTrigger = function(trigger, databaseid, ...args) {
         if (!trigger) return;
         if (trigger.funcid) {
-          return alasql5.fn[trigger.funcid](...args);
+          return alasql7.fn[trigger.funcid](...args);
         } else if (trigger.statement) {
           if (trigger.statement.expression && trigger.statement.expression.funcid) {
-            return alasql5.fn[trigger.statement.expression.funcid](...args);
+            return alasql7.fn[trigger.statement.expression.funcid](...args);
           } else {
             return trigger.statement.execute(databaseid);
           }
@@ -50976,7 +50976,7 @@ var require_alasql_fs = __commonJS({
         databaseid = this.table.databaseid || databaseid;
         var tableid = this.table.tableid;
         var statement;
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         if (this.where) {
           if (this.exists) {
             this.existsfn = this.exists.map(function(ex) {
@@ -50997,8 +50997,8 @@ var require_alasql_fs = __commonJS({
             "var y;return (" + this.where.toJS("r", "") + ")"
           ).bind(this);
           statement = function(params, cb) {
-            if (db.engineid && alasql5.engines[db.engineid].deleteFromTable) {
-              return alasql5.engines[db.engineid].deleteFromTable(
+            if (db.engineid && alasql7.engines[db.engineid].deleteFromTable) {
+              return alasql7.engines[db.engineid].deleteFromTable(
                 databaseid,
                 tableid,
                 wherefn,
@@ -51006,20 +51006,20 @@ var require_alasql_fs = __commonJS({
                 cb
               );
             }
-            if (alasql5.options.autocommit && db.engineid && (db.engineid == "LOCALSTORAGE" || db.engineid == "FILESTORAGE")) {
-              alasql5.engines[db.engineid].loadTableData(databaseid, tableid);
+            if (alasql7.options.autocommit && db.engineid && (db.engineid == "LOCALSTORAGE" || db.engineid == "FILESTORAGE")) {
+              alasql7.engines[db.engineid].loadTableData(databaseid, tableid);
             }
             var table = db.tables[tableid];
             var orignum = table.data.length;
             var newtable = [];
             var deletedRows = [];
             for (var i2 = 0, ilen = table.data.length; i2 < ilen; i2++) {
-              if (wherefn(table.data[i2], params, alasql5)) {
+              if (wherefn(table.data[i2], params, alasql7)) {
                 if (self2.output || table.afterdelete) {
                   deletedRows.push(cloneDeep(table.data[i2]));
                 }
                 if (table.delete) {
-                  table.delete(i2, params, alasql5);
+                  table.delete(i2, params, alasql7);
                 } else {
                 }
               } else {
@@ -51032,7 +51032,7 @@ var require_alasql_fs = __commonJS({
                 for (var tr in table.afterdelete) {
                   var trigger = table.afterdelete[tr];
                   if (trigger) {
-                    alasql5.executeTrigger(trigger, databaseid, deletedRows[i2]);
+                    alasql7.executeTrigger(trigger, databaseid, deletedRows[i2]);
                   }
                 }
               }
@@ -51057,16 +51057,16 @@ var require_alasql_fs = __commonJS({
               }
               res = output;
             }
-            if (alasql5.options.autocommit && db.engineid && (db.engineid == "LOCALSTORAGE" || db.engineid == "FILESTORAGE")) {
-              alasql5.engines[db.engineid].saveTableData(databaseid, tableid);
+            if (alasql7.options.autocommit && db.engineid && (db.engineid == "LOCALSTORAGE" || db.engineid == "FILESTORAGE")) {
+              alasql7.engines[db.engineid].saveTableData(databaseid, tableid);
             }
             if (cb) res = cb(res);
             return res;
           };
         } else {
           statement = function(params, cb) {
-            if (alasql5.options.autocommit && db.engineid) {
-              alasql5.engines[db.engineid].loadTableData(databaseid, tableid);
+            if (alasql7.options.autocommit && db.engineid) {
+              alasql7.engines[db.engineid].loadTableData(databaseid, tableid);
             }
             var table = db.tables[tableid];
             table.dirty = true;
@@ -51084,8 +51084,8 @@ var require_alasql_fs = __commonJS({
             for (var ix in db.tables[tableid].indices) {
               db.tables[tableid].indices[ix] = {};
             }
-            if (alasql5.options.autocommit && db.engineid) {
-              alasql5.engines[db.engineid].saveTableData(databaseid, tableid);
+            if (alasql7.options.autocommit && db.engineid) {
+              alasql7.engines[db.engineid].saveTableData(databaseid, tableid);
             }
             var res = orignum;
             if (self2.output) {
@@ -51169,16 +51169,16 @@ var require_alasql_fs = __commonJS({
             this
           );
         }
-        var s = alasql5.databases[databaseid].tables[tableid].onupdatefns || "";
+        var s = alasql7.databases[databaseid].tables[tableid].onupdatefns || "";
         s += ";";
         this.columns.forEach(function(col) {
           s += "r['" + col.column.columnid + "']=" + col.expression.toJS("r", "") + ";";
         });
         var assignfn = new Function("r,params,alasql", "var y;" + s);
         var statement = function(params, cb) {
-          var db = alasql5.databases[databaseid];
-          if (db.engineid && alasql5.engines[db.engineid].updateTable) {
-            return alasql5.engines[db.engineid].updateTable(
+          var db = alasql7.databases[databaseid];
+          if (db.engineid && alasql7.engines[db.engineid].updateTable) {
+            return alasql7.engines[db.engineid].updateTable(
               databaseid,
               tableid,
               assignfn,
@@ -51187,8 +51187,8 @@ var require_alasql_fs = __commonJS({
               cb
             );
           }
-          if (alasql5.options.autocommit && db.engineid) {
-            alasql5.engines[db.engineid].loadTableData(databaseid, tableid);
+          if (alasql7.options.autocommit && db.engineid) {
+            alasql7.engines[db.engineid].loadTableData(databaseid, tableid);
           }
           var table = db.tables[tableid];
           if (!table) {
@@ -51197,12 +51197,12 @@ var require_alasql_fs = __commonJS({
           var numrows = 0;
           var updatedRows = [];
           for (var i2 = 0, ilen = table.data.length; i2 < ilen; i2++) {
-            if (!wherefn || wherefn(table.data[i2], params, alasql5)) {
+            if (!wherefn || wherefn(table.data[i2], params, alasql7)) {
               var oldRow = self2.output ? cloneDeep(table.data[i2]) : null;
               if (table.update) {
                 table.update(assignfn, i2, params);
               } else {
-                assignfn(table.data[i2], params, alasql5);
+                assignfn(table.data[i2], params, alasql7);
               }
               if (self2.output) {
                 updatedRows.push({
@@ -51213,8 +51213,8 @@ var require_alasql_fs = __commonJS({
               numrows++;
             }
           }
-          if (alasql5.options.autocommit && db.engineid) {
-            alasql5.engines[db.engineid].saveTableData(databaseid, tableid);
+          if (alasql7.options.autocommit && db.engineid) {
+            alasql7.engines[db.engineid].saveTableData(databaseid, tableid);
           }
           var res = numrows;
           if (self2.output) {
@@ -51304,11 +51304,11 @@ var require_alasql_fs = __commonJS({
         var args;
         if (this.args && this.args.length > 0) {
           args = this.args.map(function(arg) {
-            return new Function("params,alasql", "var y;return " + arg.toJS())(params, alasql5);
+            return new Function("params,alasql", "var y;return " + arg.toJS())(params, alasql7);
           });
         }
         if (this.engineid) {
-          var res = alasql5.engines[this.engineid].createDatabase(
+          var res = alasql7.engines[this.engineid].createDatabase(
             this.databaseid,
             this.args,
             this.ifnotexists,
@@ -51318,10 +51318,10 @@ var require_alasql_fs = __commonJS({
           return res;
         } else {
           var dbid = this.databaseid;
-          if (alasql5.databases[dbid]) {
+          if (alasql7.databases[dbid]) {
             throw new Error("Database '" + dbid + "' already exists");
           }
-          var a = new alasql5.Database(dbid);
+          var a = new alasql7.Database(dbid);
           var res = 1;
           if (cb) return cb(res);
           return res;
@@ -51345,10 +51345,10 @@ var require_alasql_fs = __commonJS({
         return s;
       };
       yy.AttachDatabase.prototype.execute = function(databaseid, params, cb) {
-        if (!alasql5.engines[this.engineid]) {
+        if (!alasql7.engines[this.engineid]) {
           throw new Error('Engine "' + this.engineid + '" is not defined.');
         }
-        var res = alasql5.engines[this.engineid].attachDatabase(
+        var res = alasql7.engines[this.engineid].attachDatabase(
           this.databaseid,
           this.as,
           this.args,
@@ -51366,30 +51366,30 @@ var require_alasql_fs = __commonJS({
         return s;
       };
       yy.DetachDatabase.prototype.execute = function(databaseid, params, cb) {
-        if (!alasql5.databases[this.databaseid].engineid) {
+        if (!alasql7.databases[this.databaseid].engineid) {
           throw new Error('Cannot detach database "' + this.engineid + '", because it was not attached.');
         }
         var res;
         var dbid = this.databaseid;
-        if (dbid === alasql5.DEFAULTDATABASEID) {
+        if (dbid === alasql7.DEFAULTDATABASEID) {
           throw new Error("Drop of default database is prohibited");
         }
-        if (!alasql5.databases[dbid]) {
+        if (!alasql7.databases[dbid]) {
           if (!this.ifexists) {
             throw new Error("Database '" + dbid + "' does not exist");
           } else {
             res = 0;
           }
         } else {
-          var isFS = alasql5.databases[dbid].engineid && alasql5.databases[dbid].engineid == "FILESTORAGE", filename = alasql5.databases[dbid].filename || "";
-          delete alasql5.databases[dbid];
+          var isFS = alasql7.databases[dbid].engineid && alasql7.databases[dbid].engineid == "FILESTORAGE", filename = alasql7.databases[dbid].filename || "";
+          delete alasql7.databases[dbid];
           if (isFS) {
-            alasql5.databases[dbid] = {};
-            alasql5.databases[dbid].isDetached = true;
-            alasql5.databases[dbid].filename = filename;
+            alasql7.databases[dbid] = {};
+            alasql7.databases[dbid].isDetached = true;
+            alasql7.databases[dbid].filename = filename;
           }
-          if (dbid === alasql5.useid) {
-            alasql5.use();
+          if (dbid === alasql7.useid) {
+            alasql7.use();
           }
           res = 1;
         }
@@ -51404,10 +51404,10 @@ var require_alasql_fs = __commonJS({
       };
       yy.UseDatabase.prototype.execute = function(databaseid, params, cb) {
         var dbid = this.databaseid;
-        if (!alasql5.databases[dbid]) {
+        if (!alasql7.databases[dbid]) {
           throw new Error("Database '" + dbid + "' does not exist");
         }
-        alasql5.use(dbid);
+        alasql7.use(dbid);
         var res = 1;
         if (cb) cb(res);
         return res;
@@ -51423,26 +51423,26 @@ var require_alasql_fs = __commonJS({
       };
       yy.DropDatabase.prototype.execute = function(databaseid, params, cb) {
         if (this.engineid) {
-          return alasql5.engines[this.engineid].dropDatabase(this.databaseid, this.ifexists, cb);
+          return alasql7.engines[this.engineid].dropDatabase(this.databaseid, this.ifexists, cb);
         }
         let res;
         const dbid = this.databaseid;
-        if (dbid === alasql5.DEFAULTDATABASEID) {
+        if (dbid === alasql7.DEFAULTDATABASEID) {
           throw new Error("Drop of default database is prohibited");
         }
-        if (!alasql5.databases[dbid]) {
+        if (!alasql7.databases[dbid]) {
           if (!this.ifexists) {
             throw new Error(`Database '${dbid}' does not exist`);
           } else {
             res = 0;
           }
         } else {
-          if (alasql5.databases[dbid].engineid) {
+          if (alasql7.databases[dbid].engineid) {
             throw new Error(`Cannot drop database '${dbid}', because it is attached. Detach it.`);
           }
-          delete alasql5.databases[dbid];
-          if (dbid === alasql5.useid) {
-            alasql5.use();
+          delete alasql7.databases[dbid];
+          if (dbid === alasql7.useid) {
+            alasql7.use();
           }
           res = 1;
         }
@@ -51478,23 +51478,23 @@ var require_alasql_fs = __commonJS({
         if (that.declares && that.declares.length > 0) {
           that.declares.forEach(function(declare) {
             var dbtypeid = declare.dbtypeid;
-            if (!alasql5.fn[dbtypeid]) {
+            if (!alasql7.fn[dbtypeid]) {
               dbtypeid = dbtypeid.toUpperCase();
             }
-            alasql5.declares[declare.variable] = {
+            alasql7.declares[declare.variable] = {
               dbtypeid,
               dbsize: declare.dbsize,
               dbprecision: declare.dbprecision
             };
             if (declare.expression) {
-              alasql5.vars[declare.variable] = new Function(
+              alasql7.vars[declare.variable] = new Function(
                 "params,alasql",
                 "return " + declare.expression.toJS("({})", "", null)
-              ).bind(that)(params, alasql5);
-              if (alasql5.declares[declare.variable]) {
-                alasql5.vars[declare.variable] = alasql5.stdfn.CONVERT(
-                  alasql5.vars[declare.variable],
-                  alasql5.declares[declare.variable]
+              ).bind(that)(params, alasql7);
+              if (alasql7.declares[declare.variable]) {
+                alasql7.vars[declare.variable] = alasql7.stdfn.CONVERT(
+                  alasql7.vars[declare.variable],
+                  alasql7.declares[declare.variable]
                 );
               }
             }
@@ -51515,16 +51515,16 @@ var require_alasql_fs = __commonJS({
       };
       yy.ShowDatabases.prototype.execute = function(databaseid, params, cb) {
         if (this.engineid) {
-          return alasql5.engines[this.engineid].showDatabases(this.like, cb);
+          return alasql7.engines[this.engineid].showDatabases(this.like, cb);
         } else {
           var self2 = this;
           var res = [];
-          for (var dbid in alasql5.databases) {
+          for (var dbid in alasql7.databases) {
             res.push({ databaseid: dbid });
           }
           if (self2.like && res && res.length > 0) {
             res = res.filter(function(d) {
-              return alasql5.utils.like(self2.like.value, d.databaseid);
+              return alasql7.utils.like(self2.like.value, d.databaseid);
             });
           }
           if (cb) cb(res);
@@ -51541,7 +51541,7 @@ var require_alasql_fs = __commonJS({
         return s;
       };
       yy.ShowTables.prototype.execute = function(databaseid, params, cb) {
-        var db = alasql5.databases[this.databaseid || databaseid];
+        var db = alasql7.databases[this.databaseid || databaseid];
         var self2 = this;
         var res = [];
         for (var tableid in db.tables) {
@@ -51549,7 +51549,7 @@ var require_alasql_fs = __commonJS({
         }
         if (self2.like && res && res.length > 0) {
           res = res.filter(function(d) {
-            return alasql5.utils.like(self2.like.value, d.tableid);
+            return alasql7.utils.like(self2.like.value, d.tableid);
           });
         }
         if (cb) cb(res);
@@ -51565,7 +51565,7 @@ var require_alasql_fs = __commonJS({
         return s;
       };
       yy.ShowColumns.prototype.execute = function(databaseid, params, cb) {
-        var db = alasql5.databases[this.table.databaseid || this.databaseid || databaseid];
+        var db = alasql7.databases[this.table.databaseid || this.databaseid || databaseid];
         var table = db.tables[this.table.tableid];
         if (table && table.columns) {
           var res = table.columns.map(function(col) {
@@ -51592,7 +51592,7 @@ var require_alasql_fs = __commonJS({
         return s;
       };
       yy.ShowIndex.prototype.execute = function(databaseid, params, cb) {
-        var db = alasql5.databases[this.table.databaseid || this.databaseid || databaseid];
+        var db = alasql7.databases[this.table.databaseid || this.databaseid || databaseid];
         var table = db.tables[this.table.tableid];
         var res = [];
         if (table && table.indices) {
@@ -51612,7 +51612,7 @@ var require_alasql_fs = __commonJS({
         return s;
       };
       yy.ShowCreateTable.prototype.execute = function(databaseid) {
-        var db = alasql5.databases[this.databaseid || databaseid];
+        var db = alasql7.databases[this.databaseid || databaseid];
         var table = db.tables[this.table.tableid];
         if (table) {
           var s = "CREATE TABLE " + this.table.tableid + " (";
@@ -51647,7 +51647,7 @@ var require_alasql_fs = __commonJS({
           let val = this.value;
           if (val === "ON") val = true;
           else if (val === "OFF") val = false;
-          alasql5.options[this.variable] = val;
+          alasql7.options[this.variable] = val;
         } else if (this.expression) {
           if (this.exists) {
             this.existsfn = this.exists.map((ex) => {
@@ -51666,9 +51666,9 @@ var require_alasql_fs = __commonJS({
           let res = new Function(
             "params, alasql",
             "return " + this.expression.toJS("({})", "", null)
-          ).bind(this)(params, alasql5);
-          if (alasql5.declares[this.variable]) {
-            res = alasql5.stdfn.CONVERT(res, alasql5.declares[this.variable]);
+          ).bind(this)(params, alasql7);
+          if (alasql7.declares[this.variable]) {
+            res = alasql7.stdfn.CONVERT(res, alasql7.declares[this.variable]);
           }
           if (this.props && this.props.length > 0) {
             let fs;
@@ -51686,10 +51686,10 @@ var require_alasql_fs = __commonJS({
                 fs += `[${prop.toJS()}]`;
               }
             });
-            new Function("value, params, alasql", `${fs} = value`)(res, params, alasql5);
+            new Function("value, params, alasql", `${fs} = value`)(res, params, alasql7);
           } else {
             if (this.method === "@") {
-              alasql5.vars[this.variable] = res;
+              alasql7.vars[this.variable] = res;
             } else {
               params[this.variable] = res;
             }
@@ -51699,15 +51699,15 @@ var require_alasql_fs = __commonJS({
         if (cb) result = cb(result);
         return result;
       };
-      alasql5.test = function(name, times, fn) {
+      alasql7.test = function(name, times, fn) {
         if (arguments.length === 0) {
-          alasql5.log(alasql5.con.results);
+          alasql7.log(alasql7.con.results);
           return;
         }
         var tm = Date.now();
         if (arguments.length === 1) {
           fn();
-          alasql5.con.log(Date.now() - tm);
+          alasql7.con.log(Date.now() - tm);
           return;
         }
         if (arguments.length === 2) {
@@ -51717,22 +51717,22 @@ var require_alasql_fs = __commonJS({
         for (var i2 = 0; i2 < times; i2++) {
           fn();
         }
-        alasql5.con.results[name] = Date.now() - tm;
+        alasql7.con.results[name] = Date.now() - tm;
       };
-      alasql5.log = function(sql, params) {
-        var olduseid = alasql5.useid;
-        var target = alasql5.options.logtarget;
+      alasql7.log = function(sql, params) {
+        var olduseid = alasql7.useid;
+        var target = alasql7.options.logtarget;
         if (utils.isNode) {
           target = "console";
         }
         var res;
         if (typeof sql === "string") {
-          res = alasql5(sql, params);
+          res = alasql7(sql, params);
         } else {
           res = sql;
         }
         if (target === "console" || utils.isNode) {
-          if (typeof sql === "string" && alasql5.options.logprompt) {
+          if (typeof sql === "string" && alasql7.options.logprompt) {
             console.log(olduseid + ">", sql);
           }
           if (Array.isArray(res)) {
@@ -51756,8 +51756,8 @@ var require_alasql_fs = __commonJS({
             }
           }
           var s = "";
-          if (typeof sql === "string" && alasql5.options.logprompt) {
-            s += "<pre><code>" + alasql5.pretty(sql) + "</code></pre>";
+          if (typeof sql === "string" && alasql7.options.logprompt) {
+            s += "<pre><code>" + alasql7.pretty(sql) + "</code></pre>";
           }
           if (Array.isArray(res)) {
             if (res.length === 0) {
@@ -51775,8 +51775,8 @@ var require_alasql_fs = __commonJS({
           el.innerHTML += s;
         }
       };
-      alasql5.clear = function() {
-        var target = alasql5.options.logtarget;
+      alasql7.clear = function() {
+        var target = alasql7.options.logtarget;
         if (utils.isNode || utils.isMeteorServer) {
           if (console.clear) {
             console.clear();
@@ -51795,8 +51795,8 @@ var require_alasql_fs = __commonJS({
           el.innerHTML = "";
         }
       };
-      alasql5.write = function(s) {
-        var target = alasql5.options.logtarget;
+      alasql7.write = function(s) {
+        var target = alasql7.options.logtarget;
         if (utils.isNode || utils.isMeteorServer) {
           if (console.log) {
             console.log(s);
@@ -51877,7 +51877,7 @@ var require_alasql_fs = __commonJS({
           scrollTo(element, to, duration - 10);
         }, 10);
       }
-      alasql5.prompt = function(el, useidel, firstsql) {
+      alasql7.prompt = function(el, useidel, firstsql) {
         if (utils.isNode) {
           throw new Error("The prompt not realized for Node.js");
         }
@@ -51888,17 +51888,17 @@ var require_alasql_fs = __commonJS({
         if (typeof useidel === "string") {
           useidel = document.getElementById(useidel);
         }
-        useidel.textContent = alasql5.useid;
+        useidel.textContent = alasql7.useid;
         if (firstsql) {
-          alasql5.prompthistory.push(firstsql);
-          prompti = alasql5.prompthistory.length;
+          alasql7.prompthistory.push(firstsql);
+          prompti = alasql7.prompthistory.length;
           try {
             var tm = Date.now();
-            alasql5.log(firstsql);
-            alasql5.write('<p style="color:blue">' + (Date.now() - tm) + " ms</p>");
+            alasql7.log(firstsql);
+            alasql7.write('<p style="color:blue">' + (Date.now() - tm) + " ms</p>");
           } catch (err) {
-            alasql5.write("<p>" + alasql5.useid + "&gt;&nbsp;<b>" + firstsql + "</b></p>");
-            alasql5.write('<p style="color:red">' + err + "<p>");
+            alasql7.write("<p>" + alasql7.useid + "&gt;&nbsp;<b>" + firstsql + "</b></p>");
+            alasql7.write('<p style="color:red">' + err + "<p>");
           }
         }
         var y = el.getBoundingClientRect().top + document.getElementsByTagName("body")[0].scrollTop;
@@ -51906,20 +51906,20 @@ var require_alasql_fs = __commonJS({
         el.onkeydown = function(event) {
           if (event.which === 13) {
             var sql = el.value;
-            var olduseid = alasql5.useid;
+            var olduseid = alasql7.useid;
             el.value = "";
-            alasql5.prompthistory.push(sql);
-            prompti = alasql5.prompthistory.length;
+            alasql7.prompthistory.push(sql);
+            prompti = alasql7.prompthistory.length;
             try {
               var tm2 = Date.now();
-              alasql5.log(sql);
-              alasql5.write('<p style="color:blue">' + (Date.now() - tm2) + " ms</p>");
+              alasql7.log(sql);
+              alasql7.write('<p style="color:blue">' + (Date.now() - tm2) + " ms</p>");
             } catch (err) {
-              alasql5.write("<p>" + olduseid + "&gt;&nbsp;" + alasql5.pretty(sql, false) + "</p>");
-              alasql5.write('<p style="color:red">' + err + "<p>");
+              alasql7.write("<p>" + olduseid + "&gt;&nbsp;" + alasql7.pretty(sql, false) + "</p>");
+              alasql7.write('<p style="color:red">' + err + "<p>");
             }
             el.focus();
-            useidel.textContent = alasql5.useid;
+            useidel.textContent = alasql7.useid;
             var y2 = el.getBoundingClientRect().top + document.getElementsByTagName("body")[0].scrollTop;
             scrollTo(document.getElementsByTagName("body")[0], y2, 500);
           } else if (event.which === 38) {
@@ -51927,17 +51927,17 @@ var require_alasql_fs = __commonJS({
             if (prompti < 0) {
               prompti = 0;
             }
-            if (alasql5.prompthistory[prompti]) {
-              el.value = alasql5.prompthistory[prompti];
+            if (alasql7.prompthistory[prompti]) {
+              el.value = alasql7.prompthistory[prompti];
               event.preventDefault();
             }
           } else if (event.which === 40) {
             prompti++;
-            if (prompti >= alasql5.prompthistory.length) {
-              prompti = alasql5.prompthistory.length;
+            if (prompti >= alasql7.prompthistory.length) {
+              prompti = alasql7.prompthistory.length;
               el.value = "";
-            } else if (alasql5.prompthistory[prompti]) {
-              el.value = alasql5.prompthistory[prompti];
+            } else if (alasql7.prompthistory[prompti]) {
+              el.value = alasql7.prompthistory[prompti];
               event.preventDefault();
             }
           }
@@ -51951,8 +51951,8 @@ var require_alasql_fs = __commonJS({
       };
       yy.BeginTransaction.prototype.execute = function(databaseid, params, cb) {
         var res = 1;
-        if (alasql5.databases[databaseid].engineid) {
-          return alasql5.engines[alasql5.databases[alasql5.useid].engineid].begin(databaseid, cb);
+        if (alasql7.databases[databaseid].engineid) {
+          return alasql7.engines[alasql7.databases[alasql7.useid].engineid].begin(databaseid, cb);
         } else {
         }
         if (cb) res = cb(res);
@@ -51966,8 +51966,8 @@ var require_alasql_fs = __commonJS({
       };
       yy.CommitTransaction.prototype.execute = function(databaseid, params, cb) {
         var res = 1;
-        if (alasql5.databases[databaseid].engineid) {
-          return alasql5.engines[alasql5.databases[alasql5.useid].engineid].commit(databaseid, cb);
+        if (alasql7.databases[databaseid].engineid) {
+          return alasql7.engines[alasql7.databases[alasql7.useid].engineid].commit(databaseid, cb);
         } else {
         }
         if (cb) res = cb(res);
@@ -51981,26 +51981,26 @@ var require_alasql_fs = __commonJS({
       };
       yy.RollbackTransaction.prototype.execute = function(databaseid, params, cb) {
         var res = 1;
-        if (alasql5.databases[databaseid].engineid) {
-          return alasql5.engines[alasql5.databases[databaseid].engineid].rollback(databaseid, cb);
+        if (alasql7.databases[databaseid].engineid) {
+          return alasql7.engines[alasql7.databases[databaseid].engineid].rollback(databaseid, cb);
         } else {
         }
         if (cb) res = cb(res);
         return res;
       };
-      if (alasql5.options.tsql) {
-        alasql5.stdfn.OBJECT_ID = function(name, type) {
+      if (alasql7.options.tsql) {
+        alasql7.stdfn.OBJECT_ID = function(name, type) {
           if (typeof type == "undefined") type = "T";
           type = type.toUpperCase();
           var sname = name.split(".");
-          var dbid = alasql5.useid;
+          var dbid = alasql7.useid;
           var objname = sname[0];
           if (sname.length == 2) {
             dbid = sname[0];
             objname = sname[1];
           }
-          var tables = alasql5.databases[dbid].tables;
-          dbid = alasql5.databases[dbid].databaseid;
+          var tables = alasql7.databases[dbid].tables;
+          dbid = alasql7.databases[dbid].databaseid;
           for (var tableid in tables) {
             if (tableid == objname) {
               if (tables[tableid].view && type == "V") return dbid + "." + tableid;
@@ -52011,17 +52011,17 @@ var require_alasql_fs = __commonJS({
           return void 0;
         };
       }
-      if (alasql5.options.mysql) {
-        alasql5.fn.TIMESTAMPDIFF = function(unit, date1, date2) {
-          return alasql5.stdfn.DATEDIFF(unit, date1, date2);
+      if (alasql7.options.mysql) {
+        alasql7.fn.TIMESTAMPDIFF = function(unit, date1, date2) {
+          return alasql7.stdfn.DATEDIFF(unit, date1, date2);
         };
       }
-      if (alasql5.options.mysql || alasql5.options.sqlite) {
-        alasql5.from.INFORMATION_SCHEMA = function(filename, opts, cb, idx, query) {
+      if (alasql7.options.mysql || alasql7.options.sqlite) {
+        alasql7.from.INFORMATION_SCHEMA = function(filename, opts, cb, idx, query) {
           if (filename == "VIEWS" || filename == "TABLES") {
             var res = [];
-            for (var databaseid in alasql5.databases) {
-              var tables = alasql5.databases[databaseid].tables;
+            for (var databaseid in alasql7.databases) {
+              var tables = alasql7.databases[databaseid].tables;
               for (var tableid in tables) {
                 if (tables[tableid].view && filename == "VIEWS" || !tables[tableid].view && filename == "TABLES") {
                   res.push({ TABLE_CATALOG: databaseid, TABLE_NAME: tableid });
@@ -52034,20 +52034,20 @@ var require_alasql_fs = __commonJS({
           throw new Error("Unknown INFORMATION_SCHEMA table");
         };
       }
-      if (alasql5.options.postgres) {
+      if (alasql7.options.postgres) {
       }
-      if (alasql5.options.oracle) {
+      if (alasql7.options.oracle) {
       }
-      if (alasql5.options.sqlite) {
+      if (alasql7.options.sqlite) {
       }
-      alasql5.into.SQL = function(filename, opts, data, columns, cb) {
+      alasql7.into.SQL = function(filename, opts, data, columns, cb) {
         var res;
         if (typeof filename === "object") {
           opts = filename;
           filename = void 0;
         }
         var opt = {};
-        alasql5.utils.extend(opt, opts);
+        alasql7.utils.extend(opt, opts);
         if (typeof opt.tableid === "undefined") {
           throw new Error("Table for INSERT TO is not defined.");
         }
@@ -52079,18 +52079,18 @@ var require_alasql_fs = __commonJS({
           }).join(",");
           s += ");\n";
         }
-        filename = alasql5.utils.autoExtFilename(filename, "sql", opts);
-        res = alasql5.utils.saveFile(filename, s);
+        filename = alasql7.utils.autoExtFilename(filename, "sql", opts);
+        res = alasql7.utils.saveFile(filename, s);
         if (cb) {
           res = cb(res);
         }
         return res;
       };
-      alasql5.into.HTML = function(selector, opts, data, columns, cb) {
+      alasql7.into.HTML = function(selector, opts, data, columns, cb) {
         var res = 1;
         if (typeof document !== "object") {
           var opt = { headers: true };
-          alasql5.utils.extend(opt, opts);
+          alasql7.utils.extend(opt, opts);
           var sel = document.querySelector(selector);
           if (!sel) {
             throw new Error("Selected HTML element is not found");
@@ -52126,7 +52126,7 @@ var require_alasql_fs = __commonJS({
             }
             tbody.appendChild(tre);
           }
-          alasql5.utils.domEmptyChildren(sel);
+          alasql7.utils.domEmptyChildren(sel);
           sel.appendChild(tbe);
         }
         if (cb) {
@@ -52134,21 +52134,21 @@ var require_alasql_fs = __commonJS({
         }
         return res;
       };
-      alasql5.into.JSON = function(filename, opts, data, columns, cb) {
+      alasql7.into.JSON = function(filename, opts, data, columns, cb) {
         var res = 1;
         if (typeof filename === "object") {
           opts = filename;
           filename = void 0;
         }
         var s = JSON.stringify(data);
-        filename = alasql5.utils.autoExtFilename(filename, "json", opts);
-        res = alasql5.utils.saveFile(filename, s);
+        filename = alasql7.utils.autoExtFilename(filename, "json", opts);
+        res = alasql7.utils.saveFile(filename, s);
         if (cb) {
           res = cb(res);
         }
         return res;
       };
-      alasql5.into.OBJECT = function(filename, opts, data, columns, cb) {
+      alasql7.into.OBJECT = function(filename, opts, data, columns, cb) {
         var res;
         if (typeof filename === "object") {
           opts = filename;
@@ -52156,8 +52156,8 @@ var require_alasql_fs = __commonJS({
         }
         if (filename) {
           var s = JSON.stringify(data);
-          filename = alasql5.utils.autoExtFilename(filename, "json", opts);
-          res = alasql5.utils.saveFile(filename, s);
+          filename = alasql7.utils.autoExtFilename(filename, "json", opts);
+          res = alasql7.utils.saveFile(filename, s);
         } else {
           res = data;
         }
@@ -52166,7 +52166,7 @@ var require_alasql_fs = __commonJS({
         }
         return res;
       };
-      alasql5.into.TXT = function(filename, opts, data, columns, cb) {
+      alasql7.into.TXT = function(filename, opts, data, columns, cb) {
         if (columns.length === 0 && data.length > 0) {
           columns = Object.keys(data[0]).map(function(columnid) {
             return { columnid };
@@ -52184,22 +52184,22 @@ var require_alasql_fs = __commonJS({
             return d[key];
           }).join("\n");
         }
-        filename = alasql5.utils.autoExtFilename(filename, "txt", opts);
-        res = alasql5.utils.saveFile(filename, s);
+        filename = alasql7.utils.autoExtFilename(filename, "txt", opts);
+        res = alasql7.utils.saveFile(filename, s);
         if (cb) {
           res = cb(res);
         }
         return res;
       };
-      alasql5.into.TAB = alasql5.into.TSV = function(filename, opts, data, columns, cb) {
+      alasql7.into.TAB = alasql7.into.TSV = function(filename, opts, data, columns, cb) {
         var opt = {};
-        alasql5.utils.extend(opt, opts);
+        alasql7.utils.extend(opt, opts);
         opt.separator = "	";
-        filename = alasql5.utils.autoExtFilename(filename, "tab", opts);
+        filename = alasql7.utils.autoExtFilename(filename, "tab", opts);
         opt.autoExt = false;
-        return alasql5.into.CSV(filename, opt, data, columns, cb);
+        return alasql7.into.CSV(filename, opt, data, columns, cb);
       };
-      alasql5.into.CSV = function(filename, opts, data, columns, cb) {
+      alasql7.into.CSV = function(filename, opts, data, columns, cb) {
         if (columns.length === 0 && data.length > 0) {
           columns = Object.keys(data[0]).map(function(columnid) {
             return { columnid };
@@ -52216,7 +52216,7 @@ var require_alasql_fs = __commonJS({
         if (opts && !opts.headers && typeof opts.headers !== "undefined") {
           opt.utf8Bom = false;
         }
-        alasql5.utils.extend(opt, opts);
+        alasql7.utils.extend(opt, opts);
         var res = data.length;
         var s = opt.utf8Bom ? "\uFEFF" : "";
         if (opt.headers) {
@@ -52236,14 +52236,14 @@ var require_alasql_fs = __commonJS({
             return s2;
           }).join(opt.separator) + "\r\n";
         });
-        filename = alasql5.utils.autoExtFilename(filename, "csv", opts);
-        res = alasql5.utils.saveFile(filename, s, null, { disableAutoBom: true });
+        filename = alasql7.utils.autoExtFilename(filename, "csv", opts);
+        res = alasql7.utils.saveFile(filename, s, null, { disableAutoBom: true });
         if (cb) {
           res = cb(res);
         }
         return res;
       };
-      alasql5.into.XLS = function(filename, opts, data, columns, cb) {
+      alasql7.into.XLS = function(filename, opts, data, columns, cb) {
         if (typeof filename == "object") {
           opts = filename;
           filename = void 0;
@@ -52264,8 +52264,8 @@ var require_alasql_fs = __commonJS({
           sheet.sheetid = "Sheet1";
         }
         var s = toHTML();
-        filename = alasql5.utils.autoExtFilename(filename, "xls", opts);
-        var res = alasql5.utils.saveFile(filename, s);
+        filename = alasql7.utils.autoExtFilename(filename, "xls", opts);
+        var res = alasql7.utils.saveFile(filename, s);
         if (cb) res = cb(res);
         return res;
         function toHTML() {
@@ -52481,7 +52481,7 @@ var require_alasql_fs = __commonJS({
           return s2;
         }
       };
-      alasql5.into.XLSXML = function(filename, opts, data, columns, cb) {
+      alasql7.into.XLSXML = function(filename, opts, data, columns, cb) {
         opts = opts || {};
         if (typeof filename == "object") {
           opts = filename;
@@ -52499,8 +52499,8 @@ var require_alasql_fs = __commonJS({
           sheetsdata = [data];
           sheetscolumns = [columns];
         }
-        filename = alasql5.utils.autoExtFilename(filename, "xls", opts);
-        var res = alasql5.utils.saveFile(filename, toXML());
+        filename = alasql7.utils.autoExtFilename(filename, "xls", opts);
+        var res = alasql7.utils.saveFile(filename, toXML());
         if (cb) res = cb(res);
         return res;
         function toXML() {
@@ -52729,7 +52729,7 @@ var require_alasql_fs = __commonJS({
           return s1 + s2 + s3;
         }
       };
-      alasql5.into.XLSX = function(filename, opts, data, columns, cb) {
+      alasql7.into.XLSX = function(filename, opts, data, columns, cb) {
         var res = 1;
         opts = opts || {};
         if (deepEqual(columns, [{ columnid: "_" }])) {
@@ -52739,7 +52739,7 @@ var require_alasql_fs = __commonJS({
           columns = void 0;
         } else {
         }
-        filename = alasql5.utils.autoExtFilename(filename, "xlsx", opts);
+        filename = alasql7.utils.autoExtFilename(filename, "xlsx", opts);
         var XLSX = getXLSX();
         if (typeof filename == "object") {
           opts = filename;
@@ -52747,8 +52747,8 @@ var require_alasql_fs = __commonJS({
         }
         var wb = { SheetNames: [], Sheets: {} };
         if (opts.sourcefilename) {
-          alasql5.utils.loadBinaryFile(opts.sourcefilename, !!cb, function(data2) {
-            wb = XLSX.read(data2, { type: "binary", ...alasql5.options.excel, ...opts });
+          alasql7.utils.loadBinaryFile(opts.sourcefilename, !!cb, function(data2) {
+            wb = XLSX.read(data2, { type: "binary", ...alasql7.options.excel, ...opts });
             doExport();
             if (cb) res = cb(res);
           });
@@ -52771,7 +52771,7 @@ var require_alasql_fs = __commonJS({
         }
         function prepareSheet(opts2, data2, columns2, idx) {
           var opt = { sheetid: "Sheet " + idx, headers: true };
-          alasql5.utils.extend(opt, opts2);
+          alasql7.utils.extend(opt, opts2);
           var dataLength = Object.keys(data2).length;
           if (!columns2 || columns2.length == 0) {
             if (dataLength > 0) {
@@ -52792,11 +52792,11 @@ var require_alasql_fs = __commonJS({
           }
           var range = "A1";
           if (opt.range) range = opt.range;
-          var col0 = alasql5.utils.xlscn(range.match(/[A-Z]+/)[0]);
+          var col0 = alasql7.utils.xlscn(range.match(/[A-Z]+/)[0]);
           var row0 = +range.match(/[0-9]+/)[0] - 1;
           if (wb.Sheets[opt.sheetid]["!ref"]) {
             var rangem = wb.Sheets[opt.sheetid]["!ref"];
-            var colm = alasql5.utils.xlscn(rangem.match(/[A-Z]+/)[0]);
+            var colm = alasql7.utils.xlscn(rangem.match(/[A-Z]+/)[0]);
             var rowm = +rangem.match(/[0-9]+/)[0] - 1;
           } else {
             var colm = 1, rowm = 1;
@@ -52805,10 +52805,10 @@ var require_alasql_fs = __commonJS({
           var colmax = Math.max(col0 + columns2.length - 1 + zeroColumnFix, colm);
           var rowmax = Math.max(row0 + dataLength + 2, rowm);
           var i2 = row0 + 1;
-          wb.Sheets[opt.sheetid]["!ref"] = "A1:" + alasql5.utils.xlsnc(colmax) + rowmax;
+          wb.Sheets[opt.sheetid]["!ref"] = "A1:" + alasql7.utils.xlsnc(colmax) + rowmax;
           if (opt.headers) {
             columns2.forEach(function(col, idx2) {
-              cells[alasql5.utils.xlsnc(col0 + idx2) + "" + i2] = {
+              cells[alasql7.utils.xlsnc(col0 + idx2) + "" + i2] = {
                 v: col.columnid.trim()
               };
             });
@@ -52828,7 +52828,7 @@ var require_alasql_fs = __commonJS({
                   cell.t = "d";
                 }
               }
-              cells[alasql5.utils.xlsnc(col0 + idx2) + "" + i2] = cell;
+              cells[alasql7.utils.xlsnc(col0 + idx2) + "" + i2] = cell;
             });
             i2++;
           }
@@ -52855,15 +52855,15 @@ var require_alasql_fs = __commonJS({
           }
         }
       };
-      alasql5.from.METEOR = function(filename, opts, cb, idx, query) {
+      alasql7.from.METEOR = function(filename, opts, cb, idx, query) {
         var res = filename.find(opts).fetch();
         if (cb) res = cb(res, idx, query);
         return res;
       };
-      alasql5.from.TABLETOP = function(key, opts, cb, idx, query) {
+      alasql7.from.TABLETOP = function(key, opts, cb, idx, query) {
         var res = [];
         var opt = { headers: true, simpleSheet: true, key };
-        alasql5.utils.extend(opt, opts);
+        alasql7.utils.extend(opt, opts);
         opt.callback = function(data) {
           res = data;
           if (cb) res = cb(res, idx, query);
@@ -52871,9 +52871,9 @@ var require_alasql_fs = __commonJS({
         Tabletop.init(opt);
         return null;
       };
-      alasql5.from.HTML = function(selector, opts, cb, idx, query) {
+      alasql7.from.HTML = function(selector, opts, cb, idx, query) {
         var opt = {};
-        alasql5.utils.extend(opt, opts);
+        alasql7.utils.extend(opt, opts);
         var sel = document.querySelector(selector);
         if (!sel || sel.tagName !== "TABLE") {
           throw new Error("Selected HTML element is not a TABLE");
@@ -52911,7 +52911,7 @@ var require_alasql_fs = __commonJS({
         }
         return res;
       };
-      alasql5.from.RANGE = function(start, finish, cb, idx, query) {
+      alasql7.from.RANGE = function(start, finish, cb, idx, query) {
         var res = [];
         for (var i2 = start; i2 <= finish; i2++) {
           res.push(i2);
@@ -52921,7 +52921,7 @@ var require_alasql_fs = __commonJS({
         }
         return res;
       };
-      alasql5.from.UNNEST = function(arr, opts, cb, idx, query) {
+      alasql7.from.UNNEST = function(arr, opts, cb, idx, query) {
         var res = arr;
         if (!Array.isArray(res)) {
           res = [];
@@ -52931,7 +52931,7 @@ var require_alasql_fs = __commonJS({
         }
         return res;
       };
-      alasql5.from.FILE = function(filename, opts, cb, idx, query) {
+      alasql7.from.FILE = function(filename, opts, cb, idx, query) {
         var fname;
         if (typeof filename === "string") {
           fname = filename;
@@ -52942,16 +52942,16 @@ var require_alasql_fs = __commonJS({
         }
         var parts = fname.split(".");
         var ext = parts[parts.length - 1].toUpperCase();
-        if (alasql5.from[ext]) {
-          return alasql5.from[ext](filename, opts, cb, idx, query);
+        if (alasql7.from[ext]) {
+          return alasql7.from[ext](filename, opts, cb, idx, query);
         } else {
           throw new Error("Cannot recognize file type for loading");
         }
       };
-      alasql5.from.JSON = function(filename, opts, cb, idx, query) {
+      alasql7.from.JSON = function(filename, opts, cb, idx, query) {
         var res;
-        filename = alasql5.utils.autoExtFilename(filename, "json", opts);
-        alasql5.utils.loadFile(filename, !!cb, function(data) {
+        filename = alasql7.utils.autoExtFilename(filename, "json", opts);
+        alasql7.utils.loadFile(filename, !!cb, function(data) {
           res = JSON.parse(data);
           if (cb) {
             res = cb(res, idx, query);
@@ -52969,8 +52969,8 @@ var require_alasql_fs = __commonJS({
       const jsonl = (ext) => {
         return function(filename, opts, cb, idx, query) {
           let out = [];
-          filename = alasql5.utils.autoExtFilename(filename, ext, opts);
-          alasql5.utils.loadFile(
+          filename = alasql7.utils.autoExtFilename(filename, ext, opts);
+          alasql7.utils.loadFile(
             filename,
             !!cb,
             function(data) {
@@ -53000,12 +53000,12 @@ var require_alasql_fs = __commonJS({
           return out;
         };
       };
-      alasql5.from.JSONL = jsonl("jsonl");
-      alasql5.from.NDJSON = jsonl("ndjson");
-      alasql5.from.TXT = function(filename, opts, cb, idx, query) {
+      alasql7.from.JSONL = jsonl("jsonl");
+      alasql7.from.NDJSON = jsonl("ndjson");
+      alasql7.from.TXT = function(filename, opts, cb, idx, query) {
         var res;
-        filename = alasql5.utils.autoExtFilename(filename, "txt", opts);
-        alasql5.utils.loadFile(filename, !!cb, function(data) {
+        filename = alasql7.utils.autoExtFilename(filename, "txt", opts);
+        alasql7.utils.loadFile(filename, !!cb, function(data) {
           res = data.split(/\r?\n/);
           if (res[res.length - 1] === "") {
             res.pop();
@@ -53022,14 +53022,14 @@ var require_alasql_fs = __commonJS({
         });
         return res;
       };
-      alasql5.from.TAB = alasql5.from.TSV = function(filename, opts, cb, idx, query) {
+      alasql7.from.TAB = alasql7.from.TSV = function(filename, opts, cb, idx, query) {
         opts = opts || {};
         opts.separator = "	";
-        filename = alasql5.utils.autoExtFilename(filename, "tab", opts);
+        filename = alasql7.utils.autoExtFilename(filename, "tab", opts);
         opts.autoext = false;
-        return alasql5.from.CSV(filename, opts, cb, idx, query);
+        return alasql7.from.CSV(filename, opts, cb, idx, query);
       };
-      alasql5.from.CSV = function(contents, opts, cb, idx, query) {
+      alasql7.from.CSV = function(contents, opts, cb, idx, query) {
         contents = "" + contents;
         var opt = {
           separator: ",",
@@ -53037,7 +53037,7 @@ var require_alasql_fs = __commonJS({
           headers: true,
           raw: false
         };
-        alasql5.utils.extend(opt, opts);
+        alasql7.utils.extend(opt, opts);
         var res;
         var hs = [];
         function parseText(text) {
@@ -53150,15 +53150,15 @@ var require_alasql_fs = __commonJS({
         if (new RegExp("\n").test(contents)) {
           parseText(contents);
         } else {
-          contents = alasql5.utils.autoExtFilename(contents, "csv", opts);
-          alasql5.utils.loadFile(contents, !!cb, parseText, (e) => query.cb(null, e));
+          contents = alasql7.utils.autoExtFilename(contents, "csv", opts);
+          alasql7.utils.loadFile(contents, !!cb, parseText, (e) => query.cb(null, e));
         }
         return res;
       };
       function XLSXLSX(X, filename, opts, cb, idx, query) {
         var opt = {};
         opts = opts || {};
-        alasql5.utils.extend(opt, opts);
+        alasql7.utils.extend(opt, opts);
         if (typeof opt.headers === "undefined") {
           opt.headers = true;
         }
@@ -53171,7 +53171,7 @@ var require_alasql_fs = __commonJS({
           return o;
         }
         function getHeaderText(text) {
-          if (text && alasql5.options.casesensitive === false) {
+          if (text && alasql7.options.casesensitive === false) {
             return text.toLowerCase();
           } else {
             return text;
@@ -53195,10 +53195,10 @@ var require_alasql_fs = __commonJS({
             var col1 = rg[1].match(/[A-Z]+/)[0];
             var row1 = +rg[1].match(/[0-9]+/)[0];
             var hh = {};
-            var xlscnCol0 = alasql5.utils.xlscn(col0);
-            var xlscnCol1 = alasql5.utils.xlscn(col1);
+            var xlscnCol0 = alasql7.utils.xlscn(col0);
+            var xlscnCol1 = alasql7.utils.xlscn(col1);
             for (var j = xlscnCol0; j <= xlscnCol1; j++) {
-              var col = alasql5.utils.xlsnc(j);
+              var col = alasql7.utils.xlsnc(j);
               if (sheetOpt.headers) {
                 if (workbook.Sheets[sheetid][col + "" + row0]) {
                   hh[col] = getHeaderText(workbook.Sheets[sheetid][col + "" + row0].v);
@@ -53215,7 +53215,7 @@ var require_alasql_fs = __commonJS({
             for (var i2 = row0; i2 <= row1; i2++) {
               var row = {};
               for (var j = xlscnCol0; j <= xlscnCol1; j++) {
-                var col = alasql5.utils.xlsnc(j);
+                var col = alasql7.utils.xlsnc(j);
                 if (workbook.Sheets[sheetid][col + "" + i2]) {
                   row[hh[col]] = workbook.Sheets[sheetid][col + "" + i2].v;
                 }
@@ -53230,8 +53230,8 @@ var require_alasql_fs = __commonJS({
           }
           return sheetRes;
         }
-        filename = alasql5.utils.autoExtFilename(filename, "xls", opts);
-        alasql5.utils.loadBinaryFile(
+        filename = alasql7.utils.autoExtFilename(filename, "xls", opts);
+        alasql7.utils.loadBinaryFile(
           filename,
           !!cb,
           function(data) {
@@ -53239,13 +53239,13 @@ var require_alasql_fs = __commonJS({
               var arr = fixdata(data);
               var workbook = X.read(btoa(arr), {
                 type: "base64",
-                ...alasql5.options.excel,
+                ...alasql7.options.excel,
                 ...opts
               });
             } else {
               var workbook = X.read(data, {
                 type: "binary",
-                ...alasql5.options.excel,
+                ...alasql7.options.excel,
                 ...opts
               });
             }
@@ -53288,27 +53288,27 @@ var require_alasql_fs = __commonJS({
         );
         return res;
       }
-      alasql5.from.XLS = function(filename, opts, cb, idx, query) {
+      alasql7.from.XLS = function(filename, opts, cb, idx, query) {
         opts = opts || {};
-        filename = alasql5.utils.autoExtFilename(filename, "xls", opts);
+        filename = alasql7.utils.autoExtFilename(filename, "xls", opts);
         opts.autoExt = false;
         return XLSXLSX(getXLSX(), filename, opts, cb, idx, query);
       };
-      alasql5.from.XLSX = function(filename, opts, cb, idx, query) {
+      alasql7.from.XLSX = function(filename, opts, cb, idx, query) {
         opts = opts || {};
-        filename = alasql5.utils.autoExtFilename(filename, "xlsx", opts);
+        filename = alasql7.utils.autoExtFilename(filename, "xlsx", opts);
         opts.autoExt = false;
         return XLSXLSX(getXLSX(), filename, opts, cb, idx, query);
       };
-      alasql5.from.ODS = function(filename, opts, cb, idx, query) {
+      alasql7.from.ODS = function(filename, opts, cb, idx, query) {
         opts = opts || {};
-        filename = alasql5.utils.autoExtFilename(filename, "ods", opts);
+        filename = alasql7.utils.autoExtFilename(filename, "ods", opts);
         opts.autoExt = false;
         return XLSXLSX(getXLSX(), filename, opts, cb, idx, query);
       };
-      alasql5.from.XML = function(filename, opts, cb, idx, query) {
+      alasql7.from.XML = function(filename, opts, cb, idx, query) {
         var res;
-        alasql5.utils.loadFile(filename, !!cb, function(data) {
+        alasql7.utils.loadFile(filename, !!cb, function(data) {
           res = xmlparse(data).root;
           if (cb) res = cb(res, idx, query);
         });
@@ -53389,9 +53389,9 @@ var require_alasql_fs = __commonJS({
           return 0 == xml.indexOf(prefix);
         }
       }
-      alasql5.from.GEXF = function(filename, opts, cb, idx, query) {
+      alasql7.from.GEXF = function(filename, opts, cb, idx, query) {
         var res;
-        alasql5("SEARCH FROM XML(" + filename + ")", [], function(data) {
+        alasql7("SEARCH FROM XML(" + filename + ")", [], function(data) {
           res = data;
           if (cb) res = cb(res);
         });
@@ -53408,14 +53408,14 @@ var require_alasql_fs = __commonJS({
       yy.Print.prototype.execute = function(databaseid, params, cb) {
         var self2 = this;
         var res = 1;
-        alasql5.precompile(this, databaseid, params);
+        alasql7.precompile(this, databaseid, params);
         if (this.exprs && this.exprs.length > 0) {
           var rs = this.exprs.map(function(expr) {
             var exprfn = new Function(
               "params,alasql,p",
               "var y;return " + expr.toJS("({})", "", null)
             ).bind(self2);
-            var r2 = exprfn(params, alasql5);
+            var r2 = exprfn(params, alasql7);
             return JSONtoString(r2);
           });
           console.log.apply(console, rs);
@@ -53442,7 +53442,7 @@ var require_alasql_fs = __commonJS({
           this.url,
           !!cb,
           function(data) {
-            res = alasql5(data);
+            res = alasql7(data);
             if (cb) res = cb(res);
             return res;
           },
@@ -53479,19 +53479,19 @@ var require_alasql_fs = __commonJS({
               res++;
               ss += data;
               if (res < self2.paths.length) return;
-              new Function("params,alasql", ss)(params, alasql5);
+              new Function("params,alasql", ss)(params, alasql7);
               if (cb) res = cb(res);
             });
           });
         } else if (this.plugins && this.plugins.length > 0) {
           this.plugins.forEach(function(plugin) {
-            if (!alasql5.plugins[plugin]) {
-              loadFile(alasql5.path + "/alasql-" + plugin.toLowerCase() + ".js", !!cb, function(data) {
+            if (!alasql7.plugins[plugin]) {
+              loadFile(alasql7.path + "/alasql-" + plugin.toLowerCase() + ".js", !!cb, function(data) {
                 res++;
                 ss += data;
                 if (res < self2.plugins.length) return;
-                new Function("params,alasql", ss)(params, alasql5);
-                alasql5.plugins[plugin] = true;
+                new Function("params,alasql", ss)(params, alasql7);
+                alasql7.plugins[plugin] = true;
                 if (cb) res = cb(res);
               });
             }
@@ -53510,14 +53510,14 @@ var require_alasql_fs = __commonJS({
         return s;
       };
       yy.Assert.prototype.execute = function(databaseid) {
-        if (!deepEqual(alasql5.res, this.value)) {
+        if (!deepEqual(alasql7.res, this.value)) {
           throw new Error(
-            (this.message || "Assert wrong") + ": " + JSON.stringify(alasql5.res) + " == " + JSON.stringify(this.value)
+            (this.message || "Assert wrong") + ": " + JSON.stringify(alasql7.res) + " == " + JSON.stringify(this.value)
           );
         }
         return 1;
       };
-      var IDB = alasql5.engines.INDEXEDDB = function() {
+      var IDB = alasql7.engines.INDEXEDDB = function() {
         "";
       };
       async function _databaseExists(name) {
@@ -53655,7 +53655,7 @@ var require_alasql_fs = __commonJS({
             request.result.close();
           };
         });
-        const db = new alasql5.Database(dbid || ixdbid);
+        const db = new alasql7.Database(dbid || ixdbid);
         db.engineid = "INDEXEDDB";
         db.ixdbid = ixdbid;
         db.tables = [];
@@ -53665,7 +53665,7 @@ var require_alasql_fs = __commonJS({
         if (cb) cb(1);
       };
       IDB.createTable = async function(databaseid, tableid, ifnotexists, cb) {
-        const ixdbid = alasql5.databases[databaseid].ixdbid;
+        const ixdbid = alasql7.databases[databaseid].ixdbid;
         const found = await _databaseExists(ixdbid).catch((err) => {
           if (cb) {
             cb(null, err);
@@ -53705,7 +53705,7 @@ var require_alasql_fs = __commonJS({
         };
       };
       IDB.dropTable = async function(databaseid, tableid, ifexists, cb) {
-        const ixdbid = alasql5.databases[databaseid].ixdbid;
+        const ixdbid = alasql7.databases[databaseid].ixdbid;
         const found = await _databaseExists(ixdbid).catch((err2) => {
           if (cb) {
             cb(null, err2);
@@ -53732,7 +53732,7 @@ var require_alasql_fs = __commonJS({
           var ixdb = request.result;
           if (ixdb.objectStoreNames.contains(tableid)) {
             ixdb.deleteObjectStore(tableid);
-            delete alasql5.databases[databaseid].tables[tableid];
+            delete alasql7.databases[databaseid].tables[tableid];
           } else {
             if (!ifexists) {
               err = new Error(`IndexedDB: Cannot drop table "${tableid}" because it does not exist`);
@@ -53755,9 +53755,9 @@ var require_alasql_fs = __commonJS({
         };
       };
       IDB.intoTable = function(databaseid, tableid, value, columns, cb) {
-        const ixdbid = alasql5.databases[databaseid].ixdbid;
+        const ixdbid = alasql7.databases[databaseid].ixdbid;
         const request = indexedDB.open(ixdbid);
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         var table = db.tables[tableid];
         request.onupgradeneeded = (evt) => {
           evt.target.transaction.abort();
@@ -53779,7 +53779,7 @@ var require_alasql_fs = __commonJS({
               if (table.afterinsert[tr]) {
                 var trigger = table.afterinsert[tr];
                 if (trigger.funcid) {
-                  alasql5.fn[trigger.funcid](value);
+                  alasql7.fn[trigger.funcid](value);
                 } else if (trigger.statement) {
                   trigger.statement.execute(databaseid);
                 }
@@ -53790,7 +53790,7 @@ var require_alasql_fs = __commonJS({
         };
       };
       IDB.fromTable = function(databaseid, tableid, cb, idx, query) {
-        const ixdbid = alasql5.databases[databaseid].ixdbid;
+        const ixdbid = alasql7.databases[databaseid].ixdbid;
         const request = indexedDB.open(ixdbid);
         request.onupgradeneeded = (evt) => {
           evt.target.transaction.abort();
@@ -53817,7 +53817,7 @@ var require_alasql_fs = __commonJS({
         };
       };
       IDB.deleteFromTable = function(databaseid, tableid, wherefn, params, cb) {
-        const ixdbid = alasql5.databases[databaseid].ixdbid;
+        const ixdbid = alasql7.databases[databaseid].ixdbid;
         const request = indexedDB.open(ixdbid);
         request.onsuccess = () => {
           const ixdb = request.result;
@@ -53826,7 +53826,7 @@ var require_alasql_fs = __commonJS({
           cur.onsuccess = () => {
             var cursor = cur.result;
             if (cursor) {
-              if (!wherefn || wherefn(cursor.value, params, alasql5)) {
+              if (!wherefn || wherefn(cursor.value, params, alasql7)) {
                 cursor.delete();
                 num++;
               }
@@ -53839,7 +53839,7 @@ var require_alasql_fs = __commonJS({
         };
       };
       IDB.updateTable = function(databaseid, tableid, assignfn, wherefn, params, cb) {
-        const ixdbid = alasql5.databases[databaseid].ixdbid;
+        const ixdbid = alasql7.databases[databaseid].ixdbid;
         const request = indexedDB.open(ixdbid);
         request.onsuccess = function() {
           const ixdb = request.result;
@@ -53869,7 +53869,7 @@ var require_alasql_fs = __commonJS({
       IDB.rollback = function(databaseid, cb) {
         return cb ? cb(1) : 1;
       };
-      var LS = alasql5.engines.LOCALSTORAGE = function() {
+      var LS = alasql7.engines.LOCALSTORAGE = function() {
       };
       LS.get = function(key) {
         var s = localStorage.getItem(key);
@@ -53887,7 +53887,7 @@ var require_alasql_fs = __commonJS({
         else localStorage.setItem(key, JSON.stringify(value));
       };
       LS.storeTable = function(databaseid, tableid) {
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         var table = db.tables[tableid];
         var tbl = {};
         tbl.columns = table.columns;
@@ -53898,9 +53898,9 @@ var require_alasql_fs = __commonJS({
         LS.set(db.lsdbid + "." + tableid, tbl);
       };
       LS.restoreTable = function(databaseid, tableid) {
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         var tbl = LS.get(db.lsdbid + "." + tableid);
-        var table = new alasql5.Table();
+        var table = new alasql7.Table();
         for (var f in tbl) {
           table[f] = tbl[f];
         }
@@ -53909,7 +53909,7 @@ var require_alasql_fs = __commonJS({
         return table;
       };
       LS.removeTable = function(databaseid, tableid) {
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         localStorage.removeItem(db.lsdbid + "." + tableid);
       };
       LS.createDatabase = function(lsdbid, args, ifnotexists, databaseid, cb) {
@@ -53962,15 +53962,15 @@ var require_alasql_fs = __commonJS({
       };
       LS.attachDatabase = function(lsdbid, databaseid, args, params, cb) {
         var res = 1;
-        if (alasql5.databases[databaseid]) {
+        if (alasql7.databases[databaseid]) {
           throw new Error('Unable to attach database as "' + databaseid + '" because it already exists');
         }
         if (!databaseid) databaseid = lsdbid;
-        var db = new alasql5.Database(databaseid);
+        var db = new alasql7.Database(databaseid);
         db.engineid = "LOCALSTORAGE";
         db.lsdbid = lsdbid;
         db.tables = LS.get(lsdbid).tables;
-        if (!alasql5.options.autocommit) {
+        if (!alasql7.options.autocommit) {
           if (db.tables) {
             for (var tbid in db.tables) {
               LS.restoreTable(databaseid, tbid);
@@ -54001,7 +54001,7 @@ var require_alasql_fs = __commonJS({
       };
       LS.createTable = function(databaseid, tableid, ifnotexists, cb) {
         var res = 1;
-        var lsdbid = alasql5.databases[databaseid].lsdbid;
+        var lsdbid = alasql7.databases[databaseid].lsdbid;
         var tb = LS.get(lsdbid + "." + tableid);
         if (tb && !ifnotexists) {
           throw new Error(
@@ -54009,7 +54009,7 @@ var require_alasql_fs = __commonJS({
           );
         }
         var lsdb = LS.get(lsdbid);
-        var table = alasql5.databases[databaseid].tables[tableid];
+        var table = alasql7.databases[databaseid].tables[tableid];
         lsdb.tables[tableid] = true;
         LS.set(lsdbid, lsdb);
         LS.storeTable(databaseid, tableid);
@@ -54018,12 +54018,12 @@ var require_alasql_fs = __commonJS({
       };
       LS.truncateTable = function(databaseid, tableid, ifexists, cb) {
         var res = 1;
-        var lsdbid = alasql5.databases[databaseid].lsdbid;
+        var lsdbid = alasql7.databases[databaseid].lsdbid;
         var lsdb;
-        if (alasql5.options.autocommit) {
+        if (alasql7.options.autocommit) {
           lsdb = LS.get(lsdbid);
         } else {
-          lsdb = alasql5.databases[databaseid];
+          lsdb = alasql7.databases[databaseid];
         }
         if (!ifexists && !lsdb.tables[tableid]) {
           throw new Error(
@@ -54038,12 +54038,12 @@ var require_alasql_fs = __commonJS({
       };
       LS.dropTable = function(databaseid, tableid, ifexists, cb) {
         var res = 1;
-        var lsdbid = alasql5.databases[databaseid].lsdbid;
+        var lsdbid = alasql7.databases[databaseid].lsdbid;
         var lsdb;
-        if (alasql5.options.autocommit) {
+        if (alasql7.options.autocommit) {
           lsdb = LS.get(lsdbid);
         } else {
-          lsdb = alasql5.databases[databaseid];
+          lsdb = alasql7.databases[databaseid];
         }
         if (!ifexists && !lsdb.tables[tableid]) {
           throw new Error(
@@ -54057,13 +54057,13 @@ var require_alasql_fs = __commonJS({
         return res;
       };
       LS.fromTable = function(databaseid, tableid, cb, idx, query) {
-        var lsdbid = alasql5.databases[databaseid].lsdbid;
+        var lsdbid = alasql7.databases[databaseid].lsdbid;
         var res = LS.restoreTable(databaseid, tableid).data;
         if (cb) res = cb(res, idx, query);
         return res;
       };
       LS.intoTable = function(databaseid, tableid, value, columns, cb) {
-        var lsdbid = alasql5.databases[databaseid].lsdbid;
+        var lsdbid = alasql7.databases[databaseid].lsdbid;
         var res = value.length;
         var tb = LS.restoreTable(databaseid, tableid);
         for (var columnid in tb.identities) {
@@ -54080,19 +54080,19 @@ var require_alasql_fs = __commonJS({
         return res;
       };
       LS.loadTableData = function(databaseid, tableid) {
-        var db = alasql5.databases[databaseid];
-        var lsdbid = alasql5.databases[databaseid].lsdbid;
+        var db = alasql7.databases[databaseid];
+        var lsdbid = alasql7.databases[databaseid].lsdbid;
         LS.restoreTable(databaseid, tableid);
       };
       LS.saveTableData = function(databaseid, tableid) {
-        var db = alasql5.databases[databaseid];
-        var lsdbid = alasql5.databases[databaseid].lsdbid;
+        var db = alasql7.databases[databaseid];
+        var lsdbid = alasql7.databases[databaseid].lsdbid;
         LS.storeTable(lsdbid, tableid);
         db.tables[tableid].data = void 0;
       };
       LS.commit = function(databaseid, cb) {
-        var db = alasql5.databases[databaseid];
-        var lsdbid = alasql5.databases[databaseid].lsdbid;
+        var db = alasql7.databases[databaseid];
+        var lsdbid = alasql7.databases[databaseid].lsdbid;
         var lsdb = { databaseid: lsdbid, tables: {} };
         if (db.tables) {
           for (var tbid in db.tables) {
@@ -54106,22 +54106,22 @@ var require_alasql_fs = __commonJS({
       LS.begin = LS.commit;
       LS.rollback = function(databaseid, cb) {
         return;
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         db.dbversion++;
-        var lsdbid = alasql5.databases[databaseid].lsdbid;
+        var lsdbid = alasql7.databases[databaseid].lsdbid;
         var lsdb = LS.get(lsdbid);
-        delete alasql5.databases[databaseid];
-        alasql5.databases[databaseid] = new alasql5.Database(databaseid);
-        extend(alasql5.databases[databaseid], lsdb);
-        alasql5.databases[databaseid].databaseid = databaseid;
-        alasql5.databases[databaseid].engineid = "LOCALSTORAGE";
+        delete alasql7.databases[databaseid];
+        alasql7.databases[databaseid] = new alasql7.Database(databaseid);
+        extend(alasql7.databases[databaseid], lsdb);
+        alasql7.databases[databaseid].databaseid = databaseid;
+        alasql7.databases[databaseid].engineid = "LOCALSTORAGE";
         if (lsdb.tables) {
           for (var tbid in lsdb.tables) {
             LS.restoreTable(databaseid, tbid);
           }
         }
       };
-      var SQLITE = alasql5.engines.SQLITE = function() {
+      var SQLITE = alasql7.engines.SQLITE = function() {
       };
       SQLITE.createDatabase = function(wdbid, args, ifnotexists, dbid, cb) {
         throw new Error("Connot create SQLITE database in memory. Attach it.");
@@ -54131,7 +54131,7 @@ var require_alasql_fs = __commonJS({
       };
       SQLITE.attachDatabase = function(sqldbid, dbid, args, params, cb) {
         var res = 1;
-        if (alasql5.databases[dbid]) {
+        if (alasql7.databases[dbid]) {
           throw new Error('Unable to attach database as "' + dbid + '" because it already exists');
         }
         if (args[0] && args[0] instanceof yy.StringValue || args[0] instanceof yy.ParamValue) {
@@ -54140,11 +54140,11 @@ var require_alasql_fs = __commonJS({
           } else if (args[0] instanceof yy.ParamValue) {
             var value = params[args[0].param];
           }
-          alasql5.utils.loadBinaryFile(
+          alasql7.utils.loadBinaryFile(
             value,
             true,
             function(data) {
-              var db = new alasql5.Database(dbid || sqldbid);
+              var db = new alasql7.Database(dbid || sqldbid);
               db.engineid = "SQLITE";
               db.sqldbid = sqldbid;
               var sqldb = db.sqldb = new SQL.Database(data);
@@ -54153,7 +54153,7 @@ var require_alasql_fs = __commonJS({
               tables.forEach(function(tbl) {
                 db.tables[tbl[1]] = {};
                 var columns = db.tables[tbl[1]].columns = [];
-                var ast = alasql5.parse(tbl[4]);
+                var ast = alasql7.parse(tbl[4]);
                 var coldefs = ast.statements[0].columns;
                 if (coldefs && coldefs.length > 0) {
                   coldefs.forEach(function(cd) {
@@ -54174,7 +54174,7 @@ var require_alasql_fs = __commonJS({
         return res;
       };
       SQLITE.fromTable = function(databaseid, tableid, cb, idx, query) {
-        var data = alasql5.databases[databaseid].sqldb.exec("SELECT * FROM " + tableid);
+        var data = alasql7.databases[databaseid].sqldb.exec("SELECT * FROM " + tableid);
         var columns = query.sources[idx].columns = [];
         if (data[0].columns.length > 0) {
           data[0].columns.forEach(function(columnid) {
@@ -54194,7 +54194,7 @@ var require_alasql_fs = __commonJS({
         if (cb) cb(res, idx, query);
       };
       SQLITE.intoTable = function(databaseid, tableid, value, columns, cb) {
-        var sqldb = alasql5.databases[databaseid].sqldb;
+        var sqldb = alasql7.databases[databaseid].sqldb;
         for (var i2 = 0, ilen = value.length; i2 < ilen; i2++) {
           var s = "INSERT INTO " + tableid + " (";
           var d = value[i2];
@@ -54213,12 +54213,12 @@ var require_alasql_fs = __commonJS({
         if (cb) cb(res);
         return res;
       };
-      var FS = alasql5.engines.FILESTORAGE = alasql5.engines.FILE = function() {
+      var FS = alasql7.engines.FILESTORAGE = alasql7.engines.FILE = function() {
       };
       FS.createDatabase = function(fsdbid2, args, ifnotexists, dbid, cb) {
         var res = 1;
         var filename = args[0].value;
-        alasql5.utils.fileExists(filename, function(fex) {
+        alasql7.utils.fileExists(filename, function(fex) {
           if (fex) {
             if (ifnotexists) {
               res = 0;
@@ -54229,7 +54229,7 @@ var require_alasql_fs = __commonJS({
             }
           } else {
             var data = { tables: {} };
-            alasql5.utils.saveFile(filename, JSON.stringify(data), function(data2) {
+            alasql7.utils.saveFile(filename, JSON.stringify(data), function(data2) {
               if (cb) res = cb(res);
             });
           }
@@ -54242,14 +54242,14 @@ var require_alasql_fs = __commonJS({
         if (typeof fsdbid2 === "object" && fsdbid2.value) {
           filename = fsdbid2.value;
         } else {
-          var db = alasql5.databases[fsdbid2] || {};
+          var db = alasql7.databases[fsdbid2] || {};
           filename = db.filename || "";
-          delete alasql5.databases[fsdbid2];
+          delete alasql7.databases[fsdbid2];
         }
-        alasql5.utils.fileExists(filename, function(fex) {
+        alasql7.utils.fileExists(filename, function(fex) {
           if (fex) {
             res = 1;
-            alasql5.utils.deleteFile(filename, function() {
+            alasql7.utils.deleteFile(filename, function() {
               res = 1;
               if (cb) res = cb(res);
             });
@@ -54265,10 +54265,10 @@ var require_alasql_fs = __commonJS({
       };
       FS.attachDatabase = function(fsdbid2, dbid, args, params, cb) {
         var res = 1;
-        if (alasql5.databases[dbid]) {
+        if (alasql7.databases[dbid]) {
           throw new Error('Unable to attach database as "' + dbid + '" because it already exists');
         }
-        var db = new alasql5.Database(dbid || fsdbid2);
+        var db = new alasql7.Database(dbid || fsdbid2);
         db.engineid = "FILESTORAGE";
         db.filename = args[0].value;
         loadFile(db.filename, !!cb, function(s) {
@@ -54278,7 +54278,7 @@ var require_alasql_fs = __commonJS({
             throw new Error("Data in FileStorage database are corrupted");
           }
           db.tables = db.data.tables;
-          if (!alasql5.options.autocommit) {
+          if (!alasql7.options.autocommit) {
             if (db.tables) {
               for (var tbid in db.tables) {
                 db.tables[tbid].data = db.data[tbid];
@@ -54290,13 +54290,13 @@ var require_alasql_fs = __commonJS({
         return res;
       };
       FS.createTable = function(databaseid, tableid, ifnotexists, cb) {
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         var tb = db.data[tableid];
         var res = 1;
         if (tb && !ifnotexists) {
           throw new Error('Table "' + tableid + '" alsready exists in the database "' + fsdbid + '"');
         }
-        var table = alasql5.databases[databaseid].tables[tableid];
+        var table = alasql7.databases[databaseid].tables[tableid];
         db.data.tables[tableid] = {
           columns: table.columns,
           defaultfns: table.defaultfns,
@@ -54308,14 +54308,14 @@ var require_alasql_fs = __commonJS({
         return res;
       };
       FS.updateFile = function(databaseid) {
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         if (db.issaving) {
           db.postsave = true;
           return;
         }
         db.issaving = true;
         db.postsave = false;
-        alasql5.utils.saveFile(db.filename, JSON.stringify(db.data), function() {
+        alasql7.utils.saveFile(db.filename, JSON.stringify(db.data), function() {
           db.issaving = false;
           if (db.postsave) {
             setTimeout(function() {
@@ -54326,7 +54326,7 @@ var require_alasql_fs = __commonJS({
       };
       FS.dropTable = function(databaseid, tableid, ifexists, cb) {
         var res = 1;
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         if (!ifexists && !db.tables[tableid]) {
           throw new Error(
             'Cannot drop table "' + tableid + '" in fileStorage, because it does not exist'
@@ -54340,13 +54340,13 @@ var require_alasql_fs = __commonJS({
         return res;
       };
       FS.fromTable = function(databaseid, tableid, cb, idx, query) {
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         var res = db.data[tableid];
         if (cb) res = cb(res, idx, query);
         return res;
       };
       FS.intoTable = function(databaseid, tableid, value, columns, cb) {
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         var res = value.length;
         var tb = db.data[tableid];
         if (!tb) tb = [];
@@ -54356,17 +54356,17 @@ var require_alasql_fs = __commonJS({
         return res;
       };
       FS.loadTableData = function(databaseid, tableid) {
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         db.tables[tableid].data = db.data[tableid];
       };
       FS.saveTableData = function(databaseid, tableid) {
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         db.data[tableid] = db.tables[tableid].data;
         db.tables[tableid].data = null;
         FS.updateFile(databaseid);
       };
       FS.commit = function(databaseid, cb) {
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         var fsdb = { tables: {} };
         if (db.tables) {
           for (var tbid in db.tables) {
@@ -54384,7 +54384,7 @@ var require_alasql_fs = __commonJS({
       FS.begin = FS.commit;
       FS.rollback = function(databaseid, cb) {
         var res = 1;
-        var db = alasql5.databases[databaseid];
+        var db = alasql7.databases[databaseid];
         db.dbversion++;
         wait();
         function wait() {
@@ -54392,23 +54392,23 @@ var require_alasql_fs = __commonJS({
             if (db.issaving) {
               return wait();
             } else {
-              alasql5.loadFile(db.filename, !!cb, function(data) {
+              alasql7.loadFile(db.filename, !!cb, function(data) {
                 db.data = data;
                 db.tables = {};
                 for (var tbid in db.data.tables) {
-                  var tb = new alasql5.Table({ columns: db.data.tables[tbid].columns });
+                  var tb = new alasql7.Table({ columns: db.data.tables[tbid].columns });
                   extend(tb, db.data.tables[tbid]);
                   db.tables[tbid] = tb;
-                  if (!alasql5.options.autocommit) {
+                  if (!alasql7.options.autocommit) {
                     db.tables[tbid].data = db.data[tbid];
                   }
                   db.tables[tbid].indexColumns();
                 }
-                delete alasql5.databases[databaseid];
-                alasql5.databases[databaseid] = new alasql5.Database(databaseid);
-                extend(alasql5.databases[databaseid], db);
-                alasql5.databases[databaseid].engineid = "FILESTORAGE";
-                alasql5.databases[databaseid].filename = db.filename;
+                delete alasql7.databases[databaseid];
+                alasql7.databases[databaseid] = new alasql7.Database(databaseid);
+                extend(alasql7.databases[databaseid], db);
+                alasql7.databases[databaseid].engineid = "FILESTORAGE";
+                alasql7.databases[databaseid].filename = db.filename;
                 if (cb) res = cb(res);
               });
             }
@@ -54416,15 +54416,15 @@ var require_alasql_fs = __commonJS({
         }
       };
       if (utils.isBrowser && !utils.isWebWorker) {
-        alasql5 = alasql5 || false;
-        if (!alasql5) {
+        alasql7 = alasql7 || false;
+        if (!alasql7) {
           throw new Error("alasql was not found");
         }
-        alasql5.worker = function() {
+        alasql7.worker = function() {
           throw new Error("Can find webworker in this enviroment");
         };
         if (typeof Worker !== "undefined") {
-          alasql5.worker = function(path, paths, cb) {
+          alasql7.worker = function(path, paths, cb) {
             if (path === true) {
               path = void 0;
             }
@@ -54453,23 +54453,23 @@ var require_alasql_fs = __commonJS({
               js += path;
               js += "');self.onmessage = function(event) {alasql(event.data.sql,event.data.params, function(data){postMessage({id:event.data.id, data:data});});}";
               var blob = new Blob([js], { type: "text/plain" });
-              alasql5.webworker = new Worker(URL.createObjectURL(blob));
-              alasql5.webworker.onmessage = function(event) {
+              alasql7.webworker = new Worker(URL.createObjectURL(blob));
+              alasql7.webworker.onmessage = function(event) {
                 var id = event.data.id;
-                alasql5.buffer[id](event.data.data);
-                delete alasql5.buffer[id];
+                alasql7.buffer[id](event.data.data);
+                delete alasql7.buffer[id];
               };
-              alasql5.webworker.onerror = function(e) {
+              alasql7.webworker.onerror = function(e) {
                 throw e;
               };
               if (arguments.length > 1) {
                 var sql = "REQUIRE " + paths.map(function(p) {
                   return '"' + p + '"';
                 }).join(",");
-                alasql5(sql, [], cb);
+                alasql7(sql, [], cb);
               }
             } else if (path === false) {
-              delete alasql5.webworker;
+              delete alasql7.webworker;
               return;
             }
           };
@@ -54598,12 +54598,12 @@ var require_alasql_fs = __commonJS({
             return saveAs2;
           });
         }
-        alasql5.utils.saveAs = saveAs2;
+        alasql7.utils.saveAs = saveAs2;
       }
       ;
       new Database("alasql");
-      alasql5.use("alasql");
-      return alasql5;
+      alasql7.use("alasql");
+      return alasql7;
     });
   }
 });
@@ -63848,8 +63848,8 @@ __export(main_exports, {
   default: () => MySQLPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian7 = require("obsidian");
-var import_alasql4 = __toESM(require_alasql_fs());
+var import_obsidian9 = require("obsidian");
+var import_alasql6 = __toESM(require_alasql_fs());
 var import_prismjs = __toESM(require_prism());
 
 // node_modules/prismjs/components/prism-sql.js
@@ -63894,7 +63894,9 @@ var DEFAULT_SETTINGS = {
   batchSize: 100,
   autoSaveDelay: 2e3,
   safeMode: false,
-  snapshotRowLimit: 1e4
+  snapshotRowLimit: 1e4,
+  themeColor: "#9d7cd8",
+  useObsidianAccent: false
 };
 var SQL_CLEANUP_PATTERNS = [
   { pattern: /\/\*[\s\S]*?\*\//g, name: "block-comments" },
@@ -63938,7 +63940,6 @@ var Logger = class {
     const consoleMsg = `[MySQL Plugin] ${msg}`;
     if (level === "ERROR") console.error(consoleMsg, data);
     else if (level === "WARN") console.warn(consoleMsg, data);
-    else console.log(consoleMsg, data || "");
   }
   static info(msg, data) {
     this.log("INFO", msg, data);
@@ -63966,7 +63967,6 @@ var DatabaseManager = class {
   }
   async save() {
     if (this.isSaving) {
-      console.log("MySQL Plugin: Save already in progress, marking pending...");
       this.pendingSave = true;
       return;
     }
@@ -63990,21 +63990,19 @@ var DatabaseManager = class {
       const finalData = { ...tempData };
       delete finalData._temp;
       await this.plugin.saveData(finalData);
-      console.log("MySQL Plugin: Database saved successfully (Atomic)");
     } catch (error) {
       console.error("MySQL Plugin: Save failed", error);
       throw error;
     } finally {
       this.isSaving = false;
       if (this.pendingSave) {
-        console.log("MySQL Plugin: Processing pending save...");
         this.save();
       }
     }
   }
   async createSnapshot() {
-    const activeDatabase = import_alasql.default.useid || "alasql";
-    const databases = Object.keys(import_alasql.default.databases);
+    const activeDatabase = this.plugin.activeDatabase || "dbo";
+    const databases = Object.keys(import_alasql.default.databases).filter((d) => d !== "alasql");
     const snapshot = {
       version: 1,
       createdAt: Date.now(),
@@ -64013,183 +64011,103 @@ var DatabaseManager = class {
     };
     for (const dbName of databases) {
       try {
-        (0, import_alasql.default)(`USE ${dbName}`);
-        const tables = (0, import_alasql.default)("SHOW TABLES");
+        const dbInstance = import_alasql.default.databases[dbName];
+        if (!dbInstance) continue;
         const dbData = {};
         const dbSchema = {};
-        for (const table of tables) {
-          const tableName = table.tableid;
-          const limit = this.plugin.settings.snapshotRowLimit || 1e4;
-          const rows = await import_alasql.default.promise(`SELECT * FROM ${tableName} LIMIT ${limit}`);
-          if (rows.length === limit) {
-            Logger.warn(`Snapshot for table '${tableName}' truncated to limit of ${limit} rows.`);
-          }
-          dbData[tableName] = rows;
-          try {
-            const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${tableName}`);
-            if (createRes == null ? void 0 : createRes[0]) {
-              const createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
-              if (createSQL) {
-                dbSchema[tableName] = createSQL;
-                console.log(`MySQL Plugin: Schema saved for '${tableName}' via SHOW CREATE TABLE`);
-                continue;
-              }
-            }
-          } catch (e) {
-          }
-          try {
-            if (rows.length > 0) {
-              const firstRow = rows[0];
-              const columns = Object.keys(firstRow).map((col) => {
-                const value = firstRow[col];
-                let type = "VARCHAR";
-                if (value === null || value === void 0) {
-                  type = "VARCHAR";
-                } else if (typeof value === "number") {
-                  type = Number.isInteger(value) ? "INT" : "FLOAT";
-                } else if (typeof value === "boolean") {
-                  type = "BOOLEAN";
-                } else if (value instanceof Date) {
-                  type = "DATE";
-                }
-                return `\`${col}\` ${type}`;
-              }).join(", ");
-              const createSQL = `CREATE TABLE \`${tableName}\` (${columns})`;
-              dbSchema[tableName] = createSQL;
-              console.log(`MySQL Plugin: Schema generated for '${tableName}': ${createSQL}`);
+        if (dbInstance.tables) {
+          for (const tableName of Object.keys(dbInstance.tables)) {
+            const tableObj = dbInstance.tables[tableName];
+            const rows = tableObj.data || [];
+            const limit = this.plugin.settings.snapshotRowLimit || 1e4;
+            if (rows.length > limit) {
+              Logger.warn(`Snapshot for table '${tableName}' truncated to limit of ${limit} rows.`);
+              dbData[tableName] = rows.slice(0, limit);
             } else {
-              console.warn(`MySQL Plugin: Cannot generate schema for empty table '${tableName}'`);
+              dbData[tableName] = rows;
             }
-          } catch (e) {
-            console.error(`MySQL Plugin: Failed to generate schema for '${tableName}':`, e);
+            try {
+              if (rows.length > 0) {
+                const firstRow = rows[0];
+                const columns = Object.keys(firstRow).map((col) => {
+                  const value = firstRow[col];
+                  let type = "VARCHAR";
+                  if (value === null || value === void 0) type = "VARCHAR";
+                  else if (typeof value === "number") type = Number.isInteger(value) ? "INT" : "FLOAT";
+                  else if (typeof value === "boolean") type = "BOOLEAN";
+                  else if (value instanceof Date) type = "DATE";
+                  return `\`${col}\` ${type}`;
+                }).join(", ");
+                const createSQL = `CREATE TABLE \`${tableName}\` (${columns})`;
+                dbSchema[tableName] = createSQL;
+              }
+            } catch (e) {
+              console.error(`MySQL Plugin: Failed to generate schema for '${tableName}':`, e);
+            }
           }
         }
         snapshot.databases[dbName] = {
           tables: dbData,
-          schema: dbSchema
+          schema: dbSchema,
+          lastUpdated: Date.now()
         };
-        console.log(`MySQL Plugin: Snapshot created for '${dbName}' - ${Object.keys(dbData).length} tables, ${Object.keys(dbSchema).length} schemas`);
       } catch (error) {
         console.error(`Failed to snapshot database ${dbName}:`, error);
       }
-    }
-    if (import_alasql.default.databases[activeDatabase]) {
-      (0, import_alasql.default)(`USE ${activeDatabase}`);
     }
     return snapshot;
   }
   async load() {
     const data = await this.plugin.loadData();
-    console.log("MySQL Plugin: Starting database load...");
-    console.log("MySQL Plugin: Data structure:", {
-      hasData: !!data,
-      hasDatabases: !!(data == null ? void 0 : data.databases),
-      databaseNames: (data == null ? void 0 : data.databases) ? Object.keys(data.databases) : []
-    });
     if (!(data == null ? void 0 : data.databases)) {
-      console.log("MySQL Plugin: No databases found in saved data");
       return;
     }
     try {
       const activeDB = data.activeDatabase || data.currentDB || "dbo";
       let restoredTablesCount = 0;
       for (const [dbName, content] of Object.entries(data.databases)) {
+        if (dbName === "alasql") continue;
         const db = content;
-        console.log(`MySQL Plugin: Processing database '${dbName}'`, {
-          hasTables: !!db.tables,
-          hasSchema: !!db.schema,
-          tableCount: db.tables ? Object.keys(db.tables).length : 0,
-          schemaCount: db.schema ? Object.keys(db.schema).length : 0
-        });
-        if (!db.tables && !db.schema) {
-          console.warn(`MySQL Plugin: Skipping empty database '${dbName}'`);
-          continue;
-        }
+        if (!db.tables && !db.schema) continue;
         if (!import_alasql.default.databases[dbName]) {
           await import_alasql.default.promise(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
-          console.log(`MySQL Plugin: Created database '${dbName}'`);
         }
-        await import_alasql.default.promise(`USE ${dbName}`);
-        if (db.schema && Object.keys(db.schema).length > 0) {
+        if (db.schema) {
           for (const [tableName, sql] of Object.entries(db.schema)) {
             try {
-              await import_alasql.default.promise(`DROP TABLE IF EXISTS ${tableName}`);
-              await import_alasql.default.promise(String(sql));
-              const verifyTable = await import_alasql.default.promise(`SHOW TABLES LIKE '${tableName}'`);
-              if (verifyTable.length > 0) {
-                console.log(`MySQL Plugin: \u2713 Schema restored for '${tableName}'`);
-                restoredTablesCount++;
-              } else {
-                console.error(`MySQL Plugin: \u2717 Schema failed for '${tableName}' - table not found after creation`);
+              await import_alasql.default.promise(`DROP TABLE IF EXISTS ${dbName}.${tableName}`);
+              let createSQL = String(sql);
+              if (createSQL.toUpperCase().startsWith("CREATE TABLE")) {
+                createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-zA-Z0-9_]+)`?/i, `CREATE TABLE ${dbName}.$1`);
               }
+              await import_alasql.default.promise(createSQL);
+              restoredTablesCount++;
             } catch (e) {
-              console.error(`MySQL Plugin: Error restoring schema for '${tableName}':`, e);
+              console.error(`Error restoring schema for '${tableName}':`, e);
             }
           }
-        } else {
-          console.warn(`MySQL Plugin: No schemas found for database '${dbName}', will use fallback creation`);
         }
         if (db.tables) {
           for (const [tableName, rows] of Object.entries(db.tables)) {
-            if (!rows || rows.length === 0) {
-              console.log(`MySQL Plugin: Skipping empty table '${tableName}'`);
-              continue;
-            }
+            if (!rows || rows.length === 0) continue;
             try {
-              const exists = await import_alasql.default.promise(`SHOW TABLES LIKE '${tableName}'`);
-              if (exists.length === 0) {
-                console.warn(`MySQL Plugin: Table '${tableName}' missing, attempting fallback creation`);
-                const columns = Object.keys(rows[0]);
-                const columnDefs = columns.map((col) => {
-                  const value = rows[0][col];
-                  let type = "VARCHAR";
-                  if (value === null || value === void 0) {
-                    type = "VARCHAR";
-                  } else if (typeof value === "number") {
-                    type = Number.isInteger(value) ? "INT" : "FLOAT";
-                  } else if (typeof value === "boolean") {
-                    type = "BOOLEAN";
-                  } else if (value instanceof Date) {
-                    type = "DATE";
-                  }
-                  return `\`${col}\` ${type}`;
-                }).join(", ");
-                await import_alasql.default.promise(`CREATE TABLE \`${tableName}\` (${columnDefs})`);
-                console.log(`MySQL Plugin: Fallback table created for '${tableName}'`);
-                restoredTablesCount++;
+              const exists = await import_alasql.default.promise(`SHOW TABLES FROM ${dbName} LIKE '${tableName}'`);
+              if (exists.length > 0) {
+                const batchSize = 1e3;
+                for (let i = 0; i < rows.length; i += batchSize) {
+                  const batch = rows.slice(i, i + batchSize);
+                  await import_alasql.default.promise(`INSERT INTO ${dbName}.${tableName} SELECT * FROM ?`, [batch]);
+                }
               }
-              const batchSize = 1e3;
-              let insertedRows = 0;
-              for (let i = 0; i < rows.length; i += batchSize) {
-                const batch = rows.slice(i, i + batchSize);
-                await import_alasql.default.promise(`INSERT INTO ${tableName} SELECT * FROM ?`, [batch]);
-                insertedRows += batch.length;
-              }
-              console.log(`MySQL Plugin: \u2713 Loaded ${insertedRows} rows into '${tableName}'`);
             } catch (e) {
-              console.error(`MySQL Plugin: Error loading data for '${tableName}':`, e);
+              console.error(`Error loading data for '${tableName}':`, e);
             }
           }
         }
       }
-      if (import_alasql.default.databases[activeDB]) {
-        await import_alasql.default.promise(`USE ${activeDB}`);
-        this.plugin.activeDatabase = activeDB;
-        console.log(`MySQL Plugin: Active database set to '${activeDB}'`);
-      } else {
-        const availableDBs = Object.keys(import_alasql.default.databases);
-        if (availableDBs.length > 0) {
-          const fallbackDB = availableDBs.includes("dbo") ? "dbo" : availableDBs[0];
-          await import_alasql.default.promise(`USE ${fallbackDB}`);
-          this.plugin.activeDatabase = fallbackDB;
-          console.log(`MySQL Plugin: Using fallback database '${fallbackDB}'`);
-        }
-      }
-      const finalTables = (0, import_alasql.default)("SHOW TABLES");
-      console.log(`MySQL Plugin: \u2713 Database loaded successfully - ${restoredTablesCount} tables restored`);
-      console.log(`MySQL Plugin: Current database '${this.plugin.activeDatabase}' has ${finalTables.length} tables`);
-      if (finalTables.length === 0 && restoredTablesCount > 0) {
-        console.error("MySQL Plugin: WARNING - Tables were restored but current database appears empty!");
+      this.plugin.activeDatabase = activeDB;
+      if (!import_alasql.default.databases["dbo"]) {
+        await import_alasql.default.promise("CREATE DATABASE dbo");
       }
     } catch (error) {
       console.error("MySQL Plugin: Load failed", error);
@@ -64202,21 +64120,169 @@ var DatabaseManager = class {
       try {
         (0, import_alasql.default)(`DROP DATABASE IF EXISTS ${db}`);
       } catch (e) {
-        console.error(`Failed to drop ${db}:`, e);
       }
     }
-    if (!import_alasql.default.databases.dbo) {
-      (0, import_alasql.default)("CREATE DATABASE dbo");
-    }
+    if (!import_alasql.default.databases.dbo) (0, import_alasql.default)("CREATE DATABASE dbo");
     (0, import_alasql.default)("USE dbo");
     this.plugin.activeDatabase = "dbo";
-    const newData = {
-      ...this.plugin.settings,
-      activeDatabase: "dbo",
-      databases: {}
-    };
+    const newData = { ...this.plugin.settings, activeDatabase: "dbo", databases: {} };
     await this.plugin.saveData(newData);
-    console.log("MySQL Plugin: Database reset completed");
+  }
+  // --- New Database Management Methods ---
+  getDatabaseStats(dbName) {
+    const db = import_alasql.default.databases[dbName];
+    if (!db) return null;
+    const tableNames = Object.keys(db.tables);
+    let totalRows = 0;
+    tableNames.forEach((t) => {
+      if (db.tables[t].data) {
+        totalRows += db.tables[t].data.length;
+      }
+    });
+    const approxSize = JSON.stringify(db.tables).length;
+    return {
+      tables: tableNames.length,
+      rows: totalRows,
+      sizeBytes: approxSize,
+      lastUpdated: Date.now()
+      // Ideally this would come from the last save, but for UI we use current
+    };
+  }
+  async clearDatabase(dbName) {
+    const tables = (0, import_alasql.default)(`SHOW TABLES FROM ${dbName}`);
+    for (const t of tables) {
+      await import_alasql.default.promise(`DROP TABLE ${dbName}.${t.tableid}`);
+    }
+    await this.save();
+  }
+  async renameDatabase(oldName, newName) {
+    if (oldName === "alasql") throw new Error("Cannot rename system database 'alasql'");
+    if (oldName === "dbo") throw new Error("Cannot rename default database 'dbo'");
+    if (this.plugin.activeDatabase === oldName) throw new Error("Cannot rename active database. Switch to another database first.");
+    if (import_alasql.default.databases[newName]) throw new Error(`Database ${newName} already exists`);
+    try {
+      await import_alasql.default.promise(`CREATE DATABASE ${newName}`);
+      const tables = (0, import_alasql.default)(`SHOW TABLES FROM ${oldName}`);
+      for (const t of tables) {
+        const tableName = t.tableid;
+        const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${oldName}.${tableName}`);
+        if (createRes == null ? void 0 : createRes[0]) {
+          let createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
+          if (createSQL.toUpperCase().startsWith("CREATE TABLE")) {
+            createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)`?([a-zA-Z0-9_]+)`?/i, `CREATE TABLE ${newName}.$1`);
+          }
+          await import_alasql.default.promise(createSQL);
+          await import_alasql.default.promise(`INSERT INTO ${newName}.${tableName} SELECT * FROM ${oldName}.${tableName}`);
+        }
+      }
+      await import_alasql.default.promise(`DROP DATABASE ${oldName}`);
+      if (this.plugin.activeDatabase === oldName) {
+        this.plugin.activeDatabase = newName;
+      }
+      await this.save();
+    } catch (error) {
+      console.error(`Failed to rename database from ${oldName} to ${newName}:`, error);
+      try {
+        await import_alasql.default.promise(`DROP DATABASE IF EXISTS ${newName}`);
+      } catch (e) {
+      }
+      throw error;
+    }
+  }
+  async duplicateDatabase(dbName, newName) {
+    if (import_alasql.default.databases[newName]) throw new Error(`Database ${newName} already exists`);
+    await import_alasql.default.promise(`CREATE DATABASE ${newName}`);
+    const tables = (0, import_alasql.default)(`SHOW TABLES FROM ${dbName}`);
+    for (const t of tables) {
+      const tableName = t.tableid;
+      const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${dbName}.${tableName}`);
+      if (createRes == null ? void 0 : createRes[0]) {
+        let createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
+        if (createSQL.toUpperCase().startsWith("CREATE TABLE")) {
+          createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)`?([a-zA-Z0-9_]+)`?/i, `CREATE TABLE ${newName}.$1`);
+        }
+        await import_alasql.default.promise(createSQL);
+        await import_alasql.default.promise(`INSERT INTO ${newName}.${tableName} SELECT * FROM ${dbName}.${tableName}`);
+      }
+    }
+    await this.save();
+  }
+  async createDatabase(dbName) {
+    if (import_alasql.default.databases[dbName]) throw new Error(`Database ${dbName} already exists`);
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(dbName)) {
+      throw new Error("Invalid database name. Use alphanumeric characters and underscores only.");
+    }
+    await import_alasql.default.promise(`CREATE DATABASE ${dbName}`);
+    await this.save();
+  }
+  async deleteDatabase(dbName) {
+    if (!import_alasql.default.databases[dbName]) return;
+    if (dbName === "alasql") throw new Error("Cannot delete default alasql database");
+    if (dbName === "dbo") throw new Error("Cannot delete default database 'dbo'");
+    if (this.plugin.activeDatabase === dbName) throw new Error("Cannot delete active database. Switch first.");
+    await import_alasql.default.promise(`DROP DATABASE ${dbName}`);
+    await this.save();
+  }
+  async exportDatabase(dbName) {
+    if (!import_alasql.default.databases[dbName]) throw new Error(`Database ${dbName} does not exist`);
+    let dump = `-- Database Export: ${dbName}
+-- Date: ${(/* @__PURE__ */ new Date()).toISOString()}
+
+`;
+    dump += `CREATE DATABASE IF NOT EXISTS ${dbName};
+USE ${dbName};
+
+`;
+    const tables = (0, import_alasql.default)(`SHOW TABLES FROM ${dbName}`);
+    for (const t of tables) {
+      const tableName = t.tableid;
+      const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${dbName}.${tableName}`);
+      if (createRes == null ? void 0 : createRes[0]) {
+        let createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
+        dump += `${createSQL};
+`;
+      }
+      const data = (0, import_alasql.default)(`SELECT * FROM ${dbName}.${tableName}`);
+      if (data.length > 0) {
+        const batchSize = 100;
+        for (let i = 0; i < data.length; i += batchSize) {
+          const batch = data.slice(i, i + batchSize);
+          const values = batch.map((row) => {
+            const vals = Object.values(row).map((v) => {
+              if (v === null || v === void 0) return "NULL";
+              if (typeof v === "string") return `'${v.replace(/'/g, "''")}'`;
+              if (v instanceof Date) return `'${v.toISOString()}'`;
+              return v;
+            });
+            return `(${vals.join(", ")})`;
+          }).join(",\n");
+          dump += `INSERT INTO ${tableName} VALUES 
+${values};
+`;
+        }
+      }
+      dump += "\n";
+    }
+    return dump;
+  }
+  async importDatabase(sql) {
+    try {
+      const previousDB = this.plugin.activeDatabase;
+      const statements = sql.split(";").map((s) => s.trim()).filter((s) => s.length > 0 && !s.startsWith("--"));
+      for (const stmt of statements) {
+        if (stmt.startsWith("BEGIN") || stmt.startsWith("COMMIT")) continue;
+        await import_alasql.default.promise(stmt);
+      }
+      if (import_alasql.default.useid && import_alasql.default.useid !== "alasql") {
+        this.plugin.activeDatabase = import_alasql.default.useid;
+      } else if (previousDB) {
+        this.plugin.activeDatabase = previousDB;
+      }
+      await this.save();
+    } catch (e) {
+      console.error("Import failed", e);
+      throw new Error("Failed to import database: " + e.message);
+    }
   }
 };
 
@@ -64256,7 +64322,6 @@ var CSVManager = class {
           return obj;
         });
         await import_alasql2.default.promise(`INSERT INTO ${tableName} SELECT * FROM ?`, [mappedData]);
-        console.log(`Imported batch ${Math.floor(i / BATCH_SIZE) + 1}/${totalBatches}`);
       }
       new import_obsidian.Notice(`Successfully imported ${dataLines.length} rows into table '${tableName}'`);
       return true;
@@ -64347,12 +64412,83 @@ var QueryExecutor = class {
     monitor.start();
     try {
       let cleanQuery = SQLSanitizer.clean(query);
+      const statements = cleanQuery.split(";").map((s) => s.trim()).filter((s) => s.length > 0);
+      let currentDB = options.activeDatabase || "dbo";
+      if (statements.length > 1) {
+        const results = [];
+        for (let i = 0; i < statements.length; i++) {
+          let stmt = statements[i];
+          const upperStmt = stmt.toUpperCase().trim();
+          const SECURITY_BLOCKED2 = [
+            /\bDROP\s+DATABASE\b/i,
+            /\bSHUTDOWN\b/i,
+            /\bALTER\s+SYSTEM\b/i
+          ];
+          for (const pattern of SECURITY_BLOCKED2) {
+            if (pattern.test(stmt)) {
+              throw new Error(`Blocked SQL command: ${pattern.source.replace("\\s+", " ")}`);
+            }
+          }
+          if (options.safeMode) {
+            const BLOCKED_IN_SAFE_MODE = [
+              /\bDROP\s+TABLE\b/i,
+              /\bTRUNCATE\s+TABLE\b/i,
+              /\bTRUNCATE\b/i,
+              /\bALTER\s+TABLE\b/i
+            ];
+            for (const pattern of BLOCKED_IN_SAFE_MODE) {
+              if (pattern.test(stmt)) {
+                throw new Error(`Safe Mode Block: Structural destruction (${pattern.source.replace("\\s+", " ")}) is disabled.`);
+              }
+            }
+          }
+          const useMatch2 = stmt.match(/^\s*USE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$/i);
+          if (useMatch2) {
+            const newDB = useMatch2[1];
+            if (!import_alasql3.default.databases[newDB]) {
+              throw new Error(`Database '${newDB}' does not exist`);
+            }
+            currentDB = newDB;
+            results.push(1);
+            continue;
+          }
+          stmt = this.prefixTablesWithDatabase(stmt, currentDB);
+          const result = await this.executeWithTimeout(stmt, params, 3e4, options.signal);
+          results.push(result);
+          if (upperStmt.startsWith("CREATE TABLE") || upperStmt.startsWith("DROP TABLE")) {
+          }
+        }
+        const normalizedData2 = this.normalizeResult(results);
+        Logger.info(`Batch query executed (${statements.length} statements)`, {
+          executionTime: monitor.end(),
+          finalDatabase: currentDB
+        });
+        return {
+          success: true,
+          data: normalizedData2,
+          executionTime: monitor.end(),
+          activeDatabase: currentDB
+        };
+      }
       const trimmed = cleanQuery.trim().replace(/;$/, "");
+      const useMatch = trimmed.match(/^\s*USE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$/i);
+      if (useMatch) {
+        const newDB = useMatch[1];
+        if (!import_alasql3.default.databases[newDB]) {
+          throw new Error(`Database '${newDB}' does not exist`);
+        }
+        return {
+          success: true,
+          data: [{ type: "message", data: null, message: `Database changed to '${newDB}'` }],
+          executionTime: monitor.end(),
+          activeDatabase: newDB
+        };
+      }
       const looksLikeSingleSelect = trimmed.toUpperCase().startsWith("SELECT") && !trimmed.includes(";") && !trimmed.toUpperCase().includes("LIMIT");
       if (looksLikeSingleSelect) {
         cleanQuery = trimmed + " LIMIT 1000;";
       }
-      const upperQuery = cleanQuery.toUpperCase();
+      cleanQuery = this.prefixTablesWithDatabase(cleanQuery, currentDB);
       if (options.safeMode) {
         const BLOCKED_IN_SAFE_MODE = [
           /\bDROP\s+TABLE\b/i,
@@ -64382,7 +64518,8 @@ var QueryExecutor = class {
       return {
         success: true,
         data: normalizedData,
-        executionTime: monitor.end()
+        executionTime: monitor.end(),
+        activeDatabase: currentDB
       };
     } catch (error) {
       Logger.error("Query execution failed", error);
@@ -64393,16 +64530,62 @@ var QueryExecutor = class {
       };
     }
   }
+  /**
+   * Automatically prefix table names with database name to avoid AlaSQL context bugs
+   */
+  static prefixTablesWithDatabase(sql, database) {
+    if (!database || database === "alasql") return sql;
+    sql = sql.replace(
+      /CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+      (match, ifNotExists, tableName) => {
+        return `CREATE TABLE ${ifNotExists || ""}${database}.${tableName}`;
+      }
+    );
+    sql = sql.replace(
+      /INSERT\s+INTO\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+      (match, tableName) => {
+        return `INSERT INTO ${database}.${tableName}`;
+      }
+    );
+    sql = sql.replace(
+      /UPDATE\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)\s+SET/gi,
+      (match, tableName) => {
+        return `UPDATE ${database}.${tableName} SET`;
+      }
+    );
+    sql = sql.replace(
+      /DELETE\s+FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+      (match, tableName) => {
+        return `DELETE FROM ${database}.${tableName}`;
+      }
+    );
+    sql = sql.replace(
+      /FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+      (match, tableName) => {
+        if (["SELECT", "VALUES", "("].some((kw) => tableName.toUpperCase().includes(kw))) {
+          return match;
+        }
+        return `FROM ${database}.${tableName}`;
+      }
+    );
+    sql = sql.replace(
+      /JOIN\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+      (match, tableName) => {
+        return `JOIN ${database}.${tableName}`;
+      }
+    );
+    return sql;
+  }
   static normalizeResult(raw) {
     if (raw === void 0 || raw === null) return [];
-    if (Array.isArray(raw) && raw.some((r) => Array.isArray(r))) {
+    if (Array.isArray(raw) && raw.some((r) => Array.isArray(r) || typeof r === "number")) {
       return raw.map((res) => this.createResultSet(res));
     }
     return [this.createResultSet(raw)];
   }
   static createResultSet(res) {
     if (res === void 0 || res === null) {
-      return { type: "message", data: null, message: "Command executed" };
+      return { type: "message", data: null, message: "Command executed successfully" };
     }
     if (Array.isArray(res)) {
       if (res.length === 0) {
@@ -64627,6 +64810,10 @@ var ResultRenderer = class {
     });
   }
   static renderTable(rows, container, batchSize = 100) {
+    if (!rows || rows.length === 0) {
+      container.createEl("p", { text: "No data found", cls: "mysql-empty-state" });
+      return;
+    }
     const keys = Object.keys(rows[0]);
     const table = container.createEl("table", { cls: "mysql-table" });
     const thead = table.createEl("thead");
@@ -64650,13 +64837,37 @@ var ResultRenderer = class {
     currentCount += initialBatch.length;
     if (rows.length > batchSize) {
       const controls = container.createEl("div", { cls: "mysql-pagination" });
-      controls.createEl("span", { text: `Shows ${currentCount} / ${rows.length} rows ` });
-      const showAllBtn = controls.createEl("button", { text: "Show All" });
+      controls.style.padding = "12px 16px";
+      controls.style.backgroundColor = "var(--background-secondary-alt)";
+      controls.style.borderTop = "1px solid var(--background-modifier-border)";
+      controls.style.display = "flex";
+      controls.style.alignItems = "center";
+      controls.style.gap = "12px";
+      controls.style.fontSize = "0.85em";
+      const statusSpan = controls.createEl("span", {
+        text: `Showing ${currentCount} of ${rows.length} rows`,
+        cls: "mysql-pagination-status"
+      });
+      statusSpan.style.color = "var(--text-muted)";
+      statusSpan.style.fontWeight = "600";
+      statusSpan.style.marginRight = "auto";
+      const showAllBtn = controls.createEl("button", {
+        text: "Show All Rows",
+        cls: "mysql-pagination-btn"
+      });
+      showAllBtn.style.padding = "6px 12px";
+      showAllBtn.style.backgroundColor = "var(--interactive-accent)";
+      showAllBtn.style.color = "white";
+      showAllBtn.style.border = "none";
+      showAllBtn.style.borderRadius = "4px";
+      showAllBtn.style.cursor = "pointer";
+      showAllBtn.style.fontSize = "0.8em";
+      showAllBtn.style.fontWeight = "600";
       showAllBtn.onclick = () => {
         const remaining = rows.slice(currentCount);
         renderBatch(remaining);
         showAllBtn.remove();
-        controls.querySelector("span").setText(`Shows ${rows.length} / ${rows.length} rows `);
+        statusSpan.setText(`Showing all ${rows.length} rows`);
       };
     }
   }
@@ -64689,66 +64900,12 @@ var CSVSelectionModal = class extends import_obsidian3.FuzzySuggestModal {
 };
 
 // src/settings.ts
-var import_obsidian4 = require("obsidian");
-var MySQLSettingTab = class extends import_obsidian4.PluginSettingTab {
-  constructor(app, plugin) {
-    super(app, plugin);
-    this.plugin = plugin;
-  }
-  display() {
-    const { containerEl } = this;
-    containerEl.empty();
-    containerEl.createEl("h2", { text: "MySQL Plugin Settings" });
-    new import_obsidian4.Setting(containerEl).setName("Auto-save").setDesc("Automatically save database changes").addToggle((toggle) => toggle.setValue(this.plugin.settings.autoSave).onChange(async (value) => {
-      this.plugin.settings.autoSave = value;
-      await this.plugin.saveSettings();
-    }));
-    new import_obsidian4.Setting(containerEl).setName("Auto-save delay").setDesc("Delay in milliseconds before auto-saving (default: 2000)").addText((text) => text.setPlaceholder("2000").setValue(String(this.plugin.settings.autoSaveDelay)).onChange(async (value) => {
-      const num = parseInt(value);
-      if (!isNaN(num) && num > 0) {
-        this.plugin.settings.autoSaveDelay = num;
-        await this.plugin.saveSettings();
-      }
-    }));
-    new import_obsidian4.Setting(containerEl).setName("Batch size").setDesc("Number of rows to display per batch (default: 100)").addText((text) => text.setPlaceholder("100").setValue(String(this.plugin.settings.batchSize)).onChange(async (value) => {
-      const num = parseInt(value);
-      if (!isNaN(num) && num > 0) {
-        this.plugin.settings.batchSize = num;
-        await this.plugin.saveSettings();
-      }
-    }));
-    new import_obsidian4.Setting(containerEl).setName("Export folder").setDesc("Folder for CSV exports").addText((text) => text.setPlaceholder("sql-exports").setValue(this.plugin.settings.exportFolderName).onChange(async (value) => {
-      this.plugin.settings.exportFolderName = value || "sql-exports";
-      await this.plugin.saveSettings();
-    }));
-    new import_obsidian4.Setting(containerEl).setName("Safe Mode").setDesc("Block dangerous commands (DROP, ALTER, etc) and enforce limits").addToggle((toggle) => toggle.setValue(this.plugin.settings.safeMode).onChange(async (value) => {
-      this.plugin.settings.safeMode = value;
-      await this.plugin.saveSettings();
-    }));
-    new import_obsidian4.Setting(containerEl).setName("Snapshot Row Limit").setDesc("Max rows per table to save in snapshot (avoid memory crash)").addText((text) => text.setPlaceholder("10000").setValue(String(this.plugin.settings.snapshotRowLimit)).onChange(async (value) => {
-      const num = parseInt(value);
-      if (!isNaN(num) && num > 0) {
-        this.plugin.settings.snapshotRowLimit = num;
-        await this.plugin.saveSettings();
-      }
-    }));
-    new import_obsidian4.Setting(containerEl).setName("Reset all data").setDesc("\u26A0\uFE0F DANGER: Delete all databases and tables").addButton((btn) => btn.setWarning().setButtonText("Reset Everything").onClick(async () => {
-      if (!confirm("Are you ABSOLUTELY sure? This cannot be undone!")) return;
-      const dbManager = this.plugin.dbManager;
-      if (dbManager) {
-        await dbManager.reset();
-        new import_obsidian4.Notice("All data reset");
-        this.display();
-      } else {
-        new import_obsidian4.Notice("Database Manager not available");
-      }
-    }));
-  }
-};
+var import_obsidian6 = require("obsidian");
+var import_alasql5 = __toESM(require_alasql_fs());
 
 // src/ui/ConfirmationModal.ts
-var import_obsidian5 = require("obsidian");
-var ConfirmationModal = class extends import_obsidian5.Modal {
+var import_obsidian4 = require("obsidian");
+var ConfirmationModal = class extends import_obsidian4.Modal {
   constructor(app, title, message, onSubmit, confirmText = "Confirm", cancelText = "Cancel") {
     super(app);
     this.titleText = title;
@@ -64762,13 +64919,13 @@ var ConfirmationModal = class extends import_obsidian5.Modal {
     this.modalEl.addClass("mysql-confirmation-modal");
     const header = contentEl.createDiv({ cls: "mysql-modal-header" });
     const iconContainer = header.createDiv({ cls: "mysql-modal-icon" });
-    (0, import_obsidian5.setIcon)(iconContainer, "alert-triangle");
+    (0, import_obsidian4.setIcon)(iconContainer, "alert-triangle");
     header.createEl("h2", { text: this.titleText, cls: "mysql-modal-title" });
     contentEl.createEl("p", { text: this.message, cls: "mysql-modal-body" });
     const buttonsGroup = contentEl.createDiv({ cls: "mysql-modal-footer" });
-    const cancelBtn = new import_obsidian5.ButtonComponent(buttonsGroup).setButtonText(this.cancelText).onClick(() => this.close());
+    const cancelBtn = new import_obsidian4.ButtonComponent(buttonsGroup).setButtonText(this.cancelText).onClick(() => this.close());
     cancelBtn.buttonEl.addClass("mysql-modal-btn-cancel");
-    const confirmBtn = new import_obsidian5.ButtonComponent(buttonsGroup).setButtonText(this.confirmText).setWarning().onClick(() => {
+    const confirmBtn = new import_obsidian4.ButtonComponent(buttonsGroup).setButtonText(this.confirmText).setWarning().onClick(() => {
       this.onSubmit(true);
       this.close();
     });
@@ -64780,16 +64937,1170 @@ var ConfirmationModal = class extends import_obsidian5.Modal {
   }
 };
 
+// src/ui/DatabaseModals.ts
+var import_obsidian5 = require("obsidian");
+var import_alasql4 = __toESM(require_alasql_fs());
+var DatabaseSwitcherModal = class extends import_obsidian5.Modal {
+  constructor(app, plugin, onSelect) {
+    super(app);
+    this.plugin = plugin;
+    this.onSelect = onSelect;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass("mysql-switcher-modal");
+    contentEl.createEl("h2", { text: "Switch Database" });
+    const dbs = Object.keys(import_alasql4.default.databases).filter((db) => db !== "alasql");
+    const list = contentEl.createDiv({ cls: "mysql-db-list" });
+    if (dbs.length === 0) {
+      list.createDiv({ text: "No user databases found.", cls: "mysql-db-list-empty" });
+      return;
+    }
+    dbs.forEach((dbName) => {
+      const dbManager = this.plugin.dbManager;
+      const stats = dbManager.getDatabaseStats(dbName);
+      const isActive = dbName === this.plugin.activeDatabase;
+      const isProtected = isActive || dbName === "dbo";
+      const item = list.createDiv({ cls: `mysql-db-list-item ${isActive ? "is-active" : ""}` });
+      const infoArea = item.createDiv({ cls: "mysql-db-list-content" });
+      infoArea.style.flex = "1";
+      infoArea.style.cursor = isActive ? "default" : "pointer";
+      const info = infoArea.createDiv({ cls: "mysql-db-list-info" });
+      info.createDiv({ text: dbName, cls: "mysql-db-list-name" });
+      info.createDiv({
+        text: `${stats.tables} tables \u2022 ${stats.rows.toLocaleString()} rows`,
+        cls: "mysql-db-list-meta"
+      });
+      if (isActive) {
+        const activeBadge = item.createDiv({ text: "ACTIVE", cls: "mysql-db-list-badge" });
+        activeBadge.style.marginLeft = "auto";
+        activeBadge.setAttribute("aria-label", "Switch to another database to delete this one.");
+      } else {
+        if (isProtected) {
+          if (dbName === "dbo") {
+            const dboBadge = item.createDiv({ cls: "mysql-db-list-actions" });
+            dboBadge.style.marginLeft = "auto";
+            const lockIcon = dboBadge.createDiv({ cls: "mysql-table-icon" });
+            (0, import_obsidian5.setIcon)(lockIcon, "lock");
+            lockIcon.setAttribute("aria-label", "System Default Database. Cannot be deleted.");
+            lockIcon.style.opacity = "0.5";
+          }
+        }
+        infoArea.onclick = async () => {
+          this.switchDatabase(dbName);
+        };
+      }
+      if (!isProtected) {
+        const actions = item.createDiv({ cls: "mysql-db-list-actions" });
+        actions.style.marginLeft = "auto";
+        const deleteBtn = actions.createEl("button", {
+          cls: "mysql-db-list-delete-btn",
+          attr: { "aria-label": "Delete Database" }
+        });
+        (0, import_obsidian5.setIcon)(deleteBtn, "trash-2");
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          this.confirmDelete(dbName);
+        };
+      }
+    });
+  }
+  async switchDatabase(dbName) {
+    const dbManager = this.plugin.dbManager;
+    await import_alasql4.default.promise(`USE ${dbName}`);
+    this.plugin.activeDatabase = dbName;
+    await dbManager.save();
+    new import_obsidian5.Notice(`Switched to "${dbName}"`);
+    this.onSelect();
+    this.close();
+  }
+  confirmDelete(dbName) {
+    new ConfirmationModal(
+      this.app,
+      "Delete Database",
+      `Are you sure you want to delete "${dbName}"? This action cannot be undone.`,
+      async (confirmed) => {
+        if (confirmed) {
+          try {
+            const dbManager = this.plugin.dbManager;
+            await dbManager.deleteDatabase(dbName);
+            new import_obsidian5.Notice(`Database "${dbName}" deleted.`);
+            this.onOpen();
+          } catch (e) {
+            new import_obsidian5.Notice(`Error: ${e.message}`);
+          }
+        }
+      },
+      "Delete",
+      "Cancel"
+    ).open();
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
+var RenameDatabaseModal = class extends import_obsidian5.Modal {
+  constructor(app, plugin, oldName, onSuccess) {
+    super(app);
+    this.plugin = plugin;
+    this.oldName = oldName;
+    this.onSuccess = onSuccess;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass("mysql-rename-modal");
+    contentEl.createEl("h2", { text: `Rename Database: ${this.oldName}` });
+    const input = new import_obsidian5.TextComponent(contentEl).setPlaceholder("New database name...").setValue(this.oldName);
+    input.inputEl.addClass("mysql-rename-input");
+    input.inputEl.style.width = "100%";
+    input.inputEl.style.marginBottom = "20px";
+    const buttons = contentEl.createDiv({ cls: "mysql-modal-footer" });
+    new import_obsidian5.ButtonComponent(buttons).setButtonText("Cancel").onClick(() => this.close());
+    const confirmBtn = new import_obsidian5.ButtonComponent(buttons).setButtonText("Rename").setCta().onClick(async () => {
+      const newName = input.getValue().trim();
+      if (!newName || newName === this.oldName) {
+        this.close();
+        return;
+      }
+      try {
+        const dbManager = this.plugin.dbManager;
+        await dbManager.renameDatabase(this.oldName, newName);
+        new import_obsidian5.Notice(`Database renamed to "${newName}"`);
+        this.onSuccess();
+        this.close();
+      } catch (e) {
+        new import_obsidian5.Notice(`Error: ${e.message}`);
+      }
+    });
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
+var CreateDatabaseModal = class extends import_obsidian5.Modal {
+  constructor(app, plugin, onSuccess) {
+    super(app);
+    this.plugin = plugin;
+    this.onSuccess = onSuccess;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass("mysql-create-db-modal");
+    contentEl.createEl("h2", { text: "Create New Database" });
+    const input = new import_obsidian5.TextComponent(contentEl).setPlaceholder("Database name (e.g., my_project)").setValue("");
+    input.inputEl.style.width = "100%";
+    input.inputEl.style.marginBottom = "20px";
+    const buttons = contentEl.createDiv({ cls: "mysql-modal-footer" });
+    new import_obsidian5.ButtonComponent(buttons).setButtonText("Cancel").onClick(() => this.close());
+    const confirmBtn = new import_obsidian5.ButtonComponent(buttons).setButtonText("Create").setCta().onClick(async () => {
+      const dbName = input.getValue().trim();
+      if (!dbName) {
+        new import_obsidian5.Notice("Database name cannot be empty.");
+        return;
+      }
+      try {
+        const dbManager = this.plugin.dbManager;
+        await dbManager.createDatabase(dbName);
+        new import_obsidian5.Notice(`Database "${dbName}" created.`);
+        this.plugin.activeDatabase = dbName;
+        await dbManager.save();
+        new import_obsidian5.Notice(`Switched to "${dbName}"`);
+        this.onSuccess();
+        this.close();
+      } catch (e) {
+        new import_obsidian5.Notice(`Error: ${e.message}`);
+      }
+    });
+    setTimeout(() => input.inputEl.focus(), 50);
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
+var DuplicateDatabaseModal = class extends import_obsidian5.Modal {
+  constructor(app, plugin, oldName, onSuccess) {
+    super(app);
+    this.plugin = plugin;
+    this.oldName = oldName;
+    this.onSuccess = onSuccess;
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass("mysql-duplicate-modal");
+    contentEl.createEl("h2", { text: `Duplicate Database: ${this.oldName}` });
+    const input = new import_obsidian5.TextComponent(contentEl).setPlaceholder("New database name...").setValue(`${this.oldName}_copy`);
+    input.inputEl.style.width = "100%";
+    input.inputEl.style.marginBottom = "20px";
+    const buttons = contentEl.createDiv({ cls: "mysql-modal-footer" });
+    new import_obsidian5.ButtonComponent(buttons).setButtonText("Cancel").onClick(() => this.close());
+    const confirmBtn = new import_obsidian5.ButtonComponent(buttons).setButtonText("Duplicate").setCta().onClick(async () => {
+      const newName = input.getValue().trim();
+      if (!newName) {
+        new import_obsidian5.Notice("Database name cannot be empty.");
+        return;
+      }
+      if (newName === this.oldName) {
+        new import_obsidian5.Notice("New name must be different from the old name.");
+        return;
+      }
+      try {
+        const dbManager = this.plugin.dbManager;
+        await dbManager.duplicateDatabase(this.oldName, newName);
+        new import_obsidian5.Notice(`Database duplicatd to "${newName}"`);
+        this.onSuccess();
+        this.close();
+      } catch (e) {
+        new import_obsidian5.Notice(`Error: ${e.message}`);
+      }
+    });
+    setTimeout(() => input.inputEl.focus(), 50);
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
+var DatabaseTablesModal = class extends import_obsidian5.Modal {
+  constructor(app, plugin, dbName) {
+    var _a;
+    super(app);
+    this.plugin = plugin;
+    this.dbName = dbName;
+    (_a = this.modalEl.querySelector(".modal-close-button")) == null ? void 0 : _a.remove();
+  }
+  onOpen() {
+    this.renderList();
+  }
+  renderList() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass("mysql-tables-modal");
+    contentEl.createEl("h2", { text: `Tables in "${this.dbName}"` });
+    const db = import_alasql4.default.databases[this.dbName];
+    if (!db || !db.tables || Object.keys(db.tables).length === 0) {
+      contentEl.createDiv({ text: "No tables found in this database.", cls: "mysql-empty-state" });
+      return;
+    }
+    const list = contentEl.createDiv({ cls: "mysql-table-list" });
+    const tables = Object.keys(db.tables);
+    tables.forEach((tableName) => {
+      const tableData = db.tables[tableName].data || [];
+      const rowCount = tableData.length;
+      const sizeEstimate = JSON.stringify(tableData).length;
+      const item = list.createDiv({ cls: "mysql-table-list-item" });
+      item.style.cursor = "pointer";
+      const iconDiv = item.createDiv({ cls: "mysql-table-icon" });
+      (0, import_obsidian5.setIcon)(iconDiv, "table");
+      const info = item.createDiv({ cls: "mysql-table-info" });
+      info.createDiv({ text: tableName, cls: "mysql-table-name" });
+      info.createDiv({
+        text: `${rowCount} rows \u2022 ~${this.formatBytes(sizeEstimate)}`,
+        cls: "mysql-table-meta"
+      });
+      item.onclick = () => this.showTableData(tableName);
+    });
+  }
+  async showTableData(tableName) {
+    const { contentEl } = this;
+    contentEl.empty();
+    const header = contentEl.createDiv({ cls: "mysql-table-detail-header" });
+    const left = header.createDiv({ cls: "mysql-table-detail-title" });
+    left.style.display = "flex";
+    left.style.alignItems = "center";
+    left.style.gap = "8px";
+    new import_obsidian5.ButtonComponent(left).setIcon("arrow-left").setTooltip("Back to Tables List").onClick(() => this.renderList());
+    const title = left.createEl("h3", { text: tableName });
+    title.style.margin = "0";
+    const actions = header.createDiv({ cls: "mysql-table-detail-actions" });
+    new import_obsidian5.ButtonComponent(actions).setIcon("copy").setTooltip("Copy to clipboard").onClick(async () => {
+      try {
+        const query = `SELECT * FROM ${this.dbName}.${tableName}`;
+        const result = await QueryExecutor.execute(query);
+        if (result.success && result.data && result.data[0] && result.data[0].data) {
+          await this.copyToClipboard(result.data[0].data);
+        } else {
+          new import_obsidian5.Notice("No data to copy");
+        }
+      } catch (e) {
+        new import_obsidian5.Notice(`Copy failed: ${e.message}`);
+      }
+    });
+    new import_obsidian5.ButtonComponent(actions).setIcon("camera").setTooltip("Take screenshot").onClick(async () => {
+      try {
+        const tableElement = dataContainer.querySelector(".mysql-direct-table-wrapper");
+        if (tableElement) {
+          await this.takeScreenshot(tableElement);
+        } else {
+          new import_obsidian5.Notice("No table to screenshot");
+        }
+      } catch (e) {
+        new import_obsidian5.Notice(`Screenshot failed: ${e.message}`);
+      }
+    });
+    new import_obsidian5.ButtonComponent(actions).setIcon("file-plus").setTooltip("Add to note").onClick(async () => {
+      try {
+        const query = `SELECT * FROM ${this.dbName}.${tableName}`;
+        const result = await QueryExecutor.execute(query);
+        if (result.success && result.data && result.data[0] && result.data[0].data) {
+          await this.insertIntoNote(result.data[0].data);
+        } else {
+          new import_obsidian5.Notice("No data to insert");
+        }
+      } catch (e) {
+        new import_obsidian5.Notice(`Insert failed: ${e.message}`);
+      }
+    });
+    new import_obsidian5.ButtonComponent(actions).setIcon("download").setTooltip("Export CSV").onClick(async () => {
+      try {
+        const query = `SELECT * FROM ${this.dbName}.${tableName}`;
+        const result = await QueryExecutor.execute(query);
+        if (result.success && result.data && result.data[0] && result.data[0].data) {
+          await this.exportTableData(tableName, result.data[0].data);
+        } else {
+          new import_obsidian5.Notice("No data to export");
+        }
+      } catch (e) {
+        new import_obsidian5.Notice(`Export failed: ${e.message}`);
+      }
+    });
+    new import_obsidian5.ButtonComponent(actions).setIcon("x").setTooltip("Close").onClick(() => this.close());
+    const separator = contentEl.createDiv({ cls: "mysql-table-detail-separator" });
+    const dataContainer = contentEl.createDiv({ cls: "mysql-table-detail-content" });
+    const loadingMsg = dataContainer.createEl("p", { text: "Loading data..." });
+    loadingMsg.style.color = "var(--text-muted)";
+    try {
+      const query = `SELECT * FROM ${this.dbName}.${tableName} LIMIT 100`;
+      const result = await QueryExecutor.execute(query);
+      dataContainer.empty();
+      if (result.success) {
+        this.renderTableDataDirect(result, dataContainer, tableName);
+        if (result.data && result.data[0] && result.data[0].rowCount >= 100) {
+          const note = dataContainer.createDiv({
+            text: "Showing first 100 rows only.",
+            cls: "mysql-table-limit-note"
+          });
+        }
+      } else {
+        dataContainer.createDiv({ text: `Error: ${result.error}`, cls: "mysql-error-text" });
+      }
+    } catch (e) {
+      dataContainer.empty();
+      dataContainer.createDiv({ text: `Error loading data: ${e.message}`, cls: "mysql-error-text" });
+    }
+  }
+  renderTableDataDirect(result, container, tableName) {
+    if (!result.success || !result.data || result.data.length === 0) {
+      container.createEl("p", { text: "No data found", cls: "mysql-empty-state" });
+      return;
+    }
+    const data = result.data[0];
+    if (data.type === "table" && data.data && data.data.length > 0) {
+      const tableWrapper = container.createDiv({ cls: "mysql-direct-table-wrapper" });
+      const keys = Object.keys(data.data[0]);
+      const table = tableWrapper.createEl("table", { cls: "mysql-table mysql-direct-table" });
+      const thead = table.createEl("thead");
+      const headerRow = thead.createEl("tr");
+      keys.forEach((key) => headerRow.createEl("th", { text: key }));
+      const tbody = table.createEl("tbody");
+      const batchSize = 100;
+      let currentCount = 0;
+      const renderBatch = (batch) => {
+        batch.forEach((row) => {
+          const tr = tbody.createEl("tr");
+          keys.forEach((key) => {
+            const val = row[key];
+            tr.createEl("td", {
+              text: val === null || val === void 0 ? "NULL" : String(val)
+            });
+          });
+        });
+      };
+      const initialBatch = data.data.slice(0, batchSize);
+      renderBatch(initialBatch);
+      currentCount += initialBatch.length;
+      if (data.data.length > batchSize) {
+        const controls = tableWrapper.createEl("div", { cls: "mysql-direct-pagination" });
+        const statusSpan = controls.createEl("span", {
+          text: `Showing ${currentCount} of ${data.data.length} rows`,
+          cls: "mysql-pagination-status"
+        });
+        const showAllBtn = controls.createEl("button", {
+          text: "Show All Rows",
+          cls: "mysql-pagination-btn"
+        });
+        showAllBtn.onclick = () => {
+          const remaining = data.data.slice(currentCount);
+          renderBatch(remaining);
+          showAllBtn.remove();
+          statusSpan.setText(`Showing all ${data.data.length} rows`);
+        };
+      }
+    } else {
+      container.createEl("p", { text: "No table data found", cls: "mysql-empty-state" });
+    }
+  }
+  async copyToClipboard(data) {
+    try {
+      if (!data || data.length === 0) {
+        new import_obsidian5.Notice("No data to copy");
+        return;
+      }
+      const keys = Object.keys(data[0]);
+      let textToCopy = keys.join("	") + "\n";
+      data.forEach((row) => {
+        const values = keys.map((k) => {
+          const val = row[k];
+          return val === null || val === void 0 ? "" : String(val);
+        });
+        textToCopy += values.join("	") + "\n";
+      });
+      await navigator.clipboard.writeText(textToCopy);
+      new import_obsidian5.Notice("Table data copied to clipboard!");
+    } catch (error) {
+      new import_obsidian5.Notice("Failed to copy: " + error.message);
+    }
+  }
+  async takeScreenshot(element) {
+    try {
+      const html2canvas2 = (await Promise.resolve().then(() => __toESM(require_html2canvas()))).default;
+      const canvas = await html2canvas2(element, {
+        backgroundColor: getComputedStyle(element).backgroundColor || "#ffffff",
+        scale: 2,
+        logging: false
+      });
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          new import_obsidian5.Notice("Failed to create screenshot");
+          return;
+        }
+        try {
+          await navigator.clipboard.write([
+            new ClipboardItem({ "image/png": blob })
+          ]);
+          new import_obsidian5.Notice("Screenshot copied to clipboard!");
+        } catch (clipboardError) {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `table-screenshot-${Date.now()}.png`;
+          a.click();
+          URL.revokeObjectURL(url);
+          new import_obsidian5.Notice("Screenshot downloaded!");
+        }
+      });
+    } catch (error) {
+      new import_obsidian5.Notice("Screenshot failed: " + error.message);
+      console.error("Screenshot error:", error);
+    }
+  }
+  async insertIntoNote(data) {
+    try {
+      const { MarkdownView: MarkdownView2 } = await import("obsidian");
+      const activeView = this.app.workspace.getActiveViewOfType(MarkdownView2);
+      if (!activeView) {
+        new import_obsidian5.Notice("No active note found");
+        return;
+      }
+      const editor = activeView.editor;
+      const textToInsert = this.dataToMarkdownTable(data);
+      const cursor = editor.getCursor();
+      editor.replaceRange("\n" + textToInsert + "\n", cursor);
+      const lines = textToInsert.split("\n").length;
+      editor.setCursor({ line: cursor.line + lines + 1, ch: 0 });
+      new import_obsidian5.Notice("Table inserted into note!");
+    } catch (error) {
+      new import_obsidian5.Notice("Failed to insert: " + error.message);
+    }
+  }
+  async exportTableData(tableName, data) {
+    try {
+      if (!data || data.length === 0) {
+        new import_obsidian5.Notice("Table is empty");
+        return;
+      }
+      const csv = this.jsonToCSV(data);
+      const exportFolder = this.plugin.settings.exportFolderName || "sql-exports";
+      if (!await this.plugin.app.vault.adapter.exists(exportFolder)) {
+        await this.plugin.app.vault.createFolder(exportFolder);
+      }
+      const fileName = `${exportFolder}/${tableName}_${Date.now()}.csv`;
+      await this.plugin.app.vault.create(fileName, csv);
+      new import_obsidian5.Notice(`Table exported to ${fileName}`);
+    } catch (error) {
+      console.error("CSV Export Error:", error);
+      new import_obsidian5.Notice(`Export failed: ${error.message}`);
+    }
+  }
+  jsonToCSV(data) {
+    if (data.length === 0) return "";
+    const keys = Object.keys(data[0]);
+    const header = keys.join(",") + "\n";
+    const rows = data.map(
+      (row) => keys.map((k) => {
+        const val = row[k];
+        if (val === null || val === void 0) return "";
+        const str = String(val);
+        if (str.match(/[,"]/)) {
+          return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+      }).join(",")
+    );
+    return header + rows.join("\n");
+  }
+  dataToMarkdownTable(rows) {
+    if (!rows || rows.length === 0) return "_No data_";
+    const keys = Object.keys(rows[0]);
+    let md = "| " + keys.join(" | ") + " |\n";
+    md += "| " + keys.map(() => "---").join(" | ") + " |\n";
+    rows.forEach((row) => {
+      const values = keys.map((k) => {
+        const val = row[k];
+        if (val === null || val === void 0) return "";
+        return String(val).replace(/\|/g, "\\|");
+      });
+      md += "| " + values.join(" | ") + " |\n";
+    });
+    return md;
+  }
+  formatBytes(bytes) {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  }
+  onClose() {
+    this.contentEl.empty();
+  }
+};
+
+// src/settings.ts
+var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
+  constructor(app, plugin) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
+  hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    } : null;
+  }
+  display() {
+    const { containerEl } = this;
+    containerEl.empty();
+    containerEl.addClass("mysql-settings-modal");
+    let themeColor = this.plugin.settings.themeColor || "#9d7cd8";
+    let rgb = this.hexToRgb(themeColor);
+    if (this.plugin.settings.useObsidianAccent) {
+      const dummy = document.createElement("div");
+      dummy.style.color = "var(--interactive-accent)";
+      dummy.style.display = "none";
+      document.body.appendChild(dummy);
+      const computedColor = getComputedStyle(dummy).color;
+      document.body.removeChild(dummy);
+      let rgbValues = "157, 124, 216";
+      if (computedColor && computedColor.includes("rgb")) {
+        const match = computedColor.match(/\d+,\s*\d+,\s*\d+/);
+        if (match) rgbValues = match[0];
+      }
+      containerEl.style.setProperty("--mysql-accent", `rgb(${rgbValues})`);
+      containerEl.style.setProperty("--mysql-accent-purple", `rgb(${rgbValues})`);
+      containerEl.style.setProperty("--interactive-accent", `rgb(${rgbValues})`);
+      containerEl.style.setProperty("--mysql-accent-rgb", rgbValues);
+      containerEl.style.setProperty("--interactive-accent-rgb", rgbValues);
+    } else {
+      containerEl.style.setProperty("--mysql-accent", themeColor);
+      containerEl.style.setProperty("--mysql-accent-purple", themeColor);
+      containerEl.style.setProperty("--interactive-accent", themeColor);
+      if (rgb) {
+        containerEl.style.setProperty("--mysql-accent-rgb", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+        containerEl.style.setProperty("--interactive-accent-rgb", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+      }
+    }
+    const header = containerEl.createDiv({ cls: "mysql-settings-header" });
+    const titleGroup = header.createDiv({ cls: "mysql-settings-title-group" });
+    titleGroup.style.display = "flex";
+    titleGroup.style.alignItems = "center";
+    titleGroup.style.gap = "10px";
+    const logo = titleGroup.createDiv({ cls: "mysql-logo" });
+    logo.innerHTML = `<svg width="40" height="40" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M128 136C163.346 136 192 127.046 192 116C192 104.954 163.346 96 128 96C92.6538 96 64 104.954 64 116C64 127.046 92.6538 136 128 136Z" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M64 116V188C64 199 93 208 128 208C163 208 192 199 192 188V112" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M64 152C64 163 93 172 128 172C163 172 192 163 192 152" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M64 188C64 199 93 208 128 208C163 208 192 199 192 188" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<mask id="mask0_101_3" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="-5" y="-5" width="266" height="266">
+<path d="M256 0H0V256H256V0Z" fill="white" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</mask>
+<g mask="url(#mask0_101_3)">
+<path d="M128 76C163.346 76 192 67.0457 192 56C192 44.9543 163.346 36 128 36C92.6538 36 64 44.9543 64 56C64 67.0457 92.6538 76 128 76Z" fill="currentColor"/>
+<path d="M64 56V92C64 103 93 112 128 112C163 112 192 103 192 92V56" fill="currentColor"/>
+<path d="M128 112C163.346 112 192 103.046 192 92C192 80.9543 163.346 72 128 72C92.6538 72 64 80.9543 64 92C64 103.046 92.6538 112 128 112Z" fill="currentColor"/>
+<path d="M135 91.5C135 77.5 135 63.5 135 59.5C135 53.5 141 53.5 145 59.5C151 67.5 157 79.5 165 85.5C171 91.5 177 91.5 177 85.5C177 77.5 177 65.5 177 59.5" stroke="var(--background-primary)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>`;
+    logo.style.color = "var(--mysql-accent, var(--interactive-accent))";
+    const titleText = titleGroup.createDiv({ cls: "mysql-title-text" });
+    titleText.createEl("h2", { text: "SQL Notebook", attr: { style: "margin: 0; line-height: 1.2;" } });
+    titleText.createEl("span", { text: "Database Manager", attr: { style: "font-size: 13px; color: var(--text-muted);" } });
+    const actions = header.createDiv({ cls: "mysql-header-actions" });
+    const importBtnContainer = actions.createDiv({ cls: "mysql-import-wrapper" });
+    const importInput = importBtnContainer.createEl("input", {
+      type: "file",
+      attr: { accept: ".sql" }
+    });
+    importInput.style.display = "none";
+    importInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        await this.importDatabaseSQL(file);
+        importInput.value = "";
+      }
+    };
+    new import_obsidian6.ButtonComponent(actions).setButtonText("Atualizar").setIcon("refresh-cw").setTooltip("Atualizar Lista").onClick(() => {
+      this.display();
+      new import_obsidian6.Notice("Lista atualizada!");
+    });
+    new import_obsidian6.ButtonComponent(importBtnContainer).setButtonText("Importar").setIcon("import").setTooltip("Importar Database (.sql)").onClick(() => importInput.click());
+    new import_obsidian6.ButtonComponent(actions).setButtonText("Novo Database").setIcon("plus").setCta().onClick(() => this.openCreateModal());
+    const welcomeSection = containerEl.createDiv({ cls: "mysql-welcome-section" });
+    welcomeSection.style.marginBottom = "20px";
+    welcomeSection.style.padding = "15px";
+    welcomeSection.style.background = "rgba(var(--mysql-accent-rgb, var(--interactive-accent-rgb)), 0.1)";
+    welcomeSection.style.borderRadius = "8px";
+    welcomeSection.style.border = "1px solid var(--mysql-accent, var(--interactive-accent))";
+    welcomeSection.createEl("h3", { text: "Bem vindo ao SQL Notebook!", attr: { style: "margin: 0 0 5px 0; color: var(--mysql-accent, var(--interactive-accent));" } });
+    welcomeSection.createEl("p", { text: "Gerencie seus bancos de dados locais, execute queries e visualize resultados diretamente no Obsidian.", attr: { style: "margin: 0; font-size: 14px; color: var(--text-normal);" } });
+    const searchSection = containerEl.createDiv({ cls: "mysql-search-section" });
+    const searchWrapper = searchSection.createDiv({ cls: "mysql-search-wrapper" });
+    searchWrapper.style.display = "flex";
+    searchWrapper.style.alignItems = "center";
+    searchWrapper.style.background = "var(--background-secondary)";
+    searchWrapper.style.border = "1px solid var(--background-modifier-border)";
+    searchWrapper.style.borderRadius = "6px";
+    searchWrapper.style.padding = "0 8px";
+    const searchIcon = searchWrapper.createDiv({ cls: "mysql-search-icon" });
+    (0, import_obsidian6.setIcon)(searchIcon, "search");
+    searchIcon.style.opacity = "0.5";
+    searchIcon.style.display = "flex";
+    searchIcon.style.marginRight = "8px";
+    const searchInput = searchWrapper.createEl("input", {
+      type: "text",
+      cls: "mysql-search-box",
+      placeholder: "Buscar databases...",
+      attr: { style: "border: none; box-shadow: none; background: transparent; width: 100%; padding: 8px; outline: none;" }
+    });
+    const grid = containerEl.createDiv({ cls: "mysql-databases-grid" });
+    this.renderDatabaseGrid(grid, "");
+    searchInput.addEventListener("input", (e) => {
+      const term = e.target.value;
+      this.renderDatabaseGrid(grid, term);
+    });
+    const infoSection = containerEl.createDiv({ cls: "mysql-info-board" });
+    infoSection.style.background = "var(--background-secondary)";
+    infoSection.style.padding = "15px";
+    infoSection.style.borderRadius = "6px";
+    infoSection.style.marginTop = "20px";
+    infoSection.style.border = "1px solid var(--background-modifier-border)";
+    infoSection.createEl("h4", { text: "Informa\xE7\xF5es Importantes:", attr: { style: "margin-top: 0; margin-bottom: 10px; color: var(--mysql-accent, var(--interactive-accent));" } });
+    const list = infoSection.createEl("ul", { attr: { style: "margin: 0; padding-left: 20px; color: var(--text-muted); font-size: 13px;" } });
+    const li1 = list.createEl("li");
+    li1.innerHTML = "Para excluir ou renomear um banco de dados <b>ativo</b>, mude para outro primeiro.";
+    const li2 = list.createEl("li");
+    li2.innerHTML = 'O banco de dados do sistema <b>"dbo"</b> n\xE3o pode ser renomeado ou exclu\xEDdo.';
+    const li3 = list.createEl("li");
+    li3.innerHTML = "<b>Renomear</b> um banco de dados atualiza automaticamente refer\xEAncias internas.";
+    containerEl.createEl("hr", { attr: { style: "margin: 40px 0; border: none; border-top: 1px solid var(--background-modifier-border);" } });
+    this.createSectionHeader(containerEl, "General Settings", "settings");
+    this.renderGeneralSettings(containerEl);
+    const footer = containerEl.createDiv({ cls: "mysql-settings-footer" });
+    footer.style.display = "flex";
+    footer.style.flexDirection = "column";
+    footer.style.alignItems = "center";
+    footer.style.justifyContent = "center";
+    footer.style.marginTop = "40px";
+    footer.style.paddingTop = "20px";
+    footer.style.borderTop = "1px solid var(--background-modifier-border)";
+    footer.style.opacity = "0.7";
+    const footerLogo = footer.createDiv({ cls: "mysql-logo-footer" });
+    footerLogo.innerHTML = `<svg width="40" height="40" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M128 136C163.346 136 192 127.046 192 116C192 104.954 163.346 96 128 96C92.6538 96 64 104.954 64 116C64 127.046 92.6538 136 128 136Z" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M64 116V188C64 199 93 208 128 208C163 208 192 199 192 188V112" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M64 152C64 163 93 172 128 172C163 172 192 163 192 152" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M64 188C64 199 93 208 128 208C163 208 192 199 192 188" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<mask id="mask0_101_3_footer" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="-5" y="-5" width="266" height="266">
+<path d="M256 0H0V256H256V0Z" fill="white" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</mask>
+<g mask="url(#mask0_101_3_footer)">
+<path d="M128 76C163.346 76 192 67.0457 192 56C192 44.9543 163.346 36 128 36C92.6538 36 64 44.9543 64 56C64 67.0457 92.6538 76 128 76Z" fill="currentColor"/>
+<path d="M64 56V92C64 103 93 112 128 112C163 112 192 103 192 92V56" fill="currentColor"/>
+<path d="M128 112C163.346 112 192 103.046 192 92C192 80.9543 163.346 72 128 72C92.6538 72 64 80.9543 64 92C64 103.046 92.6538 112 128 112Z" fill="currentColor"/>
+<path d="M135 91.5C135 77.5 135 63.5 135 59.5C135 53.5 141 53.5 145 59.5C151 67.5 157 79.5 165 85.5C171 91.5 177 91.5 177 85.5C177 77.5 177 65.5 177 59.5" stroke="var(--background-primary)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>`;
+    footerLogo.style.color = "var(--mysql-accent, var(--interactive-accent))";
+    footerLogo.style.marginBottom = "10px";
+    footer.createEl("h3", { text: "SQL Notebook", attr: { style: "margin: 0; font-size: 16px; color: var(--text-normal);" } });
+    footer.createEl("span", { text: "Diego Pena", attr: { style: "font-size: 12px; color: var(--text-muted);" } });
+  }
+  renderDatabaseGrid(container, searchTerm, page = 1) {
+    container.empty();
+    container.removeClass("mysql-databases-grid");
+    const allDbs = Object.keys(import_alasql5.default.databases).filter((d) => d !== "alasql");
+    const filteredDbs = allDbs.filter((d) => d.toLowerCase().includes(searchTerm.toLowerCase()));
+    const activeDB = this.plugin.activeDatabase;
+    const sortedDbs = filteredDbs.sort((a, b) => {
+      if (a === activeDB) return -1;
+      if (b === activeDB) return 1;
+      return a.localeCompare(b);
+    });
+    if (sortedDbs.length === 0) {
+      container.addClass("mysql-databases-grid");
+      container.createDiv({ text: "No databases found.", cls: "mysql-empty-msg" });
+      return;
+    }
+    const pageSize = 4;
+    const totalPages = Math.ceil(sortedDbs.length / pageSize);
+    if (page < 1) page = 1;
+    if (page > totalPages) page = totalPages;
+    const startIndex = (page - 1) * pageSize;
+    const paginatedDbs = sortedDbs.slice(startIndex, startIndex + pageSize);
+    const gridContent = container.createDiv({ cls: "mysql-databases-grid" });
+    paginatedDbs.forEach((dbName) => {
+      this.renderDatabaseCard(gridContent, dbName);
+    });
+    if (totalPages > 1) {
+      const paginationContainer = container.createDiv({ cls: "mysql-pagination" });
+      paginationContainer.style.display = "flex";
+      paginationContainer.style.justifyContent = "center";
+      paginationContainer.style.gap = "8px";
+      paginationContainer.style.marginTop = "20px";
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = paginationContainer.createEl("button", {
+          text: String(i),
+          cls: "mysql-page-btn"
+        });
+        btn.style.padding = "4px 10px";
+        btn.style.borderRadius = "4px";
+        btn.style.border = "1px solid var(--background-modifier-border)";
+        btn.style.background = i === page ? "var(--mysql-accent, var(--interactive-accent))" : "var(--background-secondary)";
+        btn.style.color = i === page ? "var(--text-on-accent)" : "var(--text-normal)";
+        btn.style.cursor = "pointer";
+        if (i !== page) {
+          btn.onclick = () => {
+            this.renderDatabaseGrid(container, searchTerm, i);
+          };
+        } else {
+          btn.disabled = true;
+          btn.style.opacity = "1";
+        }
+      }
+    }
+  }
+  renderDatabaseCard(container, dbName) {
+    const isActive = dbName === this.plugin.activeDatabase;
+    const isSystem = dbName === "dbo";
+    const dbManager = this.plugin.dbManager;
+    const stats = dbManager.getDatabaseStats(dbName);
+    const card = container.createDiv({ cls: `mysql-db-card ${isActive ? "active" : ""}` });
+    const header = card.createDiv({ cls: "mysql-db-card-header" });
+    const nameDiv = header.createDiv({ cls: "mysql-db-name" });
+    nameDiv.createSpan({ text: dbName });
+    if (isActive) {
+      nameDiv.createSpan({ text: "Ativo", cls: "mysql-badge badge-active" });
+    } else if (isSystem) {
+      nameDiv.createSpan({ text: "System", cls: "mysql-badge badge-system" });
+    }
+    const statsGrid = card.createDiv({ cls: "mysql-db-stats" });
+    this.addStat(statsGrid, "Tabelas", stats.tables.toString());
+    this.addStat(statsGrid, "Linhas", stats.rows.toLocaleString());
+    this.addStat(statsGrid, "Tamanho", this.formatBytes(stats.sizeBytes));
+    this.addStat(statsGrid, "Atualizado", this.timeAgo(stats.lastUpdated));
+    const actions = card.createDiv({ cls: "mysql-db-actions" });
+    if (!isActive) {
+      new import_obsidian6.ButtonComponent(actions).setIcon("check").setTooltip("Ativar").setClass("btn-success").onClick(async () => {
+        await this.switchDatabase(dbName);
+      });
+    }
+    new import_obsidian6.ButtonComponent(actions).setIcon("copy").setTooltip("Duplicar").onClick(() => {
+      const modal = new DuplicateDatabaseModal(this.app, this.plugin, dbName, () => this.display());
+      modal.open();
+    });
+    if (!isActive && !isSystem) {
+      new import_obsidian6.ButtonComponent(actions).setIcon("pencil").setTooltip("Renomear").onClick(() => {
+        const modal = new RenameDatabaseModal(this.app, this.plugin, dbName, () => this.display());
+        modal.open();
+      });
+    }
+    new import_obsidian6.ButtonComponent(actions).setIcon("table").setTooltip("Visualizar Tabelas").onClick(() => this.openTablesModal(dbName));
+    new import_obsidian6.ButtonComponent(actions).setIcon("upload").setTooltip("Exportar").onClick(() => this.exportDatabaseSQL(dbName));
+    if (!isActive && !isSystem) {
+      new import_obsidian6.ButtonComponent(actions).setIcon("trash-2").setTooltip("Deletar").setWarning().onClick(() => this.confirmDelete(dbName));
+    }
+  }
+  renderGeneralSettings(containerEl) {
+    this.createSectionHeader(containerEl, "Appearance", "palette");
+    const colors = [
+      { name: "Purple (Default)", value: "#9d7cd8" },
+      { name: "Blue", value: "#61afef" },
+      { name: "Green", value: "#98c379" },
+      { name: "Orange", value: "#e5c07b" },
+      { name: "Red", value: "#e06c75" }
+    ];
+    new import_obsidian6.Setting(containerEl).setName("Use Obsidian Accent Color").setDesc("Use the global Obsidian accent color instead of a custom color.").addToggle((toggle) => toggle.setValue(this.plugin.settings.useObsidianAccent).onChange(async (value) => {
+      this.plugin.settings.useObsidianAccent = value;
+      await this.plugin.saveSettings();
+      this.display();
+    }));
+    const colorSetting = new import_obsidian6.Setting(containerEl).setName("Theme Accent").setDesc("Choose the primary accent color.").addText((text) => text.inputEl.style.display = "none");
+    if (this.plugin.settings.useObsidianAccent) {
+      colorSetting.settingEl.style.opacity = "0.5";
+      colorSetting.settingEl.style.pointerEvents = "none";
+      colorSetting.setDesc('Disabled because "Use Obsidian Accent Color" is enabled.');
+    }
+    colorSetting.then((setting) => {
+      const colorContainer = setting.controlEl.createDiv({ cls: "mysql-color-picker" });
+      colorContainer.style.display = "flex";
+      colorContainer.style.gap = "10px";
+      colors.forEach((c) => {
+        const circle = colorContainer.createDiv({ cls: "mysql-color-circle" });
+        circle.style.backgroundColor = c.value;
+        circle.style.width = "24px";
+        circle.style.height = "24px";
+        circle.style.borderRadius = "50%";
+        circle.style.cursor = "pointer";
+        circle.style.transition = "all 0.2s";
+        if (this.plugin.settings.themeColor === c.value) {
+          circle.style.border = "2px solid var(--text-normal)";
+          circle.style.transform = "scale(1.1)";
+        } else {
+          circle.style.border = "2px solid transparent";
+        }
+        circle.onClickEvent(async () => {
+          this.plugin.settings.themeColor = c.value;
+          await this.plugin.saveSettings();
+          this.display();
+        });
+      });
+    });
+    new import_obsidian6.Setting(containerEl).setName("Auto-save").setDesc("Automatically save database changes.").addToggle((toggle) => toggle.setValue(this.plugin.settings.autoSave).onChange(async (value) => {
+      this.plugin.settings.autoSave = value;
+      await this.plugin.saveSettings();
+    }));
+    new import_obsidian6.Setting(containerEl).setName("Auto-save Delay").setDesc("Milliseconds to wait before auto-saving.").addText((text) => text.setPlaceholder("2000").setValue(String(this.plugin.settings.autoSaveDelay)).onChange(async (value) => {
+      const num = parseInt(value);
+      if (!isNaN(num) && num > 0) {
+        this.plugin.settings.autoSaveDelay = num;
+        await this.plugin.saveSettings();
+      }
+    }));
+    new import_obsidian6.Setting(containerEl).setName("Export Folder").setDesc("Default folder for CSV exports.").addText((text) => text.setPlaceholder("sql-exports").setValue(this.plugin.settings.exportFolderName).onChange(async (value) => {
+      this.plugin.settings.exportFolderName = value || "sql-exports";
+      await this.plugin.saveSettings();
+    }));
+    this.createSectionHeader(containerEl, "Data & Security", "shield");
+    new import_obsidian6.Setting(containerEl).setName("Safe Mode").setDesc("Block dangerous commands (DROP, ALTER) and enforce limits.").addToggle((toggle) => toggle.setValue(this.plugin.settings.safeMode).onChange(async (value) => {
+      this.plugin.settings.safeMode = value;
+      await this.plugin.saveSettings();
+    }));
+    new import_obsidian6.Setting(containerEl).setName("Snapshot Row Limit").setDesc("Max rows per table to save (prevents memory issues).").addText((text) => text.setPlaceholder("10000").setValue(String(this.plugin.settings.snapshotRowLimit)).onChange(async (value) => {
+      const num = parseInt(value);
+      if (!isNaN(num) && num > 0) {
+        this.plugin.settings.snapshotRowLimit = num;
+        await this.plugin.saveSettings();
+      }
+    }));
+    new import_obsidian6.Setting(containerEl).setName("Batch Size").setDesc("Rows to display per page in results.").addText((text) => text.setPlaceholder("100").setValue(String(this.plugin.settings.batchSize)).onChange(async (value) => {
+      const num = parseInt(value);
+      if (!isNaN(num) && num > 0) {
+        this.plugin.settings.batchSize = num;
+        await this.plugin.saveSettings();
+      }
+    }));
+    new import_obsidian6.Setting(containerEl).setName("Reset All Data").addButton((btn) => {
+      btn.setButtonText("Reset Everything");
+      btn.setWarning();
+      btn.onClick(() => this.openClearConfirm());
+    });
+  }
+  async switchDatabase(dbName) {
+    const dbManager = this.plugin.dbManager;
+    this.plugin.activeDatabase = dbName;
+    await dbManager.save();
+    new import_obsidian6.Notice(`Switched to "${dbName}"`);
+    this.display();
+  }
+  createSectionHeader(container, text, icon) {
+    const header = container.createDiv({ cls: "mysql-settings-section-header" });
+    (0, import_obsidian6.setIcon)(header.createDiv({ cls: "mysql-section-icon" }), icon);
+    header.createEl("h3", { text });
+  }
+  renderActiveDatabaseCard(containerEl) {
+    const activeDB = this.plugin.activeDatabase;
+    const dbManager = this.plugin.dbManager;
+    const stats = dbManager.getDatabaseStats(activeDB);
+    const totalDBs = Object.keys(import_alasql5.default.databases).filter((d) => d !== "alasql").length;
+    const card = containerEl.createDiv({ cls: "mysql-db-card" });
+    const header = card.createDiv({ cls: "mysql-db-card-header" });
+    const titleRow = header.createDiv({ cls: "mysql-db-card-title-row" });
+    (0, import_obsidian6.setIcon)(titleRow.createDiv({ cls: "mysql-db-card-icon" }), "database");
+    titleRow.createEl("span", { text: activeDB, cls: "mysql-db-card-name" });
+    if (activeDB === "alasql") {
+      titleRow.createEl("span", { text: "SYSTEM", cls: "mysql-db-system-badge" });
+    }
+    const countBadge = header.createDiv({ cls: "mysql-db-count-badge" });
+    countBadge.createSpan({ text: `${totalDBs} Databases` });
+    const statsGrid = card.createDiv({ cls: "mysql-db-stats-grid" });
+    this.addStat(statsGrid, "Tables", stats.tables.toString(), "table");
+    this.addStat(statsGrid, "Rows", stats.rows.toLocaleString(), "list");
+    this.addStat(statsGrid, "Size", this.formatBytes(stats.sizeBytes), "hard-drive");
+    const lastMod = containerEl.createDiv({
+      text: `Last updated: ${this.timeAgo(stats.lastUpdated)}`,
+      cls: "mysql-db-card-last-updated"
+    });
+    const actions = card.createDiv({ cls: "mysql-db-card-actions" });
+    new import_obsidian6.ButtonComponent(actions).setButtonText("Switch").onClick(() => this.openSwitcherModal());
+    new import_obsidian6.ButtonComponent(actions).setButtonText("Create").setIcon("plus").onClick(() => this.openCreateModal());
+    const renameBtn = new import_obsidian6.ButtonComponent(actions).setButtonText("Rename").onClick(() => this.openRenameModal());
+    if (activeDB === "dbo") {
+      renameBtn.setDisabled(true);
+      renameBtn.setTooltip("Default database cannot be renamed");
+      renameBtn.buttonEl.classList.add("is-disabled-explicit");
+    }
+    new import_obsidian6.ButtonComponent(actions).setButtonText("Tables").setIcon("table").onClick(() => this.openTablesModal());
+    new import_obsidian6.ButtonComponent(actions).setButtonText("Export").setIcon("download").setTooltip("Export database structure and data to SQL file").onClick(async () => {
+      await this.exportDatabaseSQL(activeDB);
+    });
+    const importBtnContainer = actions.createDiv({ cls: "mysql-import-wrapper" });
+    const importInput = importBtnContainer.createEl("input", {
+      type: "file",
+      attr: { accept: ".sql" }
+    });
+    importInput.style.display = "none";
+    importInput.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        await this.importDatabaseSQL(file);
+        importInput.value = "";
+      }
+    };
+    new import_obsidian6.ButtonComponent(importBtnContainer).setButtonText("Import").setIcon("upload").setTooltip("Import database from SQL file").onClick(() => {
+      importInput.click();
+    });
+    const separator = actions.createDiv({ cls: "mysql-action-separator" });
+    new import_obsidian6.ButtonComponent(actions).setButtonText("Clear").setWarning().onClick(() => this.openClearConfirm());
+  }
+  addStat(parent, label, value, iconName) {
+    const item = parent.createDiv({ cls: "mysql-db-stat-item" });
+    if (iconName) {
+      const icon = item.createDiv({ cls: "mysql-db-stat-icon" });
+      (0, import_obsidian6.setIcon)(icon, iconName);
+    }
+    item.createDiv({ text: label, cls: "mysql-db-stat-label" });
+    item.createDiv({ text: value, cls: "mysql-db-stat-value" });
+  }
+  formatBytes(bytes) {
+    if (bytes === 0) return "0 B";
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+  }
+  timeAgo(timestamp) {
+    if (!timestamp) return "Never";
+    const seconds = Math.floor((Date.now() - timestamp) / 1e3);
+    if (seconds < 60) return "Just now";
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} min ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return new Date(timestamp).toLocaleDateString();
+  }
+  openSwitcherModal() {
+    const modal = new DatabaseSwitcherModal(this.app, this.plugin, () => this.display());
+    modal.open();
+  }
+  openCreateModal() {
+    const modal = new CreateDatabaseModal(this.app, this.plugin, () => this.display());
+    modal.open();
+  }
+  openRenameModal() {
+    const modal = new RenameDatabaseModal(this.app, this.plugin, this.plugin.activeDatabase, () => this.display());
+    modal.open();
+  }
+  openTablesModal(dbName) {
+    const targetDB = dbName || this.plugin.activeDatabase;
+    const modal = new DatabaseTablesModal(this.app, this.plugin, targetDB);
+    modal.open();
+  }
+  openClearConfirm() {
+    const activeDB = this.plugin.activeDatabase;
+    new ConfirmationModal(
+      this.app,
+      "Clear Database",
+      `Are you sure you want to clear all tables in "${activeDB}"? This keeps the database but deletes all data.`,
+      async (confirmed) => {
+        if (confirmed) {
+          await this.plugin.dbManager.clearDatabase(activeDB);
+          new import_obsidian6.Notice(`Database "${activeDB}" cleared.`);
+          this.display();
+        }
+      },
+      "Clear all data",
+      "Cancel"
+    ).open();
+  }
+  confirmDelete(dbName) {
+    new ConfirmationModal(
+      this.app,
+      "Delete Database",
+      `You are about to delete database "${dbName}". This action cannot be undone. All tables and data will be lost.`,
+      async (confirmed) => {
+        if (confirmed) {
+          try {
+            const dbManager = this.plugin.dbManager;
+            await dbManager.deleteDatabase(dbName);
+            new import_obsidian6.Notice(`Database "${dbName}" deleted.`);
+            this.display();
+          } catch (e) {
+            new import_obsidian6.Notice(`Error: ${e.message}`);
+          }
+        }
+      },
+      "Delete Database",
+      "Cancel"
+    ).open();
+  }
+  async exportDatabaseSQL(dbName) {
+    try {
+      const dbManager = this.plugin.dbManager;
+      const sql = await dbManager.exportDatabase(dbName);
+      const exportFolder = this.plugin.settings.exportFolderName || "sql-exports";
+      if (!await this.plugin.app.vault.adapter.exists(exportFolder)) {
+        await this.plugin.app.vault.createFolder(exportFolder);
+      }
+      const fileName = `${exportFolder}/${dbName}_backup_${Date.now()}.sql`;
+      await this.plugin.app.vault.create(fileName, sql);
+      new import_obsidian6.Notice(`Exported to ${fileName}`);
+    } catch (e) {
+      new import_obsidian6.Notice(`Export failed: ${e.message}`);
+      console.error(e);
+    }
+  }
+  async importDatabaseSQL(file) {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      var _a;
+      const sql = (_a = e.target) == null ? void 0 : _a.result;
+      if (typeof sql === "string") {
+        try {
+          new import_obsidian6.Notice("Importing database...");
+          const dbManager = this.plugin.dbManager;
+          await dbManager.importDatabase(sql);
+          new import_obsidian6.Notice("Database imported successfully!");
+          this.display();
+        } catch (err) {
+          new import_obsidian6.Notice(`Import failed: ${err.message}`);
+          console.error(err);
+        }
+      }
+    };
+    reader.readAsText(file);
+  }
+};
+
 // src/ui/WorkbenchFooter.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian8 = require("obsidian");
+
+// src/ui/HelpModal.ts
+var import_obsidian7 = require("obsidian");
+var HelpModal = class extends import_obsidian7.Modal {
+  constructor(app) {
+    super(app);
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.addClass("mysql-help-modal");
+    contentEl.createEl("h2", { text: "SQL Notebook Features" });
+    const features = [
+      {
+        icon: "chevron-down",
+        title: "Collapsible Workbench",
+        description: "Toggle the workbench view to save space. Click the header or the chevron icon."
+      },
+      {
+        icon: "at-sign",
+        title: "Auto-Collapse",
+        description: "Start a comment with '@' (e.g., '-- @ My Query') to automatically collapse the workbench when the note opens.",
+        example: "-- @ Initial Setup"
+      },
+      {
+        icon: "alert-triangle",
+        title: "Alert Marker (!)",
+        description: "Add '!' to your comment start to highlight it as an alert or warning.",
+        example: "-- ! DROP TABLE users"
+      },
+      {
+        icon: "help-circle",
+        title: "Question Marker (?)",
+        description: "Add '?' to indicate a query that needs review or is experimental.",
+        example: "-- ? optimizing join"
+      },
+      {
+        icon: "star",
+        title: "Favorite Marker (*)",
+        description: "Add '*' to highlight important or frequently used queries.",
+        example: "-- * Production Report"
+      },
+      {
+        icon: "copy",
+        title: "Copy & Edit",
+        description: "Hover over the workbench to access quick Copy Code and Edit Block buttons."
+      }
+    ];
+    const list = contentEl.createDiv({ cls: "mysql-help-list" });
+    features.forEach((feature) => {
+      const item = list.createDiv({ cls: "mysql-help-item" });
+      const iconContainer = item.createDiv({ cls: "mysql-help-icon" });
+      (0, import_obsidian7.setIcon)(iconContainer, feature.icon);
+      const content = item.createDiv({ cls: "mysql-help-content" });
+      content.createEl("h3", { text: feature.title });
+      content.createDiv({ cls: "mysql-help-desc", text: feature.description });
+      if (feature.example) {
+        content.createEl("code", { cls: "mysql-help-example", text: feature.example });
+      }
+    });
+  }
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
+  }
+};
+
+// src/ui/WorkbenchFooter.ts
 var WorkbenchFooter = class {
-  constructor(parent) {
+  constructor(parent, app) {
+    this.app = app;
     this.footerEl = parent.createDiv({ cls: "mysql-footer" });
     const left = this.footerEl.createDiv({ cls: "mysql-footer-left" });
     const logo = left.createDiv({ cls: "mysql-footer-logo" });
-    logo.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 12C20 14.2091 16.4183 16 12 16C7.58172 16 4 14.2091 4 12M20 12V18C20 20.2091 16.4183 22 12 22C7.58172 22 4 20.2091 4 18V12M20 12C20 9.79086 16.4183 8 12 8C7.58172 8 4 9.79086 4 12M20 6C20 8.20914 16.4183 10 12 10C7.58172 10 4 8.20914 4 6C4 3.79086 7.58172 2 12 2C16.4183 2 20 3.79086 20 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    (0, import_obsidian8.setIcon)(logo, "circle");
     left.createSpan({ text: "SQL Notebook", cls: "mysql-app-name" });
     this.rightEl = this.footerEl.createDiv({ cls: "mysql-footer-right" });
+    const helpBtn = this.rightEl.createDiv({
+      cls: "mysql-footer-help-btn",
+      attr: { "aria-label": "Help & Features" }
+    });
+    (0, import_obsidian8.setIcon)(helpBtn, "help-circle");
+    helpBtn.onclick = () => {
+      new HelpModal(this.app).open();
+    };
     this.statusEl = this.rightEl.createDiv({ cls: "mysql-footer-status-container" });
     this.setStatus("Ready");
   }
@@ -64803,9 +66114,9 @@ var WorkbenchFooter = class {
     }
   }
   updateTime(ms) {
-    this.rightEl.empty();
-    const timeWrapper = this.rightEl.createDiv({ cls: "mysql-footer-time-wrapper" });
-    (0, import_obsidian6.setIcon)(timeWrapper, "timer");
+    this.statusEl.empty();
+    const timeWrapper = this.statusEl.createDiv({ cls: "mysql-footer-time-wrapper" });
+    (0, import_obsidian8.setIcon)(timeWrapper, "timer");
     const timeVal = timeWrapper.createSpan({ cls: "mysql-footer-time-val" });
     timeVal.setText(`${ms}ms`);
   }
@@ -64818,26 +66129,25 @@ var WorkbenchFooter = class {
   getStatusEl() {
     return this.footerEl;
   }
-  // Helper to get the element that should be passed to executeQuery
   getContainer() {
     return this.footerEl;
   }
 };
 
 // src/main.ts
-var MySQLPlugin = class extends import_obsidian7.Plugin {
+var MySQLPlugin = class extends import_obsidian9.Plugin {
   constructor() {
     super(...arguments);
     this.activeDatabase = "dbo";
   }
   async onload() {
-    console.log("Loading MySQL Runner Plugin");
     await this.loadSettings();
-    import_alasql4.default.options.autocommit = true;
-    import_alasql4.default.options.mysql = true;
-    import_alasql4.default.promise = (sql, params) => {
+    this.applyTheme();
+    import_alasql6.default.options.autocommit = true;
+    import_alasql6.default.options.mysql = true;
+    import_alasql6.default.promise = (sql, params) => {
       return new Promise((resolve, reject) => {
-        (0, import_alasql4.default)(sql, params || [], (data, err) => {
+        (0, import_alasql6.default)(sql, params || [], (data, err) => {
           if (err) reject(err);
           else resolve(data);
         });
@@ -64845,7 +66155,7 @@ var MySQLPlugin = class extends import_obsidian7.Plugin {
     };
     this.dbManager = new DatabaseManager(this);
     this.csvManager = new CSVManager(this);
-    this.debouncedSave = (0, import_obsidian7.debounce)(
+    this.debouncedSave = (0, import_obsidian9.debounce)(
       () => this.dbManager.save(),
       this.settings.autoSaveDelay,
       true
@@ -64873,7 +66183,6 @@ var MySQLPlugin = class extends import_obsidian7.Plugin {
     );
   }
   async onunload() {
-    console.log("Unloading MySQL Runner Plugin");
     if (this.settings.autoSave) {
       await this.dbManager.save();
     }
@@ -64884,11 +66193,30 @@ var MySQLPlugin = class extends import_obsidian7.Plugin {
   async saveSettings() {
     await this.saveData(this.settings);
     if (this.debouncedSave) {
-      this.debouncedSave = (0, import_obsidian7.debounce)(
+      this.debouncedSave = (0, import_obsidian9.debounce)(
         () => this.dbManager.save(),
         this.settings.autoSaveDelay,
         true
       );
+    }
+    this.applyTheme();
+  }
+  applyTheme() {
+    const settings = this.settings;
+    const color = settings.useObsidianAccent ? "var(--interactive-accent)" : settings.themeColor;
+    document.body.style.setProperty("--mysql-accent-purple", color);
+    document.body.style.setProperty("--mysql-accent", color);
+    if (settings.useObsidianAccent) {
+      document.body.style.setProperty("--mysql-accent-rgb", "var(--interactive-accent-rgb)");
+    } else {
+      const hex = settings.themeColor;
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      if (result) {
+        const r = parseInt(result[1], 16);
+        const g = parseInt(result[2], 16);
+        const b = parseInt(result[3], 16);
+        document.body.style.setProperty("--mysql-accent-rgb", `${r}, ${g}, ${b}`);
+      }
     }
   }
   // ========================================================================
@@ -64898,24 +66226,101 @@ var MySQLPlugin = class extends import_obsidian7.Plugin {
     el.empty();
     el.addClass("mysql-block-parent");
     const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
-    const codeBlock = workbench.createEl("pre", { cls: "mysql-source-code" });
+    const rawFirstLine = source.split("\n")[0].trim();
+    let displayTitle = "MySQL Query";
+    let icon = "database";
+    let titleColorClass = "";
+    let startCollapsed = false;
+    const isComment = /^(--|#|\/\*)/.test(rawFirstLine);
+    if (isComment) {
+      let cleanLine = rawFirstLine.replace(/^(--\s?|#\s?|\/\*\s?)/, "").replace(/\s?\*\/$/, "").trim();
+      if (cleanLine.includes("@")) {
+        startCollapsed = true;
+        cleanLine = cleanLine.replace("@", "").trim();
+      }
+      if (cleanLine.startsWith("!")) {
+        icon = "alert-triangle";
+        titleColorClass = "mysql-title-alert";
+        workbench.addClass("mysql-mode-alert");
+        cleanLine = cleanLine.substring(1).trim();
+      } else if (cleanLine.startsWith("?")) {
+        icon = "help-circle";
+        titleColorClass = "mysql-title-help";
+        workbench.addClass("mysql-mode-help");
+        cleanLine = cleanLine.substring(1).trim();
+      } else if (cleanLine.startsWith("*")) {
+        icon = "star";
+        titleColorClass = "mysql-title-star";
+        workbench.addClass("mysql-mode-star");
+        cleanLine = cleanLine.substring(1).trim();
+      }
+      if (cleanLine.length > 0) {
+        displayTitle = cleanLine;
+      }
+    }
+    const previewBar = workbench.createEl("div", { cls: "mysql-collapsed-preview" });
+    const previewToggle = previewBar.createEl("div", { cls: "mysql-preview-toggle" });
+    (0, import_obsidian9.setIcon)(previewToggle, "chevron-right");
+    const previewContent = previewBar.createEl("div", { cls: "mysql-preview-content" });
+    const iconSpan = previewContent.createSpan({ cls: "mysql-preview-icon" });
+    if (titleColorClass) iconSpan.addClass(titleColorClass);
+    (0, import_obsidian9.setIcon)(iconSpan, icon);
+    const textSpan = previewContent.createSpan({ cls: "mysql-preview-text", text: displayTitle });
+    if (titleColorClass && titleColorClass !== "mysql-title-help") {
+      textSpan.addClass(titleColorClass);
+    }
+    previewBar.onclick = () => {
+      workbench.removeClass("is-collapsed");
+      body.style.display = "block";
+      previewBar.style.display = "none";
+    };
+    const body = workbench.createEl("div", { cls: "mysql-workbench-body" });
+    const collapseBtn = body.createEl("button", {
+      cls: "mysql-collapse-btn",
+      attr: { "aria-label": "Collapse" }
+    });
+    (0, import_obsidian9.setIcon)(collapseBtn, "chevron-up");
+    collapseBtn.onclick = (e) => {
+      e.stopPropagation();
+      workbench.addClass("is-collapsed");
+      body.style.display = "none";
+      previewBar.style.display = "flex";
+    };
+    if (startCollapsed) {
+      workbench.addClass("is-collapsed");
+      previewBar.style.display = "flex";
+      body.style.display = "none";
+    } else {
+      previewBar.style.display = "none";
+    }
+    const copyCodeBtn = body.createEl("button", {
+      cls: "mysql-copy-code-btn",
+      attr: { "aria-label": "Copy Code" }
+    });
+    (0, import_obsidian9.setIcon)(copyCodeBtn, "copy");
+    copyCodeBtn.onclick = async (e) => {
+      e.stopPropagation();
+      await navigator.clipboard.writeText(source);
+      new import_obsidian9.Notice("SQL code copied!");
+    };
+    const codeBlock = body.createEl("pre", { cls: "mysql-source-code" });
     codeBlock.innerHTML = `<code class="language-sql">${this.safeHighlight(source)}</code>`;
-    const controls = workbench.createEl("div", { cls: "mysql-controls" });
+    const controls = body.createEl("div", { cls: "mysql-controls" });
     const runBtn = controls.createEl("button", { cls: "mysql-btn mysql-btn-run" });
-    (0, import_obsidian7.setIcon)(runBtn, "play");
+    (0, import_obsidian9.setIcon)(runBtn, "play");
     runBtn.createSpan({ text: "Run" });
     const rightControls = controls.createEl("div", { cls: "mysql-controls-right" });
     const showTablesBtn = rightControls.createEl("button", { cls: "mysql-btn" });
-    (0, import_obsidian7.setIcon)(showTablesBtn, "table");
+    (0, import_obsidian9.setIcon)(showTablesBtn, "table");
     showTablesBtn.createSpan({ text: "Tables" });
     const importBtn = rightControls.createEl("button", { cls: "mysql-btn" });
-    (0, import_obsidian7.setIcon)(importBtn, "file-up");
+    (0, import_obsidian9.setIcon)(importBtn, "file-up");
     importBtn.createSpan({ text: "Import CSV" });
     const resetBtn = rightControls.createEl("button", { cls: "mysql-btn mysql-btn-danger" });
-    (0, import_obsidian7.setIcon)(resetBtn, "trash-2");
+    (0, import_obsidian9.setIcon)(resetBtn, "trash-2");
     resetBtn.createSpan({ text: "Reset" });
-    const resultContainer = workbench.createEl("div", { cls: "mysql-result-container" });
-    const footer = new WorkbenchFooter(workbench);
+    const resultContainer = body.createEl("div", { cls: "mysql-result-container" });
+    const footer = new WorkbenchFooter(body, this.app);
     importBtn.onclick = () => {
       new CSVSelectionModal(this.app, async (file) => {
         const success = await this.csvManager.importCSV(file);
@@ -64980,7 +66385,7 @@ var MySQLPlugin = class extends import_obsidian7.Plugin {
       cls: "mysql-btn mysql-btn-warn"
     });
     if (cancelBtn) {
-      (0, import_obsidian7.setIcon)(cancelBtn, "stop-circle");
+      (0, import_obsidian9.setIcon)(cancelBtn, "stop-circle");
       cancelBtn.createSpan({ text: "Cancel" });
     }
     const abortController = new AbortController();
@@ -64990,12 +66395,12 @@ var MySQLPlugin = class extends import_obsidian7.Plugin {
         cancelBtn.remove();
         btn.disabled = false;
         btn.empty();
-        (0, import_obsidian7.setIcon)(btn, "play");
+        (0, import_obsidian9.setIcon)(btn, "play");
         btn.createSpan({ text: "Run" });
         if (footer) {
           footer.setAborted();
         }
-        new import_obsidian7.Notice("Query aborted by user");
+        new import_obsidian9.Notice("Query aborted by user");
       };
     }
     btn.innerHTML = `\u23F3 Executing...`;
@@ -65013,7 +66418,9 @@ var MySQLPlugin = class extends import_obsidian7.Plugin {
       });
       if (cancelBtn) cancelBtn.remove();
       ResultRenderer.render(result, container, this.app, this);
-      this.activeDatabase = import_alasql4.default.useid;
+      if (result.activeDatabase) {
+        this.activeDatabase = result.activeDatabase;
+      }
       if (footer && result.executionTime !== void 0) {
         footer.updateTime(result.executionTime);
       }
@@ -65033,7 +66440,7 @@ var MySQLPlugin = class extends import_obsidian7.Plugin {
     }
     btn.disabled = false;
     btn.empty();
-    (0, import_obsidian7.setIcon)(btn, "play");
+    (0, import_obsidian9.setIcon)(btn, "play");
     btn.createSpan({ text: "Run" });
   }
   injectParams(query, params) {
@@ -65048,26 +66455,58 @@ var MySQLPlugin = class extends import_obsidian7.Plugin {
   }
   showTables(container, btn) {
     try {
-      const tables = (0, import_alasql4.default)("SHOW TABLES");
+      const activeDB = this.activeDatabase;
+      const tables = (0, import_alasql6.default)(`SHOW TABLES FROM ${activeDB}`);
       if (tables.length === 0) {
         container.empty();
         const infoState = container.createDiv({ cls: "mysql-info-state" });
-        const iconWrapper = infoState.createDiv({ cls: "mysql-info-icon" });
-        (0, import_obsidian7.setIcon)(iconWrapper, "info");
-        infoState.createEl("p", { text: "No tables found in database", cls: "mysql-info-text" });
-        new import_obsidian7.Notice("No tables found");
+        const content = infoState.createDiv();
+        content.style.display = "flex";
+        content.style.flexDirection = "column";
+        content.style.alignItems = "center";
+        content.style.textAlign = "center";
+        const titleRow = content.createDiv();
+        titleRow.style.display = "flex";
+        titleRow.style.alignItems = "center";
+        titleRow.style.justifyContent = "center";
+        titleRow.style.gap = "8px";
+        const iconWrapper = titleRow.createDiv({ cls: "mysql-info-icon" });
+        (0, import_obsidian9.setIcon)(iconWrapper, "info");
+        const msg = titleRow.createEl("p", { cls: "mysql-info-text" });
+        msg.setText("No tables found in database ");
+        const span = msg.createSpan({ text: activeDB });
+        span.style.color = "var(--mysql-accent-purple)";
+        span.style.fontWeight = "bold";
+        const help = content.createEl("p", {
+          text: "To switch databases, run 'USE <database>' or "
+        });
+        help.style.fontSize = "0.75em";
+        help.style.color = "var(--text-muted)";
+        help.style.marginTop = "4px";
+        help.style.marginBottom = "0";
+        const settingsBtn = help.createEl("a", {
+          text: "Open Settings"
+        });
+        settingsBtn.style.color = "var(--mysql-accent-purple)";
+        settingsBtn.style.cursor = "pointer";
+        settingsBtn.style.textDecoration = "underline";
+        settingsBtn.onclick = () => {
+          this.app.setting.open();
+          this.app.setting.openTabById(this.manifest.id);
+        };
+        new import_obsidian9.Notice("No tables found");
         return;
       }
       container.empty();
       const explorerHeader = container.createDiv({ cls: "mysql-result-header" });
       const headerLeft = explorerHeader.createDiv({ cls: "mysql-header-left" });
-      (0, import_obsidian7.setIcon)(headerLeft, "database");
+      (0, import_obsidian9.setIcon)(headerLeft, "database");
       headerLeft.createSpan({ text: "Active Tables", cls: "mysql-result-label" });
       const grid = container.createEl("div", { cls: "mysql-table-grid" });
       tables.forEach((t) => {
         const card = grid.createEl("div", { cls: "mysql-table-card" });
         const iconSlot = card.createDiv({ cls: "mysql-card-icon" });
-        (0, import_obsidian7.setIcon)(iconSlot, "table");
+        (0, import_obsidian9.setIcon)(iconSlot, "table");
         card.createEl("strong", { text: t.tableid });
         card.onclick = async () => {
           container.empty();
@@ -65077,7 +66516,7 @@ var MySQLPlugin = class extends import_obsidian7.Plugin {
             cls: "mysql-action-btn",
             attr: { title: "Go back to tables list" }
           });
-          (0, import_obsidian7.setIcon)(back, "arrow-left");
+          (0, import_obsidian9.setIcon)(back, "arrow-left");
           back.createSpan({ text: "Back" });
           back.onclick = (e) => {
             e.stopPropagation();
@@ -65087,16 +66526,16 @@ var MySQLPlugin = class extends import_obsidian7.Plugin {
           const exportBtn = right.createEl("button", {
             cls: "mysql-action-btn"
           });
-          (0, import_obsidian7.setIcon)(exportBtn, "file-output");
+          (0, import_obsidian9.setIcon)(exportBtn, "file-output");
           exportBtn.createSpan({ text: "Export CSV" });
           exportBtn.onclick = () => this.csvManager.exportTable(t.tableid);
           const dataContainer = container.createDiv({ cls: "mysql-table-detail-content" });
-          const result = await QueryExecutor.execute(`SELECT * FROM ${t.tableid}`);
+          const result = await QueryExecutor.execute(`SELECT * FROM ${activeDB}.${t.tableid}`);
           ResultRenderer.render(result, dataContainer, this.app, this, t.tableid);
         };
       });
     } catch (error) {
-      new import_obsidian7.Notice("Error showing tables: " + error.message);
+      new import_obsidian9.Notice("Error showing tables: " + error.message);
     }
   }
   async resetDatabase(container) {
@@ -65111,14 +66550,14 @@ var MySQLPlugin = class extends import_obsidian7.Plugin {
             container.empty();
             const successState = container.createDiv({ cls: "mysql-success-state" });
             const iconWrapper = successState.createDiv({ cls: "mysql-success-icon" });
-            (0, import_obsidian7.setIcon)(iconWrapper, "check-circle");
+            (0, import_obsidian9.setIcon)(iconWrapper, "check-circle");
             successState.createEl("p", {
               text: "All databases reset successfully",
               cls: "mysql-success"
             });
-            new import_obsidian7.Notice("Database reset completed");
+            new import_obsidian9.Notice("Database reset completed");
           } catch (error) {
-            new import_obsidian7.Notice("Reset failed: " + error.message);
+            new import_obsidian9.Notice("Reset failed: " + error.message);
           }
         }
       },

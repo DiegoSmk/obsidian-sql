@@ -5,6 +5,8 @@ export interface MySQLSettings {
     autoSaveDelay: number;
     safeMode: boolean;
     snapshotRowLimit: number;
+    themeColor: string;
+    useObsidianAccent: boolean;
 }
 
 export interface DatabaseSnapshot {
@@ -17,6 +19,14 @@ export interface DatabaseSnapshot {
 export interface DatabaseContent {
     tables: Record<string, any[]>;
     schema: Record<string, string>;
+    lastUpdated?: number;
+}
+
+export interface DatabaseStats {
+    tables: number;
+    rows: number;
+    sizeBytes: number;
+    lastUpdated: number;
 }
 
 export type Row = Record<string, any>;
@@ -34,6 +44,7 @@ export interface QueryResult {
     data?: ResultSet[];
     error?: string;
     executionTime?: number;
+    activeDatabase?: string;
 }
 
 import { Plugin } from 'obsidian';

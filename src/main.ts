@@ -28,9 +28,10 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     private debouncedSave: Debouncer<[], Promise<void>>;
 
     async onload() {
-        console.log('Loading MySQL Runner Plugin');
-
         await this.loadSettings();
+
+        // Apply theme
+        this.applyTheme();
 
         // Initialize alasql
         alasql.options.autocommit = true;
@@ -95,7 +96,6 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     }
 
     async onunload() {
-        console.log('Unloading MySQL Runner Plugin');
         if (this.settings.autoSave) {
             await this.dbManager.save();
         }
@@ -115,6 +115,35 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 true
             );
         }
+
+        this.applyTheme();
+    }
+
+    applyTheme() {
+        const settings = this.settings;
+        const color = settings.useObsidianAccent ? 'var(--interactive-accent)' : settings.themeColor;
+
+        document.body.style.setProperty('--mysql-accent-purple', color);
+        document.body.style.setProperty('--mysql-accent', color); // For consistency
+
+        if (settings.useObsidianAccent) {
+            document.body.style.setProperty('--mysql-accent-rgb', 'var(--interactive-accent-rgb)');
+        } else {
+            // We need to calc rgb for custom color. 
+            // Duplicate hexToRgb logic or make it static utility? 
+            // It's in MySQLSettingTab currently. 
+            // I'll implement a simple hexToRgb here or assume standard opaque for now if simpler, 
+            // but transparency is used in 'rgba(var(--mysql-accent-rgb), 0.1)'.
+            // So I must provide it.
+            const hex = settings.themeColor;
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            if (result) {
+                const r = parseInt(result[1], 16);
+                const g = parseInt(result[2], 16);
+                const b = parseInt(result[3], 16);
+                document.body.style.setProperty('--mysql-accent-rgb', `${r}, ${g}, ${b}`);
+            }
+        }
     }
 
     // ========================================================================
@@ -126,11 +155,117 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         el.addClass("mysql-block-parent");
         const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
 
+        // Collapsed Preview (Bar with first line of code)
+        // Parse Title & State from First Line
+        const rawFirstLine = source.split('\n')[0].trim();
+
+        let displayTitle = "MySQL Query";
+        let icon = "database";
+        let titleColorClass = "";
+        let startCollapsed = false;
+
+        // Check if first line is a comment
+        const isComment = /^(--|#|\/\*)/.test(rawFirstLine);
+
+        if (isComment) {
+            // Remove SQL comment syntax
+            let cleanLine = rawFirstLine.replace(/^(--\s?|#\s?|\/\*\s?)/, '').replace(/\s?\*\/$/, '').trim();
+
+            // Parse Markers
+            if (cleanLine.includes("@")) {
+                startCollapsed = true;
+                cleanLine = cleanLine.replace("@", "").trim();
+            }
+
+            if (cleanLine.startsWith("!")) {
+                icon = "alert-triangle";
+                titleColorClass = "mysql-title-alert";
+                workbench.addClass("mysql-mode-alert");
+                cleanLine = cleanLine.substring(1).trim();
+            } else if (cleanLine.startsWith("?")) {
+                icon = "help-circle";
+                titleColorClass = "mysql-title-help";
+                workbench.addClass("mysql-mode-help");
+                cleanLine = cleanLine.substring(1).trim();
+            } else if (cleanLine.startsWith("*")) {
+                icon = "star";
+                titleColorClass = "mysql-title-star";
+                workbench.addClass("mysql-mode-star");
+                cleanLine = cleanLine.substring(1).trim();
+            }
+
+            if (cleanLine.length > 0) {
+                displayTitle = cleanLine;
+            }
+        }
+
+        const previewBar = workbench.createEl("div", { cls: "mysql-collapsed-preview" });
+        // Initial visibility set below based on startCollapsed
+
+        const previewToggle = previewBar.createEl("div", { cls: "mysql-preview-toggle" });
+        setIcon(previewToggle, "chevron-right");
+
+        const previewContent = previewBar.createEl("div", { cls: "mysql-preview-content" });
+        const iconSpan = previewContent.createSpan({ cls: "mysql-preview-icon" });
+        if (titleColorClass) iconSpan.addClass(titleColorClass);
+        setIcon(iconSpan, icon);
+
+        const textSpan = previewContent.createSpan({ cls: "mysql-preview-text", text: displayTitle });
+        // Only apply color to text if it's not the help style (as requested)
+        if (titleColorClass && titleColorClass !== "mysql-title-help") {
+            textSpan.addClass(titleColorClass);
+        }
+
+        // Expand Action
+        previewBar.onclick = () => {
+            workbench.removeClass("is-collapsed");
+            body.style.display = "block";
+            previewBar.style.display = "none";
+        };
+
+        // Body Structure
+        const body = workbench.createEl("div", { cls: "mysql-workbench-body" });
+
+        // Collapse Button (Floating in expanded state)
+        const collapseBtn = body.createEl("button", {
+            cls: "mysql-collapse-btn",
+            attr: { "aria-label": "Collapse" }
+        });
+        setIcon(collapseBtn, "chevron-up");
+        collapseBtn.onclick = (e) => {
+            e.stopPropagation();
+            workbench.addClass("is-collapsed");
+            body.style.display = "none";
+            previewBar.style.display = "flex";
+        };
+
+        // Initialize State based on marker
+        if (startCollapsed) {
+            workbench.addClass("is-collapsed");
+            previewBar.style.display = "flex";
+            body.style.display = "none";
+        } else {
+            previewBar.style.display = "none";
+            // body is block by default
+        }
+
+        // Copy Code Button (Inside body so it hides when collapsed)
+        const copyCodeBtn = body.createEl("button", {
+            cls: "mysql-copy-code-btn",
+            attr: { "aria-label": "Copy Code" }
+        });
+        setIcon(copyCodeBtn, "copy");
+        copyCodeBtn.onclick = async (e) => {
+            e.stopPropagation(); // Prevent header toggle if clicked (though it's in body, safety)
+            await navigator.clipboard.writeText(source);
+            new Notice("SQL code copied!");
+        };
+
         // Safe Code Highlighting
-        const codeBlock = workbench.createEl("pre", { cls: "mysql-source-code" });
+        const codeBlock = body.createEl("pre", { cls: "mysql-source-code" });
         codeBlock.innerHTML = `<code class="language-sql">${this.safeHighlight(source)}</code>`;
 
-        const controls = workbench.createEl("div", { cls: "mysql-controls" });
+        const controls = body.createEl("div", { cls: "mysql-controls" });
 
         // Run Button
         const runBtn = controls.createEl("button", { cls: "mysql-btn mysql-btn-run" });
@@ -155,10 +290,10 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         setIcon(resetBtn, "trash-2");
         resetBtn.createSpan({ text: "Reset" });
 
-        const resultContainer = workbench.createEl("div", { cls: "mysql-result-container" });
+        const resultContainer = body.createEl("div", { cls: "mysql-result-container" });
 
         // VS Code Inspired Footer
-        const footer = new WorkbenchFooter(workbench);
+        const footer = new WorkbenchFooter(body, this.app);
 
         importBtn.onclick = () => {
             new CSVSelectionModal(this.app, async (file) => {
@@ -318,9 +453,10 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             // Render Result
             ResultRenderer.render(result, container, this.app, this);
 
-            // Sync active database
-            // @ts-ignore
-            this.activeDatabase = alasql.useid;
+            // Sync active database from execution result
+            if (result.activeDatabase) {
+                this.activeDatabase = result.activeDatabase;
+            }
 
             // Update Footer Time
             if (footer && result.executionTime !== undefined) {
@@ -376,15 +512,58 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
     private showTables(container: HTMLElement, btn: HTMLButtonElement): void {
         try {
-            // Use alasql directly or via execute
-            const tables = alasql("SHOW TABLES") as any[];
+            // Explicitly show from active database to avoid context issues
+            const activeDB = this.activeDatabase;
+            const tables = alasql(`SHOW TABLES FROM ${activeDB}`) as any[];
 
             if (tables.length === 0) {
                 container.empty();
                 const infoState = container.createDiv({ cls: "mysql-info-state" });
-                const iconWrapper = infoState.createDiv({ cls: "mysql-info-icon" });
+
+                const content = infoState.createDiv();
+                content.style.display = "flex";
+                content.style.flexDirection = "column";
+                content.style.alignItems = "center";
+                content.style.textAlign = "center";
+
+                // Title Row with Icon
+                const titleRow = content.createDiv();
+                titleRow.style.display = "flex";
+                titleRow.style.alignItems = "center";
+                titleRow.style.justifyContent = "center";
+                titleRow.style.gap = "8px";
+
+                const iconWrapper = titleRow.createDiv({ cls: "mysql-info-icon" });
                 setIcon(iconWrapper, "info");
-                infoState.createEl("p", { text: "No tables found in database", cls: "mysql-info-text" });
+
+                const msg = titleRow.createEl("p", { cls: "mysql-info-text" });
+                msg.setText("No tables found in database ");
+                const span = msg.createSpan({ text: activeDB });
+                span.style.color = "var(--mysql-accent-purple)";
+                span.style.fontWeight = "bold";
+
+                const help = content.createEl("p", {
+                    text: "To switch databases, run 'USE <database>' or "
+                });
+                help.style.fontSize = "0.75em";
+                help.style.color = "var(--text-muted)";
+                help.style.marginTop = "4px";
+                help.style.marginBottom = "0";
+
+                const settingsBtn = help.createEl("a", {
+                    text: "Open Settings"
+                });
+                settingsBtn.style.color = "var(--mysql-accent-purple)";
+                settingsBtn.style.cursor = "pointer";
+                settingsBtn.style.textDecoration = "underline";
+
+                settingsBtn.onclick = () => {
+                    // @ts-ignore
+                    this.app.setting.open();
+                    // @ts-ignore
+                    this.app.setting.openTabById(this.manifest.id);
+                };
+
                 new Notice("No tables found");
                 return;
             }
@@ -432,7 +611,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
                     // Dedicated container for results so RenderRenderer doesn't empty our header
                     const dataContainer = container.createDiv({ cls: "mysql-table-detail-content" });
-                    const result = await QueryExecutor.execute(`SELECT * FROM ${t.tableid}`);
+                    const result = await QueryExecutor.execute(`SELECT * FROM ${activeDB}.${t.tableid}`);
                     ResultRenderer.render(result, dataContainer, this.app, this, t.tableid);
                 };
             });

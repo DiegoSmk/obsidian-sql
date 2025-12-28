@@ -1,0 +1,29 @@
+name: AI Code Review
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  review:
+    runs-on: docker
+    container:
+      # Esta imagem é ótima pois já tem Python e Node (necessário para o checkout)
+      image: nikolaik/python-nodejs:python3.10-nodejs18
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements.txt
+
+      - name: Gemini Review
+        env:
+          GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # Ajustado para o padrão do Gitea
+          GITEA_TOKEN: ${{ gitea.token }} 
+          GITEA_SERVER_URL: ${{ gitea.server_url }}
+          GITEA_REPO: ${{ gitea.repository }}
+          GITEA_PR_NUMBER: ${{ gitea.event.pull_request.number }}
+        run: python scripts/ai_review.py

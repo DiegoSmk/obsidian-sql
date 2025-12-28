@@ -53,8 +53,7 @@ export class CSVManager {
 
                 await alasql.promise(`INSERT INTO ${tableName} SELECT * FROM ?`, [mappedData]);
 
-                // Optional: Update progress (console for now)
-                console.log(`Imported batch ${Math.floor(i / BATCH_SIZE) + 1}/${totalBatches}`);
+                // Optional: Update progress silently
             }
 
             new Notice(`Successfully imported ${dataLines.length} rows into table '${tableName}'`);

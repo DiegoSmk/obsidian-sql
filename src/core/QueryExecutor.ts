@@ -35,16 +35,120 @@ export class QueryExecutor {
         });
     }
 
-    static async execute(query: string, params?: any[], options: { safeMode?: boolean, signal?: AbortSignal } = {}): Promise<QueryResult> {
+    static async execute(query: string, params?: any[], options: { safeMode?: boolean, signal?: AbortSignal, activeDatabase?: string } = {}): Promise<QueryResult> {
         const monitor = new PerformanceMonitor();
         monitor.start();
 
         try {
             let cleanQuery = SQLSanitizer.clean(query);
 
-            // 2.1 Multi-query LIMIT Injection (Safe Version)
-            // We only inject LIMIT if it's a clear single-statement SELECT to avoid breaking complex scripts
+            // Split queries by semicolon for individual execution
+            const statements = cleanQuery
+                .split(';')
+                .map(s => s.trim())
+                .filter(s => s.length > 0);
+
+            // Track the active database throughout execution - WE MANAGE THIS, NOT ALASQL
+            let currentDB = options.activeDatabase || 'dbo';
+
+            // If multiple statements, execute sequentially with OUR context management
+            if (statements.length > 1) {
+                const results: any[] = [];
+
+                for (let i = 0; i < statements.length; i++) {
+                    let stmt = statements[i];
+                    const upperStmt = stmt.toUpperCase().trim();
+
+                    // Security checks (always ON)
+                    const SECURITY_BLOCKED = [
+                        /\bDROP\s+DATABASE\b/i,
+                        /\bSHUTDOWN\b/i,
+                        /\bALTER\s+SYSTEM\b/i
+                    ];
+
+                    for (const pattern of SECURITY_BLOCKED) {
+                        if (pattern.test(stmt)) {
+                            throw new Error(`Blocked SQL command: ${pattern.source.replace('\\s+', ' ')}`);
+                        }
+                    }
+
+                    // Safe Mode checks
+                    if (options.safeMode) {
+                        const BLOCKED_IN_SAFE_MODE = [
+                            /\bDROP\s+TABLE\b/i,
+                            /\bTRUNCATE\s+TABLE\b/i,
+                            /\bTRUNCATE\b/i,
+                            /\bALTER\s+TABLE\b/i
+                        ];
+
+                        for (const pattern of BLOCKED_IN_SAFE_MODE) {
+                            if (pattern.test(stmt)) {
+                                throw new Error(`Safe Mode Block: Structural destruction (${pattern.source.replace('\\s+', ' ')}) is disabled.`);
+                            }
+                        }
+                    }
+
+                    // CRITICAL: Intercept USE statements - DO NOT pass to AlaSQL
+                    const useMatch = stmt.match(/^\s*USE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$/i);
+                    if (useMatch) {
+                        const newDB = useMatch[1];
+
+                        // Verify database exists
+                        if (!alasql.databases[newDB]) {
+                            throw new Error(`Database '${newDB}' does not exist`);
+                        }
+
+                        currentDB = newDB;
+                        // Return a success message instead of executing USE
+                        results.push(1);
+                        continue;
+                    }
+
+                    // AUTO-PREFIX table names with current database if not already prefixed
+                    stmt = this.prefixTablesWithDatabase(stmt, currentDB);
+
+                    const result = await this.executeWithTimeout(stmt, params, 30000, options.signal);
+                    results.push(result);
+
+                    // Debug: Check which tables exist after execution
+                    if (upperStmt.startsWith('CREATE TABLE') || upperStmt.startsWith('DROP TABLE')) {
+                        // Database state tracking removed for cleaner logs
+                    }
+                }
+
+                const normalizedData = this.normalizeResult(results);
+                Logger.info(`Batch query executed (${statements.length} statements)`, {
+                    executionTime: monitor.end(),
+                    finalDatabase: currentDB
+                });
+
+                return {
+                    success: true,
+                    data: normalizedData,
+                    executionTime: monitor.end(),
+                    activeDatabase: currentDB
+                };
+            }
+
+            // Single statement execution
             const trimmed = cleanQuery.trim().replace(/;$/, '');
+
+            // Check for single USE statement
+            const useMatch = trimmed.match(/^\s*USE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$/i);
+            if (useMatch) {
+                const newDB = useMatch[1];
+                if (!alasql.databases[newDB]) {
+                    throw new Error(`Database '${newDB}' does not exist`);
+                }
+                // We don't actually execute USE, we just track it
+                return {
+                    success: true,
+                    data: [{ type: 'message', data: null, message: `Database changed to '${newDB}'` }],
+                    executionTime: monitor.end(),
+                    activeDatabase: newDB
+                };
+            }
+
             const looksLikeSingleSelect =
                 trimmed.toUpperCase().startsWith('SELECT') &&
                 !trimmed.includes(';') &&
@@ -54,11 +158,11 @@ export class QueryExecutor {
                 cleanQuery = trimmed + ' LIMIT 1000;';
             }
 
-            const upperQuery = cleanQuery.toUpperCase();
+            // Auto-prefix if needed
+            cleanQuery = this.prefixTablesWithDatabase(cleanQuery, currentDB);
 
             // Safe Mode Checks
             if (options.safeMode) {
-                // 2.2 Robust SafeMode Syntax (detecting DROP TABLE, etc with variable whitespace)
                 const BLOCKED_IN_SAFE_MODE = [
                     /\bDROP\s+TABLE\b/i,
                     /\bTRUNCATE\s+TABLE\b/i,
@@ -94,7 +198,8 @@ export class QueryExecutor {
             return {
                 success: true,
                 data: normalizedData,
-                executionTime: monitor.end()
+                executionTime: monitor.end(),
+                activeDatabase: currentDB
             };
         } catch (error) {
             Logger.error("Query execution failed", error);
@@ -105,12 +210,73 @@ export class QueryExecutor {
             };
         }
     }
+
+    /**
+     * Automatically prefix table names with database name to avoid AlaSQL context bugs
+     */
+    private static prefixTablesWithDatabase(sql: string, database: string): string {
+        if (!database || database === 'alasql') return sql;
+
+        // CREATE TABLE table_name -> CREATE TABLE db.table_name
+        sql = sql.replace(
+            /CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+            (match, ifNotExists, tableName) => {
+                return `CREATE TABLE ${ifNotExists || ''}${database}.${tableName}`;
+            }
+        );
+
+        // INSERT INTO table_name -> INSERT INTO db.table_name
+        sql = sql.replace(
+            /INSERT\s+INTO\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+            (match, tableName) => {
+                return `INSERT INTO ${database}.${tableName}`;
+            }
+        );
+
+        // UPDATE table_name -> UPDATE db.table_name
+        sql = sql.replace(
+            /UPDATE\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)\s+SET/gi,
+            (match, tableName) => {
+                return `UPDATE ${database}.${tableName} SET`;
+            }
+        );
+
+        // DELETE FROM table_name -> DELETE FROM db.table_name
+        sql = sql.replace(
+            /DELETE\s+FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+            (match, tableName) => {
+                return `DELETE FROM ${database}.${tableName}`;
+            }
+        );
+
+        // SELECT ... FROM table_name -> SELECT ... FROM db.table_name
+        sql = sql.replace(
+            /FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+            (match, tableName) => {
+                // Don't prefix if it's a subquery or function
+                if (['SELECT', 'VALUES', '('].some(kw => tableName.toUpperCase().includes(kw))) {
+                    return match;
+                }
+                return `FROM ${database}.${tableName}`;
+            }
+        );
+
+        // JOIN table_name -> JOIN db.table_name
+        sql = sql.replace(
+            /JOIN\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+            (match, tableName) => {
+                return `JOIN ${database}.${tableName}`;
+            }
+        );
+
+        return sql;
+    }
+
     private static normalizeResult(raw: any): ResultSet[] {
         if (raw === undefined || raw === null) return [];
 
-        // Detect batch execution (AlaSQL returns [1, 1, [...] ] for multiple statements)
-        if (Array.isArray(raw) && raw.some(r => Array.isArray(r))) {
-            // We NO LONGER filter out numbers. We want to see how many rows were affected by each step.
+        // Detect batch execution
+        if (Array.isArray(raw) && raw.some(r => Array.isArray(r) || typeof r === 'number')) {
             return raw.map(res => this.createResultSet(res));
         }
 
@@ -119,7 +285,7 @@ export class QueryExecutor {
 
     private static createResultSet(res: any): ResultSet {
         if (res === undefined || res === null) {
-            return { type: 'message', data: null, message: 'Command executed' };
+            return { type: 'message', data: null, message: 'Command executed successfully' };
         }
 
         if (Array.isArray(res)) {
@@ -141,8 +307,6 @@ export class QueryExecutor {
         }
 
         if (typeof res === 'number') {
-            // If it's a number, it's almost always a DML status (rows affected)
-            // or a scalar value from a function.
             return {
                 type: 'message',
                 data: res,

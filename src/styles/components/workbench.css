@@ -5,7 +5,7 @@ div.mysql-workbench-container {
     backdrop-filter: var(--mysql-workbench-blur, none);
     -webkit-backdrop-filter: var(--mysql-workbench-blur, none);
     overflow: hidden !important;
-    margin: 1.5em 0;
+    margin: 0 0 1.5em 0;
     box-shadow: var(--mysql-shadow-md);
     transition: all var(--mysql-transition-normal);
     will-change: box-shadow, border-color;
@@ -15,6 +15,10 @@ div.mysql-workbench-container {
 div.mysql-workbench-container:hover {
     box-shadow: var(--mysql-shadow-lg);
     border: 1px solid var(--mysql-accent-purple) !important;
+}
+
+div.mysql-workbench-container.mysql-mode-alert:hover {
+    border-color: var(--text-error) !important;
 }
 
 .mysql-source-code {
@@ -48,4 +52,86 @@ div.mysql-workbench-container:hover {
 
 .cm-lang-mysql:hover {
     box-shadow: none !important;
+}
+
+/* Collapsible Workbench Styles */
+/* Header styles removed as we use a dedicated preview bar for collapsed state now (in controls.css) */
+
+/* Collapsed State */
+.mysql-workbench-body {
+    position: relative;
+    /* Ensure absolute children (copy btn) position relative to body */
+}
+
+.mysql-workbench-container.is-collapsed .mysql-workbench-body {
+    display: none;
+}
+
+
+
+.mysql-workbench-container.is-collapsed {
+
+    box-shadow: var(--mysql-shadow-sm);
+}
+
+/* Help Modal Styles */
+.mysql-help-modal {
+    padding: 24px;
+}
+
+.mysql-help-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.mysql-help-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 16px;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    transition: all var(--mysql-transition-fast);
+}
+
+.mysql-help-item:hover {
+    border-color: var(--mysql-accent-purple);
+    transform: translateY(-2px);
+    box-shadow: var(--mysql-shadow-sm);
+}
+
+.mysql-help-icon {
+    color: var(--mysql-accent-purple);
+    background-color: var(--background-primary);
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mysql-help-content h3 {
+    margin: 0 0 8px 0;
+    font-size: 1rem;
+    color: var(--text-normal);
+}
+
+.mysql-help-desc {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+
+.mysql-help-example {
+    display: inline-block;
+    padding: 4px 8px;
+    background-color: var(--background-primary);
+    border-radius: 4px;
+    font-family: var(--font-monospace);
+    font-size: 0.8em;
+    color: var(--text-accent);
 }
