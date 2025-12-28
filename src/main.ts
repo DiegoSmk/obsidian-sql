@@ -413,9 +413,51 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             if (tables.length === 0) {
                 container.empty();
                 const infoState = container.createDiv({ cls: "mysql-info-state" });
-                const iconWrapper = infoState.createDiv({ cls: "mysql-info-icon" });
+
+                const content = infoState.createDiv();
+                content.style.display = "flex";
+                content.style.flexDirection = "column";
+                content.style.alignItems = "center";
+                content.style.textAlign = "center";
+
+                // Title Row with Icon
+                const titleRow = content.createDiv();
+                titleRow.style.display = "flex";
+                titleRow.style.alignItems = "center";
+                titleRow.style.justifyContent = "center";
+                titleRow.style.gap = "8px";
+
+                const iconWrapper = titleRow.createDiv({ cls: "mysql-info-icon" });
                 setIcon(iconWrapper, "info");
-                infoState.createEl("p", { text: "No tables found in database", cls: "mysql-info-text" });
+
+                const msg = titleRow.createEl("p", { cls: "mysql-info-text" });
+                msg.setText("No tables found in database ");
+                const span = msg.createSpan({ text: activeDB });
+                span.style.color = "var(--mysql-accent-purple)";
+                span.style.fontWeight = "bold";
+
+                const help = content.createEl("p", {
+                    text: "To switch databases, run 'USE <database>' or "
+                });
+                help.style.fontSize = "0.75em";
+                help.style.color = "var(--text-muted)";
+                help.style.marginTop = "4px";
+                help.style.marginBottom = "0";
+
+                const settingsBtn = help.createEl("a", {
+                    text: "Open Settings"
+                });
+                settingsBtn.style.color = "var(--mysql-accent-purple)";
+                settingsBtn.style.cursor = "pointer";
+                settingsBtn.style.textDecoration = "underline";
+
+                settingsBtn.onclick = () => {
+                    // @ts-ignore
+                    this.app.setting.open();
+                    // @ts-ignore
+                    this.app.setting.openTabById(this.manifest.id);
+                };
+
                 new Notice("No tables found");
                 return;
             }
