@@ -36,6 +36,14 @@ jobs:
           payload = {'contents': [{'parts': [{'text': prompt}]}]}
           response = requests.post(api_url, json=payload).json()
           
+          if 'error' in response:
+              print(f"Error from Gemini API: {response}")
+              exit(1)
+              
+          if 'candidates' not in response:
+              print(f"Unexpected response format: {response}")
+              exit(1)
+
           review_text = response['candidates'][0]['content']['parts'][0]['text']
 
           # 3. Posta o comentário de volta no PR
