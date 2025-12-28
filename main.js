@@ -66022,15 +66022,7 @@ var WorkbenchFooter = class {
     this.footerEl = parent.createDiv({ cls: "mysql-footer" });
     const left = this.footerEl.createDiv({ cls: "mysql-footer-left" });
     const logo = left.createDiv({ cls: "mysql-footer-logo" });
-    logo.innerHTML = `<svg width="18" height="18" viewBox="0 0 184 184" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M92 104C127.346 104 156 95.046 156 84C156 72.954 127.346 64 92 64C56.6538 64 28 72.954 28 84C28 95.046 56.6538 104 92 104Z" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M28 84V156C28 167 57 176 92 176C127 176 156 167 156 156V80" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M28 120C28 131 57 140 92 140C127 140 156 131 156 120" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M28 156C28 167 57 176 92 176C127 176 156 167 156 156" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M92 44C127.346 44 156 35.0457 156 24C156 12.9543 127.346 4 92 4C56.6538 4 28 12.9543 28 24C28 35.0457 56.6538 44 92 44Z" fill="currentColor"/>
-<path d="M28 24V60C28 71 57 80 92 80C127 80 156 71 156 60V24" fill="currentColor"/>
-<path d="M92 80C127.346 80 156 71.046 156 60C156 48.9543 127.346 40 92 40C56.6538 40 28 48.9543 28 60C28 71.046 56.6538 80 92 80Z" fill="currentColor"/>
-</svg>`;
+    (0, import_obsidian7.setIcon)(logo, "circle");
     left.createSpan({ text: "SQL Notebook", cls: "mysql-app-name" });
     this.rightEl = this.footerEl.createDiv({ cls: "mysql-footer-right" });
     this.statusEl = this.rightEl.createDiv({ cls: "mysql-footer-status-container" });
@@ -66159,6 +66151,15 @@ var MySQLPlugin = class extends import_obsidian8.Plugin {
     el.empty();
     el.addClass("mysql-block-parent");
     const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
+    const copyCodeBtn = workbench.createEl("button", {
+      cls: "mysql-copy-code-btn",
+      attr: { "aria-label": "Copy Code" }
+    });
+    (0, import_obsidian8.setIcon)(copyCodeBtn, "copy");
+    copyCodeBtn.onclick = async () => {
+      await navigator.clipboard.writeText(source);
+      new import_obsidian8.Notice("SQL code copied!");
+    };
     const codeBlock = workbench.createEl("pre", { cls: "mysql-source-code" });
     codeBlock.innerHTML = `<code class="language-sql">${this.safeHighlight(source)}</code>`;
     const controls = workbench.createEl("div", { cls: "mysql-controls" });

@@ -155,6 +155,17 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         el.addClass("mysql-block-parent");
         const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
 
+        // Copy Code Button (Custom implementation to sit next to Edit button)
+        const copyCodeBtn = workbench.createEl("button", {
+            cls: "mysql-copy-code-btn",
+            attr: { "aria-label": "Copy Code" }
+        });
+        setIcon(copyCodeBtn, "copy");
+        copyCodeBtn.onclick = async () => {
+            await navigator.clipboard.writeText(source);
+            new Notice("SQL code copied!");
+        };
+
         // Safe Code Highlighting
         const codeBlock = workbench.createEl("pre", { cls: "mysql-source-code" });
         codeBlock.innerHTML = `<code class="language-sql">${this.safeHighlight(source)}</code>`;

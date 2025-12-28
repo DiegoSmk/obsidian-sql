@@ -5,7 +5,7 @@ div.mysql-workbench-container {
     backdrop-filter: var(--mysql-workbench-blur, none);
     -webkit-backdrop-filter: var(--mysql-workbench-blur, none);
     overflow: hidden !important;
-    margin: 1.5em 0;
+    margin: 0 0 1.5em 0;
     box-shadow: var(--mysql-shadow-md);
     transition: all var(--mysql-transition-normal);
     will-change: box-shadow, border-color;
