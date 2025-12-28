@@ -31,6 +31,34 @@ def main():
             print('Diff vazio. Nada para revisar.')
             sys.exit(0)
 
+        # --- FILTRAGEM ---
+        # Filtra o diff para não enviar arquivos gerados/minificados (main.js, styles.css)
+        ignored_files = ['main.js', 'styles.css', 'main.js.map']
+        filtered_diff_parts = []
+        
+        # O diff vem com blocos começando por "diff --git"
+        chunks = diff_data.split('diff --git ')
+        for chunk in chunks:
+            if not chunk.strip():
+                continue
+            
+            # Reconstroi o início do chunk para verificar o nome do arquivo
+            is_ignored = False
+            for ignored in ignored_files:
+                if f'a/{ignored}' in chunk or f'b/{ignored}' in chunk:
+                    is_ignored = True
+                    break
+            
+            if not is_ignored:
+                filtered_diff_parts.append('diff --git ' + chunk)
+        
+        diff_data = "\n".join(filtered_diff_parts)
+        
+        if not diff_data.strip():
+            print('Todos os arquivos foram filtrados. Nada para revisar.')
+            sys.exit(0)
+        # -----------------
+
         # 3. Preparação para o Gemini (v1 estável)
         # Usamos gemini-2.5-flash conforme solicitado
         api_url = f'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={gemini_key}'
