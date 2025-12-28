@@ -32,11 +32,11 @@ def main():
             sys.exit(0)
 
         # 3. Preparação para o Gemini (v1 estável)
-        # Usamos gemini-2.0-flash conforme disponível no ambiente
-        api_url = f'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent?key={gemini_key}'
+        # Usamos gemini-2.5-flash conforme solicitado
+        api_url = f'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={gemini_key}'
         
-        # O 1.5 Flash suporta até 1 milhão de tokens
-        prompt_text = f'Atue como um desenvolvedor Senior. Revise o seguinte código (Diff). Aponte bugs, falhas de segurança e melhorias. Responda em Português de forma direta:\n\n{diff_data[:200000]}'
+        # Reduzindo para 100k para ser mais conservador com a quota
+        prompt_text = f'Atue como um desenvolvedor Senior. Revise o seguinte código (Diff). Aponte bugs, falhas de segurança e melhorias. Responda em Português de forma direta:\n\n{diff_data[:100000]}'
         
         payload = {
             'contents': [{'parts': [{'text': prompt_text}]}],
