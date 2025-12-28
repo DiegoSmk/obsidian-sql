@@ -139,7 +139,7 @@
     position: relative;
 }
 
-.mysql-block-parent .edit-block-button {
+.block-language-mysql .edit-block-button {
     background-color: var(--background-secondary) !important;
     border: 1px solid var(--background-modifier-border) !important;
     color: var(--text-muted) !important;
@@ -158,11 +158,11 @@
     z-index: 10 !important;
 }
 
-.mysql-block-parent:hover .edit-block-button {
+.block-language-mysql:hover .edit-block-button {
     opacity: 1 !important;
 }
 
-.mysql-block-parent .edit-block-button:hover {
+.block-language-mysql .edit-block-button:hover {
     border: 1px solid var(--mysql-accent-purple) !important;
     color: var(--mysql-accent-purple) !important;
     background-color: var(--background-modifier-hover) !important;
