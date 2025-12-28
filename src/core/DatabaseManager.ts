@@ -264,6 +264,9 @@ export class DatabaseManager {
     }
 
     async renameDatabase(oldName: string, newName: string): Promise<void> {
+        if (oldName === 'alasql') throw new Error("Cannot rename system database 'alasql'");
+        if (oldName === 'dbo') throw new Error("Cannot rename default database 'dbo'");
+        if (this.plugin.activeDatabase === oldName) throw new Error("Cannot rename active database. Switch to another database first.");
         if (alasql.databases[newName]) throw new Error(`Database ${newName} already exists`);
 
         try {
@@ -355,6 +358,7 @@ export class DatabaseManager {
     async deleteDatabase(dbName: string): Promise<void> {
         if (!alasql.databases[dbName]) return;
         if (dbName === 'alasql') throw new Error("Cannot delete default alasql database");
+        if (dbName === 'dbo') throw new Error("Cannot delete default database 'dbo'");
         if (this.plugin.activeDatabase === dbName) throw new Error("Cannot delete active database. Switch first.");
 
         await alasql.promise(`DROP DATABASE ${dbName}`);

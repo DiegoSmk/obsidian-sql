@@ -10,8 +10,18 @@ export class WorkbenchFooter {
 
         // Left: Logo & App Name
         const left = this.footerEl.createDiv({ cls: "mysql-footer-left" });
+
         const logo = left.createDiv({ cls: "mysql-footer-logo" });
-        logo.innerHTML = `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 12C20 14.2091 16.4183 16 12 16C7.58172 16 4 14.2091 4 12M20 12V18C20 20.2091 16.4183 22 12 22C7.58172 22 4 20.2091 4 18V12M20 12C20 9.79086 16.4183 8 12 8C7.58172 8 4 9.79086 4 12M20 6C20 8.20914 16.4183 10 12 10C7.58172 10 4 8.20914 4 6C4 3.79086 7.58172 2 12 2C16.4183 2 20 3.79086 20 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        logo.innerHTML = `<svg width="18" height="18" viewBox="0 0 184 184" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M92 104C127.346 104 156 95.046 156 84C156 72.954 127.346 64 92 64C56.6538 64 28 72.954 28 84C28 95.046 56.6538 104 92 104Z" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M28 84V156C28 167 57 176 92 176C127 176 156 167 156 156V80" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M28 120C28 131 57 140 92 140C127 140 156 131 156 120" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M28 156C28 167 57 176 92 176C127 176 156 167 156 156" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M92 44C127.346 44 156 35.0457 156 24C156 12.9543 127.346 4 92 4C56.6538 4 28 12.9543 28 24C28 35.0457 56.6538 44 92 44Z" fill="currentColor"/>
+<path d="M28 24V60C28 71 57 80 92 80C127 80 156 71 156 60V24" fill="currentColor"/>
+<path d="M92 80C127.346 80 156 71.046 156 60C156 48.9543 127.346 40 92 40C56.6538 40 28 48.9543 28 60C28 71.046 56.6538 80 92 80Z" fill="currentColor"/>
+</svg>`;
+
         left.createSpan({ text: "SQL Notebook", cls: "mysql-app-name" });
 
         // Right side container

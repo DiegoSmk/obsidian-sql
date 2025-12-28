@@ -3,7 +3,7 @@ import { App, PluginSettingTab, Setting, Notice, setIcon, ButtonComponent } from
 import alasql from 'alasql';
 import { IMySQLPlugin } from './types';
 import { ConfirmationModal } from './ui/ConfirmationModal';
-import { DatabaseSwitcherModal, RenameDatabaseModal, DatabaseTablesModal, CreateDatabaseModal } from './ui/DatabaseModals';
+import { DatabaseSwitcherModal, RenameDatabaseModal, DatabaseTablesModal, CreateDatabaseModal, DuplicateDatabaseModal } from './ui/DatabaseModals';
 
 export class MySQLSettingTab extends PluginSettingTab {
     plugin: IMySQLPlugin;
@@ -13,32 +13,414 @@ export class MySQLSettingTab extends PluginSettingTab {
         this.plugin = plugin;
     }
 
+    private hexToRgb(hex: string): { r: number, g: number, b: number } | null {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? {
+            r: parseInt(result[1], 16),
+            g: parseInt(result[2], 16),
+            b: parseInt(result[3], 16)
+        } : null;
+    }
+
     display(): void {
         const { containerEl } = this;
         containerEl.empty();
         containerEl.addClass('mysql-settings-modal');
 
-        // --- Header with Logo ---
+        // Apply Theme Color
+        // Apply Theme Color
+        // Apply Theme Color
+        let themeColor = this.plugin.settings.themeColor || '#9d7cd8';
+        let rgb = this.hexToRgb(themeColor);
+
+        if (this.plugin.settings.useObsidianAccent) {
+            // Robustly resolve the accent color to RGB
+            const dummy = document.createElement('div');
+            dummy.style.color = 'var(--interactive-accent)';
+            dummy.style.display = 'none';
+            document.body.appendChild(dummy);
+            const computedColor = getComputedStyle(dummy).color; // returns "rgb(r, g, b)"
+            document.body.removeChild(dummy);
+
+            let rgbValues = '157, 124, 216'; // Fallback
+            if (computedColor && computedColor.includes('rgb')) {
+                const match = computedColor.match(/\d+,\s*\d+,\s*\d+/);
+                if (match) rgbValues = match[0];
+            }
+
+            containerEl.style.setProperty('--mysql-accent', `rgb(${rgbValues})`);
+            containerEl.style.setProperty('--mysql-accent-purple', `rgb(${rgbValues})`);
+            containerEl.style.setProperty('--interactive-accent', `rgb(${rgbValues})`);
+
+            containerEl.style.setProperty('--mysql-accent-rgb', rgbValues);
+            containerEl.style.setProperty('--interactive-accent-rgb', rgbValues);
+        } else {
+            // Use Custom Theme Color
+            containerEl.style.setProperty('--mysql-accent', themeColor);
+            containerEl.style.setProperty('--mysql-accent-purple', themeColor);
+            containerEl.style.setProperty('--interactive-accent', themeColor);
+
+            if (rgb) {
+                containerEl.style.setProperty('--mysql-accent-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+                containerEl.style.setProperty('--interactive-accent-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+            }
+        }
+
+        // --- Header (Title + Import/Create) ---
         const header = containerEl.createDiv({ cls: 'mysql-settings-header' });
-        header.style.display = 'flex';
-        header.style.alignItems = 'center';
-        header.style.marginBottom = '20px';
-        header.style.gap = '10px';
 
-        const logo = header.createDiv({ cls: 'mysql-logo' });
-        logo.innerHTML = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 12C20 14.2091 16.4183 16 12 16C7.58172 16 4 14.2091 4 12M20 12V18C20 20.2091 16.4183 22 12 22C7.58172 22 4 20.2091 4 18V12M20 12C20 9.79086 16.4183 8 12 8C7.58172 8 4 9.79086 4 12M20 6C20 8.20914 16.4183 10 12 10C7.58172 10 4 8.20914 4 6C4 3.79086 7.58172 2 12 2C16.4183 2 20 3.79086 20 6Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-        logo.style.color = 'var(--text-accent)';
+        const titleGroup = header.createDiv({ cls: 'mysql-settings-title-group' });
+        titleGroup.style.display = 'flex';
+        titleGroup.style.alignItems = 'center';
+        titleGroup.style.gap = '10px';
 
-        const title = header.createEl('h2', { text: 'SQL Notebook' });
-        title.style.margin = '0';
+        // Logo
+        const logo = titleGroup.createDiv({ cls: 'mysql-logo' });
+        // New SVG with currentColor applied
+        logo.innerHTML = `<svg width="40" height="40" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M128 136C163.346 136 192 127.046 192 116C192 104.954 163.346 96 128 96C92.6538 96 64 104.954 64 116C64 127.046 92.6538 136 128 136Z" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M64 116V188C64 199 93 208 128 208C163 208 192 199 192 188V112" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M64 152C64 163 93 172 128 172C163 172 192 163 192 152" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M64 188C64 199 93 208 128 208C163 208 192 199 192 188" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<mask id="mask0_101_3" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="-5" y="-5" width="266" height="266">
+<path d="M256 0H0V256H256V0Z" fill="white" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</mask>
+<g mask="url(#mask0_101_3)">
+<path d="M128 76C163.346 76 192 67.0457 192 56C192 44.9543 163.346 36 128 36C92.6538 36 64 44.9543 64 56C64 67.0457 92.6538 76 128 76Z" fill="currentColor"/>
+<path d="M64 56V92C64 103 93 112 128 112C163 112 192 103 192 92V56" fill="currentColor"/>
+<path d="M128 112C163.346 112 192 103.046 192 92C192 80.9543 163.346 72 128 72C92.6538 72 64 80.9543 64 92C64 103.046 92.6538 112 128 112Z" fill="currentColor"/>
+<path d="M135 91.5C135 77.5 135 63.5 135 59.5C135 53.5 141 53.5 145 59.5C151 67.5 157 79.5 165 85.5C171 91.5 177 91.5 177 85.5C177 77.5 177 65.5 177 59.5" stroke="var(--background-primary)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>`;
+        logo.style.color = 'var(--mysql-accent, var(--interactive-accent))';
 
-        // --- Database Management Section (Now at Top) ---
-        this.createSectionHeader(containerEl, 'Database Management', 'database');
-        this.renderActiveDatabaseCard(containerEl);
+        // Title & Welcome
+        const titleText = titleGroup.createDiv({ cls: 'mysql-title-text' });
+        titleText.createEl('h2', { text: 'SQL Notebook', attr: { style: 'margin: 0; line-height: 1.2;' } });
+        titleText.createEl('span', { text: 'Database Manager', attr: { style: 'font-size: 13px; color: var(--text-muted);' } });
 
-        // --- Appearance Section ---
+        // Welcome Section (Full width below header or integrated?)
+        // User asked for a "Welcome Section" in settings screen.
+        // Let's create it right below the header line.
+
+        const actions = header.createDiv({ cls: 'mysql-header-actions' });
+
+        // Import Button
+        const importBtnContainer = actions.createDiv({ cls: 'mysql-import-wrapper' });
+        const importInput = importBtnContainer.createEl('input', {
+            type: 'file',
+            attr: { accept: '.sql' }
+        });
+        importInput.style.display = 'none';
+        importInput.onchange = async (e: any) => {
+            const file = e.target.files[0];
+            if (file) {
+                await this.importDatabaseSQL(file);
+                importInput.value = '';
+            }
+        };
+
+        // Refresh Button
+        new ButtonComponent(actions)
+            .setButtonText("Atualizar")
+            .setIcon("refresh-cw")
+            .setTooltip("Atualizar Lista")
+            .onClick(() => {
+                this.display();
+                new Notice("Lista atualizada!");
+            });
+
+        new ButtonComponent(importBtnContainer)
+            .setButtonText("Importar")
+            .setIcon("import")
+            .setTooltip("Importar Database (.sql)")
+            .onClick(() => importInput.click());
+
+        // Create Button
+        new ButtonComponent(actions)
+            .setButtonText("Novo Database")
+            .setIcon("plus")
+            .setCta()
+            .onClick(() => this.openCreateModal());
+
+        // --- Welcome Section ---
+        const welcomeSection = containerEl.createDiv({ cls: 'mysql-welcome-section' });
+        welcomeSection.style.marginBottom = '20px';
+        welcomeSection.style.padding = '15px';
+        welcomeSection.style.background = 'rgba(var(--mysql-accent-rgb, var(--interactive-accent-rgb)), 0.1)';
+        welcomeSection.style.borderRadius = '8px';
+        welcomeSection.style.border = '1px solid var(--mysql-accent, var(--interactive-accent))';
+
+        welcomeSection.createEl('h3', { text: 'Bem vindo ao SQL Notebook!', attr: { style: 'margin: 0 0 5px 0; color: var(--mysql-accent, var(--interactive-accent));' } });
+        welcomeSection.createEl('p', { text: 'Gerencie seus bancos de dados locais, execute queries e visualize resultados diretamente no Obsidian.', attr: { style: 'margin: 0; font-size: 14px; color: var(--text-normal);' } });
+
+        // --- Search Section ---
+        const searchSection = containerEl.createDiv({ cls: 'mysql-search-section' });
+
+        // Wrapper for icon + input styling
+        const searchWrapper = searchSection.createDiv({ cls: 'mysql-search-wrapper' });
+        searchWrapper.style.display = 'flex';
+        searchWrapper.style.alignItems = 'center';
+        searchWrapper.style.background = 'var(--background-secondary)';
+        searchWrapper.style.border = '1px solid var(--background-modifier-border)';
+        searchWrapper.style.borderRadius = '6px';
+        searchWrapper.style.padding = '0 8px';
+
+        const searchIcon = searchWrapper.createDiv({ cls: 'mysql-search-icon' });
+        setIcon(searchIcon, 'search');
+        searchIcon.style.opacity = '0.5';
+        searchIcon.style.display = 'flex';
+        searchIcon.style.marginRight = '8px';
+
+        const searchInput = searchWrapper.createEl('input', {
+            type: 'text',
+            cls: 'mysql-search-box',
+            placeholder: 'Buscar databases...',
+            attr: { style: 'border: none; box-shadow: none; background: transparent; width: 100%; padding: 8px; outline: none;' }
+        });
+
+        // --- Grid Container ---
+        const grid = containerEl.createDiv({ cls: 'mysql-databases-grid' });
+
+        // Initial Render
+        this.renderDatabaseGrid(grid, '');
+
+        // Search Listener
+        searchInput.addEventListener('input', (e) => {
+            const term = (e.target as HTMLInputElement).value;
+            this.renderDatabaseGrid(grid, term);
+        });
+
+        // --- Info Section ---
+        const infoSection = containerEl.createDiv({ cls: 'mysql-info-board' });
+        infoSection.style.background = 'var(--background-secondary)';
+        infoSection.style.padding = '15px';
+        infoSection.style.borderRadius = '6px';
+        infoSection.style.marginTop = '20px';
+        infoSection.style.border = '1px solid var(--background-modifier-border)';
+
+        infoSection.createEl('h4', { text: 'Informações Importantes:', attr: { style: 'margin-top: 0; margin-bottom: 10px; color: var(--mysql-accent, var(--interactive-accent));' } });
+        const list = infoSection.createEl('ul', { attr: { style: 'margin: 0; padding-left: 20px; color: var(--text-muted); font-size: 13px;' } });
+
+        const li1 = list.createEl('li');
+        li1.innerHTML = 'Para excluir ou renomear um banco de dados <b>ativo</b>, mude para outro primeiro.';
+
+        const li2 = list.createEl('li');
+        li2.innerHTML = 'O banco de dados do sistema <b>"dbo"</b> não pode ser renomeado ou excluído.';
+
+        const li3 = list.createEl('li');
+        li3.innerHTML = '<b>Renomear</b> um banco de dados atualiza automaticamente referências internas.';
+
+
+        containerEl.createEl('hr', { attr: { style: 'margin: 40px 0; border: none; border-top: 1px solid var(--background-modifier-border);' } });
+
+        this.createSectionHeader(containerEl, 'General Settings', 'settings');
+        this.renderGeneralSettings(containerEl);
+
+        // --- Footer ---
+        const footer = containerEl.createDiv({ cls: 'mysql-settings-footer' });
+        footer.style.display = 'flex';
+        footer.style.flexDirection = 'column';
+        footer.style.alignItems = 'center';
+        footer.style.justifyContent = 'center';
+        footer.style.marginTop = '40px';
+        footer.style.paddingTop = '20px';
+        footer.style.borderTop = '1px solid var(--background-modifier-border)';
+        footer.style.opacity = '0.7';
+
+        const footerLogo = footer.createDiv({ cls: 'mysql-logo-footer' });
+        footerLogo.innerHTML = `<svg width="40" height="40" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M128 136C163.346 136 192 127.046 192 116C192 104.954 163.346 96 128 96C92.6538 96 64 104.954 64 116C64 127.046 92.6538 136 128 136Z" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M64 116V188C64 199 93 208 128 208C163 208 192 199 192 188V112" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M64 152C64 163 93 172 128 172C163 172 192 163 192 152" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M64 188C64 199 93 208 128 208C163 208 192 199 192 188" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+<mask id="mask0_101_3_footer" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="-5" y="-5" width="266" height="266">
+<path d="M256 0H0V256H256V0Z" fill="white" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</mask>
+<g mask="url(#mask0_101_3_footer)">
+<path d="M128 76C163.346 76 192 67.0457 192 56C192 44.9543 163.346 36 128 36C92.6538 36 64 44.9543 64 56C64 67.0457 92.6538 76 128 76Z" fill="currentColor"/>
+<path d="M64 56V92C64 103 93 112 128 112C163 112 192 103 192 92V56" fill="currentColor"/>
+<path d="M128 112C163.346 112 192 103.046 192 92C192 80.9543 163.346 72 128 72C92.6538 72 64 80.9543 64 92C64 103.046 92.6538 112 128 112Z" fill="currentColor"/>
+<path d="M135 91.5C135 77.5 135 63.5 135 59.5C135 53.5 141 53.5 145 59.5C151 67.5 157 79.5 165 85.5C171 91.5 177 91.5 177 85.5C177 77.5 177 65.5 177 59.5" stroke="var(--background-primary)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+</svg>`;
+        footerLogo.style.color = 'var(--mysql-accent, var(--interactive-accent))';
+        footerLogo.style.marginBottom = '10px';
+
+        footer.createEl('h3', { text: 'SQL Notebook', attr: { style: 'margin: 0; font-size: 16px; color: var(--text-normal);' } });
+        footer.createEl('span', { text: 'Diego Pena', attr: { style: 'font-size: 12px; color: var(--text-muted);' } });
+    }
+
+    private renderDatabaseGrid(container: HTMLElement, searchTerm: string, page: number = 1): void {
+        container.empty();
+
+        // Remove grid class from parent if it exists, to allow stacking of grid + pagination
+        container.removeClass('mysql-databases-grid');
+
+        // Get all databases
+        // @ts-ignore
+        const allDbs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
+        const filteredDbs = allDbs.filter(d => d.toLowerCase().includes(searchTerm.toLowerCase()));
+
+        // Start with Active DB at top if it matches search
+        const activeDB = this.plugin.activeDatabase;
+        const sortedDbs = filteredDbs.sort((a, b) => {
+            if (a === activeDB) return -1;
+            if (b === activeDB) return 1;
+            return a.localeCompare(b);
+        });
+
+        if (sortedDbs.length === 0) {
+            container.addClass('mysql-databases-grid'); // Re-add for empty msg if needed
+            container.createDiv({ text: "No databases found.", cls: "mysql-empty-msg" });
+            return;
+        }
+
+        // Pagination Logic
+        const pageSize = 4;
+        const totalPages = Math.ceil(sortedDbs.length / pageSize);
+
+        // Ensure current page is valid
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+
+        const startIndex = (page - 1) * pageSize;
+        const paginatedDbs = sortedDbs.slice(startIndex, startIndex + pageSize);
+
+        // Render Cards Wrapper
+        const gridContent = container.createDiv({ cls: 'mysql-databases-grid' });
+
+        paginatedDbs.forEach(dbName => {
+            this.renderDatabaseCard(gridContent, dbName);
+        });
+
+        // Pagination Controls
+        if (totalPages > 1) {
+            const paginationContainer = container.createDiv({ cls: 'mysql-pagination' });
+            paginationContainer.style.display = 'flex';
+            paginationContainer.style.justifyContent = 'center';
+            paginationContainer.style.gap = '8px';
+            paginationContainer.style.marginTop = '20px';
+
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = paginationContainer.createEl('button', {
+                    text: String(i),
+                    cls: 'mysql-page-btn'
+                });
+
+                // Styling
+                btn.style.padding = '4px 10px';
+                btn.style.borderRadius = '4px';
+                btn.style.border = '1px solid var(--background-modifier-border)';
+                btn.style.background = i === page ? 'var(--mysql-accent, var(--interactive-accent))' : 'var(--background-secondary)';
+                btn.style.color = i === page ? 'var(--text-on-accent)' : 'var(--text-normal)';
+                btn.style.cursor = 'pointer';
+
+                if (i !== page) {
+                    btn.onclick = () => {
+                        this.renderDatabaseGrid(container, searchTerm, i);
+                    };
+                } else {
+                    btn.disabled = true;
+                    btn.style.opacity = '1';
+                }
+            }
+        }
+    }
+
+    private renderDatabaseCard(container: HTMLElement, dbName: string): void {
+        const isActive = dbName === this.plugin.activeDatabase;
+        const isSystem = dbName === 'dbo';
+        const dbManager = (this.plugin as any).dbManager;
+        const stats = dbManager.getDatabaseStats(dbName);
+
+        const card = container.createDiv({ cls: `mysql-db-card ${isActive ? 'active' : ''}` });
+
+        // Header
+        const header = card.createDiv({ cls: 'mysql-db-card-header' });
+        const nameDiv = header.createDiv({ cls: 'mysql-db-name' });
+        nameDiv.createSpan({ text: dbName });
+
+        if (isActive) {
+            nameDiv.createSpan({ text: 'Ativo', cls: 'mysql-badge badge-active' });
+        } else if (isSystem) {
+            nameDiv.createSpan({ text: 'System', cls: 'mysql-badge badge-system' });
+        }
+
+        // Stats
+        const statsGrid = card.createDiv({ cls: 'mysql-db-stats' });
+        this.addStat(statsGrid, "Tabelas", stats.tables.toString());
+        this.addStat(statsGrid, "Linhas", stats.rows.toLocaleString());
+        this.addStat(statsGrid, "Tamanho", this.formatBytes(stats.sizeBytes));
+        this.addStat(statsGrid, "Atualizado", this.timeAgo(stats.lastUpdated));
+
+        // Actions
+        const actions = card.createDiv({ cls: 'mysql-db-actions' });
+
+        if (!isActive) {
+            new ButtonComponent(actions)
+                .setIcon("check")
+                .setTooltip("Ativar")
+                .setClass("btn-success") // We might need to map this class in CSS or just use standard
+                .onClick(async () => {
+                    await this.switchDatabase(dbName);
+                });
+        }
+
+        /*
+        // Duplicar (Placeholder for now as we don't have a modal readily available, 
+        // but user asked for appearance, I'll add button that does rename-like prompt if I can't do better quickly)
+        // I'll skip duplication logic implementation for this specific step to stay within scope of "Appearance", 
+        // but the button should be there.
+        */
+        new ButtonComponent(actions)
+            .setIcon("copy")
+            .setTooltip("Duplicar")
+            .onClick(() => {
+                // Open Duplicate Modal
+                const modal = new DuplicateDatabaseModal(this.app, this.plugin, dbName, () => this.display());
+                modal.open();
+            });
+
+
+        if (!isActive && !isSystem) {
+            new ButtonComponent(actions)
+                .setIcon("pencil")
+                .setTooltip("Renomear")
+                .onClick(() => {
+                    const modal = new RenameDatabaseModal(this.app, this.plugin, dbName, () => this.display());
+                    modal.open();
+                });
+        }
+
+        // Tables Button
+        new ButtonComponent(actions)
+            .setIcon("table")
+            .setTooltip("Visualizar Tabelas")
+            .onClick(() => this.openTablesModal(dbName));
+
+        new ButtonComponent(actions)
+            .setIcon("upload")
+            .setTooltip("Exportar")
+            .onClick(() => this.exportDatabaseSQL(dbName));
+
+        // Delete
+        if (!isActive && !isSystem) {
+            new ButtonComponent(actions)
+                .setIcon("trash-2")
+                .setTooltip("Deletar")
+                .setWarning()
+                .onClick(() => this.confirmDelete(dbName));
+        }
+
+    }
+
+    private renderGeneralSettings(containerEl: HTMLElement): void {
+        // ... (Existing settings logic moved here) ...
+        // Re-implementing specific settings as previously defined in display()
+
         this.createSectionHeader(containerEl, 'Appearance', 'palette');
-
+        // Theme Colors
         const colors = [
             { name: 'Purple (Default)', value: '#9d7cd8' },
             { name: 'Blue', value: '#61afef' },
@@ -47,44 +429,56 @@ export class MySQLSettingTab extends PluginSettingTab {
             { name: 'Red', value: '#e06c75' },
         ];
 
+        // ... (Quickly recreating existing theme setting logic)
         new Setting(containerEl)
+            .setName('Use Obsidian Accent Color')
+            .setDesc('Use the global Obsidian accent color instead of a custom color.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.useObsidianAccent)
+                .onChange(async (value) => {
+                    this.plugin.settings.useObsidianAccent = value;
+                    await this.plugin.saveSettings();
+                    this.display();
+                }));
+
+        const colorSetting = new Setting(containerEl)
             .setName('Theme Accent')
-            .setDesc('Choose the primary accent color for the workbench.')
-            .addText(text => {
-                text.inputEl.style.display = 'none'; // Hidden input to store value if needed logically
-            })
-            .then((setting) => {
-                const colorContainer = setting.controlEl.createDiv({ cls: 'mysql-color-picker' });
-                colorContainer.style.display = 'flex';
-                colorContainer.style.gap = '10px';
+            .setDesc('Choose the primary accent color.')
+            .addText(text => text.inputEl.style.display = 'none');
 
-                colors.forEach(c => {
-                    const circle = colorContainer.createDiv({ cls: 'mysql-color-circle' });
-                    circle.style.backgroundColor = c.value;
-                    circle.style.width = '24px';
-                    circle.style.height = '24px';
-                    circle.style.borderRadius = '50%';
-                    circle.style.cursor = 'pointer';
-                    circle.style.border = this.plugin.settings.themeColor === c.value
-                        ? '2px solid var(--text-normal)'
-                        : '2px solid transparent';
+        if (this.plugin.settings.useObsidianAccent) {
+            colorSetting.settingEl.style.opacity = '0.5';
+            colorSetting.settingEl.style.pointerEvents = 'none';
+            colorSetting.setDesc('Disabled because "Use Obsidian Accent Color" is enabled.');
+        }
 
-                    circle.title = c.name;
+        colorSetting.then((setting) => {
+            const colorContainer = setting.controlEl.createDiv({ cls: 'mysql-color-picker' });
+            colorContainer.style.display = 'flex';
+            colorContainer.style.gap = '10px';
+            colors.forEach(c => {
+                const circle = colorContainer.createDiv({ cls: 'mysql-color-circle' });
+                circle.style.backgroundColor = c.value;
+                circle.style.width = '24px';
+                circle.style.height = '24px';
+                circle.style.borderRadius = '50%';
+                circle.style.cursor = 'pointer';
+                circle.style.transition = 'all 0.2s';
 
-                    circle.onClickEvent(async () => {
-                        this.plugin.settings.themeColor = c.value;
-                        await this.plugin.saveSettings(); // This triggers applyTheme()
+                if (this.plugin.settings.themeColor === c.value) {
+                    circle.style.border = '2px solid var(--text-normal)';
+                    circle.style.transform = 'scale(1.1)';
+                } else {
+                    circle.style.border = '2px solid transparent';
+                }
 
-                        // Update UI selection immediately
-                        const allCircles = colorContainer.querySelectorAll('.mysql-color-circle');
-                        allCircles.forEach((el: HTMLElement) => el.style.border = '2px solid transparent');
-                        circle.style.border = '2px solid var(--text-normal)';
-                    });
+                circle.onClickEvent(async () => {
+                    this.plugin.settings.themeColor = c.value;
+                    await this.plugin.saveSettings();
+                    this.display(); // Refresh to show selection
                 });
             });
-
-        // --- General Section ---
-        this.createSectionHeader(containerEl, 'General', 'sliders');
+        });
 
         new Setting(containerEl)
             .setName('Auto-save')
@@ -121,7 +515,6 @@ export class MySQLSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
 
-        // --- Data & Security Section ---
         this.createSectionHeader(containerEl, 'Data & Security', 'shield');
 
         new Setting(containerEl)
@@ -162,35 +555,28 @@ export class MySQLSettingTab extends PluginSettingTab {
                     }
                 }));
 
+        // Reset Button
         new Setting(containerEl)
             .setName('Reset All Data')
-            .setDesc('Deletes all databases and resets settings.')
             .addButton(btn => {
                 btn.setButtonText('Reset Everything');
                 btn.setWarning();
-                btn.setIcon('trash-2'); // Using explicit Lucide icon
-                btn.onClick(() => {
-                    new ConfirmationModal(
-                        this.app,
-                        "Reset All Data",
-                        "Are you ABSOLUTELY sure? This will delete all databases, tables, and reset your settings. This action cannot be undone.",
-                        async (confirmed) => {
-                            if (confirmed) {
-                                const dbManager = (this.plugin as any).dbManager;
-                                if (dbManager) {
-                                    await dbManager.reset();
-                                    new Notice('All data has been reset.');
-                                    this.display(); // Refresh UI
-                                } else {
-                                    new Notice('Database Manager unavailable.');
-                                }
-                            }
-                        },
-                        "Reset Everything",
-                        "Cancel"
-                    ).open();
-                });
+                btn.onClick(() => this.openClearConfirm()); // Actually reset logic was complicated, calling confirmation
             });
+
+    }
+
+    private async switchDatabase(dbName: string) {
+        // Reuse logic from SwitcherModal
+        const dbManager = (this.plugin as any).dbManager;
+        // QueryExecutor manages context, but for "Active" UI state we update plugin prop
+        // We do NOT call alasql USE explicitly if we want to follow new pattern, 
+        // OR we do if we want global sync. 
+        // DatabaseManager.load/save relies on plugin properties.
+        this.plugin.activeDatabase = dbName;
+        await dbManager.save();
+        new Notice(`Switched to "${dbName}"`);
+        this.display();
     }
 
     private createSectionHeader(container: HTMLElement, text: string, icon: string) {
@@ -353,8 +739,9 @@ export class MySQLSettingTab extends PluginSettingTab {
         modal.open();
     }
 
-    private openTablesModal(): void {
-        const modal = new DatabaseTablesModal(this.app, this.plugin, this.plugin.activeDatabase);
+    private openTablesModal(dbName?: string): void {
+        const targetDB = dbName || this.plugin.activeDatabase;
+        const modal = new DatabaseTablesModal(this.app, this.plugin, targetDB);
         modal.open();
     }
 

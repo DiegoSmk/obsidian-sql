@@ -120,7 +120,30 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     }
 
     applyTheme() {
-        document.body.style.setProperty('--mysql-accent-purple', this.settings.themeColor);
+        const settings = this.settings;
+        const color = settings.useObsidianAccent ? 'var(--interactive-accent)' : settings.themeColor;
+
+        document.body.style.setProperty('--mysql-accent-purple', color);
+        document.body.style.setProperty('--mysql-accent', color); // For consistency
+
+        if (settings.useObsidianAccent) {
+            document.body.style.setProperty('--mysql-accent-rgb', 'var(--interactive-accent-rgb)');
+        } else {
+            // We need to calc rgb for custom color. 
+            // Duplicate hexToRgb logic or make it static utility? 
+            // It's in MySQLSettingTab currently. 
+            // I'll implement a simple hexToRgb here or assume standard opaque for now if simpler, 
+            // but transparency is used in 'rgba(var(--mysql-accent-rgb), 0.1)'.
+            // So I must provide it.
+            const hex = settings.themeColor;
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            if (result) {
+                const r = parseInt(result[1], 16);
+                const g = parseInt(result[2], 16);
+                const b = parseInt(result[3], 16);
+                document.body.style.setProperty('--mysql-accent-rgb', `${r}, ${g}, ${b}`);
+            }
+        }
     }
 
     // ========================================================================
@@ -383,8 +406,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
     private showTables(container: HTMLElement, btn: HTMLButtonElement): void {
         try {
-            // Use alasql directly or via execute
-            const tables = alasql("SHOW TABLES") as any[];
+            // Explicitly show from active database to avoid context issues
+            const activeDB = this.activeDatabase;
+            const tables = alasql(`SHOW TABLES FROM ${activeDB}`) as any[];
 
             if (tables.length === 0) {
                 container.empty();
@@ -439,7 +463,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
                     // Dedicated container for results so RenderRenderer doesn't empty our header
                     const dataContainer = container.createDiv({ cls: "mysql-table-detail-content" });
-                    const result = await QueryExecutor.execute(`SELECT * FROM ${t.tableid}`);
+                    const result = await QueryExecutor.execute(`SELECT * FROM ${activeDB}.${t.tableid}`);
                     ResultRenderer.render(result, dataContainer, this.app, this, t.tableid);
                 };
             });

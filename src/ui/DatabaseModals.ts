@@ -239,6 +239,63 @@ export class CreateDatabaseModal extends Modal {
     }
 }
 
+export class DuplicateDatabaseModal extends Modal {
+    constructor(app: App, private plugin: IMySQLPlugin, private oldName: string, private onSuccess: () => void) {
+        super(app);
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+        contentEl.addClass('mysql-duplicate-modal');
+        contentEl.createEl('h2', { text: `Duplicate Database: ${this.oldName}` });
+
+        const input = new TextComponent(contentEl)
+            .setPlaceholder("New database name...")
+            .setValue(`${this.oldName}_copy`);
+
+        input.inputEl.style.width = '100%';
+        input.inputEl.style.marginBottom = '20px';
+
+        const buttons = contentEl.createDiv({ cls: 'mysql-modal-footer' });
+
+        new ButtonComponent(buttons)
+            .setButtonText("Cancel")
+            .onClick(() => this.close());
+
+        const confirmBtn = new ButtonComponent(buttons)
+            .setButtonText("Duplicate")
+            .setCta()
+            .onClick(async () => {
+                const newName = input.getValue().trim();
+                if (!newName) {
+                    new Notice("Database name cannot be empty.");
+                    return;
+                }
+                if (newName === this.oldName) {
+                    new Notice("New name must be different from the old name.");
+                    return;
+                }
+
+                try {
+                    const dbManager = (this.plugin as any).dbManager;
+                    await dbManager.duplicateDatabase(this.oldName, newName);
+                    new Notice(`Database duplicatd to "${newName}"`);
+                    this.onSuccess();
+                    this.close();
+                } catch (e) {
+                    new Notice(`Error: ${e.message}`);
+                }
+            });
+
+        setTimeout(() => input.inputEl.focus(), 50);
+    }
+
+    onClose() {
+        this.contentEl.empty();
+    }
+}
+
 export class DatabaseTablesModal extends Modal {
     constructor(app: App, private plugin: IMySQLPlugin, private dbName: string) {
         super(app);

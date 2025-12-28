@@ -6,6 +6,7 @@ export interface MySQLSettings {
     safeMode: boolean;
     snapshotRowLimit: number;
     themeColor: string;
+    useObsidianAccent: boolean;
 }
 
 export interface DatabaseSnapshot {
