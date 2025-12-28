@@ -20,35 +20,8 @@ jobs:
       - name: Gemini Review
         env:
           GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }} # O Gitea fornece isso automaticamente
-        run: |
-          python -c "
-          import requests, os
-          
-          # 1. Pega o Diff do PR
-          diff_url = f'${{ gitea.server_url }}/api/v1/repos/${{ gitea.repository }}/pulls/${{ gitea.event.pull_request.number }}.diff'
-          diff_data = requests.get(diff_url, headers={'Authorization': f'token {os.getenv(\"GITEA_TOKEN\")}'}).text
-
-          # 2. Pergunta ao Gemini
-          prompt = f'Atue como um desenvolvedor Senior. Revise o seguinte Diff de código e aponte bugs, falhas de segurança ou melhorias. Seja direto e técnico:\n\n{diff_data}'
-          
-          api_url = f'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key={os.getenv(\"GEMINI_KEY\")}'
-          payload = {'contents': [{'parts': [{'text': prompt}]}]}
-          response = requests.post(api_url, json=payload).json()
-          
-          if 'error' in response:
-              print(f"Error from Gemini API: {response}")
-              exit(1)
-              
-          if 'candidates' not in response:
-              print(f"Unexpected response format: {response}")
-              exit(1)
-
-          review_text = response['candidates'][0]['content']['parts'][0]['text']
-
-          # 3. Posta o comentário de volta no PR
-          comment_url = f'${{ gitea.server_url }}/api/v1/repos/${{ gitea.repository }}/issues/${{ gitea.event.pull_request.number }}/comments'
-          requests.post(comment_url, 
-                        json={'body': f'### 🤖 AI Code Review\n\n{review_text}'},
-                        headers={'Authorization': f'token {os.getenv(\"GITEA_TOKEN\")}'})
-          "
+          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITEA_SERVER_URL: ${{ gitea.server_url }}
+          GITEA_REPO: ${{ gitea.repository }}
+          GITEA_PR_NUMBER: ${{ gitea.event.pull_request.number }}
+        run: python scripts/ai_review.py
