@@ -4,84 +4,75 @@ import sys
 
 def main():
     try:
-        # Check environment variables
-        gemini_key = os.getenv("GEMINI_KEY")
-        gitea_token = os.getenv("GITEA_TOKEN")
+        # 1. Configurações de Ambiente
+        gemini_key = os.getenv('GEMINI_KEY')
+        gitea_token = os.getenv('GITEA_TOKEN')
+        server_url = os.getenv('GITEA_SERVER_URL')
+        repo = os.getenv('GITEA_REPO')
+        pr_number = os.getenv('GITEA_PR_NUMBER')
         
-        if not gemini_key:
-            print("Error: GEMINI_KEY environment variable is not set.")
+        if not all([gemini_key, gitea_token, server_url, repo, pr_number]):
+            print('Erro: Variáveis de ambiente incompletas.')
             sys.exit(1)
-        if not gitea_token:
-            print("Error: GITEA_TOKEN environment variable is not set.")
-            sys.exit(1)
-            
-        print("Starting AI Review process...")
 
-        # 1. Get PR Diff
-        # Need to construct URLs from context, which is tricky in pure script without context args.
-        # But we can pass them as env vars or args. Let's use env vars injected by workflow.
-        
-        server_url = os.getenv("GITEA_SERVER_URL")
-        repo = os.getenv("GITEA_REPO")
-        pr_number = os.getenv("GITEA_PR_NUMBER")
-        
-        if not server_url or not repo or not pr_number:
-             print(f"Error: Missing context env vars. Server: {server_url}, Repo: {repo}, PR: {pr_number}")
-             # Fallback logic if needed, but let's assume workflow sends them.
-             sys.exit(1)
+        print(f'Iniciando revisão para o PR #{pr_number} no repositório {repo}...')
 
-        diff_url = f"{server_url}/api/v1/repos/{repo}/pulls/{pr_number}.diff"
-        print(f"Fetching diff from: {diff_url}")
+        # 2. Busca o Diff do Pull Request
+        diff_url = f'{server_url}/api/v1/repos/{repo}/pulls/{pr_number}.diff'
+        headers = {'Authorization': f'token {gitea_token}'}
         
-        diff_response = requests.get(diff_url, headers={'Authorization': f'token {gitea_token}'})
+        diff_response = requests.get(diff_url, headers=headers, timeout=30)
         if diff_response.status_code != 200:
-             print(f"Error fetching diff: {diff_response.status_code} - {diff_response.text}")
-             sys.exit(1)
-             
-        diff_data = diff_response.text
-        if not diff_data:
-            print("Diff is empty, nothing to review.")
-            sys.exit(0)
+            print(f'Erro ao buscar diff: {diff_response.status_code}')
+            sys.exit(1)
             
-        print(f"Diff fetched successfully ({len(diff_data)} chars). Sending to Gemini...")
+        diff_data = diff_response.text
+        if not diff_data.strip():
+            print('Diff vazio. Nada para revisar.')
+            sys.exit(0)
 
-        # 2. Ask Gemini
-        prompt = f"Atue como um desenvolvedor Senior. Revise o seguinte Diff de código e aponte bugs, falhas de segurança ou melhorias. Seja direto e técnico:\n\n{diff_data[:30000]}" # Limit to avoid token limits
+        # 3. Preparação para o Gemini (v1 estável)
+        # Usamos v1 e gemini-1.5-flash para suportar contextos longos
+        api_url = f'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={gemini_key}'
         
-        api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={gemini_key}"
-        payload = {'contents': [{'parts': [{'text': prompt}]}]}
+        # O 1.5 Flash suporta até 1 milhão de tokens
+        prompt_text = f'Atue como um desenvolvedor Senior. Revise o seguinte código (Diff). Aponte bugs, falhas de segurança e melhorias. Responda em Português de forma direta:\n\n{diff_data[:200000]}'
         
-        response_req = requests.post(api_url, json=payload)
+        payload = {
+            'contents': [{'parts': [{'text': prompt_text}]}],
+            'generationConfig': {'temperature': 0.2} 
+        }
+
+        print(f'Enviando {len(diff_data[:200000])} caracteres para o Gemini 1.5 Flash...')
+        
+        response_req = requests.post(api_url, json=payload, timeout=60)
         response = response_req.json()
         
         if 'error' in response:
-            print(f"Error from Gemini API: {response}")
+            print(f'Erro da API Gemini: {response["error"]["message"]}')
             sys.exit(1)
-            
+
         if 'candidates' not in response:
-            print(f"Unexpected response format: {response}")
+            print(f'Erro: Resposta inesperada da API: {response}')
             sys.exit(1)
 
         review_text = response['candidates'][0]['content']['parts'][0]['text']
-        print("Review generated successfully. Posting comment...")
+        print('Revisão gerada. Postando comentário no Gitea...')
 
-        # 3. Post comment back to PR
-        comment_url = f"{server_url}/api/v1/repos/{repo}/issues/{pr_number}/comments"
+        # 4. Posta o Comentário de volta no PR
+        comment_url = f'{server_url}/api/v1/repos/{repo}/issues/{pr_number}/comments'
+        comment_payload = {'body': f'### 🤖 AI Code Review (Gemini 1.5 Flash)\n\n{review_text}'}
         
-        comment_payload = {'body': f'### 🤖 AI Code Review\n\n{review_text}'}
-        comment_response = requests.post(comment_url, json=comment_payload, headers={'Authorization': f'token {gitea_token}'})
+        res_comment = requests.post(comment_url, json=comment_payload, headers=headers, timeout=30)
         
-        if comment_response.status_code not in [201, 200]:
-            print(f"Error posting comment: {comment_response.status_code} - {comment_response.text}")
-            sys.exit(1)
-            
-        print("Review posted successfully!")
+        if res_comment.status_code in [200, 201]:
+            print('Revisão postada com sucesso!')
+        else:
+            print(f'Erro ao postar comentário: {res_comment.status_code}')
 
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f'Ocorreu um erro inesperado: {str(e)}')
         sys.exit(1)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
