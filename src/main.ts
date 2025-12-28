@@ -155,22 +155,117 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         el.addClass("mysql-block-parent");
         const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
 
-        // Copy Code Button (Custom implementation to sit next to Edit button)
-        const copyCodeBtn = workbench.createEl("button", {
+        // Collapsed Preview (Bar with first line of code)
+        // Parse Title & State from First Line
+        const rawFirstLine = source.split('\n')[0].trim();
+
+        let displayTitle = "MySQL Query";
+        let icon = "database";
+        let titleColorClass = "";
+        let startCollapsed = false;
+
+        // Check if first line is a comment
+        const isComment = /^(--|#|\/\*)/.test(rawFirstLine);
+
+        if (isComment) {
+            // Remove SQL comment syntax
+            let cleanLine = rawFirstLine.replace(/^(--\s?|#\s?|\/\*\s?)/, '').replace(/\s?\*\/$/, '').trim();
+
+            // Parse Markers
+            if (cleanLine.includes("@")) {
+                startCollapsed = true;
+                cleanLine = cleanLine.replace("@", "").trim();
+            }
+
+            if (cleanLine.startsWith("!")) {
+                icon = "alert-triangle";
+                titleColorClass = "mysql-title-alert";
+                workbench.addClass("mysql-mode-alert");
+                cleanLine = cleanLine.substring(1).trim();
+            } else if (cleanLine.startsWith("?")) {
+                icon = "help-circle";
+                titleColorClass = "mysql-title-help";
+                workbench.addClass("mysql-mode-help");
+                cleanLine = cleanLine.substring(1).trim();
+            } else if (cleanLine.startsWith("*")) {
+                icon = "star";
+                titleColorClass = "mysql-title-star";
+                workbench.addClass("mysql-mode-star");
+                cleanLine = cleanLine.substring(1).trim();
+            }
+
+            if (cleanLine.length > 0) {
+                displayTitle = cleanLine;
+            }
+        }
+
+        const previewBar = workbench.createEl("div", { cls: "mysql-collapsed-preview" });
+        // Initial visibility set below based on startCollapsed
+
+        const previewToggle = previewBar.createEl("div", { cls: "mysql-preview-toggle" });
+        setIcon(previewToggle, "chevron-right");
+
+        const previewContent = previewBar.createEl("div", { cls: "mysql-preview-content" });
+        const iconSpan = previewContent.createSpan({ cls: "mysql-preview-icon" });
+        if (titleColorClass) iconSpan.addClass(titleColorClass);
+        setIcon(iconSpan, icon);
+
+        const textSpan = previewContent.createSpan({ cls: "mysql-preview-text", text: displayTitle });
+        // Only apply color to text if it's not the help style (as requested)
+        if (titleColorClass && titleColorClass !== "mysql-title-help") {
+            textSpan.addClass(titleColorClass);
+        }
+
+        // Expand Action
+        previewBar.onclick = () => {
+            workbench.removeClass("is-collapsed");
+            body.style.display = "block";
+            previewBar.style.display = "none";
+        };
+
+        // Body Structure
+        const body = workbench.createEl("div", { cls: "mysql-workbench-body" });
+
+        // Collapse Button (Floating in expanded state)
+        const collapseBtn = body.createEl("button", {
+            cls: "mysql-collapse-btn",
+            attr: { "aria-label": "Collapse" }
+        });
+        setIcon(collapseBtn, "chevron-up");
+        collapseBtn.onclick = (e) => {
+            e.stopPropagation();
+            workbench.addClass("is-collapsed");
+            body.style.display = "none";
+            previewBar.style.display = "flex";
+        };
+
+        // Initialize State based on marker
+        if (startCollapsed) {
+            workbench.addClass("is-collapsed");
+            previewBar.style.display = "flex";
+            body.style.display = "none";
+        } else {
+            previewBar.style.display = "none";
+            // body is block by default
+        }
+
+        // Copy Code Button (Inside body so it hides when collapsed)
+        const copyCodeBtn = body.createEl("button", {
             cls: "mysql-copy-code-btn",
             attr: { "aria-label": "Copy Code" }
         });
         setIcon(copyCodeBtn, "copy");
-        copyCodeBtn.onclick = async () => {
+        copyCodeBtn.onclick = async (e) => {
+            e.stopPropagation(); // Prevent header toggle if clicked (though it's in body, safety)
             await navigator.clipboard.writeText(source);
             new Notice("SQL code copied!");
         };
 
         // Safe Code Highlighting
-        const codeBlock = workbench.createEl("pre", { cls: "mysql-source-code" });
+        const codeBlock = body.createEl("pre", { cls: "mysql-source-code" });
         codeBlock.innerHTML = `<code class="language-sql">${this.safeHighlight(source)}</code>`;
 
-        const controls = workbench.createEl("div", { cls: "mysql-controls" });
+        const controls = body.createEl("div", { cls: "mysql-controls" });
 
         // Run Button
         const runBtn = controls.createEl("button", { cls: "mysql-btn mysql-btn-run" });
@@ -195,10 +290,10 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         setIcon(resetBtn, "trash-2");
         resetBtn.createSpan({ text: "Reset" });
 
-        const resultContainer = workbench.createEl("div", { cls: "mysql-result-container" });
+        const resultContainer = body.createEl("div", { cls: "mysql-result-container" });
 
         // VS Code Inspired Footer
-        const footer = new WorkbenchFooter(workbench);
+        const footer = new WorkbenchFooter(body, this.app);
 
         importBtn.onclick = () => {
             new CSVSelectionModal(this.app, async (file) => {

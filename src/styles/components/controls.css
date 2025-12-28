@@ -55,11 +55,28 @@
     cursor: not-allowed;
 }
 
+/* Run Button (Standard) */
 .mysql-btn-run {
     background-color: var(--mysql-accent-purple) !important;
     border: 1px solid var(--mysql-accent-purple) !important;
     color: white !important;
     font-weight: 600 !important;
+}
+
+/* Alert Mode Overrides */
+.mysql-workbench-container.mysql-mode-alert .mysql-btn-run {
+    background-color: var(--text-error) !important;
+    border: 1px solid var(--text-error) !important;
+}
+
+.mysql-workbench-container.mysql-mode-alert .mysql-btn-run:hover:not(:disabled) {
+    background-color: var(--text-error) !important;
+    border: 1px solid var(--text-error) !important;
+    filter: saturate(1.2) brightness(1.1);
+}
+
+.mysql-workbench-container.mysql-mode-alert .mysql-footer-logo {
+    color: var(--text-error) !important;
 }
 
 .mysql-btn-run:hover:not(:disabled) {
@@ -153,9 +170,13 @@
     transition: all var(--mysql-transition-fast) !important;
     opacity: 0 !important;
     position: absolute !important;
-    top: 14px !important;
+    top: 15px !important;
     right: 14px !important;
     z-index: 10 !important;
+}
+
+:has(.mysql-workbench-container.is-collapsed)>.edit-block-button {
+    display: none !important;
 }
 
 :has(.mysql-workbench-container):hover>.edit-block-button {
@@ -205,28 +226,135 @@
     height: 16px;
 }
 
-/* Language Label */
+/* Collapse Button (Expanded State) */
+.mysql-collapse-btn {
+    position: absolute;
+    top: 14px;
+    right: 90px;
+    /* 52px + 30px + 8px gap */
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    color: var(--text-muted);
+    border-radius: var(--mysql-radius-sm);
+    cursor: pointer;
+    opacity: 0;
+    transition: all var(--mysql-transition-fast);
+    z-index: 10;
+}
+
+.mysql-workbench-container:hover .mysql-collapse-btn {
+    opacity: 1;
+}
+
+.mysql-collapse-btn:hover {
+    border: 1px solid var(--mysql-accent-purple);
+    color: var(--mysql-accent-purple);
+    background-color: var(--background-modifier-hover);
+}
+
+.mysql-collapse-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Collapsed Preview Bar */
+.mysql-collapsed-preview {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    /* Align left */
+    gap: 10px;
+    /* Space between toggle and content */
+    padding: 8px 16px;
+    background-color: var(--background-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+
+    /* Maintain height stability */
+    transition: background-color var(--mysql-transition-fast);
+}
+
+/* Marker Styles */
+.mysql-title-alert {
+    color: var(--text-error) !important;
+}
+
+.mysql-title-help {
+    color: var(--interactive-accent) !important;
+}
+
+.mysql-title-star {
+    color: var(--text-accent) !important;
+    font-weight: 700;
+}
+
+.mysql-collapsed-preview:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.mysql-preview-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-monospace);
+    font-size: 0.85rem;
+    color: var(--text-normal);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 90%;
+}
+
+.mysql-preview-icon {
+    color: var(--mysql-accent-purple);
+    display: flex;
+    align-items: center;
+}
+
+.mysql-preview-icon svg {
+    width: 14px;
+    height: 14px;
+}
+
+.mysql-preview-toggle {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+/* Language Label Animation Update */
 .mysql-workbench-container::after {
     content: "MYSQL";
     position: absolute;
     top: 21px;
     right: 50px;
-    /* Start at the corner */
     font-size: 0.65rem;
     font-weight: 800;
     color: var(--text-muted);
     opacity: 0.6;
-    /* More visible by default */
     letter-spacing: 0.05em;
     pointer-events: none;
     z-index: 9;
     font-family: var(--font-monospace);
     transition: all var(--mysql-transition-normal);
-    /* Animated move */
+}
+
+.mysql-workbench-container.is-collapsed::after {
+    display: none;
 }
 
 .mysql-workbench-container:hover::after {
-    right: 90px;
-    /* Move left to make space */
+    right: 128px;
+    /* Move left to make space for 3 buttons (14+30+8 + 30+8 + 30+8) */
     opacity: 0.8;
 }

@@ -1,11 +1,14 @@
-import { setIcon } from "obsidian";
+import { setIcon, App } from "obsidian";
+import { HelpModal } from "./HelpModal";
 
 export class WorkbenchFooter {
     private footerEl: HTMLElement;
     private statusEl: HTMLElement;
     private rightEl: HTMLElement;
+    private app: App;
 
-    constructor(parent: HTMLElement) {
+    constructor(parent: HTMLElement, app: App) {
+        this.app = app;
         this.footerEl = parent.createDiv({ cls: "mysql-footer" });
 
         // Left: Logo & App Name
@@ -18,6 +21,17 @@ export class WorkbenchFooter {
 
         // Right side container
         this.rightEl = this.footerEl.createDiv({ cls: "mysql-footer-right" });
+
+        // Help Button
+        const helpBtn = this.rightEl.createDiv({
+            cls: "mysql-footer-help-btn",
+            attr: { "aria-label": "Help & Features" }
+        });
+        setIcon(helpBtn, "help-circle");
+        helpBtn.onclick = () => {
+            new HelpModal(this.app).open();
+        };
+
         this.statusEl = this.rightEl.createDiv({ cls: "mysql-footer-status-container" });
 
         this.setStatus("Ready");
@@ -36,10 +50,9 @@ export class WorkbenchFooter {
     }
 
     public updateTime(ms: number) {
-        this.rightEl.empty();
+        this.statusEl.empty();
 
-        // Re-add status if needed, or just time
-        const timeWrapper = this.rightEl.createDiv({ cls: "mysql-footer-time-wrapper" });
+        const timeWrapper = this.statusEl.createDiv({ cls: "mysql-footer-time-wrapper" });
         setIcon(timeWrapper, "timer");
         const timeVal = timeWrapper.createSpan({ cls: "mysql-footer-time-val" });
         timeVal.setText(`${ms}ms`);
@@ -54,10 +67,9 @@ export class WorkbenchFooter {
     }
 
     public getStatusEl(): HTMLElement {
-        return this.footerEl; // Return main footer for consistency with previous logic if needed
+        return this.footerEl;
     }
 
-    // Helper to get the element that should be passed to executeQuery
     public getContainer(): HTMLElement {
         return this.footerEl;
     }
