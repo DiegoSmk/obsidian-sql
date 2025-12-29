@@ -6,7 +6,10 @@
 .mysql-result-content {
     background-color: var(--background-primary);
     padding: 16px 20px;
-    /* Added horizontal spacing */
+}
+
+.mysql-live-mode .mysql-result-content {
+    padding: 0 !important;
 }
 
 .mysql-result-section {

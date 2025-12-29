@@ -18,6 +18,13 @@
     background-color: var(--background-primary) !important;
 }
 
+.mysql-live-mode .mysql-table {
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
+}
+
 .mysql-workbench-container .mysql-result-content table.mysql-table thead,
 .mysql-workbench-container .mysql-result-content table.mysql-table tbody,
 .mysql-workbench-container .mysql-result-content table.mysql-table tr {

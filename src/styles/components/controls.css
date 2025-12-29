@@ -349,8 +349,9 @@
     transition: all var(--mysql-transition-normal);
 }
 
-.mysql-workbench-container.is-collapsed::after {
-    display: none;
+.mysql-workbench-container.is-collapsed::after,
+.mysql-workbench-container.mysql-live-mode::after {
+    display: none !important;
 }
 
 .mysql-workbench-container:hover::after {
