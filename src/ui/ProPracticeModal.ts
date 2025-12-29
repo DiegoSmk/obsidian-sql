@@ -52,8 +52,12 @@ export class ProPracticeModal extends Modal {
         punchline.createSpan({ text: "Remember: No pain, no gain. 💪" });
 
         const signature = contentEl.createDiv({ cls: "mysql-pro-signature" });
-        signature.createEl("p", { text: "Best regards," });
-        signature.createEl("p", { text: "SQL Notebook Development Team", cls: "mysql-pro-team" });
+        const sigLogo = signature.createDiv({ cls: "mysql-pro-signature-logo" });
+        setIcon(sigLogo, "circle");
+
+        const sigText = signature.createDiv({ cls: "mysql-pro-signature-text" });
+        sigText.createEl("p", { text: "Best regards," });
+        sigText.createEl("p", { text: "SQL Notebook Development Team", cls: "mysql-pro-team" });
 
         const btnContainer = contentEl.createDiv({ cls: "mysql-modal-buttons" });
         const closeBtn = btnContainer.createEl("button", { text: "Mark as Read", cls: "mod-cta" });

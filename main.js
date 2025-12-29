@@ -66240,8 +66240,11 @@ var ProPracticeModal = class extends import_obsidian9.Modal {
     const punchline = body.createEl("div", { cls: "mysql-pro-punchline" });
     punchline.createSpan({ text: "Remember: No pain, no gain. \u{1F4AA}" });
     const signature = contentEl.createDiv({ cls: "mysql-pro-signature" });
-    signature.createEl("p", { text: "Best regards," });
-    signature.createEl("p", { text: "SQL Notebook Development Team", cls: "mysql-pro-team" });
+    const sigLogo = signature.createDiv({ cls: "mysql-pro-signature-logo" });
+    (0, import_obsidian9.setIcon)(sigLogo, "circle");
+    const sigText = signature.createDiv({ cls: "mysql-pro-signature-text" });
+    sigText.createEl("p", { text: "Best regards," });
+    sigText.createEl("p", { text: "SQL Notebook Development Team", cls: "mysql-pro-team" });
     const btnContainer = contentEl.createDiv({ cls: "mysql-modal-buttons" });
     const closeBtn = btnContainer.createEl("button", { text: "Mark as Read", cls: "mod-cta" });
     closeBtn.onclick = () => this.close();

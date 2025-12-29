@@ -331,12 +331,15 @@
   transform: scale(0.95);
 }
 .mysql-pro-practice-modal {
-  max-width: 500px !important;
+  width: 650px !important;
+  max-width: 90vw !important;
 }
 .mysql-email-modal-container {
   background-color: var(--background-primary) !important;
   padding: 0 !important;
   overflow: hidden !important;
+  width: 650px !important;
+  max-width: 90vw !important;
 }
 .mysql-email-modal-container .modal-title,
 .mysql-email-modal-container .modal-header {
@@ -420,11 +423,23 @@
 .mysql-pro-signature {
   margin-top: 40px;
   border-top: 1px solid var(--background-modifier-border);
-  padding-top: 15px;
+  padding: 20px 30px 10px 30px;
   color: var(--text-muted);
   font-size: 0.95em;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-.mysql-pro-signature p {
+.mysql-pro-signature-logo {
+  color: var(--mysql-accent-purple);
+  display: flex;
+  align-items: center;
+}
+.mysql-pro-signature-logo svg {
+  width: 24px;
+  height: 24px;
+}
+.mysql-pro-signature-text p {
   margin: 2px 0;
 }
 .mysql-pro-team {
