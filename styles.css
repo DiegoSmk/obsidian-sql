@@ -330,6 +330,62 @@
 .mysql-color-circle:active {
   transform: scale(0.95);
 }
+.mysql-pro-practice-modal {
+  max-width: 450px !important;
+  text-align: center;
+}
+.mysql-pro-practice-modal h2 {
+  color: var(--mysql-accent-purple);
+  margin-bottom: 20px;
+}
+.mysql-pro-practice-body {
+  font-size: 1.1em;
+  line-height: 1.6;
+}
+.mysql-pro-quote {
+  background: rgba(var(--mysql-accent-rgb), 0.05);
+  border-left: 4px solid var(--mysql-accent-purple);
+  padding: 12px 20px;
+  margin: 20px 0;
+  text-align: left;
+  border-radius: 4px;
+}
+.mysql-pro-quote p {
+  margin-bottom: 8px;
+  font-style: italic;
+  color: var(--text-normal);
+}
+.mysql-pro-quote code {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--mysql-accent-purple);
+  font-weight: 600;
+}
+.mysql-pro-punchline {
+  font-size: 1.3em;
+  font-weight: 800;
+  margin: 25px 0;
+  color: var(--mysql-accent-purple);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  animation: pro-pulse 2s infinite ease-in-out;
+}
+@keyframes pro-pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+.mysql-modal-buttons {
+  margin-top: 30px;
+  display: flex;
+  justify-content: center;
+}
 
 /* src/styles/ui/responsive.css */
 @media (max-width: 768px) {
@@ -440,6 +496,16 @@
   width: 14px;
   height: 14px;
   stroke-width: 1.5px;
+}
+.mysql-footer-db-interactive {
+  cursor: pointer;
+  transition: all var(--mysql-transition-fast);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.mysql-footer-db-interactive:hover {
+  background: rgba(var(--mysql-accent-rgb), 0.1);
+  color: var(--mysql-accent-purple);
 }
 
 /* src/styles/components/workbench.css */

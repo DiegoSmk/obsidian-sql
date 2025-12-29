@@ -1,5 +1,6 @@
 import { setIcon, App } from "obsidian";
 import { HelpModal } from "./HelpModal";
+import { ProPracticeModal } from "./ProPracticeModal";
 
 export class WorkbenchFooter {
     private footerEl: HTMLElement;
@@ -22,7 +23,10 @@ export class WorkbenchFooter {
         this.rightEl = this.footerEl.createDiv({ cls: "mysql-footer-right" });
 
         // Phase 6: Active Database on the right
-        this.dbEl = this.rightEl.createDiv({ cls: "mysql-footer-db-container" });
+        this.dbEl = this.rightEl.createDiv({ cls: "mysql-footer-db-container mysql-footer-db-interactive" });
+        this.dbEl.onclick = () => {
+            new ProPracticeModal(this.app).open();
+        };
         this.setActiveDatabase("dbo");
 
         // Help Button (?)
