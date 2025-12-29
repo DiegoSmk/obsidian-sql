@@ -4,6 +4,7 @@ import { HelpModal } from "./HelpModal";
 export class WorkbenchFooter {
     private footerEl: HTMLElement;
     private statusEl: HTMLElement;
+    private dbEl: HTMLElement;
     private rightEl: HTMLElement;
     private app: App;
 
@@ -13,16 +14,18 @@ export class WorkbenchFooter {
 
         // Left: Logo & App Name
         const left = this.footerEl.createDiv({ cls: "mysql-footer-left" });
-
         const logo = left.createDiv({ cls: "mysql-footer-logo" });
         setIcon(logo, "circle");
-
         left.createSpan({ text: "SQL Notebook", cls: "mysql-app-name" });
 
         // Right side container
         this.rightEl = this.footerEl.createDiv({ cls: "mysql-footer-right" });
 
-        // Help Button
+        // Phase 6: Active Database on the right
+        this.dbEl = this.rightEl.createDiv({ cls: "mysql-footer-db-container" });
+        this.setActiveDatabase("dbo");
+
+        // Help Button (?)
         const helpBtn = this.rightEl.createDiv({
             cls: "mysql-footer-help-btn",
             attr: { "aria-label": "Help & Features" }
@@ -32,8 +35,8 @@ export class WorkbenchFooter {
             new HelpModal(this.app).open();
         };
 
+        // Status (Ready, Time)
         this.statusEl = this.rightEl.createDiv({ cls: "mysql-footer-status-container" });
-
         this.setStatus("Ready");
     }
 
@@ -43,19 +46,21 @@ export class WorkbenchFooter {
             text: text,
             cls: isRunning ? "mysql-footer-status-running" : "mysql-footer-status"
         });
-
-        if (isRunning) {
-            // Optional: could add a spinner icon here
-        }
     }
 
     public updateTime(ms: number) {
         this.statusEl.empty();
-
         const timeWrapper = this.statusEl.createDiv({ cls: "mysql-footer-time-wrapper" });
         setIcon(timeWrapper, "timer");
         const timeVal = timeWrapper.createSpan({ cls: "mysql-footer-time-val" });
         timeVal.setText(`${ms}ms`);
+    }
+
+    public setActiveDatabase(dbName: string) {
+        this.dbEl.empty();
+        const iconWrapper = this.dbEl.createDiv({ cls: "mysql-footer-db-icon" });
+        setIcon(iconWrapper, "database-backup");
+        this.dbEl.createSpan({ text: dbName, cls: "mysql-footer-db-name" });
     }
 
     public setLive() {
@@ -71,10 +76,6 @@ export class WorkbenchFooter {
 
     public setAborted() {
         this.setStatus("Aborted");
-    }
-
-    public getStatusEl(): HTMLElement {
-        return this.footerEl;
     }
 
     public getContainer(): HTMLElement {

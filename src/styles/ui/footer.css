@@ -39,9 +39,7 @@
 .mysql-footer-right {
     display: flex;
     align-items: center;
-    gap: 8px;
-    /* Increased gap */
-    font-family: var(--font-monospace);
+    gap: 12px;
 }
 
 .mysql-footer-time-wrapper {
@@ -82,12 +80,11 @@
     justify-content: center;
     cursor: pointer;
     color: var(--text-muted);
-    padding: 0 8px;
-    margin-right: 8px;
-    border-right: 1px solid var(--background-modifier-border);
-    border-left: 1px solid var(--background-modifier-border);
-    height: 14px;
-    transition: color var(--mysql-transition-fast);
+    padding: 2px 8px;
+    background: rgba(128, 128, 128, 0.05);
+    border-radius: 4px;
+    height: 20px;
+    transition: all var(--mysql-transition-fast);
 }
 
 .mysql-footer-help-btn:hover {
