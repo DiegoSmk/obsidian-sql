@@ -430,12 +430,13 @@ export class QueryExecutor {
 
         if (modifiedTables.size > 0 || isStructuralChange) {
             const tables = Array.from(modifiedTables);
-            Logger.info(`[EventBus] Emitting modification for ${database}`, { tables, originId });
+            const effectiveOriginId = originId || 'unknown';
+            Logger.info(`[EventBus] Emitting modification for ${database}`, { tables, originId: effectiveOriginId });
             DatabaseEventBus.getInstance().emitDatabaseModified({
                 database: database,
                 tables: tables,
                 timestamp: Date.now(),
-                originId: originId || 'unknown'
+                originId: effectiveOriginId
             });
         }
     }

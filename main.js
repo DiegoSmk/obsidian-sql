@@ -64771,12 +64771,13 @@ var QueryExecutor = class {
     }
     if (modifiedTables.size > 0 || isStructuralChange) {
       const tables = Array.from(modifiedTables);
-      Logger.info(`[EventBus] Emitting modification for ${database}`, { tables, originId });
+      const effectiveOriginId = originId || "unknown";
+      Logger.info(`[EventBus] Emitting modification for ${database}`, { tables, originId: effectiveOriginId });
       DatabaseEventBus.getInstance().emitDatabaseModified({
         database,
         tables,
         timestamp: Date.now(),
-        originId: originId || "unknown"
+        originId: effectiveOriginId
       });
     }
   }
@@ -66502,8 +66503,11 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
     const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
     const trimmedSource = source.trim();
     const isLive = trimmedSource.toUpperCase().startsWith("LIVE SELECT");
-    const liveBlockId = isLive ? `${ctx.sourcePath}:${ctx.lineStart} -${ctx.lineEnd} ` : null;
+    const liveBlockId = isLive ? `${ctx.sourcePath}:${ctx.lineStart}-${ctx.lineEnd}` : null;
     const stableId = isLive ? this.generateBlockStableId(source, ctx) : null;
+    if (isLive && this.settings.enableLogging) {
+      Logger.info(`[LIVE] Initializing block: stableId=${stableId}, liveBlockId=${liveBlockId}`);
+    }
     let anchoredDB = null;
     if (isLive) {
       const jsonParamMatch = source.match(/\/\*\s*params\s*:\s*({[\s\S]*?})\s*\*\//);
@@ -66758,7 +66762,7 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
         if (event.database !== anchoredDB) return;
         const hasIntersection = event.tables.length === 0 || // Structural change
         event.tables.some((t) => observedTables.includes(t));
-        Logger.info(`[LIVE] Modification detected in ${event.database}. Tables: ${event.tables.join(",")}. Match? ${hasIntersection}`);
+        Logger.info(`[LIVE] Modification detected in ${event.database}. Tables: ${event.tables.join(",")}. Match? ${hasIntersection} (Sender: ${event.originId})`);
         if (hasIntersection) {
           debouncedExec(event.tables.length === 0);
         }
