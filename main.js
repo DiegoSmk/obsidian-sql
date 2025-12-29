@@ -64406,6 +64406,7 @@ var _DatabaseEventBus = class _DatabaseEventBus extends import_obsidian2.Events 
    * @param event The event data.
    */
   emitDatabaseModified(event) {
+    event.tables = event.tables.map((t) => t.toLowerCase());
     this.trigger(_DatabaseEventBus.DATABASE_MODIFIED, event);
   }
   /**
@@ -64558,12 +64559,35 @@ var QueryExecutor = class {
       };
     } catch (error) {
       Logger.error("Query execution failed", error);
+      const originalMessage = error.message || String(error);
+      const beautifiedMessage = this.beautifyError(originalMessage);
       return {
         success: false,
-        error: error.message || String(error),
+        error: beautifiedMessage,
         executionTime: monitor.end()
       };
     }
+  }
+  /**
+   * Translates cryptic AlaSQL errors into user-friendly hints.
+   */
+  static beautifyError(message) {
+    const match = message.match(/got '([^']+)'/i);
+    if (match) {
+      const word = match[1].toUpperCase();
+      const reserved = ["TOTAL", "VALUE", "SUM", "COUNT", "MIN", "MAX", "AVG", "KEY", "ORDER", "GROUP", "DATE", "DESC", "ASC"];
+      if (reserved.includes(word)) {
+        return `${message}
+
+\u{1F4A1} Dica: '${word}' \xE9 uma palavra reservada do banco de dados. Tente usar aspas (ex: "${word.toLowerCase()}") ou mude o nome (ex: "${word.toLowerCase()}_total").`;
+      }
+    }
+    if (message.includes("Parse error")) {
+      return `${message}
+
+\u{1F4A1} Verifique se voc\xEA esqueceu algum ponto e v\xEDrgula ou se h\xE1 erros de digita\xE7\xE3o nos nomes das tabelas.`;
+    }
+    return message;
   }
   /**
    * Automatically prefix table names with database name to avoid AlaSQL context bugs
@@ -64660,14 +64684,14 @@ var QueryExecutor = class {
           const ast = import_alasql3.default.parse(sql);
           const extractTables = (node) => {
             if (!node) return;
-            if (node.into && node.into.tableid) modifiedTables.add(node.into.tableid);
-            if (node.tableid) modifiedTables.add(node.tableid);
+            if (node.into && node.into.tableid) modifiedTables.add(node.into.tableid.toLowerCase());
+            if (node.tableid) modifiedTables.add(node.tableid.toLowerCase());
             if (node.from && Array.isArray(node.from)) {
               node.from.forEach((f) => {
-                if (f.tableid) modifiedTables.add(f.tableid);
+                if (f.tableid) modifiedTables.add(f.tableid.toLowerCase());
               });
             }
-            if (node.table && node.table.tableid) modifiedTables.add(node.table.tableid);
+            if (node.table && node.table.tableid) modifiedTables.add(node.table.tableid.toLowerCase());
             if (Array.isArray(node)) {
               node.forEach(extractTables);
             } else if (typeof node === "object") {
@@ -64685,7 +64709,7 @@ var QueryExecutor = class {
           if (tableMatch) {
             const fullTableName = tableMatch[1];
             const parts = fullTableName.split(".");
-            modifiedTables.add(parts[parts.length - 1]);
+            modifiedTables.add(parts[parts.length - 1].toLowerCase());
           }
         }
       }
@@ -64705,7 +64729,7 @@ var QueryExecutor = class {
 var import_obsidian3 = require("obsidian");
 var import_html2canvas = __toESM(require_html2canvas());
 var ResultRenderer = class {
-  static render(result, container, app, plugin, tableName) {
+  static render(result, container, app, plugin, tableName, isLive = false) {
     container.empty();
     if (!result.success) {
       this.renderError(result.error || "Unknown error", container);
@@ -64713,7 +64737,7 @@ var ResultRenderer = class {
     }
     const data = result.data || [];
     const wrapper = container.createEl("div", { cls: "mysql-result-container" });
-    this.renderData(data, wrapper, app, plugin, tableName);
+    this.renderData(data, wrapper, app, plugin, tableName, isLive);
   }
   static addActionButtons(container, data, resultWrapper, app, plugin, tableName) {
     const copyBtn = container.createEl("button", {
@@ -64834,7 +64858,7 @@ var ResultRenderer = class {
     });
     return md;
   }
-  static renderData(results, container, app, plugin, tableName) {
+  static renderData(results, container, app, plugin, tableName, isLive = false) {
     if (!Array.isArray(results) || results.length === 0) {
       container.createEl("p", {
         text: "Query executed successfully (no result set)",
@@ -64845,6 +64869,7 @@ var ResultRenderer = class {
     results.forEach((rs, idx) => {
       const rsWrapper = container.createEl("div", { cls: "mysql-result-set" });
       const header = rsWrapper.createDiv({ cls: "mysql-result-header" });
+      if (isLive) header.style.display = "none";
       const contentWrapper = rsWrapper.createDiv({ cls: "mysql-result-content" });
       const left = header.createDiv({ cls: "mysql-header-left" });
       (0, import_obsidian3.setIcon)(left, results.length > 1 ? "list" : "database");
@@ -64892,6 +64917,7 @@ var ResultRenderer = class {
       }
       if (rs.rowCount !== void 0 && rs.type === "table") {
         const rowInfo = contentWrapper.createDiv({ cls: "mysql-row-count-wrapper" });
+        if (isLive) rowInfo.style.display = "none";
         const countIcon = rowInfo.createDiv({ cls: "mysql-count-icon" });
         (0, import_obsidian3.setIcon)(countIcon, "list-ordered");
         rowInfo.createSpan({ text: `${rs.rowCount} rows found`, cls: "mysql-row-count-text" });
@@ -66182,6 +66208,8 @@ var WorkbenchFooter = class {
     (0, import_obsidian9.setIcon)(logo, "circle");
     left.createSpan({ text: "SQL Notebook", cls: "mysql-app-name" });
     this.rightEl = this.footerEl.createDiv({ cls: "mysql-footer-right" });
+    this.dbEl = this.rightEl.createDiv({ cls: "mysql-footer-db-container" });
+    this.setActiveDatabase("dbo");
     const helpBtn = this.rightEl.createDiv({
       cls: "mysql-footer-help-btn",
       attr: { "aria-label": "Help & Features" }
@@ -66199,8 +66227,6 @@ var WorkbenchFooter = class {
       text,
       cls: isRunning ? "mysql-footer-status-running" : "mysql-footer-status"
     });
-    if (isRunning) {
-    }
   }
   updateTime(ms) {
     this.statusEl.empty();
@@ -66208,6 +66234,12 @@ var WorkbenchFooter = class {
     (0, import_obsidian9.setIcon)(timeWrapper, "timer");
     const timeVal = timeWrapper.createSpan({ cls: "mysql-footer-time-val" });
     timeVal.setText(`${ms}ms`);
+  }
+  setActiveDatabase(dbName) {
+    this.dbEl.empty();
+    const iconWrapper = this.dbEl.createDiv({ cls: "mysql-footer-db-icon" });
+    (0, import_obsidian9.setIcon)(iconWrapper, "database-backup");
+    this.dbEl.createSpan({ text: dbName, cls: "mysql-footer-db-name" });
   }
   setLive() {
     this.statusEl.empty();
@@ -66220,9 +66252,6 @@ var WorkbenchFooter = class {
   }
   setAborted() {
     this.setStatus("Aborted");
-  }
-  getStatusEl() {
-    return this.footerEl;
   }
   getContainer() {
     return this.footerEl;
@@ -66448,6 +66477,7 @@ var MySQLPlugin = class extends import_obsidian10.Plugin {
     resetBtn.createSpan({ text: "Reset" });
     const resultContainer = body.createEl("div", { cls: "mysql-result-container" });
     const footer = new WorkbenchFooter(body, this.app);
+    footer.setActiveDatabase(this.activeDatabase);
     importBtn.onclick = () => {
       new CSVSelectionModal(this.app, async (file) => {
         const success = await this.csvManager.importCSV(file);
@@ -66469,10 +66499,41 @@ var MySQLPlugin = class extends import_obsidian10.Plugin {
     runBtn.onclick = () => this.executeQuery(source, params, runBtn, resultContainer, footer);
     if (isLive && liveBlockId && anchoredDB) {
       body.addClass("mysql-view-only");
+      previewBar.style.display = "none";
+      footer.getContainer().style.display = "none";
       codeBlock.style.display = "none";
+      const dashboardBar = body.createDiv({ cls: "mysql-live-dashboard-bar" });
+      body.prepend(dashboardBar);
+      const dashboardLeft = dashboardBar.createDiv({ cls: "mysql-dashboard-left" });
+      dashboardLeft.style.display = "flex";
+      dashboardLeft.style.alignItems = "center";
+      dashboardLeft.style.gap = "12px";
+      const liveIndicator = dashboardLeft.createDiv({ cls: "mysql-live-indicator" });
+      liveIndicator.createDiv({ cls: "mysql-pulse-dot" });
+      liveIndicator.createSpan({ text: "LIVE" });
+      const dbInfo = dashboardLeft.createDiv({ cls: "mysql-footer-db-container" });
+      const dbIcon = dbInfo.createDiv({ cls: "mysql-footer-db-icon" });
+      (0, import_obsidian10.setIcon)(dbIcon, "database-backup");
+      dbInfo.createSpan({ text: anchoredDB, cls: "mysql-footer-db-name" });
+      const refreshBtn = dashboardBar.createEl("button", {
+        cls: "mysql-preview-refresh-btn",
+        attr: { "aria-label": "Refresh Data" }
+      });
+      (0, import_obsidian10.setIcon)(refreshBtn, "refresh-cw");
+      refreshBtn.onclick = () => {
+        refreshBtn.addClass("is-spinning");
+        this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
+          activeDatabase: anchoredDB,
+          originId: liveBlockId,
+          isLive: true
+        }).finally(() => {
+          setTimeout(() => refreshBtn.removeClass("is-spinning"), 600);
+        });
+      };
       this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
         activeDatabase: anchoredDB,
-        originId: liveBlockId
+        originId: liveBlockId,
+        isLive: true
       });
       if (footer) {
         footer.setLive();
@@ -66486,7 +66547,8 @@ var MySQLPlugin = class extends import_obsidian10.Plugin {
         if (hasIntersection) {
           this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
             activeDatabase: anchoredDB,
-            originId: liveBlockId
+            originId: liveBlockId,
+            isLive: true
           });
         }
       };
@@ -66575,7 +66637,7 @@ var MySQLPlugin = class extends import_obsidian10.Plugin {
         originId: options.originId
       });
       if (cancelBtn) cancelBtn.remove();
-      ResultRenderer.render(result, container, this.app, this);
+      ResultRenderer.render(result, container, this.app, this, void 0, options.isLive);
       if (result.activeDatabase) {
         this.activeDatabase = result.activeDatabase;
       }
@@ -66606,7 +66668,7 @@ var MySQLPlugin = class extends import_obsidian10.Plugin {
     for (const [key, value] of Object.entries(params)) {
       const wrapper = typeof value === "string" ? "'" : "";
       const safeValue = SQLSanitizer.escapeValue(value);
-      const regex = new RegExp(`[:@]${key}\\b`, "g");
+      const regex = new RegExp(`[: @]${key}\\b`, "g");
       injected = injected.replace(regex, safeValue);
     }
     return injected;
