@@ -66206,7 +66206,8 @@ var ProPracticeModal = class extends import_obsidian9.Modal {
     super(app);
   }
   onOpen() {
-    const { contentEl } = this;
+    const { contentEl, modalEl } = this;
+    modalEl.addClass("mysql-email-modal-container");
     contentEl.addClass("mysql-pro-practice-modal");
     contentEl.addClass("mysql-email-theme");
     const emailHeader = contentEl.createDiv({ cls: "mysql-email-header" });

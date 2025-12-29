@@ -6,7 +6,8 @@ export class ProPracticeModal extends Modal {
     }
 
     onOpen() {
-        const { contentEl } = this;
+        const { contentEl, modalEl } = this;
+        modalEl.addClass("mysql-email-modal-container");
         contentEl.addClass("mysql-pro-practice-modal");
         contentEl.addClass("mysql-email-theme");
 

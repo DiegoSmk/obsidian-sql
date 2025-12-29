@@ -113,9 +113,21 @@
     max-width: 500px !important;
 }
 
-/* Ensure the parent modal-content doesn't have padding that breaks the edge-to-edge look */
-.modal-content:has(.mysql-email-theme) {
+/* Flattening the structure to remove the "box in a box" effect */
+.mysql-email-modal-container {
+    background-color: var(--background-primary) !important;
     padding: 0 !important;
+    overflow: hidden !important;
+}
+
+.mysql-email-modal-container .modal-title,
+.mysql-email-modal-container .modal-header {
+    display: none !important;
+}
+
+.mysql-email-modal-container .modal-content {
+    padding: 0 !important;
+    margin: 0 !important;
     overflow: hidden !important;
 }
 
@@ -123,6 +135,7 @@
 .mysql-pro-practice-modal.mysql-email-theme {
     text-align: left;
     overflow: hidden;
+    height: 100%;
 }
 
 .mysql-email-header {

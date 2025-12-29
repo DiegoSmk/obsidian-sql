@@ -333,13 +333,24 @@
 .mysql-pro-practice-modal {
   max-width: 500px !important;
 }
-.modal-content:has(.mysql-email-theme) {
+.mysql-email-modal-container {
+  background-color: var(--background-primary) !important;
   padding: 0 !important;
+  overflow: hidden !important;
+}
+.mysql-email-modal-container .modal-title,
+.mysql-email-modal-container .modal-header {
+  display: none !important;
+}
+.mysql-email-modal-container .modal-content {
+  padding: 0 !important;
+  margin: 0 !important;
   overflow: hidden !important;
 }
 .mysql-pro-practice-modal.mysql-email-theme {
   text-align: left;
   overflow: hidden;
+  height: 100%;
 }
 .mysql-email-header {
   background-color: var(--background-secondary);
