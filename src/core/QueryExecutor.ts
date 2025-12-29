@@ -422,16 +422,14 @@ export class QueryExecutor {
                         isStructuralChange = true;
                     }
                 } catch (e) {
-                    // Fallback to robust regex if AST fails
-                    const writeRegex = /(?:INSERT INTO|UPDATE|DELETE FROM|CREATE TABLE|DROP TABLE|ALTER TABLE|TRUNCATE TABLE|FROM|JOIN)\s+([a-zA-Z_][a-zA-Z0-9_.]*)/gi;
+                    // Fallback to strict write regex if AST fails
+                    const writeRegex = /(?:INSERT INTO|UPDATE|DELETE FROM|CREATE TABLE|DROP TABLE|ALTER TABLE|TRUNCATE TABLE)\s+([a-zA-Z_][a-zA-Z0-9_.]*)/gi;
                     let match;
                     while ((match = writeRegex.exec(sql)) !== null) {
                         const fullTableName = match[1];
                         const parts = fullTableName.split('.');
                         const tid = parts[parts.length - 1].toLowerCase();
-                        if (!['select', 'values', '(', 'set', 'where'].includes(tid)) {
-                            modifiedTables.add(tid);
-                        }
+                        modifiedTables.add(tid);
                     }
                 }
             }

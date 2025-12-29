@@ -169,14 +169,14 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
     private generateBlockStableId(source: string, ctx: any): string {
         const hash = (str: string) => {
-            let h = 0;
+            let h1 = 0x811c9dc5, h2 = 0xdeadbeef;
             for (let i = 0; i < str.length; i++) {
-                h = ((h << 5) - h) + str.charCodeAt(i);
-                h |= 0;
+                h1 = Math.imul(h1 ^ str.charCodeAt(i), 16777619);
+                h2 = Math.imul(h2 ^ str.charCodeAt(i), 0x5bd1e995);
             }
-            return Math.abs(h).toString(16);
+            return (Math.abs(h1).toString(16) + Math.abs(h2).toString(16)).substring(0, 16);
         };
-        // We use path + query hash for a stable reference that survives line changes but reacts to code changes
+        // We use path + 16-char hash for stability and collision resistance
         return `${ctx.sourcePath}:${hash(source.trim())}`;
     }
 
@@ -493,7 +493,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                                 // Re-execute immediately
                                 this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                                     activeDatabase: anchoredDB,
-                                    originId: stableId || liveBlockId,
+                                    originId: stableId, // Strictly stableId for origin
                                     isLive: true
                                 });
                             });
@@ -514,7 +514,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 new Notice(`Updating LIVE data from ${anchoredDB}...`);
                 this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                     activeDatabase: anchoredDB,
-                    originId: stableId || liveBlockId,
+                    originId: stableId, // Strictly stableId
                     isLive: true
                 }).finally(() => {
                     setTimeout(() => refreshBtn.removeClass("is-spinning"), 600);
@@ -524,7 +524,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             // Execute initially
             this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                 activeDatabase: anchoredDB,
-                originId: stableId || liveBlockId,
+                originId: stableId, // Strictly stableId
                 isLive: true
             });
 
@@ -538,14 +538,13 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             const debouncedExec = debounce((isStructural: boolean) => {
                 this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                     activeDatabase: anchoredDB,
-                    originId: stableId || liveBlockId,
+                    originId: stableId, // Strictly stableId
                     isLive: true
                 });
             }, 500);
 
             const onModified = (event: DatabaseChangeEvent) => {
                 if (stableId && event.originId === stableId) return;
-                if (event.originId === liveBlockId) return;
                 if (event.database !== anchoredDB) return;
 
                 const hasIntersection = event.tables.length === 0 || // Structural change

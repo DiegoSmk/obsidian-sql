@@ -64078,7 +64078,7 @@ var DatabaseManager = class {
                 }).join(", ");
                 const createSQL = `CREATE TABLE \`${tableName}\` (${columns})`;
                 dbSchema[tableName] = createSQL;
-                Logger.warn(`Imperfect schema restoration for '${tableName}'. Tables created via data-inference may lose constraints like AUTO_INCREMENT. Consider running an explicit CREATE TABLE.`);
+                Logger.warn(`[DATA INTEGRITY] Imperfect schema restoration for '${tableName}'. Table structure was inferred from data, meaning constraints like PRIMARY KEY or AUTO_INCREMENT are likely missing. Manual schema definition is recommended.`);
               }
             } catch (e) {
               console.error(`MySQL Plugin: Failed to generate schema for '${tableName}':`, e);
@@ -64772,15 +64772,13 @@ var QueryExecutor = class {
             isStructuralChange = true;
           }
         } catch (e) {
-          const writeRegex = /(?:INSERT INTO|UPDATE|DELETE FROM|CREATE TABLE|DROP TABLE|ALTER TABLE|TRUNCATE TABLE|FROM|JOIN)\s+([a-zA-Z_][a-zA-Z0-9_.]*)/gi;
+          const writeRegex = /(?:INSERT INTO|UPDATE|DELETE FROM|CREATE TABLE|DROP TABLE|ALTER TABLE|TRUNCATE TABLE)\s+([a-zA-Z_][a-zA-Z0-9_.]*)/gi;
           let match;
           while ((match = writeRegex.exec(sql)) !== null) {
             const fullTableName = match[1];
             const parts = fullTableName.split(".");
             const tid = parts[parts.length - 1].toLowerCase();
-            if (!["select", "values", "(", "set", "where"].includes(tid)) {
-              modifiedTables.add(tid);
-            }
+            modifiedTables.add(tid);
           }
         }
       }
@@ -66498,12 +66496,12 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
   // ========================================================================
   generateBlockStableId(source, ctx) {
     const hash = (str) => {
-      let h = 0;
+      let h1 = 2166136261, h2 = 3735928559;
       for (let i = 0; i < str.length; i++) {
-        h = (h << 5) - h + str.charCodeAt(i);
-        h |= 0;
+        h1 = Math.imul(h1 ^ str.charCodeAt(i), 16777619);
+        h2 = Math.imul(h2 ^ str.charCodeAt(i), 1540483477);
       }
-      return Math.abs(h).toString(16);
+      return (Math.abs(h1).toString(16) + Math.abs(h2).toString(16)).substring(0, 16);
     };
     return `${ctx.sourcePath}:${hash(source.trim())}`;
   }
@@ -66728,7 +66726,8 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
               new import_obsidian11.Notice(`LIVE block anchored to ${db}`);
               this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                 activeDatabase: anchoredDB,
-                originId: stableId || liveBlockId,
+                originId: stableId,
+                // Strictly stableId for origin
                 isLive: true
               });
             });
@@ -66746,7 +66745,8 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
         new import_obsidian11.Notice(`Updating LIVE data from ${anchoredDB}...`);
         this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
           activeDatabase: anchoredDB,
-          originId: stableId || liveBlockId,
+          originId: stableId,
+          // Strictly stableId
           isLive: true
         }).finally(() => {
           setTimeout(() => refreshBtn.removeClass("is-spinning"), 600);
@@ -66754,7 +66754,8 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
       };
       this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
         activeDatabase: anchoredDB,
-        originId: stableId || liveBlockId,
+        originId: stableId,
+        // Strictly stableId
         isLive: true
       });
       if (footer) {
@@ -66764,13 +66765,13 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
       const debouncedExec = (0, import_obsidian11.debounce)((isStructural) => {
         this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
           activeDatabase: anchoredDB,
-          originId: stableId || liveBlockId,
+          originId: stableId,
+          // Strictly stableId
           isLive: true
         });
       }, 500);
       const onModified = (event) => {
         if (stableId && event.originId === stableId) return;
-        if (event.originId === liveBlockId) return;
         if (event.database !== anchoredDB) return;
         const hasIntersection = event.tables.length === 0 || // Structural change
         event.tables.some((t) => observedTables.includes(t));

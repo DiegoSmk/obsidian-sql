@@ -124,7 +124,7 @@ export class DatabaseManager {
                                 dbSchema[tableName] = createSQL;
 
                                 // Alert user about fallback (Potential loss of AUTO_INCREMENT/Constraints)
-                                Logger.warn(`Imperfect schema restoration for '${tableName}'. Tables created via data-inference may lose constraints like AUTO_INCREMENT. Consider running an explicit CREATE TABLE.`);
+                                Logger.warn(`[DATA INTEGRITY] Imperfect schema restoration for '${tableName}'. Table structure was inferred from data, meaning constraints like PRIMARY KEY or AUTO_INCREMENT are likely missing. Manual schema definition is recommended.`);
                             }
                         } catch (e) {
                             console.error(`MySQL Plugin: Failed to generate schema for '${tableName}':`, e);
