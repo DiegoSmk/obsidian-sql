@@ -1,4 +1,4 @@
-import { Plugin, TFile, Notice, debounce, Debouncer, setIcon, Menu } from 'obsidian';
+import { Plugin, TFile, Notice, debounce, Debouncer, setIcon, Menu, Component } from 'obsidian';
 // @ts-ignore
 import alasql from 'alasql';
 import Prism from 'prismjs';
@@ -150,7 +150,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 const r = parseInt(result[1], 16);
                 const g = parseInt(result[2], 16);
                 const b = parseInt(result[3], 16);
-                document.body.style.setProperty('--mysql-accent-rgb', `${r}, ${g}, ${b}`);
+                document.body.style.setProperty('--mysql-accent-rgb', `${r}, ${g}, ${b} `);
             }
         }
     }
@@ -180,7 +180,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         // Phase 2: LIVE Mode Detection & Identity
         const trimmedSource = source.trim();
         const isLive = trimmedSource.toUpperCase().startsWith("LIVE SELECT");
-        const liveBlockId = isLive ? `${ctx.sourcePath}:${ctx.lineStart}-${ctx.lineEnd}` : null;
+        const liveBlockId = isLive ? `${ctx.sourcePath}:${ctx.lineStart} -${ctx.lineEnd} ` : null;
         const stableId = isLive ? this.generateBlockStableId(source, ctx) : null;
 
         // Resolve Anchored Database (Priority: Params > Settings Cache > Global Active)
@@ -250,7 +250,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 }
 
                 observedTables = Array.from(new Set(observedTables));
-                Logger.info(`[LIVE] Monitoring tables:`, observedTables);
+                Logger.info(`[LIVE] Monitoring tables: `, observedTables);
             } catch (e) {
                 Logger.warn("Failed to parse LIVE AST", e);
             }
@@ -364,7 +364,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
         // Safe Code Highlighting
         const codeBlock = body.createEl("pre", { cls: "mysql-source-code" });
-        codeBlock.innerHTML = `<code class="language-sql">${this.safeHighlight(source)}</code>`;
+        codeBlock.innerHTML = `< code class="language-sql" > ${this.safeHighlight(source)} </code>`;
 
         const controls = body.createEl("div", { cls: "mysql-controls" });
 
@@ -553,23 +553,17 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             }
             this.liveListeners.set(listenerKey, onModified);
 
-            // Phase 6 Refinement: Register cleanup via ctx.addChild to ensure total detachment
-            const cleanupComponent = {
-                onunload: () => {
-                    eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, onModified);
-                    if (this.liveListeners.get(listenerKey) === onModified) {
-                        this.liveListeners.delete(listenerKey);
-                    }
-                },
-                onload: () => { }
-            };
-            // @ts-ignore
-            ctx.addChild(cleanupComponent);
+            // Phase 6 Refinement: Register cleanup via official Obsidian Component
+            class LiveSyncComponent extends Component {
+                constructor(private bus: DatabaseEventBus, private handler: (event: DatabaseChangeEvent) => void) {
+                    super();
+                }
+                onunload() {
+                    this.bus.off(DatabaseEventBus.DATABASE_MODIFIED, this.handler);
+                }
+            }
 
-            // Phase 5: Ensure cleanup also happens when the block itself is destroyed by Obsidian
-            // We can't easily hook into unmount, but we can check if'el' is still in DOM periodically 
-            // or just rely on the Map keeping history. 
-            // For now, let's just make sure we unregister the OLD one if the note is re-rendered.
+            ctx.addChild(new LiveSyncComponent(eventBus, onModified));
         }
     }
 

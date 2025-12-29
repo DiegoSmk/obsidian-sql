@@ -64029,7 +64029,10 @@ var DatabaseManager = class {
               dbData[tableName] = rows;
             }
             try {
-              if (rows.length > 0) {
+              const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${dbName}.${tableName}`);
+              if (createRes == null ? void 0 : createRes[0]) {
+                dbSchema[tableName] = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
+              } else if (rows.length > 0) {
                 const firstRow = rows[0];
                 const columns = Object.keys(firstRow).map((col) => {
                   const value = firstRow[col];
@@ -64079,8 +64082,10 @@ var DatabaseManager = class {
             try {
               await import_alasql.default.promise(`DROP TABLE IF EXISTS ${dbName}.${tableName}`);
               let createSQL = String(sql);
-              if (createSQL.toUpperCase().startsWith("CREATE TABLE")) {
-                createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-zA-Z0-9_]+)`?/i, `CREATE TABLE ${dbName}.$1`);
+              if (createSQL.toUpperCase().includes("CREATE TABLE")) {
+                if (!createSQL.includes(".")) {
+                  createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"]?([a-zA-Z0-9_]+)[`"]?/i, `CREATE TABLE ${dbName}.$1`);
+                }
               }
               await import_alasql.default.promise(createSQL);
               restoredTablesCount++;
@@ -66424,7 +66429,7 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
         const r = parseInt(result[1], 16);
         const g = parseInt(result[2], 16);
         const b = parseInt(result[3], 16);
-        document.body.style.setProperty("--mysql-accent-rgb", `${r}, ${g}, ${b}`);
+        document.body.style.setProperty("--mysql-accent-rgb", `${r}, ${g}, ${b} `);
       }
     }
   }
@@ -66448,7 +66453,7 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
     const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
     const trimmedSource = source.trim();
     const isLive = trimmedSource.toUpperCase().startsWith("LIVE SELECT");
-    const liveBlockId = isLive ? `${ctx.sourcePath}:${ctx.lineStart}-${ctx.lineEnd}` : null;
+    const liveBlockId = isLive ? `${ctx.sourcePath}:${ctx.lineStart} -${ctx.lineEnd} ` : null;
     const stableId = isLive ? this.generateBlockStableId(source, ctx) : null;
     let anchoredDB = null;
     if (isLive) {
@@ -66505,7 +66510,7 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
           }
         }
         observedTables = Array.from(new Set(observedTables));
-        Logger.info(`[LIVE] Monitoring tables:`, observedTables);
+        Logger.info(`[LIVE] Monitoring tables: `, observedTables);
       } catch (e) {
         Logger.warn("Failed to parse LIVE AST", e);
       }
@@ -66588,7 +66593,7 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
       new import_obsidian11.Notice("SQL code copied!");
     };
     const codeBlock = body.createEl("pre", { cls: "mysql-source-code" });
-    codeBlock.innerHTML = `<code class="language-sql">${this.safeHighlight(source)}</code>`;
+    codeBlock.innerHTML = `< code class="language-sql" > ${this.safeHighlight(source)} </code>`;
     const controls = body.createEl("div", { cls: "mysql-controls" });
     const runBtn = controls.createEl("button", { cls: "mysql-btn mysql-btn-run" });
     (0, import_obsidian11.setIcon)(runBtn, "play");
@@ -66715,17 +66720,17 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
         eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, this.liveListeners.get(listenerKey));
       }
       this.liveListeners.set(listenerKey, onModified);
-      const cleanupComponent = {
-        onunload: () => {
-          eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, onModified);
-          if (this.liveListeners.get(listenerKey) === onModified) {
-            this.liveListeners.delete(listenerKey);
-          }
-        },
-        onload: () => {
+      class LiveSyncComponent extends import_obsidian11.Component {
+        constructor(bus, handler) {
+          super();
+          this.bus = bus;
+          this.handler = handler;
         }
-      };
-      ctx.addChild(cleanupComponent);
+        onunload() {
+          this.bus.off(DatabaseEventBus.DATABASE_MODIFIED, this.handler);
+        }
+      }
+      ctx.addChild(new LiveSyncComponent(eventBus, onModified));
     }
   }
   safeHighlight(code) {

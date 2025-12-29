@@ -89,11 +89,13 @@ export class DatabaseManager {
                             dbData[tableName] = rows;
                         }
 
-                        // Generate Schema
+                        // Generate Schema from AlaSQL (Supports empty tables)
                         try {
-                            // Method 1: Try stored create sql if alasql keeps it (unlikely but possible)
-                            // Method 2: Generate from data structure
-                            if (rows.length > 0) {
+                            const createRes = alasql(`SHOW CREATE TABLE ${dbName}.${tableName}`) as any[];
+                            if (createRes?.[0]) {
+                                dbSchema[tableName] = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
+                            } else if (rows.length > 0) {
+                                // Fallback: Generate from data structure if SHOW CREATE fails
                                 const firstRow = rows[0] as any;
                                 const columns = Object.keys(firstRow).map(col => {
                                     const value = firstRow[col];
@@ -160,8 +162,11 @@ export class DatabaseManager {
                             await alasql.promise(`DROP TABLE IF EXISTS ${dbName}.${tableName}`);
                             // Inject database name into CREATE TABLE
                             let createSQL = String(sql);
-                            if (createSQL.toUpperCase().startsWith('CREATE TABLE')) {
-                                createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([a-zA-Z0-9_]+)`?/i, `CREATE TABLE ${dbName}.$1`);
+                            if (createSQL.toUpperCase().includes('CREATE TABLE')) {
+                                // Handles both generic and already-prefixed CREATE TABLE SQL
+                                if (!createSQL.includes('.')) {
+                                    createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"]?([a-zA-Z0-9_]+)[`"]?/i, `CREATE TABLE ${dbName}.$1`);
+                                }
                             }
                             await alasql.promise(createSQL);
                             restoredTablesCount++;
