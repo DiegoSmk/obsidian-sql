@@ -66620,7 +66620,7 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
       (0, import_obsidian11.setIcon)(refreshBtn, "refresh-cw");
       refreshBtn.onclick = () => {
         refreshBtn.addClass("is-spinning");
-        new import_obsidian11.Notice("Updating LIVE data...");
+        new import_obsidian11.Notice(`Updating LIVE data from ${anchoredDB}...`);
         this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
           activeDatabase: anchoredDB,
           originId: liveBlockId,
@@ -66656,6 +66656,14 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
         eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, this.liveListeners.get(liveBlockId));
       }
       this.liveListeners.set(liveBlockId, onModified);
+      const cleanupComponent = {
+        onunload: () => {
+          eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, onModified);
+        },
+        onload: () => {
+        }
+      };
+      ctx.addChild(cleanupComponent);
     }
   }
   safeHighlight(code) {

@@ -482,7 +482,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             setIcon(refreshBtn, "refresh-cw");
             refreshBtn.onclick = () => {
                 refreshBtn.addClass("is-spinning");
-                new Notice("Updating LIVE data...");
+                new Notice(`Updating LIVE data from ${anchoredDB}...`);
                 this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                     activeDatabase: anchoredDB,
                     originId: liveBlockId,
@@ -529,6 +529,16 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, this.liveListeners.get(liveBlockId)!);
             }
             this.liveListeners.set(liveBlockId, onModified);
+
+            // Phase 6 Refinement: Register cleanup via ctx.addChild to ensure total detachment
+            const cleanupComponent = {
+                onunload: () => {
+                    eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, onModified);
+                },
+                onload: () => { }
+            };
+            // @ts-ignore
+            ctx.addChild(cleanupComponent);
 
             // Phase 5: Ensure cleanup also happens when the block itself is destroyed by Obsidian
             // We can't easily hook into unmount, but we can check if'el' is still in DOM periodically 
