@@ -38,7 +38,6 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     public dbManager: DatabaseManager;
     public csvManager: CSVManager;
     public activeDatabase: string = 'dbo';
-    private liveListeners: Map<string, (event: DatabaseChangeEvent) => void> = new Map();
     // @ts-ignore
     private debouncedSave: Debouncer<[], Promise<void>>;
 
@@ -114,13 +113,6 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     }
 
     async onunload() {
-        // Clear all LIVE listeners
-        const eventBus = DatabaseEventBus.getInstance();
-        this.liveListeners.forEach((fn, id) => {
-            eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, fn);
-        });
-        this.liveListeners.clear();
-
         if (this.settings.autoSave) {
             await this.dbManager.save();
         }
@@ -568,14 +560,6 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
             eventBus.onDatabaseModified(onModified);
 
-            // Cleanup when block is removed or plugin reloads
-            // We use stableId for tracking active listeners to avoid "zombie" listeners on line shifts
-            const listenerKey = stableId || liveBlockId;
-            if (this.liveListeners.has(listenerKey)) {
-                eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, this.liveListeners.get(listenerKey)!);
-            }
-            this.liveListeners.set(listenerKey, onModified);
-
             // Phase 6 Refinement: Register cleanup via official Obsidian Component
             ctx.addChild(new LiveSyncComponent(eventBus, onModified));
         }
@@ -643,6 +627,10 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         options: { activeDatabase?: string, originId?: string, isLive?: boolean } = {}
     ): Promise<void> {
         btn.disabled = true;
+        const workbench = container.closest('.mysql-workbench-container');
+        if (options.isLive && workbench) {
+            workbench.addClass('is-loading');
+        }
 
         // Add Cancel Button
         const cancelBtn = container.parentElement?.querySelector('.mysql-controls')?.createEl("button", {
@@ -706,7 +694,8 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 safeMode: this.settings.safeMode,
                 signal: abortController.signal,
                 activeDatabase: options.activeDatabase || this.activeDatabase,
-                originId: options.originId
+                originId: options.originId,
+                isLive: options.isLive
             });
 
             if (cancelBtn) cancelBtn.remove();
@@ -747,12 +736,18 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             if (footer) {
                 footer.setError();
             }
+        } finally {
+            if (options.isLive && workbench) {
+                workbench.removeClass('is-loading');
+            }
+            if (footer) {
+                footer.setStatus("Ready");
+            }
+            btn.disabled = false;
+            btn.empty();
+            setIcon(btn, "play");
+            btn.createSpan({ text: "Run" });
         }
-
-        btn.disabled = false;
-        btn.empty();
-        setIcon(btn, "play");
-        btn.createSpan({ text: "Run" });
     }
 
     private injectParams(query: string, params: Record<string, any>): string {

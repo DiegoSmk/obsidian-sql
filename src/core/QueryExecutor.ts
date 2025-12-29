@@ -36,12 +36,21 @@ export class QueryExecutor {
         });
     }
 
-    static async execute(query: string, params?: any[], options: { safeMode?: boolean, signal?: AbortSignal, activeDatabase?: string, originId?: string } = {}): Promise<QueryResult> {
+    static async execute(query: string, params?: any[], options: { safeMode?: boolean, signal?: AbortSignal, activeDatabase?: string, originId?: string, isLive?: boolean } = {}): Promise<QueryResult> {
         const monitor = new PerformanceMonitor();
         monitor.start();
 
         try {
             let cleanQuery = SQLSanitizer.clean(query);
+            const upperSql = cleanQuery.toUpperCase().trim();
+
+            // Defense in Depth: Brute-force block write operations in LIVE mode
+            if (options.isLive) {
+                const isSelect = upperSql.startsWith('SELECT') || upperSql.startsWith('SHOW') || upperSql.startsWith('WITH');
+                if (!isSelect || upperSql.includes('INSERT ') || upperSql.includes('UPDATE ') || upperSql.includes('DELETE ') || upperSql.includes('DROP ')) {
+                    throw new Error("Security Block: LIVE blocks are strictly read-only and must be SELECT/SHOW queries.");
+                }
+            }
 
             // Split queries by semicolon for individual execution
             const statements = cleanQuery
@@ -236,7 +245,7 @@ export class QueryExecutor {
         }
 
         if (message.includes("Parse error")) {
-            return `${message}\n\n💡 Verifique se você esqueceu algum ponto e vírgula ou se há erros de digitação nos nomes das tabelas.`;
+            return `${message}\n\n💡 Verifique se você esqueceu algum ponto e vírgula, se há parênteses/aspas não fechadas ou erros de digitação nos nomes das tabelas.`;
         }
 
         return message;
@@ -429,7 +438,7 @@ export class QueryExecutor {
         }
 
         if (modifiedTables.size > 0 || isStructuralChange) {
-            const tables = Array.from(modifiedTables);
+            const tables = Array.from(modifiedTables).map(t => t.toLowerCase());
             const effectiveOriginId = originId || 'unknown';
             Logger.info(`[EventBus] Emitting modification for ${database}`, { tables, originId: effectiveOriginId });
             DatabaseEventBus.getInstance().emitDatabaseModified({

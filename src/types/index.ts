@@ -11,6 +11,20 @@ export interface MySQLSettings {
     enableLogging: boolean;
 }
 
+export interface AlaSQLColumn {
+    columnid: string;
+    dbtypeid?: string;
+    primarykey?: boolean;
+    auto_increment?: boolean;
+    autoincrement?: boolean;
+    identity?: boolean;
+}
+
+export interface AlaSQLTable {
+    data: any[];
+    columns?: AlaSQLColumn[];
+}
+
 export interface DatabaseSnapshot {
     version?: number;
     createdAt?: number;

@@ -64078,6 +64078,7 @@ var DatabaseManager = class {
                 }).join(", ");
                 const createSQL = `CREATE TABLE \`${tableName}\` (${columns})`;
                 dbSchema[tableName] = createSQL;
+                Logger.warn(`Imperfect schema restoration for '${tableName}'. Tables created via data-inference may lose constraints like AUTO_INCREMENT. Consider running an explicit CREATE TABLE.`);
               }
             } catch (e) {
               console.error(`MySQL Plugin: Failed to generate schema for '${tableName}':`, e);
@@ -64454,7 +64455,6 @@ var _DatabaseEventBus = class _DatabaseEventBus extends import_obsidian2.Events 
    * @param event The event data.
    */
   emitDatabaseModified(event) {
-    event.tables = event.tables.map((t) => t.toLowerCase());
     this.trigger(_DatabaseEventBus.DATABASE_MODIFIED, event);
   }
   /**
@@ -64494,6 +64494,13 @@ var QueryExecutor = class {
     monitor.start();
     try {
       let cleanQuery = SQLSanitizer.clean(query);
+      const upperSql = cleanQuery.toUpperCase().trim();
+      if (options.isLive) {
+        const isSelect = upperSql.startsWith("SELECT") || upperSql.startsWith("SHOW") || upperSql.startsWith("WITH");
+        if (!isSelect || upperSql.includes("INSERT ") || upperSql.includes("UPDATE ") || upperSql.includes("DELETE ") || upperSql.includes("DROP ")) {
+          throw new Error("Security Block: LIVE blocks are strictly read-only and must be SELECT/SHOW queries.");
+        }
+      }
       const statements = cleanQuery.split(";").map((s) => s.trim()).filter((s) => s.length > 0);
       let currentDB = options.activeDatabase || "dbo";
       if (statements.length > 1) {
@@ -64633,7 +64640,7 @@ var QueryExecutor = class {
     if (message.includes("Parse error")) {
       return `${message}
 
-\u{1F4A1} Verifique se voc\xEA esqueceu algum ponto e v\xEDrgula ou se h\xE1 erros de digita\xE7\xE3o nos nomes das tabelas.`;
+\u{1F4A1} Verifique se voc\xEA esqueceu algum ponto e v\xEDrgula, se h\xE1 par\xEAnteses/aspas n\xE3o fechadas ou erros de digita\xE7\xE3o nos nomes das tabelas.`;
     }
     return message;
   }
@@ -64779,7 +64786,7 @@ var QueryExecutor = class {
       }
     }
     if (modifiedTables.size > 0 || isStructuralChange) {
-      const tables = Array.from(modifiedTables);
+      const tables = Array.from(modifiedTables).map((t) => t.toLowerCase());
       const effectiveOriginId = originId || "unknown";
       Logger.info(`[EventBus] Emitting modification for ${database}`, { tables, originId: effectiveOriginId });
       DatabaseEventBus.getInstance().emitDatabaseModified({
@@ -66297,20 +66304,20 @@ var ProPracticeModal = class extends import_obsidian9.Modal {
       text: "Hello,"
     });
     body.createEl("p", {
-      text: "It looks like you're trying to switch databases via UI. While LIVE blocks provide a convenient switcher for dashboards, we encourage a more direct approach here in the Workbench."
+      text: "We noticed you're switching databases via the UI. While this is great for quick navigation, we'd like to share a professional tip: using the explicit `USE` command in your scripts can make your workflow even more robust."
     });
     const quote = body.createEl("blockquote", { cls: "mysql-pro-quote" });
     quote.createEl("p", {
-      text: "In a professional development environment, explicit context is king. Use the `USE` command to switch between your environments safely:"
+      text: "Explicitly defining your context is a best practice that ensures your scripts are portable and unambiguous across different environments:"
     });
     const codeBlock = quote.createDiv({ cls: "mysql-pro-code-examples" });
     codeBlock.createEl("code", { text: "USE staging;" });
     codeBlock.createEl("code", { text: "USE production;" });
     body.createEl("p", {
-      text: "Explicitly defined context makes your scripts portable and avoids ambiguity. If you still prefer a global switch, you can change the active database in the plugin settings."
+      text: "Defining the context within the code helps avoid confusion and makes your intent clear to anyone reviewing your work. You can always continue using the global switcher for convenience!"
     });
     const punchline = body.createEl("div", { cls: "mysql-pro-punchline" });
-    punchline.createSpan({ text: "Remember: No pain, no gain. \u{1F4AA}" });
+    punchline.createSpan({ text: "Happy querying! \u{1F680}" });
     const signature = contentEl.createDiv({ cls: "mysql-pro-signature" });
     const sigLogo = signature.createDiv({ cls: "mysql-pro-signature-logo" });
     (0, import_obsidian9.setIcon)(sigLogo, "circle");
@@ -66405,7 +66412,6 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
   constructor() {
     super(...arguments);
     this.activeDatabase = "dbo";
-    this.liveListeners = /* @__PURE__ */ new Map();
   }
   async onload() {
     await this.loadSettings();
@@ -66451,11 +66457,6 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
     );
   }
   async onunload() {
-    const eventBus = DatabaseEventBus.getInstance();
-    this.liveListeners.forEach((fn, id) => {
-      eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, fn);
-    });
-    this.liveListeners.clear();
     if (this.settings.autoSave) {
       await this.dbManager.save();
     }
@@ -66779,11 +66780,6 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
         }
       };
       eventBus.onDatabaseModified(onModified);
-      const listenerKey = stableId || liveBlockId;
-      if (this.liveListeners.has(listenerKey)) {
-        eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, this.liveListeners.get(listenerKey));
-      }
-      this.liveListeners.set(listenerKey, onModified);
       ctx.addChild(new LiveSyncComponent(eventBus, onModified));
     }
   }
@@ -66827,6 +66823,10 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
   async executeQuery(query, params, btn, container, footer, options = {}) {
     var _a, _b;
     btn.disabled = true;
+    const workbench = container.closest(".mysql-workbench-container");
+    if (options.isLive && workbench) {
+      workbench.addClass("is-loading");
+    }
     const cancelBtn = (_b = (_a = container.parentElement) == null ? void 0 : _a.querySelector(".mysql-controls")) == null ? void 0 : _b.createEl("button", {
       cls: "mysql-btn mysql-btn-warn"
     });
@@ -66862,7 +66862,8 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
         safeMode: this.settings.safeMode,
         signal: abortController.signal,
         activeDatabase: options.activeDatabase || this.activeDatabase,
-        originId: options.originId
+        originId: options.originId,
+        isLive: options.isLive
       });
       if (cancelBtn) cancelBtn.remove();
       ResultRenderer.render(result, container, this.app, this, void 0, options.isLive);
@@ -66885,11 +66886,18 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
       if (footer) {
         footer.setError();
       }
+    } finally {
+      if (options.isLive && workbench) {
+        workbench.removeClass("is-loading");
+      }
+      if (footer) {
+        footer.setStatus("Ready");
+      }
+      btn.disabled = false;
+      btn.empty();
+      (0, import_obsidian11.setIcon)(btn, "play");
+      btn.createSpan({ text: "Run" });
     }
-    btn.disabled = false;
-    btn.empty();
-    (0, import_obsidian11.setIcon)(btn, "play");
-    btn.createSpan({ text: "Run" });
   }
   injectParams(query, params) {
     let injected = query;

@@ -38,8 +38,6 @@ export class DatabaseEventBus extends Events {
      * @param event The event data.
      */
     public emitDatabaseModified(event: DatabaseChangeEvent): void {
-        // Normalize table names to lowercase for consistent matching
-        event.tables = event.tables.map(t => t.toLowerCase());
         this.trigger(DatabaseEventBus.DATABASE_MODIFIED, event);
     }
 

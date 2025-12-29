@@ -33,23 +33,23 @@ export class ProPracticeModal extends Modal {
         });
 
         body.createEl("p", {
-            text: "It looks like you're trying to switch databases via UI. While LIVE blocks provide a convenient switcher for dashboards, we encourage a more direct approach here in the Workbench."
+            text: "We noticed you're switching databases via the UI. While this is great for quick navigation, we'd like to share a professional tip: using the explicit `USE` command in your scripts can make your workflow even more robust."
         });
 
         const quote = body.createEl("blockquote", { cls: "mysql-pro-quote" });
         quote.createEl("p", {
-            text: "In a professional development environment, explicit context is king. Use the `USE` command to switch between your environments safely:"
+            text: "Explicitly defining your context is a best practice that ensures your scripts are portable and unambiguous across different environments:"
         });
         const codeBlock = quote.createDiv({ cls: "mysql-pro-code-examples" });
         codeBlock.createEl("code", { text: "USE staging;" });
         codeBlock.createEl("code", { text: "USE production;" });
 
         body.createEl("p", {
-            text: "Explicitly defined context makes your scripts portable and avoids ambiguity. If you still prefer a global switch, you can change the active database in the plugin settings."
+            text: "Defining the context within the code helps avoid confusion and makes your intent clear to anyone reviewing your work. You can always continue using the global switcher for convenience!"
         });
 
         const punchline = body.createEl("div", { cls: "mysql-pro-punchline" });
-        punchline.createSpan({ text: "Remember: No pain, no gain. 💪" });
+        punchline.createSpan({ text: "Happy querying! 🚀" });
 
         const signature = contentEl.createDiv({ cls: "mysql-pro-signature" });
         const sigLogo = signature.createDiv({ cls: "mysql-pro-signature-logo" });

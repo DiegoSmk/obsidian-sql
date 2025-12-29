@@ -823,6 +823,14 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   font-size: 0.8em;
   color: var(--text-accent);
 }
+.mysql-workbench-container.is-loading .mysql-result-content {
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+  filter: blur(1px);
+}
+.mysql-workbench-container.is-loading .mysql-live-indicator {
+  filter: brightness(1.3);
+}
 
 /* src/styles/components/controls.css */
 .mysql-controls {

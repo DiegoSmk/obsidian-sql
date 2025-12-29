@@ -1,6 +1,6 @@
 // @ts-ignore
 import alasql from 'alasql';
-import { IMySQLPlugin, DatabaseSnapshot, DatabaseContent } from '../types';
+import { IMySQLPlugin, DatabaseSnapshot, DatabaseContent, AlaSQLTable } from '../types';
 import { Logger } from '../utils/Logger';
 
 export class DatabaseManager {
@@ -76,7 +76,7 @@ export class DatabaseManager {
 
                 if (dbInstance.tables) {
                     for (const tableName of Object.keys(dbInstance.tables)) {
-                        const tableObj = dbInstance.tables[tableName] as any;
+                        const tableObj = dbInstance.tables[tableName] as AlaSQLTable;
                         const rows = tableObj.data || [];
 
                         const limit = this.plugin.settings.snapshotRowLimit || 10000;
@@ -122,6 +122,9 @@ export class DatabaseManager {
 
                                 const createSQL = `CREATE TABLE \`${tableName}\` (${columns})`;
                                 dbSchema[tableName] = createSQL;
+
+                                // Alert user about fallback (Potential loss of AUTO_INCREMENT/Constraints)
+                                Logger.warn(`Imperfect schema restoration for '${tableName}'. Tables created via data-inference may lose constraints like AUTO_INCREMENT. Consider running an explicit CREATE TABLE.`);
                             }
                         } catch (e) {
                             console.error(`MySQL Plugin: Failed to generate schema for '${tableName}':`, e);
