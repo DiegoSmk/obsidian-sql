@@ -101,7 +101,7 @@ export class DatabaseManager {
                                 const colDefs = tableObj.columns.map((c: any) => {
                                     let def = `\`${c.columnid}\` ${c.dbtypeid || 'VARCHAR'}`;
                                     if (c.primarykey) def += ' PRIMARY KEY';
-                                    if (c.auto_increment) def += ' AUTO_INCREMENT';
+                                    if (c.auto_increment || c.autoincrement || c.identity) def += ' AUTO_INCREMENT';
                                     return def;
                                 }).join(', ');
                                 dbSchema[tableName] = `CREATE TABLE \`${tableName}\` (${colDefs})`;
@@ -182,9 +182,9 @@ export class DatabaseManager {
                                     createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\["`]?)([a-zA-Z0-9_]+)([\]"`]?)/i, `CREATE TABLE ${dbName}.$2`);
                                 }
                             }
+                            Logger.info(`Restoring table schema: ${dbName}.${tableName}`, { sql: createSQL });
                             await alasql.promise(createSQL);
                             restoredTablesCount++;
-                            Logger.info(`Restored table schema: ${dbName}.${tableName}`);
                         } catch (e) {
                             console.error(`Error restoring schema for '${tableName}':`, e);
                         }
@@ -197,10 +197,18 @@ export class DatabaseManager {
                         try {
                             const exists = await alasql.promise(`SHOW TABLES FROM ${dbName} LIKE '${tableName}'`) as any[];
                             if (exists.length > 0) {
-                                const batchSize = 1000;
-                                for (let i = 0; i < (rows as any[]).length; i += batchSize) {
-                                    const batch = (rows as any[]).slice(i, i + batchSize);
-                                    await alasql.promise(`INSERT INTO ${dbName}.${tableName} SELECT * FROM ?`, [batch]);
+                                // Step 3: Insert data
+                                if (rows && (rows as any[]).length > 0) {
+                                    // Check if schema was provided for this table
+                                    const hasSchema = db.schema && db.schema[tableName];
+                                    if (hasSchema) {
+                                        // If table was created via schema, use INSERT INTO to preserve constraints (like AUTO_INCREMENT)
+                                        await alasql.promise(`INSERT INTO ${dbName}.${tableName} SELECT * FROM ?`, [rows]);
+                                    } else {
+                                        // Fallback: Create table from data if no schema was explicitly defined
+                                        // This path is less ideal for AUTO_INCREMENT but handles cases where schema generation failed
+                                        await alasql.promise(`SELECT * INTO ${dbName}.${tableName} FROM ?`, [rows]);
+                                    }
                                 }
                             }
                         } catch (e) {

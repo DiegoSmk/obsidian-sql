@@ -196,7 +196,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         // Phase 2: LIVE Mode Detection & Identity
         const trimmedSource = source.trim();
         const isLive = trimmedSource.toUpperCase().startsWith("LIVE SELECT");
-        const liveBlockId = isLive ? `${ctx.sourcePath}:${ctx.lineStart}-${ctx.lineEnd}` : null;
+        const sectionInfo = ctx.getSectionInfo(el);
+        const liveBlockId = isLive && sectionInfo ? `${ctx.sourcePath}:${sectionInfo.lineStart}-${sectionInfo.lineEnd}` :
+            (isLive ? `${ctx.sourcePath}:unknown-${Date.now()}` : null);
         const stableId = isLive ? this.generateBlockStableId(source, ctx) : null;
 
         if (isLive && this.settings.enableLogging) {

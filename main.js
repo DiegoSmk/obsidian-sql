@@ -64061,7 +64061,7 @@ var DatabaseManager = class {
                 const colDefs = tableObj.columns.map((c) => {
                   let def = `\`${c.columnid}\` ${c.dbtypeid || "VARCHAR"}`;
                   if (c.primarykey) def += " PRIMARY KEY";
-                  if (c.auto_increment) def += " AUTO_INCREMENT";
+                  if (c.auto_increment || c.autoincrement || c.identity) def += " AUTO_INCREMENT";
                   return def;
                 }).join(", ");
                 dbSchema[tableName] = `CREATE TABLE \`${tableName}\` (${colDefs})`;
@@ -64121,9 +64121,9 @@ var DatabaseManager = class {
                   createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\["`]?)([a-zA-Z0-9_]+)([\]"`]?)/i, `CREATE TABLE ${dbName}.$2`);
                 }
               }
+              Logger.info(`Restoring table schema: ${dbName}.${tableName}`, { sql: createSQL });
               await import_alasql.default.promise(createSQL);
               restoredTablesCount++;
-              Logger.info(`Restored table schema: ${dbName}.${tableName}`);
             } catch (e) {
               console.error(`Error restoring schema for '${tableName}':`, e);
             }
@@ -64135,10 +64135,13 @@ var DatabaseManager = class {
             try {
               const exists = await import_alasql.default.promise(`SHOW TABLES FROM ${dbName} LIKE '${tableName}'`);
               if (exists.length > 0) {
-                const batchSize = 1e3;
-                for (let i = 0; i < rows.length; i += batchSize) {
-                  const batch = rows.slice(i, i + batchSize);
-                  await import_alasql.default.promise(`INSERT INTO ${dbName}.${tableName} SELECT * FROM ?`, [batch]);
+                if (rows && rows.length > 0) {
+                  const hasSchema = db.schema && db.schema[tableName];
+                  if (hasSchema) {
+                    await import_alasql.default.promise(`INSERT INTO ${dbName}.${tableName} SELECT * FROM ?`, [rows]);
+                  } else {
+                    await import_alasql.default.promise(`SELECT * INTO ${dbName}.${tableName} FROM ?`, [rows]);
+                  }
                 }
               }
             } catch (e) {
@@ -66509,7 +66512,8 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
     const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
     const trimmedSource = source.trim();
     const isLive = trimmedSource.toUpperCase().startsWith("LIVE SELECT");
-    const liveBlockId = isLive ? `${ctx.sourcePath}:${ctx.lineStart}-${ctx.lineEnd}` : null;
+    const sectionInfo = ctx.getSectionInfo(el);
+    const liveBlockId = isLive && sectionInfo ? `${ctx.sourcePath}:${sectionInfo.lineStart}-${sectionInfo.lineEnd}` : isLive ? `${ctx.sourcePath}:unknown-${Date.now()}` : null;
     const stableId = isLive ? this.generateBlockStableId(source, ctx) : null;
     if (isLive && this.settings.enableLogging) {
       Logger.info(`[LIVE] Initializing block: stableId=${stableId}, liveBlockId=${liveBlockId}`);
