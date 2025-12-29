@@ -114,33 +114,51 @@
     text-align: center;
 }
 
-.mysql-pro-practice-modal h2 {
-    color: var(--mysql-accent-purple);
-    margin: 0;
+/* Email Theme Base */
+.mysql-pro-practice-modal.mysql-email-theme {
+    max-width: 500px !important;
+    text-align: left;
+    background-color: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    box-shadow: var(--mysql-shadow-lg);
+    padding: 0 !important;
+    overflow: hidden;
 }
 
-.mysql-pro-header {
+.mysql-email-header {
+    background-color: var(--background-secondary);
+    padding: 20px;
+    border-bottom: 2px solid var(--background-modifier-border);
     display: flex;
-    align-items: center;
-    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mysql-email-row {
+    display: flex;
     gap: 12px;
-    margin-bottom: 25px;
+    font-size: 0.9em;
 }
 
-.mysql-pro-icon {
-    color: var(--mysql-accent-purple);
-    display: flex;
-    align-items: center;
+.mysql-email-label {
+    font-weight: 600;
+    color: var(--text-muted);
+    min-width: 60px;
 }
 
-.mysql-pro-icon svg {
-    width: 28px;
-    height: 28px;
+.mysql-email-value {
+    color: var(--text-normal);
+}
+
+.mysql-email-subject {
+    font-weight: 700;
+    color: var(--text-normal);
 }
 
 .mysql-pro-practice-body {
+    padding: 30px;
     font-size: 1.05em;
-    line-height: 1.6;
+    line-height: 1.7;
     color: var(--text-normal);
 }
 
@@ -176,19 +194,19 @@
 }
 
 .mysql-pro-punchline {
-    font-size: 1.2em;
-    font-weight: 800;
+    font-size: 1.1em;
+    font-weight: 700;
     margin: 30px 0 10px 0;
     color: var(--mysql-accent-purple);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
+    font-style: italic;
 }
 
 .mysql-pro-signature {
-    margin-top: 20px;
-    font-style: italic;
+    margin-top: 40px;
+    border-top: 1px solid var(--background-modifier-border);
+    padding-top: 15px;
     color: var(--text-muted);
-    font-size: 0.9em;
+    font-size: 0.95em;
 }
 
 .mysql-pro-signature p {
@@ -201,7 +219,7 @@
 }
 
 .mysql-modal-buttons {
-    margin-top: 30px;
+    padding: 0 30px 30px 30px;
     display: flex;
-    justify-content: center;
+    justify-content: flex-end;
 }
