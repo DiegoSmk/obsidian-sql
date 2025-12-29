@@ -76,7 +76,7 @@ export class DatabaseManager {
 
                 if (dbInstance.tables) {
                     for (const tableName of Object.keys(dbInstance.tables)) {
-                        const tableObj = dbInstance.tables[tableName];
+                        const tableObj = dbInstance.tables[tableName] as any;
                         const rows = tableObj.data || [];
 
                         const limit = this.plugin.settings.snapshotRowLimit || 10000;
@@ -96,10 +96,13 @@ export class DatabaseManager {
                                 dbSchema[tableName] = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
                             }
 
-                            // If SHOW CREATE failed but we have table object, try to reconstruct from columns (Essential for empty tables)
+                            // If SHOW CREATE failed but we have table object, try to reconstruct from columns (Essential for AUTO_INCREMENT)
                             if (!dbSchema[tableName] && tableObj.columns && tableObj.columns.length > 0) {
                                 const colDefs = tableObj.columns.map((c: any) => {
-                                    return `\`${c.columnid}\` ${c.dbtypeid || 'VARCHAR'}`;
+                                    let def = `\`${c.columnid}\` ${c.dbtypeid || 'VARCHAR'}`;
+                                    if (c.primarykey) def += ' PRIMARY KEY';
+                                    if (c.auto_increment) def += ' AUTO_INCREMENT';
+                                    return def;
                                 }).join(', ');
                                 dbSchema[tableName] = `CREATE TABLE \`${tableName}\` (${colDefs})`;
                             } else if (!dbSchema[tableName] && rows.length > 0) {

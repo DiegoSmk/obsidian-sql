@@ -56079,7 +56079,10 @@ var init_Logger = __esm({
         const consoleMsg = `[MySQL Plugin] ${msg}`;
         if (level === "ERROR") console.error(consoleMsg, data);
         else if (level === "WARN") console.warn(consoleMsg, data);
-        else if (this.enabled) console.log(consoleMsg, data);
+        else if (this.enabled) {
+          if (data !== void 0) console.log(consoleMsg, data);
+          else console.log(consoleMsg);
+        }
       }
       static info(msg, data) {
         this.log("INFO", msg, data);
@@ -64056,7 +64059,10 @@ var DatabaseManager = class {
               }
               if (!dbSchema[tableName] && tableObj.columns && tableObj.columns.length > 0) {
                 const colDefs = tableObj.columns.map((c) => {
-                  return `\`${c.columnid}\` ${c.dbtypeid || "VARCHAR"}`;
+                  let def = `\`${c.columnid}\` ${c.dbtypeid || "VARCHAR"}`;
+                  if (c.primarykey) def += " PRIMARY KEY";
+                  if (c.auto_increment) def += " AUTO_INCREMENT";
+                  return def;
                 }).join(", ");
                 dbSchema[tableName] = `CREATE TABLE \`${tableName}\` (${colDefs})`;
               } else if (!dbSchema[tableName] && rows.length > 0) {
