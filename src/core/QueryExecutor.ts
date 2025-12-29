@@ -209,12 +209,37 @@ export class QueryExecutor {
             };
         } catch (error) {
             Logger.error("Query execution failed", error);
+            const originalMessage = error.message || String(error);
+            const beautifiedMessage = this.beautifyError(originalMessage);
+
             return {
                 success: false,
-                error: error.message || String(error),
+                error: beautifiedMessage,
                 executionTime: monitor.end()
             };
         }
+    }
+
+    /**
+     * Translates cryptic AlaSQL errors into user-friendly hints.
+     */
+    private static beautifyError(message: string): string {
+        // Pattern: ... got 'PALAVRA'
+        const match = message.match(/got '([^']+)'/i);
+        if (match) {
+            const word = match[1].toUpperCase();
+            const reserved = ['TOTAL', 'VALUE', 'SUM', 'COUNT', 'MIN', 'MAX', 'AVG', 'KEY', 'ORDER', 'GROUP', 'DATE', 'DESC', 'ASC'];
+
+            if (reserved.includes(word)) {
+                return `${message}\n\n💡 Dica: '${word}' é uma palavra reservada do banco de dados. Tente usar aspas (ex: "${word.toLowerCase()}") ou mude o nome (ex: "${word.toLowerCase()}_total").`;
+            }
+        }
+
+        if (message.includes("Parse error")) {
+            return `${message}\n\n💡 Verifique se você esqueceu algum ponto e vírgula ou se há erros de digitação nos nomes das tabelas.`;
+        }
+
+        return message;
     }
 
     /**
@@ -345,20 +370,20 @@ export class QueryExecutor {
                         if (!node) return;
 
                         // Handle INSERT / INTO
-                        if (node.into && node.into.tableid) modifiedTables.add(node.into.tableid);
+                        if (node.into && node.into.tableid) modifiedTables.add(node.into.tableid.toLowerCase());
 
                         // Handle UPDATE
-                        if (node.tableid) modifiedTables.add(node.tableid);
+                        if (node.tableid) modifiedTables.add(node.tableid.toLowerCase());
 
                         // Handle DELETE
                         if (node.from && Array.isArray(node.from)) {
                             node.from.forEach((f: any) => {
-                                if (f.tableid) modifiedTables.add(f.tableid);
+                                if (f.tableid) modifiedTables.add(f.tableid.toLowerCase());
                             });
                         }
 
                         // Handle CREATE/DROP/ALTER
-                        if (node.table && node.table.tableid) modifiedTables.add(node.table.tableid);
+                        if (node.table && node.table.tableid) modifiedTables.add(node.table.tableid.toLowerCase());
 
                         // Handle multiple statements/nodes if present
                         if (Array.isArray(node)) {
@@ -381,7 +406,7 @@ export class QueryExecutor {
                     if (tableMatch) {
                         const fullTableName = tableMatch[1];
                         const parts = fullTableName.split('.');
-                        modifiedTables.add(parts[parts.length - 1]);
+                        modifiedTables.add(parts[parts.length - 1].toLowerCase());
                     }
                 }
             }
