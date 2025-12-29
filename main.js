@@ -64032,7 +64032,13 @@ var DatabaseManager = class {
               const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${dbName}.${tableName}`);
               if (createRes == null ? void 0 : createRes[0]) {
                 dbSchema[tableName] = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
-              } else if (rows.length > 0) {
+              }
+              if (!dbSchema[tableName] && tableObj.columns && tableObj.columns.length > 0) {
+                const colDefs = tableObj.columns.map((c) => {
+                  return `\`${c.columnid}\` ${c.dbtypeid || "VARCHAR"}`;
+                }).join(", ");
+                dbSchema[tableName] = `CREATE TABLE \`${tableName}\` (${colDefs})`;
+              } else if (!dbSchema[tableName] && rows.length > 0) {
                 const firstRow = rows[0];
                 const columns = Object.keys(firstRow).map((col) => {
                   const value = firstRow[col];
@@ -64077,18 +64083,20 @@ var DatabaseManager = class {
         if (!import_alasql.default.databases[dbName]) {
           await import_alasql.default.promise(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
         }
+        await import_alasql.default.promise(`USE ${dbName}`);
         if (db.schema) {
           for (const [tableName, sql] of Object.entries(db.schema)) {
             try {
               await import_alasql.default.promise(`DROP TABLE IF EXISTS ${dbName}.${tableName}`);
               let createSQL = String(sql);
               if (createSQL.toUpperCase().includes("CREATE TABLE")) {
-                if (!createSQL.includes(".")) {
-                  createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`"]?([a-zA-Z0-9_]+)[`"]?/i, `CREATE TABLE ${dbName}.$1`);
+                if (!createSQL.match(new RegExp(`CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?${dbName}\\.`, "i"))) {
+                  createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\["`]?)([a-zA-Z0-9_]+)([\]"`]?)/i, `CREATE TABLE ${dbName}.$2`);
                 }
               }
               await import_alasql.default.promise(createSQL);
               restoredTablesCount++;
+              Logger.info(`Restored table schema: ${dbName}.${tableName}`);
             } catch (e) {
               console.error(`Error restoring schema for '${tableName}':`, e);
             }
