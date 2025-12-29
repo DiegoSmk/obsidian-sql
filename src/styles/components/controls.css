@@ -154,23 +154,23 @@
 /* Obsidian Edit Block Button Integration */
 /* Using :has() to safely target the button only in our blocks */
 :has(.mysql-workbench-container)>.edit-block-button {
-    background-color: var(--background-secondary) !important;
-    border: 1px solid var(--background-modifier-border) !important;
+    background-color: rgba(128, 128, 128, 0.1) !important;
+    border: none !important;
     color: var(--text-muted) !important;
-    border-radius: var(--mysql-radius-sm) !important;
-    /* Slightly rounded square */
+    border-radius: 12px !important;
     width: 30px !important;
-    height: 30px !important;
+    height: 22px !important;
     padding: 0 !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     font-size: 0.75rem !important;
-    box-shadow: var(--mysql-shadow-sm) !important;
+    box-shadow: none !important;
     transition: all var(--mysql-transition-fast) !important;
     opacity: 0 !important;
     position: absolute !important;
-    top: 15px !important;
+    top: 19px !important;
+    /* Adjusted to align with other body buttons better */
     right: 14px !important;
     z-index: 10 !important;
 }
@@ -184,9 +184,9 @@
 }
 
 :has(.mysql-workbench-container)>.edit-block-button:hover {
-    border: 1px solid var(--mysql-accent-purple) !important;
-    color: var(--mysql-accent-purple) !important;
-    background-color: var(--background-modifier-hover) !important;
+    border: none !important;
+    color: var(--interactive-accent) !important;
+    background-color: rgba(var(--mysql-accent-rgb), 0.15) !important;
 }
 
 /* Copy Code Button */
