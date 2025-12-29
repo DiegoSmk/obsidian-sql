@@ -66583,6 +66583,7 @@ var MySQLPlugin = class extends import_obsidian10.Plugin {
       (0, import_obsidian10.setIcon)(refreshBtn, "refresh-cw");
       refreshBtn.onclick = () => {
         refreshBtn.addClass("is-spinning");
+        new import_obsidian10.Notice("Updating LIVE data...");
         this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
           activeDatabase: anchoredDB,
           originId: liveBlockId,
