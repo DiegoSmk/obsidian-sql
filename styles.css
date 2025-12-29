@@ -511,6 +511,17 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
 .mysql-view-only .mysql-collapse-btn {
   display: none !important;
 }
+.mysql-workbench-container.mysql-live-mode {
+  border: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  margin-bottom: 1em !important;
+}
+.mysql-workbench-container.mysql-live-mode:hover {
+  border: none !important;
+  box-shadow: none !important;
+}
 .mysql-view-only .mysql-controls {
   border-bottom: none !important;
   padding: 0 !important;
@@ -522,7 +533,7 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   gap: 6px;
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--text-success);
+  color: var(--interactive-accent);
   background: rgba(var(--mysql-accent-rgb), 0.1);
   padding: 2px 8px;
   border-radius: 12px;
@@ -530,7 +541,7 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
 .mysql-pulse-dot {
   width: 6px;
   height: 6px;
-  background-color: var(--text-success);
+  background-color: var(--interactive-accent);
   border-radius: 50%;
   box-shadow: 0 0 0 rgba(var(--mysql-accent-rgb), 0.4);
   animation: mysql-pulse 2s infinite;
@@ -541,8 +552,8 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
     box-shadow: 0 0 0 0 rgba(var(--mysql-accent-rgb), 0.7);
   }
   70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(var(--mysql-accent-rgb), 0);
+    transform: scale(1.2);
+    box-shadow: 0 0 0 8px rgba(var(--mysql-accent-rgb), 0);
   }
   100% {
     transform: scale(0.95);
@@ -579,9 +590,14 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 4px 12px;
-  background: rgba(0, 0, 0, 0.05);
-  border-bottom: 1px solid var(--mysql-border-color);
+  padding: 6px 0;
+  background: transparent;
+  border-bottom: none;
+}
+.mysql-live-dashboard-bar .mysql-live-indicator,
+.mysql-live-dashboard-bar .mysql-footer-db-container {
+  background: transparent !important;
+  padding-left: 0;
 }
 .mysql-view-only .mysql-result-header,
 .mysql-view-only .mysql-row-count-wrapper {
@@ -953,8 +969,9 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   font-family: var(--font-monospace);
   transition: all var(--mysql-transition-normal);
 }
-.mysql-workbench-container.is-collapsed::after {
-  display: none;
+.mysql-workbench-container.is-collapsed::after,
+.mysql-workbench-container.mysql-live-mode::after {
+  display: none !important;
 }
 .mysql-workbench-container:hover::after {
   right: 128px;
@@ -969,6 +986,9 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
 .mysql-result-content {
   background-color: var(--background-primary);
   padding: 16px 20px;
+}
+.mysql-live-mode .mysql-result-content {
+  padding: 0 !important;
 }
 .mysql-result-section {
   padding: 20px;
@@ -1126,6 +1146,12 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   padding: 0 !important;
   table-layout: auto !important;
   background-color: var(--background-primary) !important;
+}
+.mysql-live-mode .mysql-table {
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-top: none !important;
 }
 .mysql-workbench-container .mysql-result-content table.mysql-table thead,
 .mysql-workbench-container .mysql-result-content table.mysql-table tbody,
