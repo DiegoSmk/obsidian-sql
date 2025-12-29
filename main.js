@@ -13,6 +13,9 @@ var __typeError = (msg) => {
   throw TypeError(msg);
 };
 var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
 var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
@@ -56057,6 +56060,46 @@ var require_prism = __commonJS({
   }
 });
 
+// src/utils/Logger.ts
+var Logger_exports = {};
+__export(Logger_exports, {
+  Logger: () => Logger
+});
+var Logger;
+var init_Logger = __esm({
+  "src/utils/Logger.ts"() {
+    Logger = class {
+      static setEnabled(enabled) {
+        this.enabled = enabled;
+      }
+      static log(level, msg, data) {
+        const entry = { level, msg, data, time: Date.now() };
+        this.logs.unshift(entry);
+        if (this.logs.length > this.MAX_LOGS) this.logs.pop();
+        const consoleMsg = `[MySQL Plugin] ${msg}`;
+        if (level === "ERROR") console.error(consoleMsg, data);
+        else if (level === "WARN") console.warn(consoleMsg, data);
+        else if (this.enabled) console.log(consoleMsg, data);
+      }
+      static info(msg, data) {
+        this.log("INFO", msg, data);
+      }
+      static warn(msg, data) {
+        this.log("WARN", msg, data);
+      }
+      static error(msg, data) {
+        this.log("ERROR", msg, data);
+      }
+      static getLogs() {
+        return this.logs;
+      }
+    };
+    Logger.logs = [];
+    Logger.MAX_LOGS = 100;
+    Logger.enabled = false;
+  }
+});
+
 // node_modules/html2canvas/dist/html2canvas.js
 var require_html2canvas = __commonJS({
   "node_modules/html2canvas/dist/html2canvas.js"(exports2, module2) {
@@ -63897,7 +63940,8 @@ var DEFAULT_SETTINGS = {
   snapshotRowLimit: 1e4,
   themeColor: "#9d7cd8",
   useObsidianAccent: false,
-  liveBlockAnchors: {}
+  liveBlockAnchors: {},
+  enableLogging: false
 };
 var SQL_CLEANUP_PATTERNS = [
   { pattern: /\/\*[\s\S]*?\*\//g, name: "block-comments" },
@@ -63932,35 +63976,12 @@ var SQLSanitizer = class {
   }
 };
 
-// src/utils/Logger.ts
-var Logger = class {
-  static log(level, msg, data) {
-    const entry = { level, msg, data, time: Date.now() };
-    this.logs.unshift(entry);
-    if (this.logs.length > this.MAX_LOGS) this.logs.pop();
-    const consoleMsg = `[MySQL Plugin] ${msg}`;
-    if (level === "ERROR") console.error(consoleMsg, data);
-    else if (level === "WARN") console.warn(consoleMsg, data);
-    else console.log(consoleMsg, data);
-  }
-  static info(msg, data) {
-    this.log("INFO", msg, data);
-  }
-  static warn(msg, data) {
-    this.log("WARN", msg, data);
-  }
-  static error(msg, data) {
-    this.log("ERROR", msg, data);
-  }
-  static getLogs() {
-    return this.logs;
-  }
-};
-Logger.logs = [];
-Logger.MAX_LOGS = 100;
+// src/main.ts
+init_Logger();
 
 // src/core/DatabaseManager.ts
 var import_alasql = __toESM(require_alasql_fs());
+init_Logger();
 var DatabaseManager = class {
   constructor(plugin) {
     this.plugin = plugin;
@@ -64400,6 +64421,9 @@ var PerformanceMonitor = class {
     return Math.round(performance.now() - this.startTime);
   }
 };
+
+// src/core/QueryExecutor.ts
+init_Logger();
 
 // src/core/DatabaseEventBus.ts
 var import_obsidian2 = require("obsidian");
@@ -65957,6 +65981,12 @@ var MySQLSettingTab = class extends import_obsidian7.PluginSettingTab {
       this.plugin.settings.safeMode = value;
       await this.plugin.saveSettings();
     }));
+    new import_obsidian7.Setting(containerEl).setName("Enable Debug Logging").setDesc("Show detailed logs in the developer console (Ctrl+Shift+I). Useful for debugging synchronization.").addToggle((toggle) => toggle.setValue(this.plugin.settings.enableLogging).onChange(async (value) => {
+      this.plugin.settings.enableLogging = value;
+      const { Logger: Logger2 } = await Promise.resolve().then(() => (init_Logger(), Logger_exports));
+      Logger2.setEnabled(value);
+      await this.plugin.saveSettings();
+    }));
     new import_obsidian7.Setting(containerEl).setName("Snapshot Row Limit").setDesc("Max rows per table to save (prevents memory issues).").addText((text) => text.setPlaceholder("10000").setValue(String(this.plugin.settings.snapshotRowLimit)).onChange(async (value) => {
       const num = parseInt(value);
       if (!isNaN(num) && num > 0) {
@@ -66369,6 +66399,7 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
   }
   async onload() {
     await this.loadSettings();
+    Logger.setEnabled(this.settings.enableLogging);
     this.applyTheme();
     import_alasql6.default.options.autocommit = true;
     import_alasql6.default.options.mysql = true;

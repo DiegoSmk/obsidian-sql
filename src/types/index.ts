@@ -8,6 +8,7 @@ export interface MySQLSettings {
     themeColor: string;
     useObsidianAccent: boolean;
     liveBlockAnchors: Record<string, string>;
+    enableLogging: boolean;
 }
 
 export interface DatabaseSnapshot {

@@ -45,6 +45,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     async onload() {
         await this.loadSettings();
 
+        // Initialize Logger State
+        Logger.setEnabled(this.settings.enableLogging);
+
         // Apply theme
         this.applyTheme();
 

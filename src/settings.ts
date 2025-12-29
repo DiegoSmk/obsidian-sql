@@ -528,6 +528,18 @@ export class MySQLSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
+            .setName('Enable Debug Logging')
+            .setDesc('Show detailed logs in the developer console (Ctrl+Shift+I). Useful for debugging synchronization.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.enableLogging)
+                .onChange(async (value) => {
+                    this.plugin.settings.enableLogging = value;
+                    const { Logger } = await import('./utils/Logger');
+                    Logger.setEnabled(value);
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
             .setName('Snapshot Row Limit')
             .setDesc('Max rows per table to save (prevents memory issues).')
             .addText(text => text

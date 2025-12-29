@@ -9,7 +9,8 @@ export const DEFAULT_SETTINGS: MySQLSettings = {
     snapshotRowLimit: 10000,
     themeColor: '#9d7cd8',
     useObsidianAccent: false,
-    liveBlockAnchors: {}
+    liveBlockAnchors: {},
+    enableLogging: false
 };
 
 export const SQL_CLEANUP_PATTERNS = [
