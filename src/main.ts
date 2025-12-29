@@ -226,7 +226,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
                 const extractTables = (node: any) => {
                     if (!node) return;
-                    if (node.tableid) observedTables.push(node.tableid);
+                    if (node.tableid) observedTables.push(node.tableid.toLowerCase());
                     if (Array.isArray(node)) {
                         node.forEach(extractTables);
                     } else if (typeof node === 'object') {
@@ -505,8 +505,16 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
             // Register Listener
             const eventBus = DatabaseEventBus.getInstance();
+            // Throttled re-execution
+            const debouncedExec = debounce((isStructural: boolean) => {
+                this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
+                    activeDatabase: anchoredDB,
+                    originId: liveBlockId,
+                    isLive: true
+                });
+            }, 500);
+
             const onModified = (event: DatabaseChangeEvent) => {
-                // Throttling or direct reaction logic here
                 if (event.originId === liveBlockId) return;
                 if (event.database !== anchoredDB) return;
 
@@ -514,11 +522,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                     event.tables.some(t => observedTables.includes(t));
 
                 if (hasIntersection) {
-                    this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
-                        activeDatabase: anchoredDB,
-                        originId: liveBlockId,
-                        isLive: true
-                    });
+                    debouncedExec(event.tables.length === 0);
                 }
             };
 

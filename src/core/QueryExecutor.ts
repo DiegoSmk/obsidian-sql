@@ -370,20 +370,32 @@ export class QueryExecutor {
                         if (!node) return;
 
                         // Handle INSERT / INTO
-                        if (node.into && node.into.tableid) modifiedTables.add(node.into.tableid.toLowerCase());
+                        if (node.into && node.into.tableid) {
+                            const tid = node.into.tableid.toLowerCase();
+                            modifiedTables.add(tid.includes('.') ? tid.split('.').pop()! : tid);
+                        }
 
                         // Handle UPDATE
-                        if (node.tableid) modifiedTables.add(node.tableid.toLowerCase());
+                        if (node.tableid) {
+                            const tid = node.tableid.toLowerCase();
+                            modifiedTables.add(tid.includes('.') ? tid.split('.').pop()! : tid);
+                        }
 
                         // Handle DELETE
                         if (node.from && Array.isArray(node.from)) {
                             node.from.forEach((f: any) => {
-                                if (f.tableid) modifiedTables.add(f.tableid.toLowerCase());
+                                if (f.tableid) {
+                                    const tid = f.tableid.toLowerCase();
+                                    modifiedTables.add(tid.includes('.') ? tid.split('.').pop()! : tid);
+                                }
                             });
                         }
 
                         // Handle CREATE/DROP/ALTER
-                        if (node.table && node.table.tableid) modifiedTables.add(node.table.tableid.toLowerCase());
+                        if (node.table && node.table.tableid) {
+                            const tid = node.table.tableid.toLowerCase();
+                            modifiedTables.add(tid.includes('.') ? tid.split('.').pop()! : tid);
+                        }
 
                         // Handle multiple statements/nodes if present
                         if (Array.isArray(node)) {

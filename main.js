@@ -64685,14 +64685,26 @@ var QueryExecutor = class {
           const ast = import_alasql3.default.parse(sql);
           const extractTables = (node) => {
             if (!node) return;
-            if (node.into && node.into.tableid) modifiedTables.add(node.into.tableid.toLowerCase());
-            if (node.tableid) modifiedTables.add(node.tableid.toLowerCase());
+            if (node.into && node.into.tableid) {
+              const tid = node.into.tableid.toLowerCase();
+              modifiedTables.add(tid.includes(".") ? tid.split(".").pop() : tid);
+            }
+            if (node.tableid) {
+              const tid = node.tableid.toLowerCase();
+              modifiedTables.add(tid.includes(".") ? tid.split(".").pop() : tid);
+            }
             if (node.from && Array.isArray(node.from)) {
               node.from.forEach((f) => {
-                if (f.tableid) modifiedTables.add(f.tableid.toLowerCase());
+                if (f.tableid) {
+                  const tid = f.tableid.toLowerCase();
+                  modifiedTables.add(tid.includes(".") ? tid.split(".").pop() : tid);
+                }
               });
             }
-            if (node.table && node.table.tableid) modifiedTables.add(node.table.tableid.toLowerCase());
+            if (node.table && node.table.tableid) {
+              const tid = node.table.tableid.toLowerCase();
+              modifiedTables.add(tid.includes(".") ? tid.split(".").pop() : tid);
+            }
             if (Array.isArray(node)) {
               node.forEach(extractTables);
             } else if (typeof node === "object") {
@@ -66464,7 +66476,7 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
         const ast = import_alasql6.default.parse(sqlForAST);
         const extractTables = (node) => {
           if (!node) return;
-          if (node.tableid) observedTables.push(node.tableid);
+          if (node.tableid) observedTables.push(node.tableid.toLowerCase());
           if (Array.isArray(node)) {
             node.forEach(extractTables);
           } else if (typeof node === "object") {
@@ -66660,17 +66672,20 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
         footer.setLive();
       }
       const eventBus = DatabaseEventBus.getInstance();
+      const debouncedExec = (0, import_obsidian11.debounce)((isStructural) => {
+        this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
+          activeDatabase: anchoredDB,
+          originId: liveBlockId,
+          isLive: true
+        });
+      }, 500);
       const onModified = (event) => {
         if (event.originId === liveBlockId) return;
         if (event.database !== anchoredDB) return;
         const hasIntersection = event.tables.length === 0 || // Structural change
         event.tables.some((t) => observedTables.includes(t));
         if (hasIntersection) {
-          this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
-            activeDatabase: anchoredDB,
-            originId: liveBlockId,
-            isLive: true
-          });
+          debouncedExec(event.tables.length === 0);
         }
       };
       eventBus.onDatabaseModified(onModified);
