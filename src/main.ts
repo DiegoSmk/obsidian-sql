@@ -1,4 +1,4 @@
-import { Plugin, TFile, Notice, debounce, Debouncer, setIcon } from 'obsidian';
+import { Plugin, TFile, Notice, debounce, Debouncer, setIcon, Menu } from 'obsidian';
 // @ts-ignore
 import alasql from 'alasql';
 import Prism from 'prismjs';
@@ -159,6 +159,19 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     // LOGIC PORTED FROM MONOLITHIC CLASS
     // ========================================================================
 
+    private generateBlockStableId(source: string, ctx: any): string {
+        const hash = (str: string) => {
+            let h = 0;
+            for (let i = 0; i < str.length; i++) {
+                h = ((h << 5) - h) + str.charCodeAt(i);
+                h |= 0;
+            }
+            return Math.abs(h).toString(16);
+        };
+        // We use path + query hash for a stable reference that survives line changes but reacts to code changes
+        return `${ctx.sourcePath}:${hash(source.trim())}`;
+    }
+
     async processSQLBlock(source: string, el: HTMLElement, ctx: any) {
         el.empty();
         el.addClass("mysql-block-parent");
@@ -168,7 +181,40 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         const trimmedSource = source.trim();
         const isLive = trimmedSource.toUpperCase().startsWith("LIVE SELECT");
         const liveBlockId = isLive ? `${ctx.sourcePath}:${ctx.lineStart}-${ctx.lineEnd}` : null;
-        const anchoredDB = isLive ? this.activeDatabase : null;
+        const stableId = isLive ? this.generateBlockStableId(source, ctx) : null;
+
+        // Resolve Anchored Database (Priority: Params > Settings Cache > Global Active)
+        let anchoredDB: string | null = null;
+        if (isLive) {
+            // Check for explicit 'db' param in comments: /* params: { "db": "empresa" } */ or -- db: empresa
+            const jsonParamMatch = source.match(/\/\*\s*params\s*:\s*({[\s\S]*?})\s*\*\//);
+            const lineParamMatch = source.match(/--\s*db:\s*([a-zA-Z_][a-zA-Z0-9_]*)/i);
+
+            if (jsonParamMatch) {
+                try {
+                    const p = JSON.parse(jsonParamMatch[1]);
+                    if (p.db) anchoredDB = p.db;
+                } catch (e) { }
+            }
+
+            if (!anchoredDB && lineParamMatch) {
+                anchoredDB = lineParamMatch[1];
+            }
+
+            // Check Settings Cache
+            if (!anchoredDB && stableId && this.settings.liveBlockAnchors[stableId]) {
+                anchoredDB = this.settings.liveBlockAnchors[stableId];
+            }
+
+            // Fallback to current global and save as anchor
+            if (!anchoredDB) {
+                anchoredDB = this.activeDatabase;
+                if (stableId) {
+                    this.settings.liveBlockAnchors[stableId] = anchoredDB;
+                    this.saveSettings();
+                }
+            }
+        }
         let observedTables: string[] = [];
 
         if (isLive) {
@@ -387,10 +433,46 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             liveIndicator.createDiv({ cls: "mysql-pulse-dot" });
             liveIndicator.createSpan({ text: "LIVE" });
 
-            const dbInfo = dashboardLeft.createDiv({ cls: "mysql-footer-db-container" });
+            const dbInfo = dashboardLeft.createDiv({ cls: "mysql-footer-db-container mysql-live-db-switcher" });
             const dbIcon = dbInfo.createDiv({ cls: "mysql-footer-db-icon" });
             setIcon(dbIcon, "database-backup");
-            dbInfo.createSpan({ text: anchoredDB, cls: "mysql-footer-db-name" });
+            const dbNameSpan = dbInfo.createSpan({ text: anchoredDB, cls: "mysql-footer-db-name" });
+
+            // Database Switcher logic
+            dbInfo.onclick = (e) => {
+                const menu = new Menu();
+                const dbs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
+
+                dbs.sort().forEach(db => {
+                    menu.addItem((item) => {
+                        item.setTitle(db)
+                            .setIcon(db === anchoredDB ? "check" : "database")
+                            .onClick(async () => {
+                                if (db === anchoredDB) return;
+
+                                // Update Anchor
+                                anchoredDB = db;
+                                if (stableId) {
+                                    this.settings.liveBlockAnchors[stableId] = db;
+                                    await this.saveSettings();
+                                }
+
+                                // Update UI
+                                dbNameSpan.setText(db);
+                                new Notice(`LIVE block anchored to ${db}`);
+
+                                // Re-execute immediately
+                                this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
+                                    activeDatabase: anchoredDB,
+                                    originId: liveBlockId,
+                                    isLive: true
+                                });
+                            });
+                    });
+                });
+
+                menu.showAtMouseEvent(e);
+            };
 
             // Refresh Button (Now on the left)
             const refreshBtn = dashboardLeft.createEl("button", {

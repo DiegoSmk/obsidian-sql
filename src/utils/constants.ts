@@ -8,7 +8,8 @@ export const DEFAULT_SETTINGS: MySQLSettings = {
     safeMode: false,
     snapshotRowLimit: 10000,
     themeColor: '#9d7cd8',
-    useObsidianAccent: false
+    useObsidianAccent: false,
+    liveBlockAnchors: {}
 };
 
 export const SQL_CLEANUP_PATTERNS = [

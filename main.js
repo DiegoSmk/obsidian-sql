@@ -63896,7 +63896,8 @@ var DEFAULT_SETTINGS = {
   safeMode: false,
   snapshotRowLimit: 1e4,
   themeColor: "#9d7cd8",
-  useObsidianAccent: false
+  useObsidianAccent: false,
+  liveBlockAnchors: {}
 };
 var SQL_CLEANUP_PATTERNS = [
   { pattern: /\/\*[\s\S]*?\*\//g, name: "block-comments" },
@@ -66352,6 +66353,17 @@ var MySQLPlugin = class extends import_obsidian10.Plugin {
   // ========================================================================
   // LOGIC PORTED FROM MONOLITHIC CLASS
   // ========================================================================
+  generateBlockStableId(source, ctx) {
+    const hash = (str) => {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) {
+        h = (h << 5) - h + str.charCodeAt(i);
+        h |= 0;
+      }
+      return Math.abs(h).toString(16);
+    };
+    return `${ctx.sourcePath}:${hash(source.trim())}`;
+  }
   async processSQLBlock(source, el, ctx) {
     el.empty();
     el.addClass("mysql-block-parent");
@@ -66359,7 +66371,32 @@ var MySQLPlugin = class extends import_obsidian10.Plugin {
     const trimmedSource = source.trim();
     const isLive = trimmedSource.toUpperCase().startsWith("LIVE SELECT");
     const liveBlockId = isLive ? `${ctx.sourcePath}:${ctx.lineStart}-${ctx.lineEnd}` : null;
-    const anchoredDB = isLive ? this.activeDatabase : null;
+    const stableId = isLive ? this.generateBlockStableId(source, ctx) : null;
+    let anchoredDB = null;
+    if (isLive) {
+      const jsonParamMatch = source.match(/\/\*\s*params\s*:\s*({[\s\S]*?})\s*\*\//);
+      const lineParamMatch = source.match(/--\s*db:\s*([a-zA-Z_][a-zA-Z0-9_]*)/i);
+      if (jsonParamMatch) {
+        try {
+          const p = JSON.parse(jsonParamMatch[1]);
+          if (p.db) anchoredDB = p.db;
+        } catch (e) {
+        }
+      }
+      if (!anchoredDB && lineParamMatch) {
+        anchoredDB = lineParamMatch[1];
+      }
+      if (!anchoredDB && stableId && this.settings.liveBlockAnchors[stableId]) {
+        anchoredDB = this.settings.liveBlockAnchors[stableId];
+      }
+      if (!anchoredDB) {
+        anchoredDB = this.activeDatabase;
+        if (stableId) {
+          this.settings.liveBlockAnchors[stableId] = anchoredDB;
+          this.saveSettings();
+        }
+      }
+    }
     let observedTables = [];
     if (isLive) {
       workbench.addClass("mysql-live-mode");
@@ -66511,10 +66548,34 @@ var MySQLPlugin = class extends import_obsidian10.Plugin {
       const liveIndicator = dashboardLeft.createDiv({ cls: "mysql-live-indicator" });
       liveIndicator.createDiv({ cls: "mysql-pulse-dot" });
       liveIndicator.createSpan({ text: "LIVE" });
-      const dbInfo = dashboardLeft.createDiv({ cls: "mysql-footer-db-container" });
+      const dbInfo = dashboardLeft.createDiv({ cls: "mysql-footer-db-container mysql-live-db-switcher" });
       const dbIcon = dbInfo.createDiv({ cls: "mysql-footer-db-icon" });
       (0, import_obsidian10.setIcon)(dbIcon, "database-backup");
-      dbInfo.createSpan({ text: anchoredDB, cls: "mysql-footer-db-name" });
+      const dbNameSpan = dbInfo.createSpan({ text: anchoredDB, cls: "mysql-footer-db-name" });
+      dbInfo.onclick = (e) => {
+        const menu = new import_obsidian10.Menu();
+        const dbs = Object.keys(import_alasql6.default.databases).filter((d) => d !== "alasql");
+        dbs.sort().forEach((db) => {
+          menu.addItem((item) => {
+            item.setTitle(db).setIcon(db === anchoredDB ? "check" : "database").onClick(async () => {
+              if (db === anchoredDB) return;
+              anchoredDB = db;
+              if (stableId) {
+                this.settings.liveBlockAnchors[stableId] = db;
+                await this.saveSettings();
+              }
+              dbNameSpan.setText(db);
+              new import_obsidian10.Notice(`LIVE block anchored to ${db}`);
+              this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
+                activeDatabase: anchoredDB,
+                originId: liveBlockId,
+                isLive: true
+              });
+            });
+          });
+        });
+        menu.showAtMouseEvent(e);
+      };
       const refreshBtn = dashboardLeft.createEl("button", {
         cls: "mysql-preview-refresh-btn",
         attr: { "aria-label": "Refresh Data" }

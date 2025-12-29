@@ -601,10 +601,19 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   background: transparent;
   border-bottom: none;
 }
-.mysql-live-dashboard-bar .mysql-live-indicator,
 .mysql-live-dashboard-bar .mysql-footer-db-container {
   background: transparent !important;
   padding-left: 0;
+}
+.mysql-live-db-switcher {
+  cursor: pointer !important;
+  padding: 2px 8px !important;
+  border-radius: 12px !important;
+  transition: all var(--mysql-transition-fast) !important;
+}
+.mysql-live-db-switcher:hover {
+  background: rgba(var(--mysql-accent-rgb), 0.15) !important;
+  color: var(--interactive-accent) !important;
 }
 .mysql-view-only .mysql-result-header,
 .mysql-view-only .mysql-row-count-wrapper {

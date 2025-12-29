@@ -7,6 +7,7 @@ export interface MySQLSettings {
     snapshotRowLimit: number;
     themeColor: string;
     useObsidianAccent: boolean;
+    liveBlockAnchors: Record<string, string>;
 }
 
 export interface DatabaseSnapshot {
