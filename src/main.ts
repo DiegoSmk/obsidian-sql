@@ -392,8 +392,8 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             setIcon(dbIcon, "database-backup");
             dbInfo.createSpan({ text: anchoredDB, cls: "mysql-footer-db-name" });
 
-            // Right: Refresh Button
-            const refreshBtn = dashboardBar.createEl("button", {
+            // Refresh Button (Now on the left)
+            const refreshBtn = dashboardLeft.createEl("button", {
                 cls: "mysql-preview-refresh-btn",
                 attr: { "aria-label": "Refresh Data" }
             });

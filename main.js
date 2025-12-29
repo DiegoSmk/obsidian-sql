@@ -66515,7 +66515,7 @@ var MySQLPlugin = class extends import_obsidian10.Plugin {
       const dbIcon = dbInfo.createDiv({ cls: "mysql-footer-db-icon" });
       (0, import_obsidian10.setIcon)(dbIcon, "database-backup");
       dbInfo.createSpan({ text: anchoredDB, cls: "mysql-footer-db-name" });
-      const refreshBtn = dashboardBar.createEl("button", {
+      const refreshBtn = dashboardLeft.createEl("button", {
         cls: "mysql-preview-refresh-btn",
         attr: { "aria-label": "Refresh Data" }
       });

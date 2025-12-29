@@ -561,19 +561,26 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   }
 }
 .mysql-preview-refresh-btn {
-  background: transparent;
+  background: rgba(128, 128, 128, 0.1);
   border: none;
   cursor: pointer;
   color: var(--text-muted);
-  padding: 4px;
+  padding: 4px 8px;
   display: flex;
   align-items: center;
-  border-radius: 4px;
+  justify-content: center;
+  border-radius: 12px;
+  height: 22px;
+  font-size: 0.75rem;
   transition: all var(--mysql-transition-fast);
 }
 .mysql-preview-refresh-btn:hover {
-  color: var(--mysql-accent-purple);
-  background: rgba(var(--mysql-accent-rgb), 0.1);
+  color: var(--interactive-accent);
+  background: rgba(var(--mysql-accent-rgb), 0.15);
+}
+.mysql-preview-refresh-btn svg {
+  width: 14px;
+  height: 14px;
 }
 .mysql-preview-refresh-btn.is-spinning svg {
   animation: mysql-spin 0.6s linear infinite;
