@@ -66488,7 +66488,7 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
         const r = parseInt(result[1], 16);
         const g = parseInt(result[2], 16);
         const b = parseInt(result[3], 16);
-        document.body.style.setProperty("--mysql-accent-rgb", `${r}, ${g}, ${b} `);
+        document.body.style.setProperty("--mysql-accent-rgb", `${r}, ${g}, ${b}`);
       }
     }
   }
@@ -66727,7 +66727,7 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
               new import_obsidian11.Notice(`LIVE block anchored to ${db}`);
               this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                 activeDatabase: anchoredDB,
-                originId: liveBlockId,
+                originId: stableId || liveBlockId,
                 isLive: true
               });
             });
@@ -66745,7 +66745,7 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
         new import_obsidian11.Notice(`Updating LIVE data from ${anchoredDB}...`);
         this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
           activeDatabase: anchoredDB,
-          originId: liveBlockId,
+          originId: stableId || liveBlockId,
           isLive: true
         }).finally(() => {
           setTimeout(() => refreshBtn.removeClass("is-spinning"), 600);
@@ -66753,7 +66753,7 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
       };
       this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
         activeDatabase: anchoredDB,
-        originId: liveBlockId,
+        originId: stableId || liveBlockId,
         isLive: true
       });
       if (footer) {
@@ -66763,11 +66763,12 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
       const debouncedExec = (0, import_obsidian11.debounce)((isStructural) => {
         this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
           activeDatabase: anchoredDB,
-          originId: liveBlockId,
+          originId: stableId || liveBlockId,
           isLive: true
         });
       }, 500);
       const onModified = (event) => {
+        if (stableId && event.originId === stableId) return;
         if (event.originId === liveBlockId) return;
         if (event.database !== anchoredDB) return;
         const hasIntersection = event.tables.length === 0 || // Structural change

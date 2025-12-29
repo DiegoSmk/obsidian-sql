@@ -166,7 +166,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 const r = parseInt(result[1], 16);
                 const g = parseInt(result[2], 16);
                 const b = parseInt(result[3], 16);
-                document.body.style.setProperty('--mysql-accent-rgb', `${r}, ${g}, ${b} `);
+                document.body.style.setProperty('--mysql-accent-rgb', `${r}, ${g}, ${b}`);
             }
         }
     }
@@ -501,7 +501,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                                 // Re-execute immediately
                                 this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                                     activeDatabase: anchoredDB,
-                                    originId: liveBlockId,
+                                    originId: stableId || liveBlockId,
                                     isLive: true
                                 });
                             });
@@ -522,7 +522,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 new Notice(`Updating LIVE data from ${anchoredDB}...`);
                 this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                     activeDatabase: anchoredDB,
-                    originId: liveBlockId,
+                    originId: stableId || liveBlockId,
                     isLive: true
                 }).finally(() => {
                     setTimeout(() => refreshBtn.removeClass("is-spinning"), 600);
@@ -532,7 +532,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             // Execute initially
             this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                 activeDatabase: anchoredDB,
-                originId: liveBlockId,
+                originId: stableId || liveBlockId,
                 isLive: true
             });
 
@@ -546,12 +546,13 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             const debouncedExec = debounce((isStructural: boolean) => {
                 this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                     activeDatabase: anchoredDB,
-                    originId: liveBlockId,
+                    originId: stableId || liveBlockId,
                     isLive: true
                 });
             }, 500);
 
             const onModified = (event: DatabaseChangeEvent) => {
+                if (stableId && event.originId === stableId) return;
                 if (event.originId === liveBlockId) return;
                 if (event.database !== anchoredDB) return;
 
