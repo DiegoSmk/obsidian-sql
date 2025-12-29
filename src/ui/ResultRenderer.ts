@@ -3,7 +3,7 @@ import html2canvas from 'html2canvas';
 import { IMySQLPlugin, QueryResult } from '../types';
 
 export class ResultRenderer {
-    static render(result: QueryResult, container: HTMLElement, app: App, plugin: IMySQLPlugin, tableName?: string): void {
+    static render(result: QueryResult, container: HTMLElement, app: App, plugin: IMySQLPlugin, tableName?: string, isLive: boolean = false): void {
         container.empty();
 
         if (!result.success) {
@@ -14,7 +14,7 @@ export class ResultRenderer {
         const data = result.data || [];
         const wrapper = container.createEl("div", { cls: "mysql-result-container" });
 
-        this.renderData(data, wrapper, app, plugin, tableName);
+        this.renderData(data, wrapper, app, plugin, tableName, isLive);
     }
 
     private static addActionButtons(
@@ -167,7 +167,7 @@ export class ResultRenderer {
         return md;
     }
 
-    private static renderData(results: any[], container: HTMLElement, app: App, plugin: IMySQLPlugin, tableName?: string): void {
+    private static renderData(results: any[], container: HTMLElement, app: App, plugin: IMySQLPlugin, tableName?: string, isLive: boolean = false): void {
         if (!Array.isArray(results) || results.length === 0) {
             container.createEl("p", {
                 text: "Query executed successfully (no result set)",
@@ -181,6 +181,7 @@ export class ResultRenderer {
 
             // Unified Result Header
             const header = rsWrapper.createDiv({ cls: "mysql-result-header" });
+            if (isLive) header.style.display = "none";
 
             // Content Wrapper (This is what will be screenshotted)
             const contentWrapper = rsWrapper.createDiv({ cls: "mysql-result-content" });
@@ -239,6 +240,7 @@ export class ResultRenderer {
 
             if (rs.rowCount !== undefined && rs.type === 'table') {
                 const rowInfo = contentWrapper.createDiv({ cls: "mysql-row-count-wrapper" });
+                if (isLive) rowInfo.style.display = "none";
                 const countIcon = rowInfo.createDiv({ cls: "mysql-count-icon" });
                 setIcon(countIcon, "list-ordered");
                 rowInfo.createSpan({ text: `${rs.rowCount} rows found`, cls: "mysql-row-count-text" });
@@ -287,8 +289,8 @@ export class ResultRenderer {
             controls.style.alignItems = "center";
             controls.style.gap = "12px";
             controls.style.fontSize = "0.85em";
-            
-            const statusSpan = controls.createEl("span", { 
+
+            const statusSpan = controls.createEl("span", {
                 text: `Showing ${currentCount} of ${rows.length} rows`,
                 cls: "mysql-pagination-status"
             });
@@ -296,7 +298,7 @@ export class ResultRenderer {
             statusSpan.style.fontWeight = "600";
             statusSpan.style.marginRight = "auto";
 
-            const showAllBtn = controls.createEl("button", { 
+            const showAllBtn = controls.createEl("button", {
                 text: "Show All Rows",
                 cls: "mysql-pagination-btn"
             });
@@ -308,7 +310,7 @@ export class ResultRenderer {
             showAllBtn.style.cursor = "pointer";
             showAllBtn.style.fontSize = "0.8em";
             showAllBtn.style.fontWeight = "600";
-            
+
             showAllBtn.onclick = () => {
                 const remaining = rows.slice(currentCount);
                 renderBatch(remaining);

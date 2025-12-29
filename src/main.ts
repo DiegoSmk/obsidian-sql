@@ -334,6 +334,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
         // VS Code Inspired Footer
         const footer = new WorkbenchFooter(body, this.app);
+        footer.setActiveDatabase(this.activeDatabase);
 
         importBtn.onclick = () => {
             new CSVSelectionModal(this.app, async (file) => {
@@ -366,12 +367,53 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         if (isLive && liveBlockId && anchoredDB) {
             // Hide typical interactive elements
             body.addClass("mysql-view-only");
+
+            // Phase 5: Minimalist LIVE View (sem footer, sem header)
+            previewBar.style.display = "none";
+            footer.getContainer().style.display = "none";
             codeBlock.style.display = "none";
+
+            // Create minimalist dashboard bar
+            const dashboardBar = body.createDiv({ cls: "mysql-live-dashboard-bar" });
+            body.prepend(dashboardBar);
+
+            // Left: LIVE Indicator + DB Name
+            const dashboardLeft = dashboardBar.createDiv({ cls: "mysql-dashboard-left" });
+            dashboardLeft.style.display = "flex";
+            dashboardLeft.style.alignItems = "center";
+            dashboardLeft.style.gap = "12px";
+
+            const liveIndicator = dashboardLeft.createDiv({ cls: "mysql-live-indicator" });
+            liveIndicator.createDiv({ cls: "mysql-pulse-dot" });
+            liveIndicator.createSpan({ text: "LIVE" });
+
+            const dbInfo = dashboardLeft.createDiv({ cls: "mysql-footer-db-container" });
+            const dbIcon = dbInfo.createDiv({ cls: "mysql-footer-db-icon" });
+            setIcon(dbIcon, "database-backup");
+            dbInfo.createSpan({ text: anchoredDB, cls: "mysql-footer-db-name" });
+
+            // Right: Refresh Button
+            const refreshBtn = dashboardBar.createEl("button", {
+                cls: "mysql-preview-refresh-btn",
+                attr: { "aria-label": "Refresh Data" }
+            });
+            setIcon(refreshBtn, "refresh-cw");
+            refreshBtn.onclick = () => {
+                refreshBtn.addClass("is-spinning");
+                this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
+                    activeDatabase: anchoredDB,
+                    originId: liveBlockId,
+                    isLive: true
+                }).finally(() => {
+                    setTimeout(() => refreshBtn.removeClass("is-spinning"), 600);
+                });
+            };
 
             // Execute initially
             this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                 activeDatabase: anchoredDB,
-                originId: liveBlockId
+                originId: liveBlockId,
+                isLive: true
             });
 
             if (footer) {
@@ -391,7 +433,8 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 if (hasIntersection) {
                     this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                         activeDatabase: anchoredDB,
-                        originId: liveBlockId
+                        originId: liveBlockId,
+                        isLive: true
                     });
                 }
             };
@@ -403,6 +446,11 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, this.liveListeners.get(liveBlockId)!);
             }
             this.liveListeners.set(liveBlockId, onModified);
+
+            // Phase 5: Ensure cleanup also happens when the block itself is destroyed by Obsidian
+            // We can't easily hook into unmount, but we can check if'el' is still in DOM periodically 
+            // or just rely on the Map keeping history. 
+            // For now, let's just make sure we unregister the OLD one if the note is re-rendered.
         }
     }
 
@@ -465,7 +513,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         btn: HTMLButtonElement,
         container: HTMLElement,
         footer?: WorkbenchFooter,
-        options: { activeDatabase?: string, originId?: string } = {}
+        options: { activeDatabase?: string, originId?: string, isLive?: boolean } = {}
     ): Promise<void> {
         btn.disabled = true;
 
@@ -537,7 +585,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             if (cancelBtn) cancelBtn.remove();
 
             // Render Result
-            ResultRenderer.render(result, container, this.app, this);
+            ResultRenderer.render(result, container, this.app, this, undefined, options.isLive);
 
             // Sync active database from execution result
             if (result.activeDatabase) {
@@ -587,7 +635,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             const wrapper = typeof value === 'string' ? "'" : "";
             const safeValue = SQLSanitizer.escapeValue(value);
             // RegEx to replace :param or @param
-            const regex = new RegExp(`[:@]${key}\\b`, 'g');
+            const regex = new RegExp(`[: @]${key}\\b`, 'g');
             // safeValue already has quotes if string from escapeValue?
             // SQLSanitizer.escapeValue adds quotes for strings.
             // So we replace directly.
