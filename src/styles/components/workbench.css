@@ -188,8 +188,8 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 6px 0;
-    /* Flush with sides, minimal vertical padding */
+    padding: 6px 12px;
+    /* 12px horizontal breathing room */
     background: transparent;
     border-bottom: none;
 }

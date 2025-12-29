@@ -597,7 +597,7 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 0;
+  padding: 6px 12px;
   background: transparent;
   border-bottom: none;
 }
