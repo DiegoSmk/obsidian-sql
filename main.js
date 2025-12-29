@@ -64121,7 +64121,7 @@ var DatabaseManager = class {
                   createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([\["`]?)([a-zA-Z0-9_]+)([\]"`]?)/i, `CREATE TABLE ${dbName}.$2`);
                 }
               }
-              Logger.info(`Restoring table schema: ${dbName}.${tableName}`, { sql: createSQL });
+              Logger.info(`Restored table schema: ${dbName}.${tableName}`);
               await import_alasql.default.promise(createSQL);
               restoredTablesCount++;
             } catch (e) {
