@@ -413,21 +413,27 @@ export class QueryExecutor {
                         isStructuralChange = true;
                     }
                 } catch (e) {
-                    // Fallback to simple regex if AST fails
-                    const tableMatch = sql.match(/(?:INSERT INTO|UPDATE|DELETE FROM|CREATE TABLE|DROP TABLE|ALTER TABLE)\s+([a-zA-Z_][a-zA-Z0-9_.]*)/i);
-                    if (tableMatch) {
-                        const fullTableName = tableMatch[1];
+                    // Fallback to robust regex if AST fails
+                    const writeRegex = /(?:INSERT INTO|UPDATE|DELETE FROM|CREATE TABLE|DROP TABLE|ALTER TABLE|TRUNCATE TABLE|FROM|JOIN)\s+([a-zA-Z_][a-zA-Z0-9_.]*)/gi;
+                    let match;
+                    while ((match = writeRegex.exec(sql)) !== null) {
+                        const fullTableName = match[1];
                         const parts = fullTableName.split('.');
-                        modifiedTables.add(parts[parts.length - 1].toLowerCase());
+                        const tid = parts[parts.length - 1].toLowerCase();
+                        if (!['select', 'values', '(', 'set', 'where'].includes(tid)) {
+                            modifiedTables.add(tid);
+                        }
                     }
                 }
             }
         }
 
         if (modifiedTables.size > 0 || isStructuralChange) {
+            const tables = Array.from(modifiedTables);
+            Logger.info(`[EventBus] Emitting modification for ${database}`, { tables, originId });
             DatabaseEventBus.getInstance().emitDatabaseModified({
                 database: database,
-                tables: Array.from(modifiedTables),
+                tables: tables,
                 timestamp: Date.now(),
                 originId: originId || 'unknown'
             });

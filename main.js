@@ -63941,6 +63941,7 @@ var Logger = class {
     const consoleMsg = `[MySQL Plugin] ${msg}`;
     if (level === "ERROR") console.error(consoleMsg, data);
     else if (level === "WARN") console.warn(consoleMsg, data);
+    else console.log(consoleMsg, data);
   }
   static info(msg, data) {
     this.log("INFO", msg, data);
@@ -64718,19 +64719,25 @@ var QueryExecutor = class {
             isStructuralChange = true;
           }
         } catch (e) {
-          const tableMatch = sql.match(/(?:INSERT INTO|UPDATE|DELETE FROM|CREATE TABLE|DROP TABLE|ALTER TABLE)\s+([a-zA-Z_][a-zA-Z0-9_.]*)/i);
-          if (tableMatch) {
-            const fullTableName = tableMatch[1];
+          const writeRegex = /(?:INSERT INTO|UPDATE|DELETE FROM|CREATE TABLE|DROP TABLE|ALTER TABLE|TRUNCATE TABLE|FROM|JOIN)\s+([a-zA-Z_][a-zA-Z0-9_.]*)/gi;
+          let match;
+          while ((match = writeRegex.exec(sql)) !== null) {
+            const fullTableName = match[1];
             const parts = fullTableName.split(".");
-            modifiedTables.add(parts[parts.length - 1].toLowerCase());
+            const tid = parts[parts.length - 1].toLowerCase();
+            if (!["select", "values", "(", "set", "where"].includes(tid)) {
+              modifiedTables.add(tid);
+            }
           }
         }
       }
     }
     if (modifiedTables.size > 0 || isStructuralChange) {
+      const tables = Array.from(modifiedTables);
+      Logger.info(`[EventBus] Emitting modification for ${database}`, { tables, originId });
       DatabaseEventBus.getInstance().emitDatabaseModified({
         database,
-        tables: Array.from(modifiedTables),
+        tables,
         timestamp: Date.now(),
         originId: originId || "unknown"
       });
@@ -66473,19 +66480,32 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
       workbench.addClass("mysql-live-mode");
       try {
         const sqlForAST = trimmedSource.substring(5).trim();
-        const ast = import_alasql6.default.parse(sqlForAST);
-        const extractTables = (node) => {
+        const extractFromNode = (node) => {
           if (!node) return;
-          if (node.tableid) observedTables.push(node.tableid.toLowerCase());
+          if (node.tableid) {
+            const tid = node.tableid.toLowerCase();
+            observedTables.push(tid.includes(".") ? tid.split(".").pop() : tid);
+          }
           if (Array.isArray(node)) {
-            node.forEach(extractTables);
+            node.forEach(extractFromNode);
           } else if (typeof node === "object") {
             Object.values(node).forEach((val) => {
-              if (typeof val === "object") extractTables(val);
+              if (typeof val === "object") extractFromNode(val);
             });
           }
         };
-        extractTables(ast);
+        const ast = import_alasql6.default.parse(sqlForAST);
+        extractFromNode(ast);
+        const tableRegex = /(?:FROM|JOIN|INTO|UPDATE)\s+([a-zA-Z_][a-zA-Z0-9_.]*)/gi;
+        let match;
+        while ((match = tableRegex.exec(sqlForAST)) !== null) {
+          const tid = match[1].split(".").pop().toLowerCase();
+          if (!["select", "values", "(", "set", "where"].includes(tid)) {
+            observedTables.push(tid);
+          }
+        }
+        observedTables = Array.from(new Set(observedTables));
+        Logger.info(`[LIVE] Monitoring tables:`, observedTables);
       } catch (e) {
         Logger.warn("Failed to parse LIVE AST", e);
       }
@@ -66684,18 +66704,23 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
         if (event.database !== anchoredDB) return;
         const hasIntersection = event.tables.length === 0 || // Structural change
         event.tables.some((t) => observedTables.includes(t));
+        Logger.info(`[LIVE] Modification detected in ${event.database}. Tables: ${event.tables.join(",")}. Match? ${hasIntersection}`);
         if (hasIntersection) {
           debouncedExec(event.tables.length === 0);
         }
       };
       eventBus.onDatabaseModified(onModified);
-      if (this.liveListeners.has(liveBlockId)) {
-        eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, this.liveListeners.get(liveBlockId));
+      const listenerKey = stableId || liveBlockId;
+      if (this.liveListeners.has(listenerKey)) {
+        eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, this.liveListeners.get(listenerKey));
       }
-      this.liveListeners.set(liveBlockId, onModified);
+      this.liveListeners.set(listenerKey, onModified);
       const cleanupComponent = {
         onunload: () => {
           eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, onModified);
+          if (this.liveListeners.get(listenerKey) === onModified) {
+            this.liveListeners.delete(listenerKey);
+          }
         },
         onload: () => {
         }

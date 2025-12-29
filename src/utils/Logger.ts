@@ -10,7 +10,7 @@ export class Logger {
         const consoleMsg = `[MySQL Plugin] ${msg}`;
         if (level === 'ERROR') console.error(consoleMsg, data);
         else if (level === 'WARN') console.warn(consoleMsg, data);
-        // Removed console.log for cleaner output
+        else console.log(consoleMsg, data);
     }
 
     static info(msg: string, data?: any) { this.log('INFO', msg, data); }

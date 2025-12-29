@@ -222,20 +222,35 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             try {
                 // Extract SQL without LIVE prefix for AST parsing
                 const sqlForAST = trimmedSource.substring(5).trim();
-                const ast = (alasql as any).parse(sqlForAST);
-
-                const extractTables = (node: any) => {
+                const extractFromNode = (node: any) => {
                     if (!node) return;
-                    if (node.tableid) observedTables.push(node.tableid.toLowerCase());
+                    if (node.tableid) {
+                        const tid = node.tableid.toLowerCase();
+                        observedTables.push(tid.includes('.') ? tid.split('.').pop()! : tid);
+                    }
                     if (Array.isArray(node)) {
-                        node.forEach(extractTables);
+                        node.forEach(extractFromNode);
                     } else if (typeof node === 'object') {
                         Object.values(node).forEach(val => {
-                            if (typeof val === 'object') extractTables(val);
+                            if (typeof val === 'object') extractFromNode(val);
                         });
                     }
                 };
-                extractTables(ast);
+                const ast = (alasql as any).parse(sqlForAST);
+                extractFromNode(ast);
+
+                // Regex fallback for EXTRA safety
+                const tableRegex = /(?:FROM|JOIN|INTO|UPDATE)\s+([a-zA-Z_][a-zA-Z0-9_.]*)/gi;
+                let match;
+                while ((match = tableRegex.exec(sqlForAST)) !== null) {
+                    const tid = match[1].split('.').pop()!.toLowerCase();
+                    if (!['select', 'values', '(', 'set', 'where'].includes(tid)) {
+                        observedTables.push(tid);
+                    }
+                }
+
+                observedTables = Array.from(new Set(observedTables));
+                Logger.info(`[LIVE] Monitoring tables:`, observedTables);
             } catch (e) {
                 Logger.warn("Failed to parse LIVE AST", e);
             }
@@ -521,6 +536,8 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 const hasIntersection = event.tables.length === 0 || // Structural change
                     event.tables.some(t => observedTables.includes(t));
 
+                Logger.info(`[LIVE] Modification detected in ${event.database}. Tables: ${event.tables.join(',')}. Match? ${hasIntersection}`);
+
                 if (hasIntersection) {
                     debouncedExec(event.tables.length === 0);
                 }
@@ -529,15 +546,20 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             eventBus.onDatabaseModified(onModified);
 
             // Cleanup when block is removed or plugin reloads
-            if (this.liveListeners.has(liveBlockId)) {
-                eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, this.liveListeners.get(liveBlockId)!);
+            // We use stableId for tracking active listeners to avoid "zombie" listeners on line shifts
+            const listenerKey = stableId || liveBlockId;
+            if (this.liveListeners.has(listenerKey)) {
+                eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, this.liveListeners.get(listenerKey)!);
             }
-            this.liveListeners.set(liveBlockId, onModified);
+            this.liveListeners.set(listenerKey, onModified);
 
             // Phase 6 Refinement: Register cleanup via ctx.addChild to ensure total detachment
             const cleanupComponent = {
                 onunload: () => {
                     eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, onModified);
+                    if (this.liveListeners.get(listenerKey) === onModified) {
+                        this.liveListeners.delete(listenerKey);
+                    }
                 },
                 onload: () => { }
             };
