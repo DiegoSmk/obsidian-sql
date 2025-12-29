@@ -110,18 +110,18 @@
 
 /* Pro Practice Modal Styles */
 .mysql-pro-practice-modal {
-    max-width: 450px !important;
-    text-align: center;
+    max-width: 500px !important;
+}
+
+/* Ensure the parent modal-content doesn't have padding that breaks the edge-to-edge look */
+.modal-content:has(.mysql-email-theme) {
+    padding: 0 !important;
+    overflow: hidden !important;
 }
 
 /* Email Theme Base */
 .mysql-pro-practice-modal.mysql-email-theme {
-    max-width: 500px !important;
     text-align: left;
-    background-color: var(--background-primary);
-    border: 1px solid var(--background-modifier-border);
-    box-shadow: var(--mysql-shadow-lg);
-    padding: 0 !important;
     overflow: hidden;
 }
 
