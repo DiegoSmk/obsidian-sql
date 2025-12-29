@@ -63848,7 +63848,7 @@ __export(main_exports, {
   default: () => MySQLPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian9 = require("obsidian");
+var import_obsidian10 = require("obsidian");
 var import_alasql6 = __toESM(require_alasql_fs());
 var import_prismjs = __toESM(require_prism());
 
@@ -64386,6 +64386,39 @@ var PerformanceMonitor = class {
   }
 };
 
+// src/core/DatabaseEventBus.ts
+var import_obsidian2 = require("obsidian");
+var _DatabaseEventBus = class _DatabaseEventBus extends import_obsidian2.Events {
+  constructor() {
+    super();
+  }
+  /**
+   * Gets the singleton instance of the DatabaseEventBus.
+   */
+  static getInstance() {
+    if (!_DatabaseEventBus.instance) {
+      _DatabaseEventBus.instance = new _DatabaseEventBus();
+    }
+    return _DatabaseEventBus.instance;
+  }
+  /**
+   * Emits a database modified event.
+   * @param event The event data.
+   */
+  emitDatabaseModified(event) {
+    this.trigger(_DatabaseEventBus.DATABASE_MODIFIED, event);
+  }
+  /**
+   * Registers a listener for database modified events.
+   * @param callback The function to call when a change occurs.
+   */
+  onDatabaseModified(callback) {
+    this.on(_DatabaseEventBus.DATABASE_MODIFIED, callback);
+  }
+};
+_DatabaseEventBus.DATABASE_MODIFIED = "database-modified";
+var DatabaseEventBus = _DatabaseEventBus;
+
 // src/core/QueryExecutor.ts
 var QueryExecutor = class {
   static async executeWithTimeout(query, params, timeout = 3e4, signal) {
@@ -64458,6 +64491,7 @@ var QueryExecutor = class {
           if (upperStmt.startsWith("CREATE TABLE") || upperStmt.startsWith("DROP TABLE")) {
           }
         }
+        this.notifyIfModified(statements, currentDB, options.originId);
         const normalizedData2 = this.normalizeResult(results);
         Logger.info(`Batch query executed (${statements.length} statements)`, {
           executionTime: monitor.end(),
@@ -64514,6 +64548,7 @@ var QueryExecutor = class {
       }
       const rawResult = await this.executeWithTimeout(cleanQuery, params, 3e4, options.signal);
       const normalizedData = this.normalizeResult(rawResult);
+      this.notifyIfModified(statements.length > 1 ? statements : [cleanQuery], currentDB, options.originId);
       Logger.info(`Query executed: ${cleanQuery.substring(0, 50)}...`, { executionTime: monitor.end() });
       return {
         success: true,
@@ -64610,10 +64645,64 @@ var QueryExecutor = class {
     }
     return { type: "message", data: res, message: String(res) };
   }
+  /**
+   * Analyzes statements and notifies the EventBus if any data modification occurred.
+   */
+  static notifyIfModified(statements, database, originId) {
+    const modifiedTables = /* @__PURE__ */ new Set();
+    let isStructuralChange = false;
+    const writeKeywords = ["INSERT", "UPDATE", "DELETE", "CREATE", "DROP", "ALTER", "TRUNCATE"];
+    for (const sql of statements) {
+      const upperSql = sql.trim().toUpperCase();
+      const startsWithWrite = writeKeywords.some((kw) => upperSql.startsWith(kw));
+      if (startsWithWrite) {
+        try {
+          const ast = import_alasql3.default.parse(sql);
+          const extractTables = (node) => {
+            if (!node) return;
+            if (node.into && node.into.tableid) modifiedTables.add(node.into.tableid);
+            if (node.tableid) modifiedTables.add(node.tableid);
+            if (node.from && Array.isArray(node.from)) {
+              node.from.forEach((f) => {
+                if (f.tableid) modifiedTables.add(f.tableid);
+              });
+            }
+            if (node.table && node.table.tableid) modifiedTables.add(node.table.tableid);
+            if (Array.isArray(node)) {
+              node.forEach(extractTables);
+            } else if (typeof node === "object") {
+              Object.values(node).forEach((val) => {
+                if (typeof val === "object") extractTables(val);
+              });
+            }
+          };
+          extractTables(ast);
+          if (upperSql.startsWith("CREATE") || upperSql.startsWith("DROP") || upperSql.startsWith("ALTER")) {
+            isStructuralChange = true;
+          }
+        } catch (e) {
+          const tableMatch = sql.match(/(?:INSERT INTO|UPDATE|DELETE FROM|CREATE TABLE|DROP TABLE|ALTER TABLE)\s+([a-zA-Z_][a-zA-Z0-9_.]*)/i);
+          if (tableMatch) {
+            const fullTableName = tableMatch[1];
+            const parts = fullTableName.split(".");
+            modifiedTables.add(parts[parts.length - 1]);
+          }
+        }
+      }
+    }
+    if (modifiedTables.size > 0 || isStructuralChange) {
+      DatabaseEventBus.getInstance().emitDatabaseModified({
+        database,
+        tables: Array.from(modifiedTables),
+        timestamp: Date.now(),
+        originId: originId || "unknown"
+      });
+    }
+  }
 };
 
 // src/ui/ResultRenderer.ts
-var import_obsidian2 = require("obsidian");
+var import_obsidian3 = require("obsidian");
 var import_html2canvas = __toESM(require_html2canvas());
 var ResultRenderer = class {
   static render(result, container, app, plugin, tableName) {
@@ -64631,21 +64720,21 @@ var ResultRenderer = class {
       cls: "mysql-action-btn",
       attr: { title: "Copy result to clipboard" }
     });
-    (0, import_obsidian2.setIcon)(copyBtn, "copy");
+    (0, import_obsidian3.setIcon)(copyBtn, "copy");
     copyBtn.createSpan({ text: "Copy" });
     copyBtn.onclick = () => this.copyToClipboard(data);
     const screenshotBtn = container.createEl("button", {
       cls: "mysql-action-btn",
       attr: { title: "Take screenshot of result" }
     });
-    (0, import_obsidian2.setIcon)(screenshotBtn, "camera");
+    (0, import_obsidian3.setIcon)(screenshotBtn, "camera");
     screenshotBtn.createSpan({ text: "Screenshot" });
     screenshotBtn.onclick = () => this.takeScreenshot(resultWrapper);
     const insertBtn = container.createEl("button", {
       cls: "mysql-action-btn",
       attr: { title: "Insert result into note" }
     });
-    (0, import_obsidian2.setIcon)(insertBtn, "file-plus");
+    (0, import_obsidian3.setIcon)(insertBtn, "file-plus");
     insertBtn.createSpan({ text: "Add to Note" });
     insertBtn.onclick = () => this.insertIntoNote(data, app);
   }
@@ -64668,9 +64757,9 @@ var ResultRenderer = class {
         textToCopy = JSON.stringify(data, null, 2);
       }
       await navigator.clipboard.writeText(textToCopy);
-      new import_obsidian2.Notice("\u2713 Copied to clipboard!");
+      new import_obsidian3.Notice("\u2713 Copied to clipboard!");
     } catch (error) {
-      new import_obsidian2.Notice("\u274C Failed to copy: " + error.message);
+      new import_obsidian3.Notice("\u274C Failed to copy: " + error.message);
     }
   }
   static async takeScreenshot(element) {
@@ -64682,14 +64771,14 @@ var ResultRenderer = class {
       });
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          new import_obsidian2.Notice("\u274C Failed to create screenshot");
+          new import_obsidian3.Notice("\u274C Failed to create screenshot");
           return;
         }
         try {
           await navigator.clipboard.write([
             new ClipboardItem({ "image/png": blob })
           ]);
-          new import_obsidian2.Notice("\u2713 Screenshot copied to clipboard!");
+          new import_obsidian3.Notice("\u2713 Screenshot copied to clipboard!");
         } catch (clipboardError) {
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
@@ -64697,19 +64786,19 @@ var ResultRenderer = class {
           a.download = `mysql-result-${Date.now()}.png`;
           a.click();
           URL.revokeObjectURL(url);
-          new import_obsidian2.Notice("\u2713 Screenshot downloaded!");
+          new import_obsidian3.Notice("\u2713 Screenshot downloaded!");
         }
       });
     } catch (error) {
-      new import_obsidian2.Notice("\u274C Screenshot failed: " + error.message);
+      new import_obsidian3.Notice("\u274C Screenshot failed: " + error.message);
       console.error("Screenshot error:", error);
     }
   }
   static async insertIntoNote(data, app) {
     try {
-      const activeView = app.workspace.getActiveViewOfType(import_obsidian2.MarkdownView);
+      const activeView = app.workspace.getActiveViewOfType(import_obsidian3.MarkdownView);
       if (!activeView) {
-        new import_obsidian2.Notice("\u274C No active note found");
+        new import_obsidian3.Notice("\u274C No active note found");
         return;
       }
       const editor = activeView.editor;
@@ -64725,9 +64814,9 @@ var ResultRenderer = class {
       editor.replaceRange("\n" + textToInsert + "\n", cursor);
       const lines = textToInsert.split("\n").length;
       editor.setCursor({ line: cursor.line + lines + 1, ch: 0 });
-      new import_obsidian2.Notice("\u2713 Result inserted into note!");
+      new import_obsidian3.Notice("\u2713 Result inserted into note!");
     } catch (error) {
-      new import_obsidian2.Notice("\u274C Failed to insert: " + error.message);
+      new import_obsidian3.Notice("\u274C Failed to insert: " + error.message);
     }
   }
   static dataToMarkdownTable(rows) {
@@ -64758,7 +64847,7 @@ var ResultRenderer = class {
       const header = rsWrapper.createDiv({ cls: "mysql-result-header" });
       const contentWrapper = rsWrapper.createDiv({ cls: "mysql-result-content" });
       const left = header.createDiv({ cls: "mysql-header-left" });
-      (0, import_obsidian2.setIcon)(left, results.length > 1 ? "list" : "database");
+      (0, import_obsidian3.setIcon)(left, results.length > 1 ? "list" : "database");
       const labelText = results.length > 1 ? `Result #${idx + 1}` : tableName ? `Table: ${tableName}` : "Query Result";
       left.createSpan({ text: labelText, cls: "mysql-result-label" });
       const right = header.createDiv({ cls: "mysql-header-right" });
@@ -64793,7 +64882,7 @@ var ResultRenderer = class {
             msgWrapper.createEl("p", { text: rs.message || "Error" });
           } else {
             const iconWrapper = msgWrapper.createDiv({ cls: isDML ? "mysql-success-icon" : "mysql-info-icon" });
-            (0, import_obsidian2.setIcon)(iconWrapper, isDML ? "database" : "info");
+            (0, import_obsidian3.setIcon)(iconWrapper, isDML ? "database" : "info");
             msgWrapper.createDiv({
               text: rs.message || "Done",
               cls: isDML ? "mysql-success" : "mysql-info-text"
@@ -64804,7 +64893,7 @@ var ResultRenderer = class {
       if (rs.rowCount !== void 0 && rs.type === "table") {
         const rowInfo = contentWrapper.createDiv({ cls: "mysql-row-count-wrapper" });
         const countIcon = rowInfo.createDiv({ cls: "mysql-count-icon" });
-        (0, import_obsidian2.setIcon)(countIcon, "list-ordered");
+        (0, import_obsidian3.setIcon)(countIcon, "list-ordered");
         rowInfo.createSpan({ text: `${rs.rowCount} rows found`, cls: "mysql-row-count-text" });
       }
     });
@@ -64875,15 +64964,15 @@ var ResultRenderer = class {
     const errorDiv = container.createDiv({ cls: "mysql-error" });
     const header = errorDiv.createDiv({ cls: "mysql-error-header" });
     const iconWrapper = header.createDiv({ cls: "mysql-error-icon" });
-    (0, import_obsidian2.setIcon)(iconWrapper, "alert-circle");
+    (0, import_obsidian3.setIcon)(iconWrapper, "alert-circle");
     header.createSpan({ text: "Execution Error", cls: "mysql-error-title" });
     errorDiv.createDiv({ text: message, cls: "mysql-error-message" });
   }
 };
 
 // src/ui/CSVSelectionModal.ts
-var import_obsidian3 = require("obsidian");
-var CSVSelectionModal = class extends import_obsidian3.FuzzySuggestModal {
+var import_obsidian4 = require("obsidian");
+var CSVSelectionModal = class extends import_obsidian4.FuzzySuggestModal {
   constructor(app, onChoose) {
     super(app);
     this.onChoose = onChoose;
@@ -64900,12 +64989,12 @@ var CSVSelectionModal = class extends import_obsidian3.FuzzySuggestModal {
 };
 
 // src/settings.ts
-var import_obsidian6 = require("obsidian");
+var import_obsidian7 = require("obsidian");
 var import_alasql5 = __toESM(require_alasql_fs());
 
 // src/ui/ConfirmationModal.ts
-var import_obsidian4 = require("obsidian");
-var ConfirmationModal = class extends import_obsidian4.Modal {
+var import_obsidian5 = require("obsidian");
+var ConfirmationModal = class extends import_obsidian5.Modal {
   constructor(app, title, message, onSubmit, confirmText = "Confirm", cancelText = "Cancel") {
     super(app);
     this.titleText = title;
@@ -64919,13 +65008,13 @@ var ConfirmationModal = class extends import_obsidian4.Modal {
     this.modalEl.addClass("mysql-confirmation-modal");
     const header = contentEl.createDiv({ cls: "mysql-modal-header" });
     const iconContainer = header.createDiv({ cls: "mysql-modal-icon" });
-    (0, import_obsidian4.setIcon)(iconContainer, "alert-triangle");
+    (0, import_obsidian5.setIcon)(iconContainer, "alert-triangle");
     header.createEl("h2", { text: this.titleText, cls: "mysql-modal-title" });
     contentEl.createEl("p", { text: this.message, cls: "mysql-modal-body" });
     const buttonsGroup = contentEl.createDiv({ cls: "mysql-modal-footer" });
-    const cancelBtn = new import_obsidian4.ButtonComponent(buttonsGroup).setButtonText(this.cancelText).onClick(() => this.close());
+    const cancelBtn = new import_obsidian5.ButtonComponent(buttonsGroup).setButtonText(this.cancelText).onClick(() => this.close());
     cancelBtn.buttonEl.addClass("mysql-modal-btn-cancel");
-    const confirmBtn = new import_obsidian4.ButtonComponent(buttonsGroup).setButtonText(this.confirmText).setWarning().onClick(() => {
+    const confirmBtn = new import_obsidian5.ButtonComponent(buttonsGroup).setButtonText(this.confirmText).setWarning().onClick(() => {
       this.onSubmit(true);
       this.close();
     });
@@ -64938,9 +65027,9 @@ var ConfirmationModal = class extends import_obsidian4.Modal {
 };
 
 // src/ui/DatabaseModals.ts
-var import_obsidian5 = require("obsidian");
+var import_obsidian6 = require("obsidian");
 var import_alasql4 = __toESM(require_alasql_fs());
-var DatabaseSwitcherModal = class extends import_obsidian5.Modal {
+var DatabaseSwitcherModal = class extends import_obsidian6.Modal {
   constructor(app, plugin, onSelect) {
     super(app);
     this.plugin = plugin;
@@ -64982,7 +65071,7 @@ var DatabaseSwitcherModal = class extends import_obsidian5.Modal {
             const dboBadge = item.createDiv({ cls: "mysql-db-list-actions" });
             dboBadge.style.marginLeft = "auto";
             const lockIcon = dboBadge.createDiv({ cls: "mysql-table-icon" });
-            (0, import_obsidian5.setIcon)(lockIcon, "lock");
+            (0, import_obsidian6.setIcon)(lockIcon, "lock");
             lockIcon.setAttribute("aria-label", "System Default Database. Cannot be deleted.");
             lockIcon.style.opacity = "0.5";
           }
@@ -64998,7 +65087,7 @@ var DatabaseSwitcherModal = class extends import_obsidian5.Modal {
           cls: "mysql-db-list-delete-btn",
           attr: { "aria-label": "Delete Database" }
         });
-        (0, import_obsidian5.setIcon)(deleteBtn, "trash-2");
+        (0, import_obsidian6.setIcon)(deleteBtn, "trash-2");
         deleteBtn.onclick = (e) => {
           e.stopPropagation();
           this.confirmDelete(dbName);
@@ -65011,7 +65100,7 @@ var DatabaseSwitcherModal = class extends import_obsidian5.Modal {
     await import_alasql4.default.promise(`USE ${dbName}`);
     this.plugin.activeDatabase = dbName;
     await dbManager.save();
-    new import_obsidian5.Notice(`Switched to "${dbName}"`);
+    new import_obsidian6.Notice(`Switched to "${dbName}"`);
     this.onSelect();
     this.close();
   }
@@ -65025,10 +65114,10 @@ var DatabaseSwitcherModal = class extends import_obsidian5.Modal {
           try {
             const dbManager = this.plugin.dbManager;
             await dbManager.deleteDatabase(dbName);
-            new import_obsidian5.Notice(`Database "${dbName}" deleted.`);
+            new import_obsidian6.Notice(`Database "${dbName}" deleted.`);
             this.onOpen();
           } catch (e) {
-            new import_obsidian5.Notice(`Error: ${e.message}`);
+            new import_obsidian6.Notice(`Error: ${e.message}`);
           }
         }
       },
@@ -65040,7 +65129,7 @@ var DatabaseSwitcherModal = class extends import_obsidian5.Modal {
     this.contentEl.empty();
   }
 };
-var RenameDatabaseModal = class extends import_obsidian5.Modal {
+var RenameDatabaseModal = class extends import_obsidian6.Modal {
   constructor(app, plugin, oldName, onSuccess) {
     super(app);
     this.plugin = plugin;
@@ -65052,13 +65141,13 @@ var RenameDatabaseModal = class extends import_obsidian5.Modal {
     contentEl.empty();
     contentEl.addClass("mysql-rename-modal");
     contentEl.createEl("h2", { text: `Rename Database: ${this.oldName}` });
-    const input = new import_obsidian5.TextComponent(contentEl).setPlaceholder("New database name...").setValue(this.oldName);
+    const input = new import_obsidian6.TextComponent(contentEl).setPlaceholder("New database name...").setValue(this.oldName);
     input.inputEl.addClass("mysql-rename-input");
     input.inputEl.style.width = "100%";
     input.inputEl.style.marginBottom = "20px";
     const buttons = contentEl.createDiv({ cls: "mysql-modal-footer" });
-    new import_obsidian5.ButtonComponent(buttons).setButtonText("Cancel").onClick(() => this.close());
-    const confirmBtn = new import_obsidian5.ButtonComponent(buttons).setButtonText("Rename").setCta().onClick(async () => {
+    new import_obsidian6.ButtonComponent(buttons).setButtonText("Cancel").onClick(() => this.close());
+    const confirmBtn = new import_obsidian6.ButtonComponent(buttons).setButtonText("Rename").setCta().onClick(async () => {
       const newName = input.getValue().trim();
       if (!newName || newName === this.oldName) {
         this.close();
@@ -65067,11 +65156,11 @@ var RenameDatabaseModal = class extends import_obsidian5.Modal {
       try {
         const dbManager = this.plugin.dbManager;
         await dbManager.renameDatabase(this.oldName, newName);
-        new import_obsidian5.Notice(`Database renamed to "${newName}"`);
+        new import_obsidian6.Notice(`Database renamed to "${newName}"`);
         this.onSuccess();
         this.close();
       } catch (e) {
-        new import_obsidian5.Notice(`Error: ${e.message}`);
+        new import_obsidian6.Notice(`Error: ${e.message}`);
       }
     });
   }
@@ -65079,7 +65168,7 @@ var RenameDatabaseModal = class extends import_obsidian5.Modal {
     this.contentEl.empty();
   }
 };
-var CreateDatabaseModal = class extends import_obsidian5.Modal {
+var CreateDatabaseModal = class extends import_obsidian6.Modal {
   constructor(app, plugin, onSuccess) {
     super(app);
     this.plugin = plugin;
@@ -65090,28 +65179,28 @@ var CreateDatabaseModal = class extends import_obsidian5.Modal {
     contentEl.empty();
     contentEl.addClass("mysql-create-db-modal");
     contentEl.createEl("h2", { text: "Create New Database" });
-    const input = new import_obsidian5.TextComponent(contentEl).setPlaceholder("Database name (e.g., my_project)").setValue("");
+    const input = new import_obsidian6.TextComponent(contentEl).setPlaceholder("Database name (e.g., my_project)").setValue("");
     input.inputEl.style.width = "100%";
     input.inputEl.style.marginBottom = "20px";
     const buttons = contentEl.createDiv({ cls: "mysql-modal-footer" });
-    new import_obsidian5.ButtonComponent(buttons).setButtonText("Cancel").onClick(() => this.close());
-    const confirmBtn = new import_obsidian5.ButtonComponent(buttons).setButtonText("Create").setCta().onClick(async () => {
+    new import_obsidian6.ButtonComponent(buttons).setButtonText("Cancel").onClick(() => this.close());
+    const confirmBtn = new import_obsidian6.ButtonComponent(buttons).setButtonText("Create").setCta().onClick(async () => {
       const dbName = input.getValue().trim();
       if (!dbName) {
-        new import_obsidian5.Notice("Database name cannot be empty.");
+        new import_obsidian6.Notice("Database name cannot be empty.");
         return;
       }
       try {
         const dbManager = this.plugin.dbManager;
         await dbManager.createDatabase(dbName);
-        new import_obsidian5.Notice(`Database "${dbName}" created.`);
+        new import_obsidian6.Notice(`Database "${dbName}" created.`);
         this.plugin.activeDatabase = dbName;
         await dbManager.save();
-        new import_obsidian5.Notice(`Switched to "${dbName}"`);
+        new import_obsidian6.Notice(`Switched to "${dbName}"`);
         this.onSuccess();
         this.close();
       } catch (e) {
-        new import_obsidian5.Notice(`Error: ${e.message}`);
+        new import_obsidian6.Notice(`Error: ${e.message}`);
       }
     });
     setTimeout(() => input.inputEl.focus(), 50);
@@ -65120,7 +65209,7 @@ var CreateDatabaseModal = class extends import_obsidian5.Modal {
     this.contentEl.empty();
   }
 };
-var DuplicateDatabaseModal = class extends import_obsidian5.Modal {
+var DuplicateDatabaseModal = class extends import_obsidian6.Modal {
   constructor(app, plugin, oldName, onSuccess) {
     super(app);
     this.plugin = plugin;
@@ -65132,29 +65221,29 @@ var DuplicateDatabaseModal = class extends import_obsidian5.Modal {
     contentEl.empty();
     contentEl.addClass("mysql-duplicate-modal");
     contentEl.createEl("h2", { text: `Duplicate Database: ${this.oldName}` });
-    const input = new import_obsidian5.TextComponent(contentEl).setPlaceholder("New database name...").setValue(`${this.oldName}_copy`);
+    const input = new import_obsidian6.TextComponent(contentEl).setPlaceholder("New database name...").setValue(`${this.oldName}_copy`);
     input.inputEl.style.width = "100%";
     input.inputEl.style.marginBottom = "20px";
     const buttons = contentEl.createDiv({ cls: "mysql-modal-footer" });
-    new import_obsidian5.ButtonComponent(buttons).setButtonText("Cancel").onClick(() => this.close());
-    const confirmBtn = new import_obsidian5.ButtonComponent(buttons).setButtonText("Duplicate").setCta().onClick(async () => {
+    new import_obsidian6.ButtonComponent(buttons).setButtonText("Cancel").onClick(() => this.close());
+    const confirmBtn = new import_obsidian6.ButtonComponent(buttons).setButtonText("Duplicate").setCta().onClick(async () => {
       const newName = input.getValue().trim();
       if (!newName) {
-        new import_obsidian5.Notice("Database name cannot be empty.");
+        new import_obsidian6.Notice("Database name cannot be empty.");
         return;
       }
       if (newName === this.oldName) {
-        new import_obsidian5.Notice("New name must be different from the old name.");
+        new import_obsidian6.Notice("New name must be different from the old name.");
         return;
       }
       try {
         const dbManager = this.plugin.dbManager;
         await dbManager.duplicateDatabase(this.oldName, newName);
-        new import_obsidian5.Notice(`Database duplicatd to "${newName}"`);
+        new import_obsidian6.Notice(`Database duplicatd to "${newName}"`);
         this.onSuccess();
         this.close();
       } catch (e) {
-        new import_obsidian5.Notice(`Error: ${e.message}`);
+        new import_obsidian6.Notice(`Error: ${e.message}`);
       }
     });
     setTimeout(() => input.inputEl.focus(), 50);
@@ -65163,7 +65252,7 @@ var DuplicateDatabaseModal = class extends import_obsidian5.Modal {
     this.contentEl.empty();
   }
 };
-var DatabaseTablesModal = class extends import_obsidian5.Modal {
+var DatabaseTablesModal = class extends import_obsidian6.Modal {
   constructor(app, plugin, dbName) {
     var _a;
     super(app);
@@ -65193,7 +65282,7 @@ var DatabaseTablesModal = class extends import_obsidian5.Modal {
       const item = list.createDiv({ cls: "mysql-table-list-item" });
       item.style.cursor = "pointer";
       const iconDiv = item.createDiv({ cls: "mysql-table-icon" });
-      (0, import_obsidian5.setIcon)(iconDiv, "table");
+      (0, import_obsidian6.setIcon)(iconDiv, "table");
       const info = item.createDiv({ cls: "mysql-table-info" });
       info.createDiv({ text: tableName, cls: "mysql-table-name" });
       info.createDiv({
@@ -65211,62 +65300,62 @@ var DatabaseTablesModal = class extends import_obsidian5.Modal {
     left.style.display = "flex";
     left.style.alignItems = "center";
     left.style.gap = "8px";
-    new import_obsidian5.ButtonComponent(left).setIcon("arrow-left").setTooltip("Back to Tables List").onClick(() => this.renderList());
+    new import_obsidian6.ButtonComponent(left).setIcon("arrow-left").setTooltip("Back to Tables List").onClick(() => this.renderList());
     const title = left.createEl("h3", { text: tableName });
     title.style.margin = "0";
     const actions = header.createDiv({ cls: "mysql-table-detail-actions" });
-    new import_obsidian5.ButtonComponent(actions).setIcon("copy").setTooltip("Copy to clipboard").onClick(async () => {
+    new import_obsidian6.ButtonComponent(actions).setIcon("copy").setTooltip("Copy to clipboard").onClick(async () => {
       try {
         const query = `SELECT * FROM ${this.dbName}.${tableName}`;
         const result = await QueryExecutor.execute(query);
         if (result.success && result.data && result.data[0] && result.data[0].data) {
           await this.copyToClipboard(result.data[0].data);
         } else {
-          new import_obsidian5.Notice("No data to copy");
+          new import_obsidian6.Notice("No data to copy");
         }
       } catch (e) {
-        new import_obsidian5.Notice(`Copy failed: ${e.message}`);
+        new import_obsidian6.Notice(`Copy failed: ${e.message}`);
       }
     });
-    new import_obsidian5.ButtonComponent(actions).setIcon("camera").setTooltip("Take screenshot").onClick(async () => {
+    new import_obsidian6.ButtonComponent(actions).setIcon("camera").setTooltip("Take screenshot").onClick(async () => {
       try {
         const tableElement = dataContainer.querySelector(".mysql-direct-table-wrapper");
         if (tableElement) {
           await this.takeScreenshot(tableElement);
         } else {
-          new import_obsidian5.Notice("No table to screenshot");
+          new import_obsidian6.Notice("No table to screenshot");
         }
       } catch (e) {
-        new import_obsidian5.Notice(`Screenshot failed: ${e.message}`);
+        new import_obsidian6.Notice(`Screenshot failed: ${e.message}`);
       }
     });
-    new import_obsidian5.ButtonComponent(actions).setIcon("file-plus").setTooltip("Add to note").onClick(async () => {
+    new import_obsidian6.ButtonComponent(actions).setIcon("file-plus").setTooltip("Add to note").onClick(async () => {
       try {
         const query = `SELECT * FROM ${this.dbName}.${tableName}`;
         const result = await QueryExecutor.execute(query);
         if (result.success && result.data && result.data[0] && result.data[0].data) {
           await this.insertIntoNote(result.data[0].data);
         } else {
-          new import_obsidian5.Notice("No data to insert");
+          new import_obsidian6.Notice("No data to insert");
         }
       } catch (e) {
-        new import_obsidian5.Notice(`Insert failed: ${e.message}`);
+        new import_obsidian6.Notice(`Insert failed: ${e.message}`);
       }
     });
-    new import_obsidian5.ButtonComponent(actions).setIcon("download").setTooltip("Export CSV").onClick(async () => {
+    new import_obsidian6.ButtonComponent(actions).setIcon("download").setTooltip("Export CSV").onClick(async () => {
       try {
         const query = `SELECT * FROM ${this.dbName}.${tableName}`;
         const result = await QueryExecutor.execute(query);
         if (result.success && result.data && result.data[0] && result.data[0].data) {
           await this.exportTableData(tableName, result.data[0].data);
         } else {
-          new import_obsidian5.Notice("No data to export");
+          new import_obsidian6.Notice("No data to export");
         }
       } catch (e) {
-        new import_obsidian5.Notice(`Export failed: ${e.message}`);
+        new import_obsidian6.Notice(`Export failed: ${e.message}`);
       }
     });
-    new import_obsidian5.ButtonComponent(actions).setIcon("x").setTooltip("Close").onClick(() => this.close());
+    new import_obsidian6.ButtonComponent(actions).setIcon("x").setTooltip("Close").onClick(() => this.close());
     const separator = contentEl.createDiv({ cls: "mysql-table-detail-separator" });
     const dataContainer = contentEl.createDiv({ cls: "mysql-table-detail-content" });
     const loadingMsg = dataContainer.createEl("p", { text: "Loading data..." });
@@ -65345,7 +65434,7 @@ var DatabaseTablesModal = class extends import_obsidian5.Modal {
   async copyToClipboard(data) {
     try {
       if (!data || data.length === 0) {
-        new import_obsidian5.Notice("No data to copy");
+        new import_obsidian6.Notice("No data to copy");
         return;
       }
       const keys = Object.keys(data[0]);
@@ -65358,9 +65447,9 @@ var DatabaseTablesModal = class extends import_obsidian5.Modal {
         textToCopy += values.join("	") + "\n";
       });
       await navigator.clipboard.writeText(textToCopy);
-      new import_obsidian5.Notice("Table data copied to clipboard!");
+      new import_obsidian6.Notice("Table data copied to clipboard!");
     } catch (error) {
-      new import_obsidian5.Notice("Failed to copy: " + error.message);
+      new import_obsidian6.Notice("Failed to copy: " + error.message);
     }
   }
   async takeScreenshot(element) {
@@ -65373,14 +65462,14 @@ var DatabaseTablesModal = class extends import_obsidian5.Modal {
       });
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          new import_obsidian5.Notice("Failed to create screenshot");
+          new import_obsidian6.Notice("Failed to create screenshot");
           return;
         }
         try {
           await navigator.clipboard.write([
             new ClipboardItem({ "image/png": blob })
           ]);
-          new import_obsidian5.Notice("Screenshot copied to clipboard!");
+          new import_obsidian6.Notice("Screenshot copied to clipboard!");
         } catch (clipboardError) {
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
@@ -65388,11 +65477,11 @@ var DatabaseTablesModal = class extends import_obsidian5.Modal {
           a.download = `table-screenshot-${Date.now()}.png`;
           a.click();
           URL.revokeObjectURL(url);
-          new import_obsidian5.Notice("Screenshot downloaded!");
+          new import_obsidian6.Notice("Screenshot downloaded!");
         }
       });
     } catch (error) {
-      new import_obsidian5.Notice("Screenshot failed: " + error.message);
+      new import_obsidian6.Notice("Screenshot failed: " + error.message);
       console.error("Screenshot error:", error);
     }
   }
@@ -65401,7 +65490,7 @@ var DatabaseTablesModal = class extends import_obsidian5.Modal {
       const { MarkdownView: MarkdownView2 } = await import("obsidian");
       const activeView = this.app.workspace.getActiveViewOfType(MarkdownView2);
       if (!activeView) {
-        new import_obsidian5.Notice("No active note found");
+        new import_obsidian6.Notice("No active note found");
         return;
       }
       const editor = activeView.editor;
@@ -65410,15 +65499,15 @@ var DatabaseTablesModal = class extends import_obsidian5.Modal {
       editor.replaceRange("\n" + textToInsert + "\n", cursor);
       const lines = textToInsert.split("\n").length;
       editor.setCursor({ line: cursor.line + lines + 1, ch: 0 });
-      new import_obsidian5.Notice("Table inserted into note!");
+      new import_obsidian6.Notice("Table inserted into note!");
     } catch (error) {
-      new import_obsidian5.Notice("Failed to insert: " + error.message);
+      new import_obsidian6.Notice("Failed to insert: " + error.message);
     }
   }
   async exportTableData(tableName, data) {
     try {
       if (!data || data.length === 0) {
-        new import_obsidian5.Notice("Table is empty");
+        new import_obsidian6.Notice("Table is empty");
         return;
       }
       const csv = this.jsonToCSV(data);
@@ -65428,10 +65517,10 @@ var DatabaseTablesModal = class extends import_obsidian5.Modal {
       }
       const fileName = `${exportFolder}/${tableName}_${Date.now()}.csv`;
       await this.plugin.app.vault.create(fileName, csv);
-      new import_obsidian5.Notice(`Table exported to ${fileName}`);
+      new import_obsidian6.Notice(`Table exported to ${fileName}`);
     } catch (error) {
       console.error("CSV Export Error:", error);
-      new import_obsidian5.Notice(`Export failed: ${error.message}`);
+      new import_obsidian6.Notice(`Export failed: ${error.message}`);
     }
   }
   jsonToCSV(data) {
@@ -65479,7 +65568,7 @@ var DatabaseTablesModal = class extends import_obsidian5.Modal {
 };
 
 // src/settings.ts
-var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
+var MySQLSettingTab = class extends import_obsidian7.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -65563,12 +65652,12 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
         importInput.value = "";
       }
     };
-    new import_obsidian6.ButtonComponent(actions).setButtonText("Atualizar").setIcon("refresh-cw").setTooltip("Atualizar Lista").onClick(() => {
+    new import_obsidian7.ButtonComponent(actions).setButtonText("Atualizar").setIcon("refresh-cw").setTooltip("Atualizar Lista").onClick(() => {
       this.display();
-      new import_obsidian6.Notice("Lista atualizada!");
+      new import_obsidian7.Notice("Lista atualizada!");
     });
-    new import_obsidian6.ButtonComponent(importBtnContainer).setButtonText("Importar").setIcon("import").setTooltip("Importar Database (.sql)").onClick(() => importInput.click());
-    new import_obsidian6.ButtonComponent(actions).setButtonText("Novo Database").setIcon("plus").setCta().onClick(() => this.openCreateModal());
+    new import_obsidian7.ButtonComponent(importBtnContainer).setButtonText("Importar").setIcon("import").setTooltip("Importar Database (.sql)").onClick(() => importInput.click());
+    new import_obsidian7.ButtonComponent(actions).setButtonText("Novo Database").setIcon("plus").setCta().onClick(() => this.openCreateModal());
     const welcomeSection = containerEl.createDiv({ cls: "mysql-welcome-section" });
     welcomeSection.style.marginBottom = "20px";
     welcomeSection.style.padding = "15px";
@@ -65586,7 +65675,7 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
     searchWrapper.style.borderRadius = "6px";
     searchWrapper.style.padding = "0 8px";
     const searchIcon = searchWrapper.createDiv({ cls: "mysql-search-icon" });
-    (0, import_obsidian6.setIcon)(searchIcon, "search");
+    (0, import_obsidian7.setIcon)(searchIcon, "search");
     searchIcon.style.opacity = "0.5";
     searchIcon.style.display = "flex";
     searchIcon.style.marginRight = "8px";
@@ -65724,24 +65813,24 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
     this.addStat(statsGrid, "Atualizado", this.timeAgo(stats.lastUpdated));
     const actions = card.createDiv({ cls: "mysql-db-actions" });
     if (!isActive) {
-      new import_obsidian6.ButtonComponent(actions).setIcon("check").setTooltip("Ativar").setClass("btn-success").onClick(async () => {
+      new import_obsidian7.ButtonComponent(actions).setIcon("check").setTooltip("Ativar").setClass("btn-success").onClick(async () => {
         await this.switchDatabase(dbName);
       });
     }
-    new import_obsidian6.ButtonComponent(actions).setIcon("copy").setTooltip("Duplicar").onClick(() => {
+    new import_obsidian7.ButtonComponent(actions).setIcon("copy").setTooltip("Duplicar").onClick(() => {
       const modal = new DuplicateDatabaseModal(this.app, this.plugin, dbName, () => this.display());
       modal.open();
     });
     if (!isActive && !isSystem) {
-      new import_obsidian6.ButtonComponent(actions).setIcon("pencil").setTooltip("Renomear").onClick(() => {
+      new import_obsidian7.ButtonComponent(actions).setIcon("pencil").setTooltip("Renomear").onClick(() => {
         const modal = new RenameDatabaseModal(this.app, this.plugin, dbName, () => this.display());
         modal.open();
       });
     }
-    new import_obsidian6.ButtonComponent(actions).setIcon("table").setTooltip("Visualizar Tabelas").onClick(() => this.openTablesModal(dbName));
-    new import_obsidian6.ButtonComponent(actions).setIcon("upload").setTooltip("Exportar").onClick(() => this.exportDatabaseSQL(dbName));
+    new import_obsidian7.ButtonComponent(actions).setIcon("table").setTooltip("Visualizar Tabelas").onClick(() => this.openTablesModal(dbName));
+    new import_obsidian7.ButtonComponent(actions).setIcon("upload").setTooltip("Exportar").onClick(() => this.exportDatabaseSQL(dbName));
     if (!isActive && !isSystem) {
-      new import_obsidian6.ButtonComponent(actions).setIcon("trash-2").setTooltip("Deletar").setWarning().onClick(() => this.confirmDelete(dbName));
+      new import_obsidian7.ButtonComponent(actions).setIcon("trash-2").setTooltip("Deletar").setWarning().onClick(() => this.confirmDelete(dbName));
     }
   }
   renderGeneralSettings(containerEl) {
@@ -65753,12 +65842,12 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
       { name: "Orange", value: "#e5c07b" },
       { name: "Red", value: "#e06c75" }
     ];
-    new import_obsidian6.Setting(containerEl).setName("Use Obsidian Accent Color").setDesc("Use the global Obsidian accent color instead of a custom color.").addToggle((toggle) => toggle.setValue(this.plugin.settings.useObsidianAccent).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Use Obsidian Accent Color").setDesc("Use the global Obsidian accent color instead of a custom color.").addToggle((toggle) => toggle.setValue(this.plugin.settings.useObsidianAccent).onChange(async (value) => {
       this.plugin.settings.useObsidianAccent = value;
       await this.plugin.saveSettings();
       this.display();
     }));
-    const colorSetting = new import_obsidian6.Setting(containerEl).setName("Theme Accent").setDesc("Choose the primary accent color.").addText((text) => text.inputEl.style.display = "none");
+    const colorSetting = new import_obsidian7.Setting(containerEl).setName("Theme Accent").setDesc("Choose the primary accent color.").addText((text) => text.inputEl.style.display = "none");
     if (this.plugin.settings.useObsidianAccent) {
       colorSetting.settingEl.style.opacity = "0.5";
       colorSetting.settingEl.style.pointerEvents = "none";
@@ -65789,41 +65878,41 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
         });
       });
     });
-    new import_obsidian6.Setting(containerEl).setName("Auto-save").setDesc("Automatically save database changes.").addToggle((toggle) => toggle.setValue(this.plugin.settings.autoSave).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Auto-save").setDesc("Automatically save database changes.").addToggle((toggle) => toggle.setValue(this.plugin.settings.autoSave).onChange(async (value) => {
       this.plugin.settings.autoSave = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian6.Setting(containerEl).setName("Auto-save Delay").setDesc("Milliseconds to wait before auto-saving.").addText((text) => text.setPlaceholder("2000").setValue(String(this.plugin.settings.autoSaveDelay)).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Auto-save Delay").setDesc("Milliseconds to wait before auto-saving.").addText((text) => text.setPlaceholder("2000").setValue(String(this.plugin.settings.autoSaveDelay)).onChange(async (value) => {
       const num = parseInt(value);
       if (!isNaN(num) && num > 0) {
         this.plugin.settings.autoSaveDelay = num;
         await this.plugin.saveSettings();
       }
     }));
-    new import_obsidian6.Setting(containerEl).setName("Export Folder").setDesc("Default folder for CSV exports.").addText((text) => text.setPlaceholder("sql-exports").setValue(this.plugin.settings.exportFolderName).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Export Folder").setDesc("Default folder for CSV exports.").addText((text) => text.setPlaceholder("sql-exports").setValue(this.plugin.settings.exportFolderName).onChange(async (value) => {
       this.plugin.settings.exportFolderName = value || "sql-exports";
       await this.plugin.saveSettings();
     }));
     this.createSectionHeader(containerEl, "Data & Security", "shield");
-    new import_obsidian6.Setting(containerEl).setName("Safe Mode").setDesc("Block dangerous commands (DROP, ALTER) and enforce limits.").addToggle((toggle) => toggle.setValue(this.plugin.settings.safeMode).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Safe Mode").setDesc("Block dangerous commands (DROP, ALTER) and enforce limits.").addToggle((toggle) => toggle.setValue(this.plugin.settings.safeMode).onChange(async (value) => {
       this.plugin.settings.safeMode = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian6.Setting(containerEl).setName("Snapshot Row Limit").setDesc("Max rows per table to save (prevents memory issues).").addText((text) => text.setPlaceholder("10000").setValue(String(this.plugin.settings.snapshotRowLimit)).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Snapshot Row Limit").setDesc("Max rows per table to save (prevents memory issues).").addText((text) => text.setPlaceholder("10000").setValue(String(this.plugin.settings.snapshotRowLimit)).onChange(async (value) => {
       const num = parseInt(value);
       if (!isNaN(num) && num > 0) {
         this.plugin.settings.snapshotRowLimit = num;
         await this.plugin.saveSettings();
       }
     }));
-    new import_obsidian6.Setting(containerEl).setName("Batch Size").setDesc("Rows to display per page in results.").addText((text) => text.setPlaceholder("100").setValue(String(this.plugin.settings.batchSize)).onChange(async (value) => {
+    new import_obsidian7.Setting(containerEl).setName("Batch Size").setDesc("Rows to display per page in results.").addText((text) => text.setPlaceholder("100").setValue(String(this.plugin.settings.batchSize)).onChange(async (value) => {
       const num = parseInt(value);
       if (!isNaN(num) && num > 0) {
         this.plugin.settings.batchSize = num;
         await this.plugin.saveSettings();
       }
     }));
-    new import_obsidian6.Setting(containerEl).setName("Reset All Data").addButton((btn) => {
+    new import_obsidian7.Setting(containerEl).setName("Reset All Data").addButton((btn) => {
       btn.setButtonText("Reset Everything");
       btn.setWarning();
       btn.onClick(() => this.openClearConfirm());
@@ -65833,12 +65922,12 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
     const dbManager = this.plugin.dbManager;
     this.plugin.activeDatabase = dbName;
     await dbManager.save();
-    new import_obsidian6.Notice(`Switched to "${dbName}"`);
+    new import_obsidian7.Notice(`Switched to "${dbName}"`);
     this.display();
   }
   createSectionHeader(container, text, icon) {
     const header = container.createDiv({ cls: "mysql-settings-section-header" });
-    (0, import_obsidian6.setIcon)(header.createDiv({ cls: "mysql-section-icon" }), icon);
+    (0, import_obsidian7.setIcon)(header.createDiv({ cls: "mysql-section-icon" }), icon);
     header.createEl("h3", { text });
   }
   renderActiveDatabaseCard(containerEl) {
@@ -65849,7 +65938,7 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
     const card = containerEl.createDiv({ cls: "mysql-db-card" });
     const header = card.createDiv({ cls: "mysql-db-card-header" });
     const titleRow = header.createDiv({ cls: "mysql-db-card-title-row" });
-    (0, import_obsidian6.setIcon)(titleRow.createDiv({ cls: "mysql-db-card-icon" }), "database");
+    (0, import_obsidian7.setIcon)(titleRow.createDiv({ cls: "mysql-db-card-icon" }), "database");
     titleRow.createEl("span", { text: activeDB, cls: "mysql-db-card-name" });
     if (activeDB === "alasql") {
       titleRow.createEl("span", { text: "SYSTEM", cls: "mysql-db-system-badge" });
@@ -65865,16 +65954,16 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
       cls: "mysql-db-card-last-updated"
     });
     const actions = card.createDiv({ cls: "mysql-db-card-actions" });
-    new import_obsidian6.ButtonComponent(actions).setButtonText("Switch").onClick(() => this.openSwitcherModal());
-    new import_obsidian6.ButtonComponent(actions).setButtonText("Create").setIcon("plus").onClick(() => this.openCreateModal());
-    const renameBtn = new import_obsidian6.ButtonComponent(actions).setButtonText("Rename").onClick(() => this.openRenameModal());
+    new import_obsidian7.ButtonComponent(actions).setButtonText("Switch").onClick(() => this.openSwitcherModal());
+    new import_obsidian7.ButtonComponent(actions).setButtonText("Create").setIcon("plus").onClick(() => this.openCreateModal());
+    const renameBtn = new import_obsidian7.ButtonComponent(actions).setButtonText("Rename").onClick(() => this.openRenameModal());
     if (activeDB === "dbo") {
       renameBtn.setDisabled(true);
       renameBtn.setTooltip("Default database cannot be renamed");
       renameBtn.buttonEl.classList.add("is-disabled-explicit");
     }
-    new import_obsidian6.ButtonComponent(actions).setButtonText("Tables").setIcon("table").onClick(() => this.openTablesModal());
-    new import_obsidian6.ButtonComponent(actions).setButtonText("Export").setIcon("download").setTooltip("Export database structure and data to SQL file").onClick(async () => {
+    new import_obsidian7.ButtonComponent(actions).setButtonText("Tables").setIcon("table").onClick(() => this.openTablesModal());
+    new import_obsidian7.ButtonComponent(actions).setButtonText("Export").setIcon("download").setTooltip("Export database structure and data to SQL file").onClick(async () => {
       await this.exportDatabaseSQL(activeDB);
     });
     const importBtnContainer = actions.createDiv({ cls: "mysql-import-wrapper" });
@@ -65890,17 +65979,17 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
         importInput.value = "";
       }
     };
-    new import_obsidian6.ButtonComponent(importBtnContainer).setButtonText("Import").setIcon("upload").setTooltip("Import database from SQL file").onClick(() => {
+    new import_obsidian7.ButtonComponent(importBtnContainer).setButtonText("Import").setIcon("upload").setTooltip("Import database from SQL file").onClick(() => {
       importInput.click();
     });
     const separator = actions.createDiv({ cls: "mysql-action-separator" });
-    new import_obsidian6.ButtonComponent(actions).setButtonText("Clear").setWarning().onClick(() => this.openClearConfirm());
+    new import_obsidian7.ButtonComponent(actions).setButtonText("Clear").setWarning().onClick(() => this.openClearConfirm());
   }
   addStat(parent, label, value, iconName) {
     const item = parent.createDiv({ cls: "mysql-db-stat-item" });
     if (iconName) {
       const icon = item.createDiv({ cls: "mysql-db-stat-icon" });
-      (0, import_obsidian6.setIcon)(icon, iconName);
+      (0, import_obsidian7.setIcon)(icon, iconName);
     }
     item.createDiv({ text: label, cls: "mysql-db-stat-label" });
     item.createDiv({ text: value, cls: "mysql-db-stat-value" });
@@ -65948,7 +66037,7 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
       async (confirmed) => {
         if (confirmed) {
           await this.plugin.dbManager.clearDatabase(activeDB);
-          new import_obsidian6.Notice(`Database "${activeDB}" cleared.`);
+          new import_obsidian7.Notice(`Database "${activeDB}" cleared.`);
           this.display();
         }
       },
@@ -65966,10 +66055,10 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
           try {
             const dbManager = this.plugin.dbManager;
             await dbManager.deleteDatabase(dbName);
-            new import_obsidian6.Notice(`Database "${dbName}" deleted.`);
+            new import_obsidian7.Notice(`Database "${dbName}" deleted.`);
             this.display();
           } catch (e) {
-            new import_obsidian6.Notice(`Error: ${e.message}`);
+            new import_obsidian7.Notice(`Error: ${e.message}`);
           }
         }
       },
@@ -65987,9 +66076,9 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
       }
       const fileName = `${exportFolder}/${dbName}_backup_${Date.now()}.sql`;
       await this.plugin.app.vault.create(fileName, sql);
-      new import_obsidian6.Notice(`Exported to ${fileName}`);
+      new import_obsidian7.Notice(`Exported to ${fileName}`);
     } catch (e) {
-      new import_obsidian6.Notice(`Export failed: ${e.message}`);
+      new import_obsidian7.Notice(`Export failed: ${e.message}`);
       console.error(e);
     }
   }
@@ -66000,13 +66089,13 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
       const sql = (_a = e.target) == null ? void 0 : _a.result;
       if (typeof sql === "string") {
         try {
-          new import_obsidian6.Notice("Importing database...");
+          new import_obsidian7.Notice("Importing database...");
           const dbManager = this.plugin.dbManager;
           await dbManager.importDatabase(sql);
-          new import_obsidian6.Notice("Database imported successfully!");
+          new import_obsidian7.Notice("Database imported successfully!");
           this.display();
         } catch (err) {
-          new import_obsidian6.Notice(`Import failed: ${err.message}`);
+          new import_obsidian7.Notice(`Import failed: ${err.message}`);
           console.error(err);
         }
       }
@@ -66016,11 +66105,11 @@ var MySQLSettingTab = class extends import_obsidian6.PluginSettingTab {
 };
 
 // src/ui/WorkbenchFooter.ts
-var import_obsidian8 = require("obsidian");
+var import_obsidian9 = require("obsidian");
 
 // src/ui/HelpModal.ts
-var import_obsidian7 = require("obsidian");
-var HelpModal = class extends import_obsidian7.Modal {
+var import_obsidian8 = require("obsidian");
+var HelpModal = class extends import_obsidian8.Modal {
   constructor(app) {
     super(app);
   }
@@ -66068,7 +66157,7 @@ var HelpModal = class extends import_obsidian7.Modal {
     features.forEach((feature) => {
       const item = list.createDiv({ cls: "mysql-help-item" });
       const iconContainer = item.createDiv({ cls: "mysql-help-icon" });
-      (0, import_obsidian7.setIcon)(iconContainer, feature.icon);
+      (0, import_obsidian8.setIcon)(iconContainer, feature.icon);
       const content = item.createDiv({ cls: "mysql-help-content" });
       content.createEl("h3", { text: feature.title });
       content.createDiv({ cls: "mysql-help-desc", text: feature.description });
@@ -66090,14 +66179,14 @@ var WorkbenchFooter = class {
     this.footerEl = parent.createDiv({ cls: "mysql-footer" });
     const left = this.footerEl.createDiv({ cls: "mysql-footer-left" });
     const logo = left.createDiv({ cls: "mysql-footer-logo" });
-    (0, import_obsidian8.setIcon)(logo, "circle");
+    (0, import_obsidian9.setIcon)(logo, "circle");
     left.createSpan({ text: "SQL Notebook", cls: "mysql-app-name" });
     this.rightEl = this.footerEl.createDiv({ cls: "mysql-footer-right" });
     const helpBtn = this.rightEl.createDiv({
       cls: "mysql-footer-help-btn",
       attr: { "aria-label": "Help & Features" }
     });
-    (0, import_obsidian8.setIcon)(helpBtn, "help-circle");
+    (0, import_obsidian9.setIcon)(helpBtn, "help-circle");
     helpBtn.onclick = () => {
       new HelpModal(this.app).open();
     };
@@ -66116,9 +66205,15 @@ var WorkbenchFooter = class {
   updateTime(ms) {
     this.statusEl.empty();
     const timeWrapper = this.statusEl.createDiv({ cls: "mysql-footer-time-wrapper" });
-    (0, import_obsidian8.setIcon)(timeWrapper, "timer");
+    (0, import_obsidian9.setIcon)(timeWrapper, "timer");
     const timeVal = timeWrapper.createSpan({ cls: "mysql-footer-time-val" });
     timeVal.setText(`${ms}ms`);
+  }
+  setLive() {
+    this.statusEl.empty();
+    const indicator = this.statusEl.createDiv({ cls: "mysql-live-indicator" });
+    indicator.createDiv({ cls: "mysql-pulse-dot" });
+    indicator.createSpan({ text: "LIVE" });
   }
   setError() {
     this.setStatus("Error");
@@ -66135,10 +66230,11 @@ var WorkbenchFooter = class {
 };
 
 // src/main.ts
-var MySQLPlugin = class extends import_obsidian9.Plugin {
+var MySQLPlugin = class extends import_obsidian10.Plugin {
   constructor() {
     super(...arguments);
     this.activeDatabase = "dbo";
+    this.liveListeners = /* @__PURE__ */ new Map();
   }
   async onload() {
     await this.loadSettings();
@@ -66155,7 +66251,7 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
     };
     this.dbManager = new DatabaseManager(this);
     this.csvManager = new CSVManager(this);
-    this.debouncedSave = (0, import_obsidian9.debounce)(
+    this.debouncedSave = (0, import_obsidian10.debounce)(
       () => this.dbManager.save(),
       this.settings.autoSaveDelay,
       true
@@ -66183,6 +66279,11 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
     );
   }
   async onunload() {
+    const eventBus = DatabaseEventBus.getInstance();
+    this.liveListeners.forEach((fn, id) => {
+      eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, fn);
+    });
+    this.liveListeners.clear();
     if (this.settings.autoSave) {
       await this.dbManager.save();
     }
@@ -66193,7 +66294,7 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
   async saveSettings() {
     await this.saveData(this.settings);
     if (this.debouncedSave) {
-      this.debouncedSave = (0, import_obsidian9.debounce)(
+      this.debouncedSave = (0, import_obsidian10.debounce)(
         () => this.dbManager.save(),
         this.settings.autoSaveDelay,
         true
@@ -66226,6 +66327,32 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
     el.empty();
     el.addClass("mysql-block-parent");
     const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
+    const trimmedSource = source.trim();
+    const isLive = trimmedSource.toUpperCase().startsWith("LIVE SELECT");
+    const liveBlockId = isLive ? `${ctx.sourcePath}:${ctx.lineStart}-${ctx.lineEnd}` : null;
+    const anchoredDB = isLive ? this.activeDatabase : null;
+    let observedTables = [];
+    if (isLive) {
+      workbench.addClass("mysql-live-mode");
+      try {
+        const sqlForAST = trimmedSource.substring(5).trim();
+        const ast = import_alasql6.default.parse(sqlForAST);
+        const extractTables = (node) => {
+          if (!node) return;
+          if (node.tableid) observedTables.push(node.tableid);
+          if (Array.isArray(node)) {
+            node.forEach(extractTables);
+          } else if (typeof node === "object") {
+            Object.values(node).forEach((val) => {
+              if (typeof val === "object") extractTables(val);
+            });
+          }
+        };
+        extractTables(ast);
+      } catch (e) {
+        Logger.warn("Failed to parse LIVE AST", e);
+      }
+    }
     const rawFirstLine = source.split("\n")[0].trim();
     let displayTitle = "MySQL Query";
     let icon = "database";
@@ -66260,11 +66387,11 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
     }
     const previewBar = workbench.createEl("div", { cls: "mysql-collapsed-preview" });
     const previewToggle = previewBar.createEl("div", { cls: "mysql-preview-toggle" });
-    (0, import_obsidian9.setIcon)(previewToggle, "chevron-right");
+    (0, import_obsidian10.setIcon)(previewToggle, "chevron-right");
     const previewContent = previewBar.createEl("div", { cls: "mysql-preview-content" });
     const iconSpan = previewContent.createSpan({ cls: "mysql-preview-icon" });
     if (titleColorClass) iconSpan.addClass(titleColorClass);
-    (0, import_obsidian9.setIcon)(iconSpan, icon);
+    (0, import_obsidian10.setIcon)(iconSpan, icon);
     const textSpan = previewContent.createSpan({ cls: "mysql-preview-text", text: displayTitle });
     if (titleColorClass && titleColorClass !== "mysql-title-help") {
       textSpan.addClass(titleColorClass);
@@ -66279,7 +66406,7 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
       cls: "mysql-collapse-btn",
       attr: { "aria-label": "Collapse" }
     });
-    (0, import_obsidian9.setIcon)(collapseBtn, "chevron-up");
+    (0, import_obsidian10.setIcon)(collapseBtn, "chevron-up");
     collapseBtn.onclick = (e) => {
       e.stopPropagation();
       workbench.addClass("is-collapsed");
@@ -66297,27 +66424,27 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
       cls: "mysql-copy-code-btn",
       attr: { "aria-label": "Copy Code" }
     });
-    (0, import_obsidian9.setIcon)(copyCodeBtn, "copy");
+    (0, import_obsidian10.setIcon)(copyCodeBtn, "copy");
     copyCodeBtn.onclick = async (e) => {
       e.stopPropagation();
       await navigator.clipboard.writeText(source);
-      new import_obsidian9.Notice("SQL code copied!");
+      new import_obsidian10.Notice("SQL code copied!");
     };
     const codeBlock = body.createEl("pre", { cls: "mysql-source-code" });
     codeBlock.innerHTML = `<code class="language-sql">${this.safeHighlight(source)}</code>`;
     const controls = body.createEl("div", { cls: "mysql-controls" });
     const runBtn = controls.createEl("button", { cls: "mysql-btn mysql-btn-run" });
-    (0, import_obsidian9.setIcon)(runBtn, "play");
+    (0, import_obsidian10.setIcon)(runBtn, "play");
     runBtn.createSpan({ text: "Run" });
     const rightControls = controls.createEl("div", { cls: "mysql-controls-right" });
     const showTablesBtn = rightControls.createEl("button", { cls: "mysql-btn" });
-    (0, import_obsidian9.setIcon)(showTablesBtn, "table");
+    (0, import_obsidian10.setIcon)(showTablesBtn, "table");
     showTablesBtn.createSpan({ text: "Tables" });
     const importBtn = rightControls.createEl("button", { cls: "mysql-btn" });
-    (0, import_obsidian9.setIcon)(importBtn, "file-up");
+    (0, import_obsidian10.setIcon)(importBtn, "file-up");
     importBtn.createSpan({ text: "Import CSV" });
     const resetBtn = rightControls.createEl("button", { cls: "mysql-btn mysql-btn-danger" });
-    (0, import_obsidian9.setIcon)(resetBtn, "trash-2");
+    (0, import_obsidian10.setIcon)(resetBtn, "trash-2");
     resetBtn.createSpan({ text: "Reset" });
     const resultContainer = body.createEl("div", { cls: "mysql-result-container" });
     const footer = new WorkbenchFooter(body, this.app);
@@ -66340,6 +66467,35 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
       });
     }
     runBtn.onclick = () => this.executeQuery(source, params, runBtn, resultContainer, footer);
+    if (isLive && liveBlockId && anchoredDB) {
+      body.addClass("mysql-view-only");
+      codeBlock.style.display = "none";
+      this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
+        activeDatabase: anchoredDB,
+        originId: liveBlockId
+      });
+      if (footer) {
+        footer.setLive();
+      }
+      const eventBus = DatabaseEventBus.getInstance();
+      const onModified = (event) => {
+        if (event.originId === liveBlockId) return;
+        if (event.database !== anchoredDB) return;
+        const hasIntersection = event.tables.length === 0 || // Structural change
+        event.tables.some((t) => observedTables.includes(t));
+        if (hasIntersection) {
+          this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
+            activeDatabase: anchoredDB,
+            originId: liveBlockId
+          });
+        }
+      };
+      eventBus.onDatabaseModified(onModified);
+      if (this.liveListeners.has(liveBlockId)) {
+        eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, this.liveListeners.get(liveBlockId));
+      }
+      this.liveListeners.set(liveBlockId, onModified);
+    }
   }
   safeHighlight(code) {
     const highlighted = import_prismjs.default.highlight(code, import_prismjs.default.languages.sql, "sql");
@@ -66378,14 +66534,14 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
       };
     });
   }
-  async executeQuery(query, params, btn, container, footer) {
+  async executeQuery(query, params, btn, container, footer, options = {}) {
     var _a, _b;
     btn.disabled = true;
     const cancelBtn = (_b = (_a = container.parentElement) == null ? void 0 : _a.querySelector(".mysql-controls")) == null ? void 0 : _b.createEl("button", {
       cls: "mysql-btn mysql-btn-warn"
     });
     if (cancelBtn) {
-      (0, import_obsidian9.setIcon)(cancelBtn, "stop-circle");
+      (0, import_obsidian10.setIcon)(cancelBtn, "stop-circle");
       cancelBtn.createSpan({ text: "Cancel" });
     }
     const abortController = new AbortController();
@@ -66395,12 +66551,12 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
         cancelBtn.remove();
         btn.disabled = false;
         btn.empty();
-        (0, import_obsidian9.setIcon)(btn, "play");
+        (0, import_obsidian10.setIcon)(btn, "play");
         btn.createSpan({ text: "Run" });
         if (footer) {
           footer.setAborted();
         }
-        new import_obsidian9.Notice("Query aborted by user");
+        new import_obsidian10.Notice("Query aborted by user");
       };
     }
     btn.innerHTML = `\u23F3 Executing...`;
@@ -66414,7 +66570,9 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
     try {
       const result = await QueryExecutor.execute(finalQuery, void 0, {
         safeMode: this.settings.safeMode,
-        signal: abortController.signal
+        signal: abortController.signal,
+        activeDatabase: options.activeDatabase || this.activeDatabase,
+        originId: options.originId
       });
       if (cancelBtn) cancelBtn.remove();
       ResultRenderer.render(result, container, this.app, this);
@@ -66440,7 +66598,7 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
     }
     btn.disabled = false;
     btn.empty();
-    (0, import_obsidian9.setIcon)(btn, "play");
+    (0, import_obsidian10.setIcon)(btn, "play");
     btn.createSpan({ text: "Run" });
   }
   injectParams(query, params) {
@@ -66471,7 +66629,7 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
         titleRow.style.justifyContent = "center";
         titleRow.style.gap = "8px";
         const iconWrapper = titleRow.createDiv({ cls: "mysql-info-icon" });
-        (0, import_obsidian9.setIcon)(iconWrapper, "info");
+        (0, import_obsidian10.setIcon)(iconWrapper, "info");
         const msg = titleRow.createEl("p", { cls: "mysql-info-text" });
         msg.setText("No tables found in database ");
         const span = msg.createSpan({ text: activeDB });
@@ -66494,19 +66652,19 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
           this.app.setting.open();
           this.app.setting.openTabById(this.manifest.id);
         };
-        new import_obsidian9.Notice("No tables found");
+        new import_obsidian10.Notice("No tables found");
         return;
       }
       container.empty();
       const explorerHeader = container.createDiv({ cls: "mysql-result-header" });
       const headerLeft = explorerHeader.createDiv({ cls: "mysql-header-left" });
-      (0, import_obsidian9.setIcon)(headerLeft, "database");
+      (0, import_obsidian10.setIcon)(headerLeft, "database");
       headerLeft.createSpan({ text: "Active Tables", cls: "mysql-result-label" });
       const grid = container.createEl("div", { cls: "mysql-table-grid" });
       tables.forEach((t) => {
         const card = grid.createEl("div", { cls: "mysql-table-card" });
         const iconSlot = card.createDiv({ cls: "mysql-card-icon" });
-        (0, import_obsidian9.setIcon)(iconSlot, "table");
+        (0, import_obsidian10.setIcon)(iconSlot, "table");
         card.createEl("strong", { text: t.tableid });
         card.onclick = async () => {
           container.empty();
@@ -66516,7 +66674,7 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
             cls: "mysql-action-btn",
             attr: { title: "Go back to tables list" }
           });
-          (0, import_obsidian9.setIcon)(back, "arrow-left");
+          (0, import_obsidian10.setIcon)(back, "arrow-left");
           back.createSpan({ text: "Back" });
           back.onclick = (e) => {
             e.stopPropagation();
@@ -66526,7 +66684,7 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
           const exportBtn = right.createEl("button", {
             cls: "mysql-action-btn"
           });
-          (0, import_obsidian9.setIcon)(exportBtn, "file-output");
+          (0, import_obsidian10.setIcon)(exportBtn, "file-output");
           exportBtn.createSpan({ text: "Export CSV" });
           exportBtn.onclick = () => this.csvManager.exportTable(t.tableid);
           const dataContainer = container.createDiv({ cls: "mysql-table-detail-content" });
@@ -66535,7 +66693,7 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
         };
       });
     } catch (error) {
-      new import_obsidian9.Notice("Error showing tables: " + error.message);
+      new import_obsidian10.Notice("Error showing tables: " + error.message);
     }
   }
   async resetDatabase(container) {
@@ -66550,14 +66708,14 @@ var MySQLPlugin = class extends import_obsidian9.Plugin {
             container.empty();
             const successState = container.createDiv({ cls: "mysql-success-state" });
             const iconWrapper = successState.createDiv({ cls: "mysql-success-icon" });
-            (0, import_obsidian9.setIcon)(iconWrapper, "check-circle");
+            (0, import_obsidian10.setIcon)(iconWrapper, "check-circle");
             successState.createEl("p", {
               text: "All databases reset successfully",
               cls: "mysql-success"
             });
-            new import_obsidian9.Notice("Database reset completed");
+            new import_obsidian10.Notice("Database reset completed");
           } catch (error) {
-            new import_obsidian9.Notice("Reset failed: " + error.message);
+            new import_obsidian10.Notice("Reset failed: " + error.message);
           }
         }
       },

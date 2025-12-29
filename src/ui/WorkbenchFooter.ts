@@ -58,6 +58,13 @@ export class WorkbenchFooter {
         timeVal.setText(`${ms}ms`);
     }
 
+    public setLive() {
+        this.statusEl.empty();
+        const indicator = this.statusEl.createDiv({ cls: "mysql-live-indicator" });
+        indicator.createDiv({ cls: "mysql-pulse-dot" });
+        indicator.createSpan({ text: "LIVE" });
+    }
+
     public setError() {
         this.setStatus("Error");
     }

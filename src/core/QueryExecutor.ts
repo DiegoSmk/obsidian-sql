@@ -4,6 +4,7 @@ import { BLOCKED_COMMANDS } from '../utils/constants';
 import { SQLSanitizer } from '../utils/SQLSanitizer';
 import { PerformanceMonitor } from '../utils/PerformanceMonitor';
 import { Logger } from '../utils/Logger';
+import { DatabaseEventBus } from './DatabaseEventBus';
 import { QueryResult, ResultSet } from '../types';
 
 export class QueryExecutor {
@@ -35,7 +36,7 @@ export class QueryExecutor {
         });
     }
 
-    static async execute(query: string, params?: any[], options: { safeMode?: boolean, signal?: AbortSignal, activeDatabase?: string } = {}): Promise<QueryResult> {
+    static async execute(query: string, params?: any[], options: { safeMode?: boolean, signal?: AbortSignal, activeDatabase?: string, originId?: string } = {}): Promise<QueryResult> {
         const monitor = new PerformanceMonitor();
         monitor.start();
 
@@ -116,6 +117,8 @@ export class QueryExecutor {
                     }
                 }
 
+                this.notifyIfModified(statements, currentDB, options.originId);
+
                 const normalizedData = this.normalizeResult(results);
                 Logger.info(`Batch query executed (${statements.length} statements)`, {
                     executionTime: monitor.end(),
@@ -192,6 +195,9 @@ export class QueryExecutor {
 
             const rawResult = await this.executeWithTimeout(cleanQuery, params, 30000, options.signal);
             const normalizedData = this.normalizeResult(rawResult);
+
+            // POST-EXECUTION: Trigger Live Updates if data was modified
+            this.notifyIfModified(statements.length > 1 ? statements : [cleanQuery], currentDB, options.originId);
 
             Logger.info(`Query executed: ${cleanQuery.substring(0, 50)}...`, { executionTime: monitor.end() });
 
@@ -315,5 +321,79 @@ export class QueryExecutor {
         }
 
         return { type: 'message', data: res, message: String(res) };
+    }
+
+    /**
+     * Analyzes statements and notifies the EventBus if any data modification occurred.
+     */
+    private static notifyIfModified(statements: string[], database: string, originId?: string): void {
+        const modifiedTables = new Set<string>();
+        let isStructuralChange = false;
+
+        const writeKeywords = ['INSERT', 'UPDATE', 'DELETE', 'CREATE', 'DROP', 'ALTER', 'TRUNCATE'];
+
+        for (const sql of statements) {
+            const upperSql = sql.trim().toUpperCase();
+            const startsWithWrite = writeKeywords.some(kw => upperSql.startsWith(kw));
+
+            if (startsWithWrite) {
+                try {
+                    const ast = (alasql as any).parse(sql);
+
+                    // Simple recursive AST traversal to find table names in write operations
+                    const extractTables = (node: any) => {
+                        if (!node) return;
+
+                        // Handle INSERT / INTO
+                        if (node.into && node.into.tableid) modifiedTables.add(node.into.tableid);
+
+                        // Handle UPDATE
+                        if (node.tableid) modifiedTables.add(node.tableid);
+
+                        // Handle DELETE
+                        if (node.from && Array.isArray(node.from)) {
+                            node.from.forEach((f: any) => {
+                                if (f.tableid) modifiedTables.add(f.tableid);
+                            });
+                        }
+
+                        // Handle CREATE/DROP/ALTER
+                        if (node.table && node.table.tableid) modifiedTables.add(node.table.tableid);
+
+                        // Handle multiple statements/nodes if present
+                        if (Array.isArray(node)) {
+                            node.forEach(extractTables);
+                        } else if (typeof node === 'object') {
+                            Object.values(node).forEach(val => {
+                                if (typeof val === 'object') extractTables(val);
+                            });
+                        }
+                    };
+
+                    extractTables(ast);
+
+                    if (upperSql.startsWith('CREATE') || upperSql.startsWith('DROP') || upperSql.startsWith('ALTER')) {
+                        isStructuralChange = true;
+                    }
+                } catch (e) {
+                    // Fallback to simple regex if AST fails
+                    const tableMatch = sql.match(/(?:INSERT INTO|UPDATE|DELETE FROM|CREATE TABLE|DROP TABLE|ALTER TABLE)\s+([a-zA-Z_][a-zA-Z0-9_.]*)/i);
+                    if (tableMatch) {
+                        const fullTableName = tableMatch[1];
+                        const parts = fullTableName.split('.');
+                        modifiedTables.add(parts[parts.length - 1]);
+                    }
+                }
+            }
+        }
+
+        if (modifiedTables.size > 0 || isStructuralChange) {
+            DatabaseEventBus.getInstance().emitDatabaseModified({
+                database: database,
+                tables: Array.from(modifiedTables),
+                timestamp: Date.now(),
+                originId: originId || 'unknown'
+            });
+        }
     }
 }

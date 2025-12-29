@@ -74,6 +74,61 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
     box-shadow: var(--mysql-shadow-sm);
 }
 
+
+/* LIVE Mode Styles */
+.mysql-view-only .mysql-source-code,
+.mysql-view-only .mysql-controls-right,
+.mysql-view-only .mysql-btn-run,
+.mysql-view-only .mysql-copy-code-btn,
+.mysql-view-only .mysql-collapse-btn {
+    display: none !important;
+}
+
+.mysql-view-only .mysql-controls {
+    border-bottom: none !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+}
+
+/* Pulse Indicator */
+.mysql-live-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-success);
+    background: rgba(var(--mysql-accent-rgb), 0.1);
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.mysql-pulse-dot {
+    width: 6px;
+    height: 6px;
+    background-color: var(--text-success);
+    border-radius: 50%;
+    box-shadow: 0 0 0 rgba(var(--mysql-accent-rgb), 0.4);
+    animation: mysql-pulse 2s infinite;
+}
+
+@keyframes mysql-pulse {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(var(--mysql-accent-rgb), 0.7);
+    }
+
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(var(--mysql-accent-rgb), 0);
+    }
+
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(var(--mysql-accent-rgb), 0);
+    }
+}
+
 /* Help Modal Styles */
 .mysql-help-modal {
     padding: 24px;

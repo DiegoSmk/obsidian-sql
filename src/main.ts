@@ -12,6 +12,7 @@ import { Logger } from './utils/Logger';
 import { DatabaseManager } from './core/DatabaseManager';
 import { CSVManager } from './core/CSVManager';
 import { QueryExecutor } from './core/QueryExecutor';
+import { DatabaseEventBus, DatabaseChangeEvent } from './core/DatabaseEventBus';
 
 import { ResultRenderer } from './ui/ResultRenderer';
 import { CSVSelectionModal } from './ui/CSVSelectionModal';
@@ -24,6 +25,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     public dbManager: DatabaseManager;
     public csvManager: CSVManager;
     public activeDatabase: string = 'dbo';
+    private liveListeners: Map<string, (event: DatabaseChangeEvent) => void> = new Map();
     // @ts-ignore
     private debouncedSave: Debouncer<[], Promise<void>>;
 
@@ -96,6 +98,13 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     }
 
     async onunload() {
+        // Clear all LIVE listeners
+        const eventBus = DatabaseEventBus.getInstance();
+        this.liveListeners.forEach((fn, id) => {
+            eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, fn);
+        });
+        this.liveListeners.clear();
+
         if (this.settings.autoSave) {
             await this.dbManager.save();
         }
@@ -154,6 +163,37 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         el.empty();
         el.addClass("mysql-block-parent");
         const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
+
+        // Phase 2: LIVE Mode Detection & Identity
+        const trimmedSource = source.trim();
+        const isLive = trimmedSource.toUpperCase().startsWith("LIVE SELECT");
+        const liveBlockId = isLive ? `${ctx.sourcePath}:${ctx.lineStart}-${ctx.lineEnd}` : null;
+        const anchoredDB = isLive ? this.activeDatabase : null;
+        let observedTables: string[] = [];
+
+        if (isLive) {
+            workbench.addClass("mysql-live-mode");
+            try {
+                // Extract SQL without LIVE prefix for AST parsing
+                const sqlForAST = trimmedSource.substring(5).trim();
+                const ast = (alasql as any).parse(sqlForAST);
+
+                const extractTables = (node: any) => {
+                    if (!node) return;
+                    if (node.tableid) observedTables.push(node.tableid);
+                    if (Array.isArray(node)) {
+                        node.forEach(extractTables);
+                    } else if (typeof node === 'object') {
+                        Object.values(node).forEach(val => {
+                            if (typeof val === 'object') extractTables(val);
+                        });
+                    }
+                };
+                extractTables(ast);
+            } catch (e) {
+                Logger.warn("Failed to parse LIVE AST", e);
+            }
+        }
 
         // Collapsed Preview (Bar with first line of code)
         // Parse Title & State from First Line
@@ -321,6 +361,49 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         }
 
         runBtn.onclick = () => this.executeQuery(source, params, runBtn, resultContainer, footer);
+
+        // If LIVE, trigger initial execution and hide editor
+        if (isLive && liveBlockId && anchoredDB) {
+            // Hide typical interactive elements
+            body.addClass("mysql-view-only");
+            codeBlock.style.display = "none";
+
+            // Execute initially
+            this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
+                activeDatabase: anchoredDB,
+                originId: liveBlockId
+            });
+
+            if (footer) {
+                footer.setLive();
+            }
+
+            // Register Listener
+            const eventBus = DatabaseEventBus.getInstance();
+            const onModified = (event: DatabaseChangeEvent) => {
+                // Throttling or direct reaction logic here
+                if (event.originId === liveBlockId) return;
+                if (event.database !== anchoredDB) return;
+
+                const hasIntersection = event.tables.length === 0 || // Structural change
+                    event.tables.some(t => observedTables.includes(t));
+
+                if (hasIntersection) {
+                    this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
+                        activeDatabase: anchoredDB,
+                        originId: liveBlockId
+                    });
+                }
+            };
+
+            eventBus.onDatabaseModified(onModified);
+
+            // Cleanup when block is removed or plugin reloads
+            if (this.liveListeners.has(liveBlockId)) {
+                eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, this.liveListeners.get(liveBlockId)!);
+            }
+            this.liveListeners.set(liveBlockId, onModified);
+        }
     }
 
     private safeHighlight(code: string): string {
@@ -381,7 +464,8 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         params: Record<string, any>,
         btn: HTMLButtonElement,
         container: HTMLElement,
-        footer?: WorkbenchFooter
+        footer?: WorkbenchFooter,
+        options: { activeDatabase?: string, originId?: string } = {}
     ): Promise<void> {
         btn.disabled = true;
 
@@ -445,7 +529,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         try {
             const result = await QueryExecutor.execute(finalQuery, undefined, {
                 safeMode: this.settings.safeMode,
-                signal: abortController.signal
+                signal: abortController.signal,
+                activeDatabase: options.activeDatabase || this.activeDatabase,
+                originId: options.originId
             });
 
             if (cancelBtn) cancelBtn.remove();
