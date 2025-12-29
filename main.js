@@ -66603,7 +66603,7 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
       new import_obsidian11.Notice("SQL code copied!");
     };
     const codeBlock = body.createEl("pre", { cls: "mysql-source-code" });
-    codeBlock.innerHTML = `< code class="language-sql" > ${this.safeHighlight(source)} </code>`;
+    codeBlock.innerHTML = `<code class="language-sql">${this.safeHighlight(source)}</code>`;
     const controls = body.createEl("div", { cls: "mysql-controls" });
     const runBtn = controls.createEl("button", { cls: "mysql-btn mysql-btn-run" });
     (0, import_obsidian11.setIcon)(runBtn, "play");

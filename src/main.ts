@@ -377,7 +377,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
         // Safe Code Highlighting
         const codeBlock = body.createEl("pre", { cls: "mysql-source-code" });
-        codeBlock.innerHTML = `< code class="language-sql" > ${this.safeHighlight(source)} </code>`;
+        codeBlock.innerHTML = `<code class="language-sql">${this.safeHighlight(source)}</code>`;
 
         const controls = body.createEl("div", { cls: "mysql-controls" });
 
