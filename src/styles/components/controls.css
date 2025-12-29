@@ -169,7 +169,7 @@
     transition: all var(--mysql-transition-fast) !important;
     opacity: 0 !important;
     position: absolute !important;
-    top: 19px !important;
+    top: 8px !important;
     right: 14px !important;
     z-index: 10 !important;
 }
