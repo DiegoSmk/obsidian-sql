@@ -9,29 +9,39 @@ export class ProPracticeModal extends Modal {
         const { contentEl } = this;
         contentEl.addClass("mysql-pro-practice-modal");
 
-        contentEl.createEl("h2", { text: "🧙‍♂️ Pro Practice Alert" });
+        const header = contentEl.createDiv({ cls: "mysql-pro-header" });
+        const iconEl = header.createDiv({ cls: "mysql-pro-icon" });
+        setIcon(iconEl, "terminal");
+        header.createEl("h2", { text: "Pro Practice Alert" });
 
         const body = contentEl.createDiv({ cls: "mysql-pro-practice-body" });
 
         body.createEl("p", {
-            text: "Ei, percebi que você tentou clicar no banco de dados para trocar o contexto. No modo LIVE nós facilitamos as coisas, mas aqui no Workbench, gostamos de manter as coisas... puras."
+            text: "It looks like you're trying to switch databases via UI. While LIVE blocks provide a convenient switcher for dashboards, we encourage a more direct approach here in the Workbench."
         });
 
         const quote = body.createEl("blockquote", { cls: "mysql-pro-quote" });
         quote.createEl("p", {
-            text: "Em um ambiente de desenvolvimento real, o controle é seu. Incentivamos fortemente o uso do comando `USE` diretamente no seu SQL para alternar entre contextos."
+            text: "In a professional development environment, explicit context is king. Use the `USE` command to switch between your environments safely:"
         });
-        quote.createEl("code", { text: "USE empresa;" });
+        const codeBlock = quote.createDiv({ cls: "mysql-pro-code-examples" });
+        codeBlock.createEl("code", { text: "USE staging;" });
+        codeBlock.createEl("br");
+        codeBlock.createEl("code", { text: "USE production;" });
 
         body.createEl("p", {
-            text: "É mais rápido, é mais profissional e mantém seu script auto-contido. Se você for do tipo que prefere cliques, pode trocar o banco global nas configurações do plugin, mas lembre-se: "
+            text: "Explicitly defined context makes your scripts portable and avoids ambiguity. If you still prefer a global switch, you can change the active database in the plugin settings, but remember:"
         });
 
         const punchline = body.createEl("div", { cls: "mysql-pro-punchline" });
-        punchline.createSpan({ text: "No pain, no gain. 💪💻" });
+        punchline.createSpan({ text: "No pain, no gain. 💪" });
+
+        const signature = contentEl.createDiv({ cls: "mysql-pro-signature" });
+        signature.createEl("p", { text: "Signed," });
+        signature.createEl("p", { text: "SQL Notebook Development Team", cls: "mysql-pro-team" });
 
         const btnContainer = contentEl.createDiv({ cls: "mysql-modal-buttons" });
-        const closeBtn = btnContainer.createEl("button", { text: "Entendido, mestre", cls: "mod-cta" });
+        const closeBtn = btnContainer.createEl("button", { text: "Understood", cls: "mod-cta" });
         closeBtn.onclick = () => this.close();
     }
 
