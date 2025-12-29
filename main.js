@@ -66343,6 +66343,16 @@ var WorkbenchFooter = class {
 };
 
 // src/main.ts
+var LiveSyncComponent = class extends import_obsidian11.Component {
+  constructor(bus, handler) {
+    super();
+    this.bus = bus;
+    this.handler = handler;
+  }
+  onunload() {
+    this.bus.off(DatabaseEventBus.DATABASE_MODIFIED, this.handler);
+  }
+};
 var MySQLPlugin = class extends import_obsidian11.Plugin {
   constructor() {
     super(...arguments);
@@ -66720,16 +66730,6 @@ var MySQLPlugin = class extends import_obsidian11.Plugin {
         eventBus.off(DatabaseEventBus.DATABASE_MODIFIED, this.liveListeners.get(listenerKey));
       }
       this.liveListeners.set(listenerKey, onModified);
-      class LiveSyncComponent extends import_obsidian11.Component {
-        constructor(bus, handler) {
-          super();
-          this.bus = bus;
-          this.handler = handler;
-        }
-        onunload() {
-          this.bus.off(DatabaseEventBus.DATABASE_MODIFIED, this.handler);
-        }
-      }
       ctx.addChild(new LiveSyncComponent(eventBus, onModified));
     }
   }

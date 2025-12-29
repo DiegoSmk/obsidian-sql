@@ -20,6 +20,19 @@ import { MySQLSettingTab } from './settings';
 import { ConfirmationModal } from './ui/ConfirmationModal';
 import { WorkbenchFooter } from './ui/WorkbenchFooter';
 
+/**
+ * Component to manage the lifecycle of a LIVE block synchronization listener.
+ * This ensures listeners are correctly detached when the block is unloaded.
+ */
+class LiveSyncComponent extends Component {
+    constructor(private bus: DatabaseEventBus, private handler: (event: DatabaseChangeEvent) => void) {
+        super();
+    }
+    onunload() {
+        this.bus.off(DatabaseEventBus.DATABASE_MODIFIED, this.handler);
+    }
+}
+
 export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     settings: MySQLSettings;
     public dbManager: DatabaseManager;
@@ -554,15 +567,6 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             this.liveListeners.set(listenerKey, onModified);
 
             // Phase 6 Refinement: Register cleanup via official Obsidian Component
-            class LiveSyncComponent extends Component {
-                constructor(private bus: DatabaseEventBus, private handler: (event: DatabaseChangeEvent) => void) {
-                    super();
-                }
-                onunload() {
-                    this.bus.off(DatabaseEventBus.DATABASE_MODIFIED, this.handler);
-                }
-            }
-
             ctx.addChild(new LiveSyncComponent(eventBus, onModified));
         }
     }
