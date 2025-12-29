@@ -814,7 +814,7 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   background-color: var(--background-modifier-hover);
   text-decoration: none;
 }
-:has(.mysql-workbench-container) > .edit-block-button {
+:has(.mysql-workbench-container.mysql-live-mode) > .edit-block-button {
   background-color: rgba(128, 128, 128, 0.1) !important;
   border: none !important;
   color: var(--text-muted) !important;
@@ -834,16 +834,41 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   right: 14px !important;
   z-index: 10 !important;
 }
+:has(.mysql-workbench-container:not(.mysql-live-mode)) > .edit-block-button {
+  background-color: var(--background-secondary) !important;
+  border: 1px solid var(--background-modifier-border) !important;
+  color: var(--text-muted) !important;
+  border-radius: var(--mysql-radius-sm) !important;
+  width: 30px !important;
+  height: 30px !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 0.75rem !important;
+  box-shadow: var(--mysql-shadow-sm) !important;
+  transition: all var(--mysql-transition-fast) !important;
+  opacity: 0 !important;
+  position: absolute !important;
+  top: 15px !important;
+  right: 14px !important;
+  z-index: 10 !important;
+}
 :has(.mysql-workbench-container.is-collapsed) > .edit-block-button {
   display: none !important;
 }
 :has(.mysql-workbench-container):hover > .edit-block-button {
   opacity: 1 !important;
 }
-:has(.mysql-workbench-container) > .edit-block-button:hover {
+:has(.mysql-workbench-container.mysql-live-mode) > .edit-block-button:hover {
   border: none !important;
   color: var(--interactive-accent) !important;
   background-color: rgba(var(--mysql-accent-rgb), 0.15) !important;
+}
+:has(.mysql-workbench-container:not(.mysql-live-mode)) > .edit-block-button:hover {
+  border: 1px solid var(--mysql-accent-purple) !important;
+  color: var(--mysql-accent-purple) !important;
+  background-color: var(--background-modifier-hover) !important;
 }
 .mysql-copy-code-btn {
   position: absolute;
