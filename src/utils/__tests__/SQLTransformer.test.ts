@@ -44,5 +44,26 @@ describe('SQLTransformer', () => {
             const sql = 'SELECT * FROM JSON("data.json")';
             expect(SQLTransformer.prefixTablesWithDatabase(sql, db)).toBe('SELECT * FROM JSON("data.json")');
         });
+
+        it('should NOT prefix additional reserved keywords', () => {
+            const keywords = ['VALUES', 'EXPLODE', 'CSV', 'TAB', 'TSV', 'XLSX'];
+            keywords.forEach(kw => {
+                const sql = `SELECT * FROM ${kw}(foo)`;
+                expect(SQLTransformer.prefixTablesWithDatabase(sql, db)).toBe(sql);
+            });
+        });
+
+        it('should prefix tables in DELETE and UPDATE statements', () => {
+            const del = 'DELETE FROM users WHERE id=1';
+            expect(SQLTransformer.prefixTablesWithDatabase(del, db)).toBe('DELETE FROM [my_db].[users] WHERE id=1');
+
+            const upd = 'UPDATE settings SET val=1';
+            expect(SQLTransformer.prefixTablesWithDatabase(upd, db)).toBe('UPDATE [my_db].[settings] SET val=1');
+        });
+
+        it('should do nothing if database is alasql or empty', () => {
+            expect(SQLTransformer.prefixTablesWithDatabase('SELECT * FROM tbl', '')).toBe('SELECT * FROM tbl');
+            expect(SQLTransformer.prefixTablesWithDatabase('SELECT * FROM tbl', 'alasql')).toBe('SELECT * FROM tbl');
+        });
     });
 });

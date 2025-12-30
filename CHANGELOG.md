@@ -16,9 +16,9 @@
 - Added comprehensive unit tests for `DatabaseManager` and `QueryExecutor`.
 - All tests passing (100% logic coverage for critical paths).
 
-### 📝 Documentation
 - Added `SQL_USAGE_AND_LIMITATIONS.md` detailing known AlaSQL quirks and workarounds.
 - Updated Testing Guide.
+- **Professional Guidelines**: Added improved documentation for Security Best Practices (SQL Injection prevention) and Contribution Standards.
 
 ---
 
