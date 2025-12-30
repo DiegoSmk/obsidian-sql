@@ -59,6 +59,7 @@ export interface QueryResult {
     success: boolean;
     data?: ResultSet[];
     error?: string;
+    warning?: string;
     executionTime?: number;
     activeDatabase?: string;
 }

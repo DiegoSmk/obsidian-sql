@@ -48,4 +48,18 @@ export class SQLTransformer {
         return result;
     }
 
+    /**
+     * Detects usage of INSERT INTO with explicit column list followed by SELECT.
+     * This pattern often triggers error "$01 is not defined" in AlaSQL.
+     */
+    static hasFragileInsertSelect(sql: string): boolean {
+        // Matches: INSERT INTO table (col1, col2) SELECT ...
+        // We use a simplified regex that assumes standard syntax.
+        // It looks for parenthesis between INSERT INTO and SELECT.
+        const upper = sql.toUpperCase().replace(/\s+/g, ' ');
+        // Check for basic structure: INSERT INTO ... (...) ... SELECT
+        const match = upper.match(/INSERT INTO\s+[^(]+\s*\([^)]+\)\s*SELECT/);
+        return !!match;
+    }
+
 }

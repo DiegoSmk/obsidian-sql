@@ -66,4 +66,26 @@ describe('SQLTransformer', () => {
             expect(SQLTransformer.prefixTablesWithDatabase('SELECT * FROM tbl', 'alasql')).toBe('SELECT * FROM tbl');
         });
     });
+
+    describe('hasFragileInsertSelect', () => {
+        it('should detect INSERT INTO ... (cols) ... SELECT', () => {
+            expect(SQLTransformer.hasFragileInsertSelect('INSERT INTO logs (date, msg) SELECT NOW(), "test"')).toBe(true);
+        });
+
+        it('should NOT detect INSERT INTO ... SELECT without columns', () => {
+            expect(SQLTransformer.hasFragileInsertSelect('INSERT INTO logs SELECT NOW(), "test"')).toBe(false);
+        });
+
+        it('should NOT detect INSERT INTO ... VALUES', () => {
+            expect(SQLTransformer.hasFragileInsertSelect('INSERT INTO logs (date, msg) VALUES (NOW(), "test")')).toBe(false);
+        });
+
+        it('should handle brackets in table name', () => {
+            expect(SQLTransformer.hasFragileInsertSelect('INSERT INTO [my_db].[logs] (msg) SELECT "msg"')).toBe(true);
+        });
+
+        it('should be case insensitive', () => {
+            expect(SQLTransformer.hasFragileInsertSelect('insert into t (c) select x')).toBe(true);
+        });
+    });
 });

@@ -48,6 +48,8 @@ export class QueryExecutor {
             let cleanQuery = SQLSanitizer.clean(query);
             const upperSql = cleanQuery.toUpperCase().trim();
 
+            let warnings: string[] = [];
+
             // 1. Intercept FORM command (Custom DSL) - Must happen BEFORE splitting or prefixing
             if (upperSql.startsWith('FORM')) {
                 return await this.handleFormCommand(cleanQuery, currentDB, monitor);
@@ -110,6 +112,11 @@ export class QueryExecutor {
                         continue;
                     }
 
+                    // Warning check for Fragile INSERT
+                    if (SQLTransformer.hasFragileInsertSelect(stmt)) {
+                        warnings.push(`⚠️ Detectado 'INSERT INTO ... (colunas) SELECT'. O AlaSQL pode falhar com erro '$01'. Se ocorrer, remova a lista de colunas, mas garanta que a ordem do SELECT corresponda exatamente às colunas da tabela.`);
+                    }
+
                     stmt = SQLTransformer.prefixTablesWithDatabase(stmt, currentDB);
                     const result = await this.executeWithTimeout(stmt, params, 30000, options.signal);
                     results.push(result);
@@ -118,7 +125,8 @@ export class QueryExecutor {
                 this.notifyIfModified(statements, currentDB, options.originId);
                 const normalizedData = this.normalizeResult(results);
                 Logger.info(`Batch query executed (${statements.length} statements)`, { executionTime: monitor.end(), finalDatabase: currentDB });
-                return { success: true, data: normalizedData, executionTime: monitor.end(), activeDatabase: currentDB };
+                const finalWarning = warnings.length > 0 ? warnings.join('\n') : undefined;
+                return { success: true, data: normalizedData, executionTime: monitor.end(), activeDatabase: currentDB, warning: finalWarning };
             }
 
             // Single statement execution
@@ -147,6 +155,11 @@ export class QueryExecutor {
                 }
             }
 
+            // Warning check for Fragile INSERT
+            if (SQLTransformer.hasFragileInsertSelect(trimmed)) {
+                warnings.push(`⚠️ Detectado 'INSERT INTO ... (colunas) SELECT'. O AlaSQL pode falhar com erro '$01'. Se ocorrer, remova e garanta a ordem exata das colunas.`);
+            }
+
             const looksLikeSingleSelect = trimmedUpper.startsWith('SELECT') && !trimmed.includes(';') && !trimmedUpper.includes('LIMIT');
             let finalQuery = looksLikeSingleSelect ? trimmed + ' LIMIT 1000;' : trimmed;
             finalQuery = SQLTransformer.prefixTablesWithDatabase(finalQuery, currentDB);
@@ -157,7 +170,7 @@ export class QueryExecutor {
             this.notifyIfModified([finalQuery], currentDB, options.originId);
             Logger.info(`Query executed: ${finalQuery.substring(0, 50)}...`, { executionTime: monitor.end() });
 
-            return { success: true, data: normalizedData, executionTime: monitor.end(), activeDatabase: currentDB };
+            return { success: true, data: normalizedData, executionTime: monitor.end(), activeDatabase: currentDB, warning: warnings.length > 0 ? warnings.join('\n') : undefined };
 
         } catch (error) {
             Logger.error("Query execution failed", error);
@@ -175,6 +188,9 @@ export class QueryExecutor {
             if (reserved.includes(word)) {
                 return `${message}\n\n💡 Dica: '${word}' é uma palavra reservada do banco de dados. Tente usar aspas (ex: "${word.toLowerCase()}") ou mude o nome (ex: "${word.toLowerCase()}_total").`;
             }
+        }
+        if (message.includes("$01 is not defined")) {
+            return `${message}\n\n⚠️ Erro Conhecido do AlaSQL: O uso de lista de colunas explícita em 'INSERT INTO ... SELECT' causou falha.\n\nSolução: Remova a lista de colunas (ex: 'INSERT INTO T SELECT ...') e certifique-se de que a ordem dos campos no SELECT corresponda EXATAMENTE à ordem das colunas na tabela de destino.`;
         }
         if (message.includes("Parse error")) {
             return `${message}\n\n💡 Verifique se você esqueceu algum ponto e vírgula, se há parênteses/aspas não fechadas ou erros de digitação nos nomes das tabelas.`;
