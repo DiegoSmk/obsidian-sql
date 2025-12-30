@@ -48,7 +48,7 @@ export interface DatabaseStats {
 export type Row = Record<string, any>;
 
 export interface ResultSet {
-    type: 'table' | 'scalar' | 'message' | 'error';
+    type: 'table' | 'scalar' | 'message' | 'error' | 'form';
     data: Row[] | any;
     columns?: string[];
     message?: string;

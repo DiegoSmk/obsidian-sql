@@ -152,29 +152,8 @@
 }
 
 /* Obsidian Edit Block Button Integration */
-/* Using :has() to safely target the button only in our blocks */
-:has(.mysql-workbench-container.mysql-live-mode)>.edit-block-button {
-    background-color: rgba(128, 128, 128, 0.1) !important;
-    border: none !important;
-    color: var(--text-muted) !important;
-    border-radius: 12px !important;
-    width: 30px !important;
-    height: 22px !important;
-    padding: 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 0.75rem !important;
-    box-shadow: none !important;
-    transition: all var(--mysql-transition-fast) !important;
-    opacity: 0 !important;
-    position: absolute !important;
-    top: 8px !important;
-    right: 14px !important;
-    z-index: 10 !important;
-}
-
-:has(.mysql-workbench-container:not(.mysql-live-mode))>.edit-block-button {
+/* Base styles (Normal Mode) */
+:has(.mysql-workbench-container)>.edit-block-button {
     background-color: var(--background-secondary) !important;
     border: 1px solid var(--background-modifier-border) !important;
     color: var(--text-muted) !important;
@@ -190,30 +169,62 @@
     transition: all var(--mysql-transition-fast) !important;
     opacity: 0 !important;
     position: absolute !important;
-    top: 15px !important;
+    top: 39px !important;
     right: 14px !important;
     z-index: 10 !important;
 }
 
+/* Minimalist Overrides (LIVE Mode) */
+:has(.mysql-workbench-container.mysql-live-mode)>.edit-block-button {
+    background-color: rgba(128, 128, 128, 0.1) !important;
+    border: none !important;
+    color: var(--text-muted) !important;
+    border-radius: 12px !important;
+    width: 30px !important;
+    height: 22px !important;
+    box-shadow: none !important;
+    top: 8px !important;
+}
+
+/* Minimalist Overrides (FORM Mode) */
+:has(.mysql-workbench-container.mysql-form-mode)>.edit-block-button {
+    background-color: rgba(128, 128, 128, 0.1) !important;
+    border: none !important;
+    color: var(--text-muted) !important;
+    border-radius: 12px !important;
+    width: 30px !important;
+    height: 22px !important;
+    box-shadow: none !important;
+    top: 36px !important;
+}
+
+
+
+
+/* Collapsed state is handled by display: none separately */
 :has(.mysql-workbench-container.is-collapsed)>.edit-block-button {
     display: none !important;
 }
+
 
 :has(.mysql-workbench-container):hover>.edit-block-button {
     opacity: 1 !important;
 }
 
-:has(.mysql-workbench-container.mysql-live-mode)>.edit-block-button:hover {
+:has(.mysql-workbench-container.mysql-live-mode)>.edit-block-button:hover,
+:has(.mysql-workbench-container.mysql-form-mode)>.edit-block-button:hover {
     border: none !important;
     color: var(--interactive-accent) !important;
     background-color: rgba(var(--mysql-accent-rgb), 0.15) !important;
 }
 
-:has(.mysql-workbench-container:not(.mysql-live-mode))>.edit-block-button:hover {
+:has(.mysql-workbench-container):not(.mysql-live-mode):not(.mysql-form-mode)>.edit-block-button:hover {
     border: 1px solid var(--mysql-accent-purple) !important;
     color: var(--mysql-accent-purple) !important;
     background-color: var(--background-modifier-hover) !important;
 }
+
+
 
 /* Copy Code Button */
 .mysql-copy-code-btn {
@@ -376,6 +387,7 @@
 }
 
 .mysql-workbench-container.is-collapsed::after,
+.mysql-workbench-container.mysql-form-mode::after,
 .mysql-workbench-container.mysql-live-mode::after {
     display: none !important;
 }

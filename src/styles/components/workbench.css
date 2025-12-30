@@ -84,6 +84,17 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
     display: none !important;
 }
 
+/* Code Reveal logic for View-Only mode */
+.mysql-view-only .mysql-source-code {
+    display: none !important;
+}
+
+
+
+
+
+
+
 /* Minimalist LIVE Container */
 .mysql-workbench-container.mysql-live-mode {
     border: none !important;
@@ -184,6 +195,8 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
     }
 }
 
+
+
 /* Minimalist LIVE Dashboard */
 .mysql-live-dashboard-bar {
     display: flex;
@@ -194,6 +207,26 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
     background: transparent;
     border-bottom: none;
 }
+
+.mysql-form-dashboard-bar {
+    padding-top: 10px;
+}
+
+.mysql-form-indicator {
+    color: var(--mysql-accent-purple);
+    background: transparent !important;
+    padding: 0 !important;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+}
+
+.mysql-form-indicator svg {
+    width: 16px;
+    height: 16px;
+    margin-right: 4px;
+}
+
 
 .mysql-live-dashboard-bar .mysql-footer-db-container {
     background: transparent !important;

@@ -642,6 +642,9 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
 .mysql-view-only .mysql-collapse-btn {
   display: none !important;
 }
+.mysql-view-only .mysql-source-code {
+  display: none !important;
+}
 .mysql-workbench-container.mysql-live-mode {
   border: none !important;
   box-shadow: none !important;
@@ -732,6 +735,22 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   padding: 6px 12px;
   background: transparent;
   border-bottom: none;
+}
+.mysql-form-dashboard-bar {
+  padding-top: 10px;
+}
+.mysql-form-indicator {
+  color: var(--mysql-accent-purple);
+  background: transparent !important;
+  padding: 0 !important;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+}
+.mysql-form-indicator svg {
+  width: 16px;
+  height: 16px;
+  margin-right: 4px;
 }
 .mysql-live-dashboard-bar .mysql-footer-db-container {
   background: transparent !important;
@@ -963,27 +982,7 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   background-color: var(--background-modifier-hover);
   text-decoration: none;
 }
-:has(.mysql-workbench-container.mysql-live-mode) > .edit-block-button {
-  background-color: rgba(128, 128, 128, 0.1) !important;
-  border: none !important;
-  color: var(--text-muted) !important;
-  border-radius: 12px !important;
-  width: 30px !important;
-  height: 22px !important;
-  padding: 0 !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  font-size: 0.75rem !important;
-  box-shadow: none !important;
-  transition: all var(--mysql-transition-fast) !important;
-  opacity: 0 !important;
-  position: absolute !important;
-  top: 8px !important;
-  right: 14px !important;
-  z-index: 10 !important;
-}
-:has(.mysql-workbench-container:not(.mysql-live-mode)) > .edit-block-button {
+:has(.mysql-workbench-container) > .edit-block-button {
   background-color: var(--background-secondary) !important;
   border: 1px solid var(--background-modifier-border) !important;
   color: var(--text-muted) !important;
@@ -999,9 +998,29 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   transition: all var(--mysql-transition-fast) !important;
   opacity: 0 !important;
   position: absolute !important;
-  top: 15px !important;
+  top: 39px !important;
   right: 14px !important;
   z-index: 10 !important;
+}
+:has(.mysql-workbench-container.mysql-live-mode) > .edit-block-button {
+  background-color: rgba(128, 128, 128, 0.1) !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+  border-radius: 12px !important;
+  width: 30px !important;
+  height: 22px !important;
+  box-shadow: none !important;
+  top: 8px !important;
+}
+:has(.mysql-workbench-container.mysql-form-mode) > .edit-block-button {
+  background-color: rgba(128, 128, 128, 0.1) !important;
+  border: none !important;
+  color: var(--text-muted) !important;
+  border-radius: 12px !important;
+  width: 30px !important;
+  height: 22px !important;
+  box-shadow: none !important;
+  top: 36px !important;
 }
 :has(.mysql-workbench-container.is-collapsed) > .edit-block-button {
   display: none !important;
@@ -1009,12 +1028,13 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
 :has(.mysql-workbench-container):hover > .edit-block-button {
   opacity: 1 !important;
 }
-:has(.mysql-workbench-container.mysql-live-mode) > .edit-block-button:hover {
+:has(.mysql-workbench-container.mysql-live-mode) > .edit-block-button:hover,
+:has(.mysql-workbench-container.mysql-form-mode) > .edit-block-button:hover {
   border: none !important;
   color: var(--interactive-accent) !important;
   background-color: rgba(var(--mysql-accent-rgb), 0.15) !important;
 }
-:has(.mysql-workbench-container:not(.mysql-live-mode)) > .edit-block-button:hover {
+:has(.mysql-workbench-container):not(.mysql-live-mode):not(.mysql-form-mode) > .edit-block-button:hover {
   border: 1px solid var(--mysql-accent-purple) !important;
   color: var(--mysql-accent-purple) !important;
   background-color: var(--background-modifier-hover) !important;
@@ -1151,6 +1171,7 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   transition: all var(--mysql-transition-normal);
 }
 .mysql-workbench-container.is-collapsed::after,
+.mysql-workbench-container.mysql-form-mode::after,
 .mysql-workbench-container.mysql-live-mode::after {
   display: none !important;
 }
@@ -2078,6 +2099,115 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
 .mysql-table-detail-view .mysql-pagination-btn:hover {
   transform: translateY(-1px) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* src/styles/components/form.css */
+.mysql-form-wrapper {
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 20px;
+  margin: 10px 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.mysql-form-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.mysql-form-title {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--mysql-accent);
+}
+.mysql-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.mysql-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.mysql-form-row label {
+  font-size: 0.9em;
+  font-weight: 500;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mysql-required-star {
+  color: var(--text-error);
+}
+.mysql-form-row input,
+.mysql-form-row select,
+.mysql-form-row textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--background-modifier-border);
+  background-color: var(--background-secondary);
+  color: var(--text-normal);
+}
+.mysql-form-row input:focus,
+.mysql-form-row select:focus {
+  border-color: var(--mysql-accent);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--mysql-accent-rgb), 0.2);
+}
+.mysql-form-row input[type=checkbox] {
+  width: auto;
+  align-self: flex-start;
+}
+.mysql-form-footer {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--background-modifier-border);
+}
+.mysql-form-submit-btn {
+  background-color: var(--mysql-accent) !important;
+  color: white !important;
+  border: none !important;
+}
+.mysql-form-submit-btn:hover {
+  filter: brightness(1.1);
+}
+.mysql-form-wrapper {
+  animation: mysql-slide-up 0.3s ease-out;
+}
+@keyframes mysql-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.mysql-form-status {
+  margin: 16px 0;
+  padding: 10px 14px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+.mysql-form-status.success {
+  background-color: rgba(var(--mono-rgb-100), 0.05);
+  border: 1px solid var(--text-success);
+  color: var(--text-success);
+}
+.mysql-form-status.error {
+  background-color: rgba(var(--text-error-rgb), 0.1);
+  border: 1px solid var(--text-error);
+  color: var(--text-error);
 }
 
 /* src/styles/index.css */

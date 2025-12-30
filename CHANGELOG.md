@@ -2,7 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.4.0] - 2025-12-29
+## [0.5.0] - 2025-12-29
+
+### Added
+- **SQL Forms Module**: Intercept `FORM` commands to dynamically render data entry forms based on table schema.
+- **Custom DSL for Forms**: Support for custom labels, input types (`SELECT`, `DATE`, `NUMBER`, etc.), `DEFAULT` values, and `HIDDEN` fields.
+- **Form-to-DB Integration**: Automatic `INSERT` generation upon save, with full `DatabaseEventBus` support for instant re-rendering of `LIVE` blocks.
+- **Improved Metadata Detection**: Switched to internal AlaSQL metadata for robust primary key and auto-increment detection.
+- **Inline Status Feedback**: Forms now feature integrated success and error messages with slide-up animations.
+
+---
 
 ### Added
 - **Live Blocks Engine**: Introduced the `LIVE SELECT` feature, allowing real-time synchronization between notes and the database.

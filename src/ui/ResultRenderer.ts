@@ -1,6 +1,7 @@
 import { App, MarkdownView, Notice, setIcon } from 'obsidian';
 import html2canvas from 'html2canvas';
 import { IMySQLPlugin, QueryResult } from '../types';
+import { FormRenderer } from './FormRenderer';
 
 export class ResultRenderer {
     static render(result: QueryResult, container: HTMLElement, app: App, plugin: IMySQLPlugin, tableName?: string, isLive: boolean = false): void {
@@ -235,6 +236,9 @@ export class ResultRenderer {
                             cls: isDML ? "mysql-success" : "mysql-info-text"
                         });
                     }
+                    break;
+                case 'form':
+                    FormRenderer.render(rs.data, contentWrapper, app, plugin);
                     break;
             }
 

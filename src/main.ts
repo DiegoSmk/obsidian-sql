@@ -188,10 +188,11 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         // Phase 2: LIVE Mode Detection & Identity
         const trimmedSource = source.trim();
         const isLive = trimmedSource.toUpperCase().startsWith("LIVE SELECT");
+        const isForm = trimmedSource.toUpperCase().startsWith("FORM");
         const sectionInfo = ctx.getSectionInfo(el);
         const liveBlockId = isLive && sectionInfo ? `${ctx.sourcePath}:${sectionInfo.lineStart}-${sectionInfo.lineEnd}` :
             (isLive ? `${ctx.sourcePath}:unknown-${Date.now()}` : null);
-        const stableId = isLive ? this.generateBlockStableId(source, ctx) : null;
+        const stableId = (isLive || isForm) ? this.generateBlockStableId(source, ctx) : null;
 
         if (isLive && this.settings.enableLogging) {
             Logger.info(`[LIVE] Initializing block: stableId=${stableId}, liveBlockId=${liveBlockId}`);
@@ -199,7 +200,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
         // Resolve Anchored Database (Priority: Params > Settings Cache > Global Active)
         let anchoredDB: string | null = null;
-        if (isLive) {
+        if (isLive || isForm) {
             // Check for explicit 'db' param in comments: /* params: { "db": "empresa" } */ or -- db: empresa
             const jsonParamMatch = source.match(/\/\*\s*params\s*:\s*({[\s\S]*?})\s*\*\//);
             const lineParamMatch = source.match(/--\s*db:\s*([a-zA-Z_][a-zA-Z0-9_]*)/i);
@@ -274,8 +275,8 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         // Parse Title & State from First Line
         const rawFirstLine = source.split('\n')[0].trim();
 
-        let displayTitle = "MySQL Query";
-        let icon = "database";
+        let displayTitle = isForm ? "Data Form" : (isLive ? "Live Result" : "SQL Query");
+        let icon = isForm ? "file-edit" : (isLive ? "pulse" : "database");
         let titleColorClass = "";
         let startCollapsed = false;
 
@@ -437,6 +438,62 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         }
 
         runBtn.onclick = () => this.executeQuery(source, params, runBtn, resultContainer, footer);
+
+        // FORM Mode: Auto-run and Minimalist UI
+        if (isForm && anchoredDB) {
+            workbench.addClass("mysql-form-mode");
+            body.addClass("mysql-view-only");
+            previewBar.style.display = "none";
+            footer.getContainer().style.display = "none";
+            codeBlock.style.display = "none";
+            controls.style.display = "none"; // Hide all controls including Run button
+
+            // Create FORM dashboard bar
+            const dashboardBar = body.createDiv({ cls: "mysql-live-dashboard-bar mysql-form-dashboard-bar" });
+            body.prepend(dashboardBar);
+
+            const dashboardLeft = dashboardBar.createDiv({ cls: "mysql-dashboard-left" });
+            dashboardLeft.style.display = "flex";
+            dashboardLeft.style.alignItems = "center";
+            dashboardLeft.style.gap = "12px";
+
+            const formIndicator = dashboardLeft.createDiv({ cls: "mysql-live-indicator mysql-form-indicator" });
+            setIcon(formIndicator, "file-edit");
+            formIndicator.createSpan({ text: "FORM" });
+
+            const dbInfo = dashboardLeft.createDiv({ cls: "mysql-footer-db-container mysql-live-db-switcher" });
+            const dbIcon = dbInfo.createDiv({ cls: "mysql-footer-db-icon" });
+            setIcon(dbIcon, "database-backup");
+            const dbNameSpan = dbInfo.createSpan({ text: anchoredDB, cls: "mysql-footer-db-name" });
+
+            // Database Switcher logic
+            dbInfo.onclick = (e) => {
+                const menu = new Menu();
+                const dbs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
+                dbs.sort().forEach(db => {
+                    menu.addItem((item) => {
+                        item.setTitle(db)
+                            .setIcon(db === anchoredDB ? "check" : "database")
+                            .onClick(async () => {
+                                if (db === anchoredDB) return;
+                                anchoredDB = db;
+                                if (stableId) {
+                                    this.settings.liveBlockAnchors[stableId] = db;
+                                    await this.saveSettings();
+                                }
+                                dbNameSpan.setText(db);
+                                new Notice(`FORM anchored to ${db}`);
+                                this.executeQuery(source, params, runBtn, resultContainer, footer, { activeDatabase: anchoredDB });
+                            });
+                    });
+                });
+                menu.showAtMouseEvent(e);
+            };
+
+            // Execute initially
+            this.executeQuery(source, params, runBtn, resultContainer, footer, { activeDatabase: anchoredDB });
+
+        }
 
         // If LIVE, trigger initial execution and hide editor
         if (isLive && liveBlockId && anchoredDB) {

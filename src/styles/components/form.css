@@ -1,0 +1,127 @@
+.mysql-form-wrapper {
+    background-color: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 20px;
+    margin: 10px 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.mysql-form-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.mysql-form-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--mysql-accent);
+}
+
+.mysql-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.mysql-form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mysql-form-row label {
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.mysql-required-star {
+    color: var(--text-error);
+}
+
+.mysql-form-row input,
+.mysql-form-row select,
+.mysql-form-row textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background-color: var(--background-secondary);
+    color: var(--text-normal);
+}
+
+.mysql-form-row input:focus,
+.mysql-form-row select:focus {
+    border-color: var(--mysql-accent);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(var(--mysql-accent-rgb), 0.2);
+}
+
+.mysql-form-row input[type="checkbox"] {
+    width: auto;
+    align-self: flex-start;
+}
+
+.mysql-form-footer {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.mysql-form-submit-btn {
+    background-color: var(--mysql-accent) !important;
+    color: white !important;
+    border: none !important;
+}
+
+.mysql-form-submit-btn:hover {
+    filter: brightness(1.1);
+}
+
+
+/* Animations */
+.mysql-form-wrapper {
+    animation: mysql-slide-up 0.3s ease-out;
+}
+
+@keyframes mysql-slide-up {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.mysql-form-status {
+    margin: 16px 0;
+    padding: 10px 14px;
+    border-radius: 4px;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.mysql-form-status.success {
+    background-color: rgba(var(--mono-rgb-100), 0.05);
+    border: 1px solid var(--text-success);
+    color: var(--text-success);
+}
+
+.mysql-form-status.error {
+    background-color: rgba(var(--text-error-rgb), 0.1);
+    border: 1px solid var(--text-error);
+    color: var(--text-error);
+}

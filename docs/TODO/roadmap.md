@@ -6,10 +6,10 @@ Este documento rastreia as funcionalidades planejadas, melhorias pendentes e ide
 
 ### 1. SQL Forms (`FORM` Engine)
 Transformar blocos SQL em interfaces de entrada de dados.
-- [ ] Criar `FormRenderer.ts` para gerar formulários HTML a partir de tabelas.
-- [ ] Suporte a syntax `FORM tabela` (automático via metadados).
-- [ ] Suporte a syntax customizada para labels e tipos de input.
-- [ ] Conexão com `DatabaseEventBus` para atualizar tabelas `LIVE` após o envio.
+- [x] Criar `FormRenderer.ts` para gerar formulários HTML a partir de tabelas.
+- [x] Suporte a syntax `FORM tabela` (automático via metadados).
+- [x] Suporte a syntax customizada para labels e tipos de input.
+- [x] Conexão com `DatabaseEventBus` para atualizar tabelas `LIVE` após o envio.
 
 ### 2. Live Visuals (`LIVE CHART`)
 Visualizações de dados que se atualizam sozinhas.
