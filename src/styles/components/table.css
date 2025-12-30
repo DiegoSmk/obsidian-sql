@@ -131,3 +131,30 @@
     font-weight: 600;
     margin-right: auto;
 }
+
+.mysql-pagination-btn {
+    padding: 6px 14px !important;
+    background-color: var(--mysql-accent) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: var(--mysql-radius-sm) !important;
+    cursor: pointer !important;
+    font-size: 0.75rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    transition: all var(--mysql-transition-fast) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.mysql-pagination-btn:hover {
+    background-color: var(--mysql-accent-hover) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--mysql-accent), transparent 70%) !important;
+}
+
+.mysql-pagination-btn:active {
+    transform: translateY(0) !important;
+}
