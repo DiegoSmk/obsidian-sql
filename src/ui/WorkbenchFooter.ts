@@ -1,6 +1,7 @@
 import { setIcon, App } from "obsidian";
 import { HelpModal } from "./HelpModal";
 import { ProPracticeModal } from "./ProPracticeModal";
+import { t } from "../utils/i18n";
 
 export class WorkbenchFooter {
     private footerEl: HTMLElement;
@@ -32,7 +33,7 @@ export class WorkbenchFooter {
         // Help Button (?)
         const helpBtn = this.rightEl.createDiv({
             cls: "mysql-footer-help-btn",
-            attr: { "aria-label": "Help & Features" }
+            attr: { "aria-label": t('footer.tip_help') }
         });
         setIcon(helpBtn, "help-circle");
         helpBtn.onclick = () => {
@@ -41,7 +42,7 @@ export class WorkbenchFooter {
 
         // Status (Ready, Time)
         this.statusEl = this.rightEl.createDiv({ cls: "mysql-footer-status-container" });
-        this.setStatus("Ready");
+        this.setStatus(t('footer.status_ready'));
     }
 
     public setStatus(text: string, isRunning: boolean = false) {
@@ -71,15 +72,15 @@ export class WorkbenchFooter {
         this.statusEl.empty();
         const indicator = this.statusEl.createDiv({ cls: "mysql-live-indicator" });
         indicator.createDiv({ cls: "mysql-pulse-dot" });
-        indicator.createSpan({ text: "LIVE" });
+        indicator.createSpan({ text: t('footer.status_live') });
     }
 
     public setError() {
-        this.setStatus("Error");
+        this.setStatus(t('footer.status_error'));
     }
 
     public setAborted() {
-        this.setStatus("Aborted");
+        this.setStatus(t('footer.status_aborted'));
     }
 
     public getContainer(): HTMLElement {

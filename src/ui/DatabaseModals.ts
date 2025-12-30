@@ -2,6 +2,7 @@ import { App, Modal, ButtonComponent, TextComponent, Notice, setIcon } from 'obs
 import { IMySQLPlugin } from '../types';
 import { ConfirmationModal } from './ConfirmationModal';
 import { QueryExecutor } from '../core/QueryExecutor';
+import { t } from '../utils/i18n';
 // @ts-ignore
 import alasql from 'alasql';
 
@@ -14,13 +15,13 @@ export class DatabaseSwitcherModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('mysql-switcher-modal');
-        contentEl.createEl('h2', { text: 'Switch Database' });
+        contentEl.createEl('h2', { text: t('modals.switch_title') });
 
         const dbs = Object.keys(alasql.databases).filter(db => db !== 'alasql');
         const list = contentEl.createDiv({ cls: 'mysql-db-list' });
 
         if (dbs.length === 0) {
-            list.createDiv({ text: "No user databases found.", cls: "mysql-db-list-empty" });
+            list.createDiv({ text: t('modals.no_user_dbs'), cls: "mysql-db-list-empty" });
             return;
         }
 
@@ -40,14 +41,14 @@ export class DatabaseSwitcherModal extends Modal {
             const info = infoArea.createDiv({ cls: 'mysql-db-list-info' });
             info.createDiv({ text: dbName, cls: 'mysql-db-list-name' });
             info.createDiv({
-                text: `${stats.tables} tables • ${stats.rows.toLocaleString()} rows`,
+                text: `${stats.tables} ${t('modals.stat_tables').toLowerCase()} • ${stats.rows.toLocaleString()} ${t('modals.stat_rows').toLowerCase()}`,
                 cls: 'mysql-db-list-meta'
             });
 
             if (isActive) {
-                const activeBadge = item.createDiv({ text: 'ACTIVE', cls: 'mysql-db-list-badge' });
+                const activeBadge = item.createDiv({ text: t('modals.badge_ativo'), cls: 'mysql-db-list-badge' });
                 activeBadge.style.marginLeft = 'auto'; // Right align
-                activeBadge.setAttribute('aria-label', "Switch to another database to delete this one.");
+                activeBadge.setAttribute('aria-label', t('modals.tip_protected_db'));
             } else {
                 // Not active, is it protected?
                 if (isProtected) {
@@ -57,7 +58,7 @@ export class DatabaseSwitcherModal extends Modal {
                         dboBadge.style.marginLeft = 'auto';
                         const lockIcon = dboBadge.createDiv({ cls: 'mysql-table-icon' });
                         setIcon(lockIcon, 'lock');
-                        lockIcon.setAttribute('aria-label', "System Default Database. Cannot be deleted.");
+                        lockIcon.setAttribute('aria-label', t('modals.tip_system_db'));
                         lockIcon.style.opacity = '0.5';
                     }
                 }
@@ -76,7 +77,7 @@ export class DatabaseSwitcherModal extends Modal {
 
                 const deleteBtn = actions.createEl('button', {
                     cls: 'mysql-db-list-delete-btn',
-                    attr: { 'aria-label': 'Delete Database' }
+                    attr: { 'aria-label': t('modals.btn_delete') }
                 });
                 setIcon(deleteBtn, 'trash-2');
 
@@ -93,7 +94,7 @@ export class DatabaseSwitcherModal extends Modal {
         await alasql.promise(`USE ${dbName}`);
         this.plugin.activeDatabase = dbName;
         await dbManager.save();
-        new Notice(`Switched to "${dbName}"`);
+        new Notice(t('modals.notice_switch_success', { name: dbName }));
         this.onSelect();
         this.close();
     }
@@ -101,14 +102,14 @@ export class DatabaseSwitcherModal extends Modal {
     private confirmDelete(dbName: string) {
         new ConfirmationModal(
             this.app,
-            "Delete Database",
-            `Are you sure you want to delete "${dbName}"? This action cannot be undone.`,
+            t('modals.confirm_delete_title'),
+            t('modals.confirm_delete_msg', { dbName }),
             async (confirmed) => {
                 if (confirmed) {
                     try {
                         const dbManager = (this.plugin as any).dbManager;
                         await dbManager.deleteDatabase(dbName);
-                        new Notice(`Database "${dbName}" deleted.`);
+                        new Notice(t('modals.notice_delete_success', { name: dbName }));
                         // Refresh the list
                         this.onOpen();
                     } catch (e) {
@@ -116,8 +117,8 @@ export class DatabaseSwitcherModal extends Modal {
                     }
                 }
             },
-            "Delete",
-            "Cancel"
+            t('modals.btn_delete'),
+            t('modals.btn_cancel')
         ).open();
     }
 
@@ -135,10 +136,10 @@ export class RenameDatabaseModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('mysql-rename-modal');
-        contentEl.createEl('h2', { text: `Rename Database: ${this.oldName}` });
+        contentEl.createEl('h2', { text: t('modals.rename_title', { name: this.oldName }) });
 
         const input = new TextComponent(contentEl)
-            .setPlaceholder("New database name...")
+            .setPlaceholder(t('modals.rename_placeholder'))
             .setValue(this.oldName);
 
         input.inputEl.addClass('mysql-rename-input');
@@ -148,11 +149,11 @@ export class RenameDatabaseModal extends Modal {
         const buttons = contentEl.createDiv({ cls: 'mysql-modal-footer' });
 
         new ButtonComponent(buttons)
-            .setButtonText("Cancel")
+            .setButtonText(t('modals.btn_cancel'))
             .onClick(() => this.close());
 
         const confirmBtn = new ButtonComponent(buttons)
-            .setButtonText("Rename")
+            .setButtonText(t('modals.btn_renomear'))
             .setCta()
             .onClick(async () => {
                 const newName = input.getValue().trim();
@@ -164,7 +165,7 @@ export class RenameDatabaseModal extends Modal {
                 try {
                     const dbManager = (this.plugin as any).dbManager;
                     await dbManager.renameDatabase(this.oldName, newName);
-                    new Notice(`Database renamed to "${newName}"`);
+                    new Notice(t('modals.notice_rename_success', { name: newName }));
                     this.onSuccess();
                     this.close();
                 } catch (e) {
@@ -187,10 +188,10 @@ export class CreateDatabaseModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('mysql-create-db-modal'); // Reusing or adding class
-        contentEl.createEl('h2', { text: "Create New Database" });
+        contentEl.createEl('h2', { text: t('modals.create_title') });
 
         const input = new TextComponent(contentEl)
-            .setPlaceholder("Database name (e.g., my_project)")
+            .setPlaceholder(t('modals.create_placeholder'))
             .setValue("");
 
         input.inputEl.style.width = '100%';
@@ -199,16 +200,16 @@ export class CreateDatabaseModal extends Modal {
         const buttons = contentEl.createDiv({ cls: 'mysql-modal-footer' });
 
         new ButtonComponent(buttons)
-            .setButtonText("Cancel")
+            .setButtonText(t('modals.btn_cancel'))
             .onClick(() => this.close());
 
         const confirmBtn = new ButtonComponent(buttons)
-            .setButtonText("Create")
+            .setButtonText(t('modals.btn_confirm'))
             .setCta()
             .onClick(async () => {
                 const dbName = input.getValue().trim();
                 if (!dbName) {
-                    new Notice("Database name cannot be empty.");
+                    new Notice(t('modals.notice_create_empty'));
                     return;
                 }
 
@@ -248,10 +249,10 @@ export class DuplicateDatabaseModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('mysql-duplicate-modal');
-        contentEl.createEl('h2', { text: `Duplicate Database: ${this.oldName}` });
+        contentEl.createEl('h2', { text: t('modals.duplicate_title', { name: this.oldName }) });
 
         const input = new TextComponent(contentEl)
-            .setPlaceholder("New database name...")
+            .setPlaceholder(t('modals.rename_placeholder'))
             .setValue(`${this.oldName}_copy`);
 
         input.inputEl.style.width = '100%';
@@ -260,16 +261,16 @@ export class DuplicateDatabaseModal extends Modal {
         const buttons = contentEl.createDiv({ cls: 'mysql-modal-footer' });
 
         new ButtonComponent(buttons)
-            .setButtonText("Cancel")
+            .setButtonText(t('modals.btn_cancel'))
             .onClick(() => this.close());
 
         const confirmBtn = new ButtonComponent(buttons)
-            .setButtonText("Duplicate")
+            .setButtonText(t('modals.btn_duplicar'))
             .setCta()
             .onClick(async () => {
                 const newName = input.getValue().trim();
                 if (!newName) {
-                    new Notice("Database name cannot be empty.");
+                    new Notice(t('modals.notice_create_empty'));
                     return;
                 }
                 if (newName === this.oldName) {
@@ -280,7 +281,7 @@ export class DuplicateDatabaseModal extends Modal {
                 try {
                     const dbManager = (this.plugin as any).dbManager;
                     await dbManager.duplicateDatabase(this.oldName, newName);
-                    new Notice(`Database duplicatd to "${newName}"`);
+                    new Notice(t('modals.notice_duplicate_success', { name: newName }));
                     this.onSuccess();
                     this.close();
                 } catch (e) {
@@ -311,11 +312,11 @@ export class DatabaseTablesModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('mysql-tables-modal');
-        contentEl.createEl('h2', { text: `Tables in "${this.dbName}"` });
+        contentEl.createEl('h2', { text: t('modals.tables_title', { name: this.dbName }) });
 
         const db = alasql.databases[this.dbName];
         if (!db || !db.tables || Object.keys(db.tables).length === 0) {
-            contentEl.createDiv({ text: "No tables found in this database.", cls: "mysql-empty-state" });
+            contentEl.createDiv({ text: t('renderer.msg_no_tables'), cls: "mysql-empty-state" });
             return;
         }
 
@@ -338,7 +339,7 @@ export class DatabaseTablesModal extends Modal {
             const info = item.createDiv({ cls: 'mysql-table-info' });
             info.createDiv({ text: tableName, cls: 'mysql-table-name' });
             info.createDiv({
-                text: `${rowCount} rows • ~${this.formatBytes(sizeEstimate)}`,
+                text: `${rowCount} ${t('modals.stat_rows').toLowerCase()} • ~${this.formatBytes(sizeEstimate)}`,
                 cls: 'mysql-table-meta'
             });
 
@@ -361,7 +362,7 @@ export class DatabaseTablesModal extends Modal {
 
         new ButtonComponent(left)
             .setIcon('arrow-left')
-            .setTooltip('Back to Tables List')
+            .setTooltip(t('renderer.tip_back'))
             .onClick(() => this.renderList());
 
         const title = left.createEl('h3', { text: tableName });
@@ -373,7 +374,7 @@ export class DatabaseTablesModal extends Modal {
         // Copy button
         new ButtonComponent(actions)
             .setIcon("copy")
-            .setTooltip('Copy to clipboard')
+            .setTooltip(t('renderer.tip_copy'))
             .onClick(async () => {
                 try {
                     const query = `SELECT * FROM ${this.dbName}.${tableName}`;
@@ -382,7 +383,7 @@ export class DatabaseTablesModal extends Modal {
                     if (result.success && result.data && result.data[0] && result.data[0].data) {
                         await this.copyToClipboard(result.data[0].data);
                     } else {
-                        new Notice("No data to copy");
+                        new Notice(t('renderer.notice_copy_failed'));
                     }
                 } catch (e) {
                     new Notice(`Copy failed: ${e.message}`);
@@ -392,14 +393,14 @@ export class DatabaseTablesModal extends Modal {
         // Screenshot button
         new ButtonComponent(actions)
             .setIcon("camera")
-            .setTooltip('Take screenshot')
+            .setTooltip(t('renderer.tip_screenshot'))
             .onClick(async () => {
                 try {
                     const tableElement = dataContainer.querySelector('.mysql-direct-table-wrapper');
                     if (tableElement) {
                         await this.takeScreenshot(tableElement as HTMLElement);
                     } else {
-                        new Notice("No table to screenshot");
+                        new Notice(t('renderer.notice_screenshot_failed'));
                     }
                 } catch (e) {
                     new Notice(`Screenshot failed: ${e.message}`);
@@ -409,7 +410,7 @@ export class DatabaseTablesModal extends Modal {
         // Add to note button
         new ButtonComponent(actions)
             .setIcon("file-plus")
-            .setTooltip('Add to note')
+            .setTooltip(t('renderer.tip_add_note'))
             .onClick(async () => {
                 try {
                     const query = `SELECT * FROM ${this.dbName}.${tableName}`;
@@ -418,7 +419,7 @@ export class DatabaseTablesModal extends Modal {
                     if (result.success && result.data && result.data[0] && result.data[0].data) {
                         await this.insertIntoNote(result.data[0].data);
                     } else {
-                        new Notice("No data to insert");
+                        new Notice(t('renderer.notice_insert_failed'));
                     }
                 } catch (e) {
                     new Notice(`Insert failed: ${e.message}`);
@@ -428,7 +429,7 @@ export class DatabaseTablesModal extends Modal {
         // Export button with correct icon
         new ButtonComponent(actions)
             .setIcon("download")
-            .setTooltip('Export CSV')
+            .setTooltip(t('modals.btn_exportar'))
             .onClick(async () => {
                 try {
                     // Get the table data and export manually since CSVManager doesn't handle database context
@@ -438,7 +439,7 @@ export class DatabaseTablesModal extends Modal {
                     if (result.success && result.data && result.data[0] && result.data[0].data) {
                         await this.exportTableData(tableName, result.data[0].data);
                     } else {
-                        new Notice("No data to export");
+                        new Notice(t('renderer.msg_no_data'));
                     }
                 } catch (e) {
                     new Notice(`Export failed: ${e.message}`);
@@ -448,7 +449,7 @@ export class DatabaseTablesModal extends Modal {
         // Close button
         new ButtonComponent(actions)
             .setIcon('x')
-            .setTooltip('Close')
+            .setTooltip(t('workbench.btn_cancel'))
             .onClick(() => this.close());
 
         // Separator line
@@ -456,7 +457,7 @@ export class DatabaseTablesModal extends Modal {
 
         // Data Container without extra margins
         const dataContainer = contentEl.createDiv({ cls: 'mysql-table-detail-content' });
-        const loadingMsg = dataContainer.createEl('p', { text: 'Loading data...' });
+        const loadingMsg = dataContainer.createEl('p', { text: t('renderer.msg_loading') });
         loadingMsg.style.color = 'var(--text-muted)';
 
         try {
@@ -470,7 +471,7 @@ export class DatabaseTablesModal extends Modal {
 
                 if (result.data && result.data[0] && result.data[0].rowCount >= 100) {
                     const note = dataContainer.createDiv({
-                        text: "Showing first 100 rows only.",
+                        text: t('renderer.msg_showing_limit', { count: '100' }),
                         cls: 'mysql-table-limit-note'
                     });
                 }
@@ -485,7 +486,7 @@ export class DatabaseTablesModal extends Modal {
 
     private renderTableDataDirect(result: any, container: HTMLElement, tableName: string) {
         if (!result.success || !result.data || result.data.length === 0) {
-            container.createEl("p", { text: "No data found", cls: "mysql-empty-state" });
+            container.createEl("p", { text: t('renderer.msg_no_data'), cls: "mysql-empty-state" });
             return;
         }
 
@@ -511,7 +512,7 @@ export class DatabaseTablesModal extends Modal {
                     keys.forEach(key => {
                         const val = row[key];
                         tr.createEl("td", {
-                            text: val === null || val === undefined ? "NULL" : String(val)
+                            text: val === null || val === undefined ? t('modals.null_value') : String(val)
                         });
                     });
                 });
@@ -530,7 +531,7 @@ export class DatabaseTablesModal extends Modal {
                 });
 
                 const showAllBtn = controls.createEl("button", {
-                    text: "Show All Rows",
+                    text: t('renderer.btn_show_all'),
                     cls: "mysql-pagination-btn"
                 });
 
@@ -538,18 +539,18 @@ export class DatabaseTablesModal extends Modal {
                     const remaining = data.data.slice(currentCount);
                     renderBatch(remaining);
                     showAllBtn.remove();
-                    statusSpan.setText(`Showing all ${data.data.length} rows`);
+                    statusSpan.setText(t('renderer.msg_showing_all', { count: String(data.data.length) }));
                 };
             }
         } else {
-            container.createEl("p", { text: "No table data found", cls: "mysql-empty-state" });
+            container.createEl("p", { text: t('renderer.msg_no_data'), cls: "mysql-empty-state" });
         }
     }
 
     private async copyToClipboard(data: any[]): Promise<void> {
         try {
             if (!data || data.length === 0) {
-                new Notice('No data to copy');
+                new Notice(t('renderer.msg_no_data'));
                 return;
             }
 
@@ -565,9 +566,9 @@ export class DatabaseTablesModal extends Modal {
             });
 
             await navigator.clipboard.writeText(textToCopy);
-            new Notice('Table data copied to clipboard!');
+            new Notice(t('modals.notice_table_data_copied'));
         } catch (error) {
-            new Notice('Failed to copy: ' + error.message);
+            new Notice(t('modals.notice_copy_failed', { error: error.message }));
         }
     }
 
@@ -584,7 +585,7 @@ export class DatabaseTablesModal extends Modal {
 
             canvas.toBlob(async (blob: Blob | null) => {
                 if (!blob) {
-                    new Notice('Failed to create screenshot');
+                    new Notice(t('modals.notice_screenshot_failed'));
                     return;
                 }
 
@@ -592,7 +593,7 @@ export class DatabaseTablesModal extends Modal {
                     await navigator.clipboard.write([
                         new ClipboardItem({ 'image/png': blob })
                     ]);
-                    new Notice('Screenshot copied to clipboard!');
+                    new Notice(t('renderer.notice_screenshot_copied'));
                 } catch (clipboardError) {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -600,11 +601,11 @@ export class DatabaseTablesModal extends Modal {
                     a.download = `table-screenshot-${Date.now()}.png`;
                     a.click();
                     URL.revokeObjectURL(url);
-                    new Notice('Screenshot downloaded!');
+                    new Notice(t('renderer.notice_screenshot_downloaded'));
                 }
             });
         } catch (error) {
-            new Notice('Screenshot failed: ' + error.message);
+            new Notice(t('renderer.notice_screenshot_failed') + ': ' + error.message);
             console.error('Screenshot error:', error);
         }
     }
@@ -615,7 +616,7 @@ export class DatabaseTablesModal extends Modal {
             const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 
             if (!activeView) {
-                new Notice('No active note found');
+                new Notice(t('modals.notice_no_active_note'));
                 return;
             }
 
@@ -628,16 +629,16 @@ export class DatabaseTablesModal extends Modal {
             const lines = textToInsert.split('\n').length;
             editor.setCursor({ line: cursor.line + lines + 1, ch: 0 });
 
-            new Notice('Table inserted into note!');
+            new Notice(t('modals.notice_table_inserted'));
         } catch (error) {
-            new Notice('Failed to insert: ' + error.message);
+            new Notice(t('modals.notice_insert_failed', { error: error.message }));
         }
     }
 
     private async exportTableData(tableName: string, data: any[]): Promise<void> {
         try {
             if (!data || data.length === 0) {
-                new Notice("Table is empty");
+                new Notice(t('renderer.msg_no_data'));
                 return;
             }
 

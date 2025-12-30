@@ -2,6 +2,7 @@ import { App, Notice, setIcon } from 'obsidian';
 import { IMySQLPlugin } from '../types';
 import { QueryExecutor } from '../core/QueryExecutor';
 import { SQLSanitizer } from '../utils/SQLSanitizer';
+import { t } from '../utils/i18n';
 
 export interface FormField {
     name: string;
@@ -26,7 +27,7 @@ export class FormRenderer {
 
         const header = formWrapper.createDiv({ cls: "mysql-form-header" });
         setIcon(header, "file-edit");
-        header.createSpan({ text: `Insert into ${data.baseTableName}`, cls: "mysql-form-title" });
+        header.createSpan({ text: t('form.title_insert', { name: data.baseTableName }), cls: "mysql-form-title" });
 
         const form = formWrapper.createEl("form", { cls: "mysql-form" });
         const fieldInputs: Record<string, HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement> = {};
@@ -77,9 +78,9 @@ export class FormRenderer {
         const footer = formWrapper.createDiv({ cls: "mysql-form-footer" });
         const submitBtn = footer.createEl("button", { cls: "mysql-btn mysql-form-submit-btn", type: "button" });
         setIcon(submitBtn, "save");
-        submitBtn.createSpan({ text: "Save Record" });
+        submitBtn.createSpan({ text: t('form.btn_save') });
 
-        const clearBtn = footer.createEl("button", { cls: "mysql-btn", type: "button", text: "Clear" });
+        const clearBtn = footer.createEl("button", { cls: "mysql-btn", type: "button", text: t('form.btn_clear') });
 
         submitBtn.onclick = async () => {
             if (!form.checkValidity()) {
@@ -105,18 +106,18 @@ export class FormRenderer {
     ): Promise<void> {
         btn.disabled = true;
         const originalText = btn.innerText;
-        btn.innerText = "Saving...";
+        btn.innerText = t('form.btn_saving');
         statusMsg.style.display = "none";
 
         try {
             if (!SQLSanitizer.validateIdentifier(data.tableName.split('.').pop()!)) {
-                throw new Error("Invalid table name");
+                throw new Error(t('form.err_invalid_table'));
             }
 
             const values: Record<string, any> = {};
             for (const [name, input] of Object.entries(inputs)) {
                 if (!SQLSanitizer.validateIdentifier(name)) {
-                    throw new Error(`Invalid column name: ${name}`);
+                    throw new Error(t('form.err_invalid_col', { name }));
                 }
 
                 if (input instanceof HTMLInputElement && input.type === 'checkbox') {
@@ -146,14 +147,14 @@ export class FormRenderer {
                 setIcon(iconWrapper, "check-circle");
 
                 statusMsg.createDiv({
-                    text: `Saved successfully to ${data.baseTableName}`,
+                    text: t('form.msg_success', { name: data.baseTableName }),
                     cls: "mysql-success"
                 });
 
 
                 statusMsg.style.display = "flex";
                 form.reset();
-                new Notice(`Record saved to ${data.baseTableName}`);
+                new Notice(t('form.notice_success', { name: data.baseTableName }));
             } else {
                 statusMsg.empty();
                 statusMsg.className = "mysql-error-inline mysql-msg-compact error";
@@ -161,9 +162,9 @@ export class FormRenderer {
                 const iconWrapper = statusMsg.createDiv({ cls: "mysql-error-icon" });
                 setIcon(iconWrapper, "alert-circle");
 
-                statusMsg.createSpan({ text: `Error: ${result.error}` });
+                statusMsg.createSpan({ text: t('form.msg_error', { error: result.error || "" }) });
                 statusMsg.style.display = "flex";
-                new Notice(`Error saving record: ${result.error}`);
+                new Notice(t('form.notice_error', { error: result.error || "" }));
 
             }
         } catch (e) {
@@ -173,14 +174,14 @@ export class FormRenderer {
             const iconWrapper = statusMsg.createDiv({ cls: "mysql-error-icon" });
             setIcon(iconWrapper, "alert-circle");
 
-            statusMsg.createSpan({ text: `Unexpected Error: ${e.message}` });
+            statusMsg.createSpan({ text: t('form.msg_unexpected', { error: e.message }) });
             statusMsg.style.display = "flex";
 
         } finally {
             btn.disabled = false;
             btn.innerHTML = "";
             setIcon(btn, "save");
-            btn.createSpan({ text: "Save Record" });
+            btn.createSpan({ text: t('form.btn_save') });
         }
     }
 }
