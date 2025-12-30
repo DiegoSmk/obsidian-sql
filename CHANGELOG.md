@@ -2,7 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.1] - 2025-12-30
+
+### Added
+- **Unit Testing Infrastructure**: Integrated **Vitest** for professional testing of core logic.
+- **Mock Obsidian API**: Created a mock system to allow full logic verification outside of Obsidian.
+- **SQLTransformer Utility**: New isolated module for reliable SQL query manipulation.
+- **Coverage Reports**: Automated coverage analysis for critical logic (SQL parsing, security, and persistence).
+
+### Fixed
+- **Table-valued Functions Bug**: Fixed a syntax error where functions like `RANGE()` were incorrectly prefixed with the database name.
+- **Robust Database Reset**: Improved `reset()` logic to ensure all databases (including `dbo`) are fully cleared by switching to system context before dropping.
+- **Database Cloning Reliability**: Switched to a robust deep-cloning mechanism for `renameDatabase` and `duplicateDatabase` to handle cross-db operations correctly.
+- **UI Spacing**: Refined the distance between form fields and status messages in the workbench for a more balanced layout.
+
+### Changed
+- **Architectural Cleanup**: Refactored `QueryExecutor` to delegate SQL transformations to the dedicated `SQLTransformer`.
+- **Event-Driven Reset**: Resetting via UI now triggers global refresh of LIVE blocks and Table Explorer.
+
+---
+
 ## [0.5.0] - 2025-12-29
+
 
 ### Added
 - **SQL Forms Module**: Intercept `FORM` commands to dynamically render data entry forms based on table schema.
