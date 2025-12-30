@@ -77,12 +77,13 @@
 }
 
 .mysql-settings-modal .setting-item-control button:hover {
-    border-color: var(--mysql-accent-purple) !important;
-    color: var(--mysql-accent-purple) !important;
+    border-color: var(--mysql-accent) !important;
+    color: var(--mysql-accent) !important;
     transform: translateY(-1px);
     background-color: var(--background-modifier-hover) !important;
     filter: saturate(1.4);
 }
+
 
 .mysql-settings-modal .setting-item-control button.mod-warning:hover {
     border-color: var(--color-red) !important;
@@ -179,13 +180,14 @@
 }
 
 .mysql-pro-quote {
-    background: rgba(var(--mysql-accent-rgb), 0.05);
-    border-left: 4px solid var(--mysql-accent-purple);
+    background: color-mix(in srgb, var(--mysql-accent), transparent 95%);
+    border-left: 4px solid var(--mysql-accent);
     padding: 16px 20px;
     margin: 24px 0;
     text-align: left;
     border-radius: 4px;
 }
+
 
 .mysql-pro-quote p {
     margin-bottom: 12px;
@@ -203,19 +205,21 @@
     background: rgba(0, 0, 0, 0.2);
     padding: 4px 10px;
     border-radius: 4px;
-    color: var(--mysql-accent-purple);
+    color: var(--mysql-accent);
     font-weight: 700;
     display: inline-block;
     width: fit-content;
 }
 
+
 .mysql-pro-punchline {
     font-size: 1.1em;
     font-weight: 700;
     margin: 30px 0 10px 0;
-    color: var(--mysql-accent-purple);
+    color: var(--mysql-accent);
     font-style: italic;
 }
+
 
 .mysql-pro-signature {
     margin-top: 40px;
@@ -229,10 +233,11 @@
 }
 
 .mysql-pro-signature-logo {
-    color: var(--mysql-accent-purple);
+    color: var(--mysql-accent);
     display: flex;
     align-items: center;
 }
+
 
 .mysql-pro-signature-logo svg {
     width: 24px;
@@ -245,11 +250,31 @@
 
 .mysql-pro-team {
     font-weight: 600;
-    color: var(--mysql-accent-purple);
+    color: var(--mysql-accent);
 }
+
 
 .mysql-modal-buttons {
     padding: 0 30px 30px 30px;
     display: flex;
     justify-content: flex-end;
+}
+
+/* Theme Adaptive CTA Buttons (covers settings, modals, and headers) */
+.mysql-settings-modal button.mod-cta,
+.mysql-header-actions button.mod-cta,
+.mysql-form-wrapper button.mod-cta,
+.mysql-modal-buttons button.mod-cta {
+    background-color: var(--mysql-accent) !important;
+    color: white !important;
+    border: none !important;
+}
+
+.mysql-settings-modal button.mod-cta:hover,
+.mysql-header-actions button.mod-cta:hover,
+.mysql-form-wrapper button.mod-cta:hover,
+.mysql-modal-buttons button.mod-cta:hover {
+    filter: brightness(1.2) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--mysql-accent), transparent 70%) !important;
 }

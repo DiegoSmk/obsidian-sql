@@ -24,7 +24,7 @@
 
 .mysql-result-title {
     margin: 24px 20px 16px 20px;
-    color: var(--mysql-accent-purple);
+    color: var(--mysql-accent);
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -39,7 +39,7 @@
     display: block;
     width: 4px;
     height: 1.25em;
-    background-color: var(--mysql-accent-purple);
+    background-color: var(--mysql-accent);
     border-radius: 2px;
     flex-shrink: 0;
 }
@@ -70,7 +70,7 @@
 .mysql-header-left svg {
     width: 16px;
     height: 16px;
-    color: var(--mysql-accent-purple);
+    color: var(--mysql-accent);
 }
 
 .mysql-msg-compact {
@@ -92,7 +92,7 @@
 .mysql-count-icon {
     display: flex;
     align-items: center;
-    color: var(--mysql-accent-purple);
+    color: var(--mysql-accent);
 }
 
 .mysql-count-icon svg {
@@ -119,12 +119,22 @@
     margin: 12px 20px;
     font-size: 0.85rem;
     line-height: 1.4;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
+
+.mysql-error-inline .mysql-error-icon {
+    color: var(--text-error);
+    display: flex;
+    align-items: center;
+}
+
 
 .mysql-scalar-value {
     font-size: 1.25em;
     font-weight: 700;
-    color: var(--mysql-accent-purple);
+    color: var(--mysql-accent);
     padding: 16px 20px;
     background-color: var(--background-secondary-alt);
     border-radius: var(--mysql-radius-sm);
@@ -163,8 +173,8 @@
 
 .mysql-action-btn:hover {
     opacity: 1;
-    color: var(--mysql-accent-purple) !important;
-    border-color: var(--mysql-accent-purple) !important;
+    color: var(--mysql-accent) !important;
+    border-color: var(--mysql-accent) !important;
     background-color: var(--background-modifier-hover) !important;
 }
 

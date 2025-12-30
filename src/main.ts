@@ -140,27 +140,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         const settings = this.settings;
         const color = settings.useObsidianAccent ? 'var(--interactive-accent)' : settings.themeColor;
 
+        // Set variables on body for global availability
+        document.body.style.setProperty('--mysql-accent', color);
         document.body.style.setProperty('--mysql-accent-purple', color);
-        document.body.style.setProperty('--mysql-accent', color); // For consistency
-
-        if (settings.useObsidianAccent) {
-            document.body.style.setProperty('--mysql-accent-rgb', 'var(--interactive-accent-rgb)');
-        } else {
-            // We need to calc rgb for custom color. 
-            // Duplicate hexToRgb logic or make it static utility? 
-            // It's in MySQLSettingTab currently. 
-            // I'll implement a simple hexToRgb here or assume standard opaque for now if simpler, 
-            // but transparency is used in 'rgba(var(--mysql-accent-rgb), 0.1)'.
-            // So I must provide it.
-            const hex = settings.themeColor;
-            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            if (result) {
-                const r = parseInt(result[1], 16);
-                const g = parseInt(result[2], 16);
-                const b = parseInt(result[3], 16);
-                document.body.style.setProperty('--mysql-accent-rgb', `${r}, ${g}, ${b}`);
-            }
-        }
     }
 
     // ========================================================================
@@ -425,7 +407,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
         // Event Handlers for new buttons
         showTablesBtn.onclick = () => this.showTables(resultContainer, showTablesBtn);
-        resetBtn.onclick = () => this.resetDatabase(resultContainer);
+        resetBtn.onclick = () => this.resetDatabase(resultContainer, footer);
 
         // Parse optional parameters JSON in comments
         const paramMatch = source.match(/\/\*\s*params\s*:\s*({[\s\S]*?})\s*\*\//);
@@ -851,7 +833,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 const msg = titleRow.createEl("p", { cls: "mysql-info-text" });
                 msg.setText("No tables found in database ");
                 const span = msg.createSpan({ text: activeDB });
-                span.style.color = "var(--mysql-accent-purple)";
+                span.style.color = "var(--mysql-accent)";
                 span.style.fontWeight = "bold";
 
                 const help = content.createEl("p", {
@@ -865,7 +847,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 const settingsBtn = help.createEl("a", {
                     text: "Open Settings"
                 });
-                settingsBtn.style.color = "var(--mysql-accent-purple)";
+                settingsBtn.style.color = "var(--mysql-accent)";
                 settingsBtn.style.cursor = "pointer";
                 settingsBtn.style.textDecoration = "underline";
 
@@ -932,7 +914,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         }
     }
 
-    private async resetDatabase(container: HTMLElement): Promise<void> {
+    private async resetDatabase(container: HTMLElement, footer?: WorkbenchFooter): Promise<void> {
         new ConfirmationModal(
             this.app,
             "Reset Database",
@@ -942,6 +924,11 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                     try {
                         await this.dbManager.reset();
                         container.empty();
+
+                        if (footer) {
+                            footer.setActiveDatabase('dbo');
+                        }
+
 
                         const successState = container.createDiv({ cls: "mysql-success-state" });
                         const iconWrapper = successState.createDiv({ cls: "mysql-success-icon" });

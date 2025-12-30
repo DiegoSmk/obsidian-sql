@@ -2,6 +2,8 @@
 import alasql from 'alasql';
 import { IMySQLPlugin, DatabaseSnapshot, DatabaseContent, AlaSQLTable } from '../types';
 import { Logger } from '../utils/Logger';
+import { DatabaseEventBus } from './DatabaseEventBus';
+
 
 export class DatabaseManager {
     private isSaving: boolean = false;
@@ -245,20 +247,47 @@ export class DatabaseManager {
     }
 
     async reset(): Promise<void> {
-        const dbs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
-        for (const db of dbs) {
-            try {
-                alasql(`DROP DATABASE IF EXISTS ${db}`);
-            } catch (e) { }
+        // Switch to the system database 'alasql' first so we can drop 'dbo' and others
+        try {
+            await alasql.promise('USE alasql');
+        } catch (e) {
+            console.warn("MySQL Plugin: Could not switch to system db during reset, proceeding wrap...");
         }
 
-        if (!alasql.databases.dbo) alasql('CREATE DATABASE dbo');
-        alasql('USE dbo');
+        const dbs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
+        Logger.info(`Resetting ${dbs.length} databases...`);
+
+        for (const db of dbs) {
+            try {
+                // Use backticks for safety with special chars and use promise
+                await alasql.promise(`DROP DATABASE IF EXISTS \`${db}\``);
+                Logger.info(`Dropped database: ${db}`);
+            } catch (e) {
+                console.error(`Failed to drop database ${db} during reset:`, e);
+            }
+        }
+
+        if (!alasql.databases.dbo) {
+            await alasql.promise('CREATE DATABASE dbo');
+        }
+
+        await alasql.promise('USE dbo');
         this.plugin.activeDatabase = 'dbo';
 
         const newData = { ...this.plugin.settings, activeDatabase: 'dbo', databases: {} };
         await this.plugin.saveData(newData);
+
+        // Notify UI components that everything changed
+        DatabaseEventBus.getInstance().emitDatabaseModified({
+            database: 'dbo',
+            tables: [], // Empty tables list indicates a potential structural wipe
+            timestamp: Date.now(),
+            originId: 'database-reset'
+        });
+
+        Logger.info("Database reset complete.");
     }
+
 
     // --- New Database Management Methods ---
 
@@ -315,19 +344,21 @@ export class DatabaseManager {
                 // and alasql supports "CREATE TABLE new.tab AS SELECT * FROM old.tab" but that copies data + structure (sometimes without constraints)
                 // A safer bet given alasql limitations:
 
-                // Get Schema
-                const createRes = alasql(`SHOW CREATE TABLE ${oldName}.${tableName}`) as any[];
-                if (createRes?.[0]) {
-                    let createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
-
-                    // Inject new DB prefix
-                    if (createSQL.toUpperCase().startsWith('CREATE TABLE')) {
-                        createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)`?([a-zA-Z0-9_]+)`?/i, `CREATE TABLE ${newName}.$1`);
+                // Deep clone table using internal structures
+                try {
+                    const sourceData = alasql(`SELECT * FROM ${oldName}.\`${tableName}\``) as any[];
+                    await alasql.promise(`CREATE TABLE ${newName}.\`${tableName}\``);
+                    if (sourceData.length > 0) {
+                        alasql.databases[newName].tables[tableName].data = JSON.parse(JSON.stringify(sourceData));
                     }
-
-                    await alasql.promise(createSQL);
-                    await alasql.promise(`INSERT INTO ${newName}.${tableName} SELECT * FROM ${oldName}.${tableName}`);
+                } catch (e) {
+                    console.error(`Failed to copy table ${tableName} during rename:`, e);
                 }
+
+
+
+
+
             }
 
             // 3. Drop old
@@ -358,19 +389,21 @@ export class DatabaseManager {
         const tables = alasql(`SHOW TABLES FROM ${dbName}`) as any[];
         for (const t of tables) {
             const tableName = t.tableid;
-            const createRes = alasql(`SHOW CREATE TABLE ${dbName}.${tableName}`) as any[];
-            if (createRes?.[0]) {
-                let createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
-
-                // Inject new DB prefix
-                if (createSQL.toUpperCase().startsWith('CREATE TABLE')) {
-                    createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)`?([a-zA-Z0-9_]+)`?/i, `CREATE TABLE ${newName}.$1`);
+            try {
+                const sourceData = alasql(`SELECT * FROM ${dbName}.\`${tableName}\``) as any[];
+                await alasql.promise(`CREATE TABLE ${newName}.\`${tableName}\``);
+                if (sourceData.length > 0) {
+                    alasql.databases[newName].tables[tableName].data = JSON.parse(JSON.stringify(sourceData));
                 }
-
-                await alasql.promise(createSQL);
-                await alasql.promise(`INSERT INTO ${newName}.${tableName} SELECT * FROM ${dbName}.${tableName}`);
+            } catch (e) {
+                console.error(`Failed to duplicate table ${tableName}:`, e);
             }
         }
+
+
+
+
+
 
         await this.save();
     }

@@ -227,15 +227,18 @@ export class ResultRenderer {
                     });
 
                     if (rs.type === 'error') {
-                        msgWrapper.createEl("p", { text: rs.message || "Error" });
+                        const iconWrapper = msgWrapper.createDiv({ cls: "mysql-error-icon" });
+                        setIcon(iconWrapper, "alert-circle");
+                        msgWrapper.createSpan({ text: rs.message || "Error" });
                     } else {
                         const iconWrapper = msgWrapper.createDiv({ cls: isDML ? "mysql-success-icon" : "mysql-info-icon" });
-                        setIcon(iconWrapper, isDML ? "database" : "info");
+                        setIcon(iconWrapper, isDML ? "check-circle" : "info");
                         msgWrapper.createDiv({
                             text: rs.message || "Done",
                             cls: isDML ? "mysql-success" : "mysql-info-text"
                         });
                     }
+
                     break;
                 case 'form':
                     FormRenderer.render(rs.data, contentWrapper, app, plugin);

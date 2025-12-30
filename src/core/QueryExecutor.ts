@@ -6,6 +6,8 @@ import { PerformanceMonitor } from '../utils/PerformanceMonitor';
 import { Logger } from '../utils/Logger';
 import { DatabaseEventBus } from './DatabaseEventBus';
 import { QueryResult, ResultSet } from '../types';
+import { SQLTransformer } from '../utils/SQLTransformer';
+
 
 export class QueryExecutor {
     private static async executeWithTimeout(
@@ -108,7 +110,7 @@ export class QueryExecutor {
                         continue;
                     }
 
-                    stmt = this.prefixTablesWithDatabase(stmt, currentDB);
+                    stmt = SQLTransformer.prefixTablesWithDatabase(stmt, currentDB);
                     const result = await this.executeWithTimeout(stmt, params, 30000, options.signal);
                     results.push(result);
                 }
@@ -147,7 +149,7 @@ export class QueryExecutor {
 
             const looksLikeSingleSelect = trimmedUpper.startsWith('SELECT') && !trimmed.includes(';') && !trimmedUpper.includes('LIMIT');
             let finalQuery = looksLikeSingleSelect ? trimmed + ' LIMIT 1000;' : trimmed;
-            finalQuery = this.prefixTablesWithDatabase(finalQuery, currentDB);
+            finalQuery = SQLTransformer.prefixTablesWithDatabase(finalQuery, currentDB);
 
             const rawResult = await this.executeWithTimeout(finalQuery, params, 30000, options.signal);
             const normalizedData = this.normalizeResult(rawResult);
@@ -178,21 +180,6 @@ export class QueryExecutor {
             return `${message}\n\n💡 Verifique se você esqueceu algum ponto e vírgula, se há parênteses/aspas não fechadas ou erros de digitação nos nomes das tabelas.`;
         }
         return message;
-    }
-
-    private static prefixTablesWithDatabase(sql: string, database: string): string {
-        if (!database || database === 'alasql') return sql;
-        let result = sql;
-        result = result.replace(/CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi, (m, i, t) => `CREATE TABLE ${i || ''}${database}.${t}`);
-        result = result.replace(/INSERT\s+INTO\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi, (m, t) => `INSERT INTO ${database}.${t}`);
-        result = result.replace(/UPDATE\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)\s+SET/gi, (m, t) => `UPDATE ${database}.${t} SET`);
-        result = result.replace(/DELETE\s+FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi, (m, t) => `DELETE FROM ${database}.${t}`);
-        result = result.replace(/FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi, (m, t) => {
-            if (['SELECT', 'VALUES', '('].some(kw => t.toUpperCase().includes(kw))) return m;
-            return `FROM ${database}.${t}`;
-        });
-        result = result.replace(/JOIN\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi, (m, t) => `JOIN ${database}.${t}`);
-        return result;
     }
 
     private static normalizeResult(raw: any): ResultSet[] {

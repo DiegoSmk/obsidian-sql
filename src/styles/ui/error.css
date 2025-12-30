@@ -106,8 +106,9 @@
     border: 1px dashed var(--mysql-border-color, var(--background-modifier-border));
 }
 
+
 .mysql-success-state {
-    border-color: var(--mysql-accent-purple);
+    border-color: var(--mysql-accent);
 }
 
 .mysql-info-state {
@@ -122,7 +123,7 @@
 }
 
 .mysql-success {
-    color: var(--mysql-accent-purple);
+    color: var(--mysql-accent);
 }
 
 .mysql-info-text {
@@ -137,7 +138,7 @@
 }
 
 .mysql-success-icon {
-    color: var(--mysql-accent-purple);
+    color: var(--mysql-accent);
 }
 
 .mysql-info-icon {

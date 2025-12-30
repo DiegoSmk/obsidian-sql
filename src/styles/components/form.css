@@ -62,8 +62,9 @@
 .mysql-form-row select:focus {
     border-color: var(--mysql-accent);
     outline: none;
-    box-shadow: 0 0 0 2px rgba(var(--mysql-accent-rgb), 0.2);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--mysql-accent), transparent 80%);
 }
+
 
 .mysql-form-row input[type="checkbox"] {
     width: auto;
@@ -106,22 +107,8 @@
     }
 }
 
-.mysql-form-status {
-    margin: 16px 0;
-    padding: 10px 14px;
-    border-radius: 4px;
-    font-size: 0.9em;
-    font-weight: 500;
-}
-
-.mysql-form-status.success {
-    background-color: rgba(var(--mono-rgb-100), 0.05);
-    border: 1px solid var(--text-success);
-    color: var(--text-success);
-}
-
-.mysql-form-status.error {
-    background-color: rgba(var(--text-error-rgb), 0.1);
-    border: 1px solid var(--text-error);
-    color: var(--text-error);
+/* Inherit shared success/error styles but override margins for form context */
+.mysql-form-wrapper .mysql-success-state,
+.mysql-form-wrapper .mysql-error-inline {
+    margin: 24px 0 0 0 !important;
 }

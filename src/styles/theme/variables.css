@@ -1,15 +1,15 @@
 :root {
+    --mysql-accent: var(--interactive-accent);
+    --mysql-accent-purple: var(--interactive-accent);
     --mysql-transition-fast: 0.15s ease;
     --mysql-transition-normal: 0.3s ease;
     --mysql-radius-sm: 8px;
     --mysql-radius-md: 14px;
-    /* More rounded as in v1.1.0 */
-    --mysql-accent-purple: #9d7cd8;
-    /* Professional Purple Accent */
     --mysql-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.06);
     --mysql-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --mysql-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
+
 
 /* Premium Surface Colors from v0.2.2b */
 .theme-dark {

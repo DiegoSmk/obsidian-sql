@@ -63985,6 +63985,41 @@ init_Logger();
 // src/core/DatabaseManager.ts
 var import_alasql = __toESM(require_alasql_fs());
 init_Logger();
+
+// src/core/DatabaseEventBus.ts
+var import_obsidian = require("obsidian");
+var _DatabaseEventBus = class _DatabaseEventBus extends import_obsidian.Events {
+  constructor() {
+    super();
+  }
+  /**
+   * Gets the singleton instance of the DatabaseEventBus.
+   */
+  static getInstance() {
+    if (!_DatabaseEventBus.instance) {
+      _DatabaseEventBus.instance = new _DatabaseEventBus();
+    }
+    return _DatabaseEventBus.instance;
+  }
+  /**
+   * Emits a database modified event.
+   * @param event The event data.
+   */
+  emitDatabaseModified(event) {
+    this.trigger(_DatabaseEventBus.DATABASE_MODIFIED, event);
+  }
+  /**
+   * Registers a listener for database modified events.
+   * @param callback The function to call when a change occurs.
+   */
+  onDatabaseModified(callback) {
+    this.on(_DatabaseEventBus.DATABASE_MODIFIED, callback);
+  }
+};
+_DatabaseEventBus.DATABASE_MODIFIED = "database-modified";
+var DatabaseEventBus = _DatabaseEventBus;
+
+// src/core/DatabaseManager.ts
 var DatabaseManager = class {
   constructor(plugin) {
     this.plugin = plugin;
@@ -64161,18 +64196,36 @@ var DatabaseManager = class {
     }
   }
   async reset() {
+    try {
+      await import_alasql.default.promise("USE alasql");
+    } catch (e) {
+      console.warn("MySQL Plugin: Could not switch to system db during reset, proceeding wrap...");
+    }
     const dbs = Object.keys(import_alasql.default.databases).filter((d) => d !== "alasql");
+    Logger.info(`Resetting ${dbs.length} databases...`);
     for (const db of dbs) {
       try {
-        (0, import_alasql.default)(`DROP DATABASE IF EXISTS ${db}`);
+        await import_alasql.default.promise(`DROP DATABASE IF EXISTS \`${db}\``);
+        Logger.info(`Dropped database: ${db}`);
       } catch (e) {
+        console.error(`Failed to drop database ${db} during reset:`, e);
       }
     }
-    if (!import_alasql.default.databases.dbo) (0, import_alasql.default)("CREATE DATABASE dbo");
-    (0, import_alasql.default)("USE dbo");
+    if (!import_alasql.default.databases.dbo) {
+      await import_alasql.default.promise("CREATE DATABASE dbo");
+    }
+    await import_alasql.default.promise("USE dbo");
     this.plugin.activeDatabase = "dbo";
     const newData = { ...this.plugin.settings, activeDatabase: "dbo", databases: {} };
     await this.plugin.saveData(newData);
+    DatabaseEventBus.getInstance().emitDatabaseModified({
+      database: "dbo",
+      tables: [],
+      // Empty tables list indicates a potential structural wipe
+      timestamp: Date.now(),
+      originId: "database-reset"
+    });
+    Logger.info("Database reset complete.");
   }
   // --- New Database Management Methods ---
   getDatabaseStats(dbName) {
@@ -64333,7 +64386,7 @@ ${values};
 };
 
 // src/core/CSVManager.ts
-var import_obsidian = require("obsidian");
+var import_obsidian2 = require("obsidian");
 var import_alasql2 = __toESM(require_alasql_fs());
 var CSVManager = class {
   constructor(plugin) {
@@ -64342,12 +64395,12 @@ var CSVManager = class {
   async importCSV(file) {
     try {
       if (file.stat.size > 20 * 1024 * 1024) {
-        new import_obsidian.Notice(`File too large (${(file.stat.size / 1024 / 1024).toFixed(2)} MB). Limit is 20MB.`);
+        new import_obsidian2.Notice(`File too large (${(file.stat.size / 1024 / 1024).toFixed(2)} MB). Limit is 20MB.`);
         return false;
       }
       const content = await this.plugin.app.vault.read(file);
       if (!content) {
-        new import_obsidian.Notice("CSV file is empty");
+        new import_obsidian2.Notice("CSV file is empty");
         return false;
       }
       const tableName = SQLSanitizer.sanitizeIdentifier(file.basename);
@@ -64369,11 +64422,11 @@ var CSVManager = class {
         });
         await import_alasql2.default.promise(`INSERT INTO ${tableName} SELECT * FROM ?`, [mappedData]);
       }
-      new import_obsidian.Notice(`Successfully imported ${dataLines.length} rows into table '${tableName}'`);
+      new import_obsidian2.Notice(`Successfully imported ${dataLines.length} rows into table '${tableName}'`);
       return true;
     } catch (error) {
       console.error("CSV Import Error:", error);
-      new import_obsidian.Notice(`Import failed: ${error.message}`);
+      new import_obsidian2.Notice(`Import failed: ${error.message}`);
       return false;
     }
   }
@@ -64381,7 +64434,7 @@ var CSVManager = class {
     try {
       const data = await import_alasql2.default.promise(`SELECT * FROM ${tableName}`);
       if (!data || data.length === 0) {
-        new import_obsidian.Notice("Table is empty");
+        new import_obsidian2.Notice("Table is empty");
         return;
       }
       const csv = this.jsonToCSV(data);
@@ -64391,10 +64444,10 @@ var CSVManager = class {
       }
       const fileName = `${exportFolder}/${tableName}_${Date.now()}.csv`;
       await this.plugin.app.vault.create(fileName, csv);
-      new import_obsidian.Notice(`Table exported to ${fileName}`);
+      new import_obsidian2.Notice(`Table exported to ${fileName}`);
     } catch (error) {
       console.error("CSV Export Error:", error);
-      new import_obsidian.Notice(`Export failed: ${error.message}`);
+      new import_obsidian2.Notice(`Export failed: ${error.message}`);
     }
   }
   jsonToCSV(data) {
@@ -64435,38 +64488,44 @@ var PerformanceMonitor = class {
 // src/core/QueryExecutor.ts
 init_Logger();
 
-// src/core/DatabaseEventBus.ts
-var import_obsidian2 = require("obsidian");
-var _DatabaseEventBus = class _DatabaseEventBus extends import_obsidian2.Events {
-  constructor() {
-    super();
-  }
+// src/utils/SQLTransformer.ts
+var SQLTransformer = class {
   /**
-   * Gets the singleton instance of the DatabaseEventBus.
+   * Prefixes table names with the database name unless it's a known function or already prefixed.
    */
-  static getInstance() {
-    if (!_DatabaseEventBus.instance) {
-      _DatabaseEventBus.instance = new _DatabaseEventBus();
-    }
-    return _DatabaseEventBus.instance;
-  }
-  /**
-   * Emits a database modified event.
-   * @param event The event data.
-   */
-  emitDatabaseModified(event) {
-    this.trigger(_DatabaseEventBus.DATABASE_MODIFIED, event);
-  }
-  /**
-   * Registers a listener for database modified events.
-   * @param callback The function to call when a change occurs.
-   */
-  onDatabaseModified(callback) {
-    this.on(_DatabaseEventBus.DATABASE_MODIFIED, callback);
+  static prefixTablesWithDatabase(sql, database) {
+    if (!database || database === "alasql") return sql;
+    let result = sql;
+    const notAFunction = /(?![\s]*\()/.source;
+    result = result.replace(
+      new RegExp(/CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source, "gi"),
+      (m, i, t) => `CREATE TABLE ${i || ""}${database}.${t}`
+    );
+    result = result.replace(
+      new RegExp(/INSERT\s+INTO\s+(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source, "gi"),
+      (m, t) => `INSERT INTO ${database}.${t}`
+    );
+    result = result.replace(
+      new RegExp(/UPDATE\s+(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source + /\s+SET/.source, "gi"),
+      (m, t) => `UPDATE ${database}.${t} SET`
+    );
+    result = result.replace(
+      new RegExp(/DELETE\s+FROM\s+(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source, "gi"),
+      (m, t) => `DELETE FROM ${database}.${t}`
+    );
+    result = result.replace(new RegExp(/FROM\s+(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source + notAFunction, "gi"), (m, t) => {
+      const upperT = t.toUpperCase();
+      if (["SELECT", "VALUES", "(", "RANGE", "EXPLODE", "JSON", "CSV", "TAB", "TSV", "XLSX"].includes(upperT)) return m;
+      return `FROM ${database}.${t}`;
+    });
+    result = result.replace(new RegExp(/JOIN\s+(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source + notAFunction, "gi"), (m, t) => {
+      const upperT = t.toUpperCase();
+      if (["SELECT", "VALUES", "(", "RANGE", "EXPLODE", "JSON", "CSV", "TAB", "TSV", "XLSX"].includes(upperT)) return m;
+      return `JOIN ${database}.${t}`;
+    });
+    return result;
   }
 };
-_DatabaseEventBus.DATABASE_MODIFIED = "database-modified";
-var DatabaseEventBus = _DatabaseEventBus;
 
 // src/core/QueryExecutor.ts
 var QueryExecutor = class {
@@ -64538,7 +64597,7 @@ var QueryExecutor = class {
             results.push(formResult.data[0]);
             continue;
           }
-          stmt = this.prefixTablesWithDatabase(stmt, currentDB);
+          stmt = SQLTransformer.prefixTablesWithDatabase(stmt, currentDB);
           const result = await this.executeWithTimeout(stmt, params, 3e4, options.signal);
           results.push(result);
         }
@@ -64567,7 +64626,7 @@ var QueryExecutor = class {
       }
       const looksLikeSingleSelect = trimmedUpper.startsWith("SELECT") && !trimmed.includes(";") && !trimmedUpper.includes("LIMIT");
       let finalQuery = looksLikeSingleSelect ? trimmed + " LIMIT 1000;" : trimmed;
-      finalQuery = this.prefixTablesWithDatabase(finalQuery, currentDB);
+      finalQuery = SQLTransformer.prefixTablesWithDatabase(finalQuery, currentDB);
       const rawResult = await this.executeWithTimeout(finalQuery, params, 3e4, options.signal);
       const normalizedData = this.normalizeResult(rawResult);
       this.notifyIfModified([finalQuery], currentDB, options.originId);
@@ -64597,20 +64656,6 @@ var QueryExecutor = class {
 \u{1F4A1} Verifique se voc\xEA esqueceu algum ponto e v\xEDrgula, se h\xE1 par\xEAnteses/aspas n\xE3o fechadas ou erros de digita\xE7\xE3o nos nomes das tabelas.`;
     }
     return message;
-  }
-  static prefixTablesWithDatabase(sql, database) {
-    if (!database || database === "alasql") return sql;
-    let result = sql;
-    result = result.replace(/CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi, (m, i, t) => `CREATE TABLE ${i || ""}${database}.${t}`);
-    result = result.replace(/INSERT\s+INTO\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi, (m, t) => `INSERT INTO ${database}.${t}`);
-    result = result.replace(/UPDATE\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)\s+SET/gi, (m, t) => `UPDATE ${database}.${t} SET`);
-    result = result.replace(/DELETE\s+FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi, (m, t) => `DELETE FROM ${database}.${t}`);
-    result = result.replace(/FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi, (m, t) => {
-      if (["SELECT", "VALUES", "("].some((kw) => t.toUpperCase().includes(kw))) return m;
-      return `FROM ${database}.${t}`;
-    });
-    result = result.replace(/JOIN\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi, (m, t) => `JOIN ${database}.${t}`);
-    return result;
   }
   static normalizeResult(raw) {
     if (raw === void 0 || raw === null) return [];
@@ -64860,21 +64905,33 @@ var FormRenderer = class {
         originId: "form-submission"
       });
       if (result.success) {
-        statusMsg.textContent = `\u2713 Saved successfully to ${data.baseTableName}`;
-        statusMsg.className = "mysql-form-status success";
-        statusMsg.style.display = "block";
+        statusMsg.empty();
+        statusMsg.className = "mysql-success-state mysql-msg-compact success";
+        const iconWrapper = statusMsg.createDiv({ cls: "mysql-success-icon" });
+        (0, import_obsidian3.setIcon)(iconWrapper, "check-circle");
+        statusMsg.createDiv({
+          text: `Saved successfully to ${data.baseTableName}`,
+          cls: "mysql-success"
+        });
+        statusMsg.style.display = "flex";
         form.reset();
         new import_obsidian3.Notice(`Record saved to ${data.baseTableName}`);
       } else {
-        statusMsg.textContent = `\u274C Error: ${result.error}`;
-        statusMsg.className = "mysql-form-status error";
-        statusMsg.style.display = "block";
+        statusMsg.empty();
+        statusMsg.className = "mysql-error-inline mysql-msg-compact error";
+        const iconWrapper = statusMsg.createDiv({ cls: "mysql-error-icon" });
+        (0, import_obsidian3.setIcon)(iconWrapper, "alert-circle");
+        statusMsg.createSpan({ text: `Error: ${result.error}` });
+        statusMsg.style.display = "flex";
         new import_obsidian3.Notice(`Error saving record: ${result.error}`);
       }
     } catch (e) {
-      statusMsg.textContent = `\u274C Unexpected Error: ${e.message}`;
-      statusMsg.className = "mysql-form-status error";
-      statusMsg.style.display = "block";
+      statusMsg.empty();
+      statusMsg.className = "mysql-error-inline mysql-msg-compact error";
+      const iconWrapper = statusMsg.createDiv({ cls: "mysql-error-icon" });
+      (0, import_obsidian3.setIcon)(iconWrapper, "alert-circle");
+      statusMsg.createSpan({ text: `Unexpected Error: ${e.message}` });
+      statusMsg.style.display = "flex";
     } finally {
       btn.disabled = false;
       btn.innerHTML = "";
@@ -65061,10 +65118,12 @@ var ResultRenderer = class {
             cls: rs.type === "error" ? "mysql-error-inline" : isDML ? "mysql-success-state mysql-msg-compact" : "mysql-info-state mysql-msg-compact"
           });
           if (rs.type === "error") {
-            msgWrapper.createEl("p", { text: rs.message || "Error" });
+            const iconWrapper = msgWrapper.createDiv({ cls: "mysql-error-icon" });
+            (0, import_obsidian4.setIcon)(iconWrapper, "alert-circle");
+            msgWrapper.createSpan({ text: rs.message || "Error" });
           } else {
             const iconWrapper = msgWrapper.createDiv({ cls: isDML ? "mysql-success-icon" : "mysql-info-icon" });
-            (0, import_obsidian4.setIcon)(iconWrapper, isDML ? "database" : "info");
+            (0, import_obsidian4.setIcon)(iconWrapper, isDML ? "check-circle" : "info");
             msgWrapper.createDiv({
               text: rs.message || "Done",
               cls: isDML ? "mysql-success" : "mysql-info-text"
@@ -65771,34 +65830,10 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     containerEl.addClass("mysql-settings-modal");
-    let themeColor = this.plugin.settings.themeColor || "#9d7cd8";
-    let rgb = this.hexToRgb(themeColor);
-    if (this.plugin.settings.useObsidianAccent) {
-      const dummy = document.createElement("div");
-      dummy.style.color = "var(--interactive-accent)";
-      dummy.style.display = "none";
-      document.body.appendChild(dummy);
-      const computedColor = getComputedStyle(dummy).color;
-      document.body.removeChild(dummy);
-      let rgbValues = "157, 124, 216";
-      if (computedColor && computedColor.includes("rgb")) {
-        const match = computedColor.match(/\d+,\s*\d+,\s*\d+/);
-        if (match) rgbValues = match[0];
-      }
-      containerEl.style.setProperty("--mysql-accent", `rgb(${rgbValues})`);
-      containerEl.style.setProperty("--mysql-accent-purple", `rgb(${rgbValues})`);
-      containerEl.style.setProperty("--interactive-accent", `rgb(${rgbValues})`);
-      containerEl.style.setProperty("--mysql-accent-rgb", rgbValues);
-      containerEl.style.setProperty("--interactive-accent-rgb", rgbValues);
-    } else {
-      containerEl.style.setProperty("--mysql-accent", themeColor);
-      containerEl.style.setProperty("--mysql-accent-purple", themeColor);
-      containerEl.style.setProperty("--interactive-accent", themeColor);
-      if (rgb) {
-        containerEl.style.setProperty("--mysql-accent-rgb", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
-        containerEl.style.setProperty("--interactive-accent-rgb", `${rgb.r}, ${rgb.g}, ${rgb.b}`);
-      }
-    }
+    const themeColor = this.plugin.settings.themeColor || "#9d7cd8";
+    const color = this.plugin.settings.useObsidianAccent ? "var(--interactive-accent)" : themeColor;
+    containerEl.style.setProperty("--mysql-accent", color);
+    containerEl.style.setProperty("--mysql-accent-purple", color);
     const header = containerEl.createDiv({ cls: "mysql-settings-header" });
     const titleGroup = header.createDiv({ cls: "mysql-settings-title-group" });
     titleGroup.style.display = "flex";
@@ -65847,10 +65882,10 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
     const welcomeSection = containerEl.createDiv({ cls: "mysql-welcome-section" });
     welcomeSection.style.marginBottom = "20px";
     welcomeSection.style.padding = "15px";
-    welcomeSection.style.background = "rgba(var(--mysql-accent-rgb, var(--interactive-accent-rgb)), 0.1)";
+    welcomeSection.style.background = "color-mix(in srgb, var(--mysql-accent), transparent 90%)";
     welcomeSection.style.borderRadius = "8px";
-    welcomeSection.style.border = "1px solid var(--mysql-accent, var(--interactive-accent))";
-    welcomeSection.createEl("h3", { text: "Bem vindo ao SQL Notebook!", attr: { style: "margin: 0 0 5px 0; color: var(--mysql-accent, var(--interactive-accent));" } });
+    welcomeSection.style.border = "1px solid color-mix(in srgb, var(--mysql-accent), transparent 70%)";
+    welcomeSection.createEl("h3", { text: "Bem vindo ao SQL Notebook!", attr: { style: "margin: 0 0 5px 0; color: var(--mysql-accent);" } });
     welcomeSection.createEl("p", { text: "Gerencie seus bancos de dados locais, execute queries e visualize resultados diretamente no Obsidian.", attr: { style: "margin: 0; font-size: 14px; color: var(--text-normal);" } });
     const searchSection = containerEl.createDiv({ cls: "mysql-search-section" });
     const searchWrapper = searchSection.createDiv({ cls: "mysql-search-wrapper" });
@@ -66564,20 +66599,8 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
   applyTheme() {
     const settings = this.settings;
     const color = settings.useObsidianAccent ? "var(--interactive-accent)" : settings.themeColor;
-    document.body.style.setProperty("--mysql-accent-purple", color);
     document.body.style.setProperty("--mysql-accent", color);
-    if (settings.useObsidianAccent) {
-      document.body.style.setProperty("--mysql-accent-rgb", "var(--interactive-accent-rgb)");
-    } else {
-      const hex = settings.themeColor;
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      if (result) {
-        const r = parseInt(result[1], 16);
-        const g = parseInt(result[2], 16);
-        const b = parseInt(result[3], 16);
-        document.body.style.setProperty("--mysql-accent-rgb", `${r}, ${g}, ${b}`);
-      }
-    }
+    document.body.style.setProperty("--mysql-accent-purple", color);
   }
   // ========================================================================
   // LOGIC PORTED FROM MONOLITHIC CLASS
@@ -66772,7 +66795,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
       }).open();
     };
     showTablesBtn.onclick = () => this.showTables(resultContainer, showTablesBtn);
-    resetBtn.onclick = () => this.resetDatabase(resultContainer);
+    resetBtn.onclick = () => this.resetDatabase(resultContainer, footer);
     const paramMatch = source.match(/\/\*\s*params\s*:\s*({[\s\S]*?})\s*\*\//);
     const params = paramMatch ? JSON.parse(paramMatch[1]) : {};
     if (Object.keys(params).length > 0) {
@@ -67063,7 +67086,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
         const msg = titleRow.createEl("p", { cls: "mysql-info-text" });
         msg.setText("No tables found in database ");
         const span = msg.createSpan({ text: activeDB });
-        span.style.color = "var(--mysql-accent-purple)";
+        span.style.color = "var(--mysql-accent)";
         span.style.fontWeight = "bold";
         const help = content.createEl("p", {
           text: "To switch databases, run 'USE <database>' or "
@@ -67075,7 +67098,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
         const settingsBtn = help.createEl("a", {
           text: "Open Settings"
         });
-        settingsBtn.style.color = "var(--mysql-accent-purple)";
+        settingsBtn.style.color = "var(--mysql-accent)";
         settingsBtn.style.cursor = "pointer";
         settingsBtn.style.textDecoration = "underline";
         settingsBtn.onclick = () => {
@@ -67126,7 +67149,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
       new import_obsidian12.Notice("Error showing tables: " + error.message);
     }
   }
-  async resetDatabase(container) {
+  async resetDatabase(container, footer) {
     new ConfirmationModal(
       this.app,
       "Reset Database",
@@ -67136,6 +67159,9 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
           try {
             await this.dbManager.reset();
             container.empty();
+            if (footer) {
+              footer.setActiveDatabase("dbo");
+            }
             const successState = container.createDiv({ cls: "mysql-success-state" });
             const iconWrapper = successState.createDiv({ cls: "mysql-success-icon" });
             (0, import_obsidian12.setIcon)(iconWrapper, "check-circle");

@@ -131,21 +131,43 @@ export class FormRenderer {
             });
 
             if (result.success) {
-                statusMsg.textContent = `✓ Saved successfully to ${data.baseTableName}`;
-                statusMsg.className = "mysql-form-status success";
-                statusMsg.style.display = "block";
+                statusMsg.empty();
+                statusMsg.className = "mysql-success-state mysql-msg-compact success";
+
+                const iconWrapper = statusMsg.createDiv({ cls: "mysql-success-icon" });
+                setIcon(iconWrapper, "check-circle");
+
+                statusMsg.createDiv({
+                    text: `Saved successfully to ${data.baseTableName}`,
+                    cls: "mysql-success"
+                });
+
+
+                statusMsg.style.display = "flex";
                 form.reset();
                 new Notice(`Record saved to ${data.baseTableName}`);
             } else {
-                statusMsg.textContent = `❌ Error: ${result.error}`;
-                statusMsg.className = "mysql-form-status error";
-                statusMsg.style.display = "block";
+                statusMsg.empty();
+                statusMsg.className = "mysql-error-inline mysql-msg-compact error";
+
+                const iconWrapper = statusMsg.createDiv({ cls: "mysql-error-icon" });
+                setIcon(iconWrapper, "alert-circle");
+
+                statusMsg.createSpan({ text: `Error: ${result.error}` });
+                statusMsg.style.display = "flex";
                 new Notice(`Error saving record: ${result.error}`);
+
             }
         } catch (e) {
-            statusMsg.textContent = `❌ Unexpected Error: ${e.message}`;
-            statusMsg.className = "mysql-form-status error";
-            statusMsg.style.display = "block";
+            statusMsg.empty();
+            statusMsg.className = "mysql-error-inline mysql-msg-compact error";
+
+            const iconWrapper = statusMsg.createDiv({ cls: "mysql-error-icon" });
+            setIcon(iconWrapper, "alert-circle");
+
+            statusMsg.createSpan({ text: `Unexpected Error: ${e.message}` });
+            statusMsg.style.display = "flex";
+
         } finally {
             btn.disabled = false;
             btn.innerHTML = "";
