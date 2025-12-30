@@ -66,7 +66,13 @@ export function t(keyPath: string, vars?: Record<string, string>): string {
     if (vars) {
         let interpolated = value;
         for (const [varName, varValue] of Object.entries(vars)) {
-            interpolated = interpolated.replace(new RegExp(`{${varName}}`, 'g'), varValue);
+            const sanitizedValue = String(varValue)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+            interpolated = interpolated.replace(new RegExp(`{${varName}}`, 'g'), sanitizedValue);
         }
         return interpolated;
     }
