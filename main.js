@@ -64265,9 +64265,14 @@ var DatabaseManager = class {
       for (const t of tables) {
         const tableName = t.tableid;
         try {
-          await import_alasql.default.promise(`USE ${newName}`);
-          await import_alasql.default.promise(`CREATE TABLE \`${tableName}\` AS SELECT * FROM ${oldName}.\`${tableName}\` WHERE 1=0`);
-          await import_alasql.default.promise(`INSERT INTO \`${tableName}\` SELECT * FROM ${oldName}.\`${tableName}\``);
+          await import_alasql.default.promise(`USE [${oldName}]`);
+          const createSQL = (0, import_alasql.default)(`SHOW CREATE TABLE [${tableName}]`);
+          const sourceData = (0, import_alasql.default)(`SELECT * FROM [${tableName}]`);
+          await import_alasql.default.promise(`USE [${newName}]`);
+          await import_alasql.default.promise(createSQL);
+          if (sourceData && sourceData.length > 0) {
+            await import_alasql.default.promise(`INSERT INTO [${tableName}] SELECT * FROM ?`, [sourceData]);
+          }
         } catch (e) {
           console.error(`Failed to copy table ${tableName} during rename:`, e);
         }
@@ -64293,9 +64298,14 @@ var DatabaseManager = class {
     for (const t of tables) {
       const tableName = t.tableid;
       try {
-        await import_alasql.default.promise(`USE ${newName}`);
-        await import_alasql.default.promise(`CREATE TABLE \`${tableName}\` AS SELECT * FROM ${dbName}.\`${tableName}\` WHERE 1=0`);
-        await import_alasql.default.promise(`INSERT INTO \`${tableName}\` SELECT * FROM ${dbName}.\`${tableName}\``);
+        await import_alasql.default.promise(`USE [${dbName}]`);
+        const createSQL = (0, import_alasql.default)(`SHOW CREATE TABLE [${tableName}]`);
+        const sourceData = (0, import_alasql.default)(`SELECT * FROM [${tableName}]`);
+        await import_alasql.default.promise(`USE [${newName}]`);
+        await import_alasql.default.promise(createSQL);
+        if (sourceData && sourceData.length > 0) {
+          await import_alasql.default.promise(`INSERT INTO [${tableName}] SELECT * FROM ?`, [sourceData]);
+        }
       } catch (e) {
         console.error(`Failed to duplicate table ${tableName}:`, e);
       }
@@ -64497,23 +64507,23 @@ var SQLTransformer = class {
       const isFunction = after.trim().startsWith("(");
       const isReserved = ["SELECT", "VALUES", "RANGE", "EXPLODE", "JSON", "CSV", "TAB", "TSV", "XLSX"].includes(upperT);
       if (isFunction || isReserved) return m;
-      return m.replace(t, `${database}.${t}`);
+      return m.replace(t, `[${database}].[${t}]`);
     };
     result = result.replace(
       /CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
-      (m, i, t) => `CREATE TABLE ${i || ""}${database}.${t}`
+      (m, i, t) => `CREATE TABLE ${i || ""}[${database}].[${t}]`
     );
     result = result.replace(
       /INSERT\s+INTO\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
-      (m, t) => `INSERT INTO ${database}.${t}`
+      (m, t) => `INSERT INTO [${database}].[${t}]`
     );
     result = result.replace(
-      /UPDATE\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)\s+SET/gi,
-      (m, t) => `UPDATE ${database}.${t} SET`
+      /UPDATE\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b(\s+SET)/gi,
+      (m, t, set) => `UPDATE [${database}].[${t}]${set}`
     );
     result = result.replace(
       /DELETE\s+FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
-      (m, t) => `DELETE FROM ${database}.${t}`
+      (m, t) => `DELETE FROM [${database}].[${t}]`
     );
     result = result.replace(/FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s]*\(?)/gi, (m, t, after) => {
       return tableFnCheck(m, t, after);
@@ -65168,33 +65178,15 @@ var ResultRenderer = class {
     renderBatch(initialBatch);
     currentCount += initialBatch.length;
     if (rows.length > batchSize) {
-      const controls = container.createEl("div", { cls: "mysql-pagination" });
-      controls.style.padding = "12px 16px";
-      controls.style.backgroundColor = "var(--background-secondary-alt)";
-      controls.style.borderTop = "1px solid var(--background-modifier-border)";
-      controls.style.display = "flex";
-      controls.style.alignItems = "center";
-      controls.style.gap = "12px";
-      controls.style.fontSize = "0.85em";
+      const controls = container.createEl("div", { cls: "mysql-pagination-controls" });
       const statusSpan = controls.createEl("span", {
         text: `Showing ${currentCount} of ${rows.length} rows`,
         cls: "mysql-pagination-status"
       });
-      statusSpan.style.color = "var(--text-muted)";
-      statusSpan.style.fontWeight = "600";
-      statusSpan.style.marginRight = "auto";
       const showAllBtn = controls.createEl("button", {
         text: "Show All Rows",
         cls: "mysql-pagination-btn"
       });
-      showAllBtn.style.padding = "6px 12px";
-      showAllBtn.style.backgroundColor = "var(--interactive-accent)";
-      showAllBtn.style.color = "white";
-      showAllBtn.style.border = "none";
-      showAllBtn.style.borderRadius = "4px";
-      showAllBtn.style.cursor = "pointer";
-      showAllBtn.style.fontSize = "0.8em";
-      showAllBtn.style.fontWeight = "600";
       showAllBtn.onclick = () => {
         const remaining = rows.slice(currentCount);
         renderBatch(remaining);
