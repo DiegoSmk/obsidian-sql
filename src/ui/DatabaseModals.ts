@@ -113,7 +113,7 @@ export class DatabaseSwitcherModal extends Modal {
                         // Refresh the list
                         this.onOpen();
                     } catch (e) {
-                        new Notice(`Error: ${e.message}`);
+                        new Notice(t('common.error', { error: e.message }));
                     }
                 }
             },
@@ -169,7 +169,7 @@ export class RenameDatabaseModal extends Modal {
                     this.onSuccess();
                     this.close();
                 } catch (e) {
-                    new Notice(`Error: ${e.message}`);
+                    new Notice(t('common.error', { error: e.message }));
                 }
             });
     }
@@ -216,18 +216,18 @@ export class CreateDatabaseModal extends Modal {
                 try {
                     const dbManager = (this.plugin as any).dbManager;
                     await dbManager.createDatabase(dbName);
-                    new Notice(`Database "${dbName}" created.`);
+                    new Notice(t('modals.notice_create_success', { name: dbName }));
 
                     // Automatically switch to it?
                     // Usually yes, user creates DB to use it.
                     this.plugin.activeDatabase = dbName;
                     await dbManager.save();
-                    new Notice(`Switched to "${dbName}"`);
+                    new Notice(t('modals.notice_switch_success', { name: dbName }));
 
                     this.onSuccess();
                     this.close();
                 } catch (e) {
-                    new Notice(`Error: ${e.message}`);
+                    new Notice(t('common.error', { error: e.message }));
                 }
             });
 
@@ -274,7 +274,7 @@ export class DuplicateDatabaseModal extends Modal {
                     return;
                 }
                 if (newName === this.oldName) {
-                    new Notice("New name must be different from the old name.");
+                    new Notice(t('common.invalid_name'));
                     return;
                 }
 
@@ -285,7 +285,7 @@ export class DuplicateDatabaseModal extends Modal {
                     this.onSuccess();
                     this.close();
                 } catch (e) {
-                    new Notice(`Error: ${e.message}`);
+                    new Notice(t('common.error', { error: e.message }));
                 }
             });
 
@@ -383,10 +383,10 @@ export class DatabaseTablesModal extends Modal {
                     if (result.success && result.data && result.data[0] && result.data[0].data) {
                         await this.copyToClipboard(result.data[0].data);
                     } else {
-                        new Notice(t('renderer.notice_copy_failed'));
+                        new Notice(t('renderer.notice_copy_failed', { error: t('renderer.msg_no_data') }));
                     }
                 } catch (e) {
-                    new Notice(`Copy failed: ${e.message}`);
+                    new Notice(t('modals.notice_copy_failed', { error: e.message }));
                 }
             });
 
@@ -400,10 +400,10 @@ export class DatabaseTablesModal extends Modal {
                     if (tableElement) {
                         await this.takeScreenshot(tableElement as HTMLElement);
                     } else {
-                        new Notice(t('renderer.notice_screenshot_failed'));
+                        new Notice(t('renderer.notice_screenshot_failed', { error: 'No table element' }));
                     }
                 } catch (e) {
-                    new Notice(`Screenshot failed: ${e.message}`);
+                    new Notice(t('renderer.notice_screenshot_failed', { error: e.message }));
                 }
             });
 
@@ -419,10 +419,10 @@ export class DatabaseTablesModal extends Modal {
                     if (result.success && result.data && result.data[0] && result.data[0].data) {
                         await this.insertIntoNote(result.data[0].data);
                     } else {
-                        new Notice(t('renderer.notice_insert_failed'));
+                        new Notice(t('renderer.notice_insert_failed', { error: t('renderer.msg_no_data') }));
                     }
                 } catch (e) {
-                    new Notice(`Insert failed: ${e.message}`);
+                    new Notice(t('renderer.notice_insert_failed', { error: e.message }));
                 }
             });
 
@@ -442,7 +442,7 @@ export class DatabaseTablesModal extends Modal {
                         new Notice(t('renderer.msg_no_data'));
                     }
                 } catch (e) {
-                    new Notice(`Export failed: ${e.message}`);
+                    new Notice(t('common.error', { error: e.message }));
                 }
             });
 
@@ -585,7 +585,7 @@ export class DatabaseTablesModal extends Modal {
 
             canvas.toBlob(async (blob: Blob | null) => {
                 if (!blob) {
-                    new Notice(t('modals.notice_screenshot_failed'));
+                    new Notice(t('modals.notice_screenshot_failed', { error: 'Blob creation failed' }));
                     return;
                 }
 
@@ -605,7 +605,7 @@ export class DatabaseTablesModal extends Modal {
                 }
             });
         } catch (error) {
-            new Notice(t('renderer.notice_screenshot_failed') + ': ' + error.message);
+            new Notice(t('renderer.notice_screenshot_failed', { error: error.message }));
             console.error('Screenshot error:', error);
         }
     }
@@ -654,10 +654,10 @@ export class DatabaseTablesModal extends Modal {
             const fileName = `${exportFolder}/${tableName}_${Date.now()}.csv`;
             await this.plugin.app.vault.create(fileName, csv);
 
-            new Notice(`Table exported to ${fileName}`);
+            new Notice(t('common.notice_export_success', { name: fileName }));
         } catch (error) {
             console.error("CSV Export Error:", error);
-            new Notice(`Export failed: ${error.message}`);
+            new Notice(t('common.error', { error: error.message }));
         }
     }
 

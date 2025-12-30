@@ -1,4 +1,4 @@
-export type Language = 'en' | 'pt-BR' | 'zh';
+export type Language = 'auto' | 'en' | 'pt-BR' | 'zh' | 'es' | 'de' | 'fr' | 'ja' | 'ko';
 
 export interface MySQLSettings {
     language: Language;

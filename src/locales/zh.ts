@@ -98,11 +98,11 @@ export default {
         "status_error": "错误",
         "status_done": "完成",
         "notice_table_data_copied": "表数据已复制到剪贴板！",
-        "notice_copy_failed": "复制失败：{error}",
-        "notice_screenshot_failed": "创建截图失败",
-        "notice_no_active_note": "未找到活动笔记",
-        "notice_table_inserted": "表已插入笔记！",
-        "notice_insert_failed": "插入失败：{error}"
+        "notice_copy_failed": "复制失败: {error}",
+        "notice_screenshot_failed": "创建截图失败: {error}",
+        "notice_no_active_note": "也未找到活动笔记",
+        "notice_table_inserted": "表格已插入笔记！",
+        "notice_insert_failed": "插入失败: {error}"
     },
     "workbench": {
         "btn_run": "运行",
@@ -119,13 +119,13 @@ export default {
         "tip_screenshot": "获取结果截图",
         "tip_add_note": "将结果插入笔记",
         "notice_copied": "✓ 已复制到剪贴板！",
-        "notice_copy_failed": "❌ 复制失败：",
-        "notice_screenshot_failed": "❌ 创建截图失败",
+        "notice_copy_failed": "❌ 复制失败: {error}",
+        "notice_screenshot_failed": "❌ 创建截图失败: {error}",
         "notice_screenshot_copied": "✓ 截图已复制到剪贴板！",
         "notice_screenshot_downloaded": "✓ 截图已下载！",
         "notice_insert_no_note": "❌ 未找到活动笔记",
         "notice_insert_success": "✓ 结果已插入笔记！",
-        "notice_insert_failed": "❌ 插入失败：",
+        "notice_insert_failed": "❌ 插入失败: {error}",
         "msg_no_result": "查询成功执行（无结果集）",
         "msg_rows_found": "找到 {count} 行",
         "msg_no_data": "未找到数据",
@@ -176,5 +176,15 @@ export default {
         "status_error": "错误",
         "status_aborted": "已中止",
         "status_live": "实时"
+    },
+    "common": {
+        "error": "错误：{error}",
+        "invalid_name": "新名称必须与旧名称不同。",
+        "notice_export_success": "已导出到 {name}",
+        "notice_import_loading": "正在导入数据库...",
+        "notice_import_success": "数据库导入成功！",
+        "notice_anchor_form": "FORM 已锚定到 {name}",
+        "notice_anchor_live": "LIVE 块已锚定到 {name}",
+        "notice_update_live": "正在从 {name} 更新 LIVE 数据..."
     }
 }

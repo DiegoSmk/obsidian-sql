@@ -6643,24 +6643,24 @@ var require_xlsx = __commonJS({
         return o;
       }
       function pad0(v, d) {
-        var t = "" + v;
-        return t.length >= d ? t : fill("0", d - t.length) + t;
+        var t2 = "" + v;
+        return t2.length >= d ? t2 : fill("0", d - t2.length) + t2;
       }
       function pad_(v, d) {
-        var t = "" + v;
-        return t.length >= d ? t : fill(" ", d - t.length) + t;
+        var t2 = "" + v;
+        return t2.length >= d ? t2 : fill(" ", d - t2.length) + t2;
       }
       function rpad_(v, d) {
-        var t = "" + v;
-        return t.length >= d ? t : t + fill(" ", d - t.length);
+        var t2 = "" + v;
+        return t2.length >= d ? t2 : t2 + fill(" ", d - t2.length);
       }
       function pad0r1(v, d) {
-        var t = "" + Math.round(v);
-        return t.length >= d ? t : fill("0", d - t.length) + t;
+        var t2 = "" + Math.round(v);
+        return t2.length >= d ? t2 : fill("0", d - t2.length) + t2;
       }
       function pad0r2(v, d) {
-        var t = "" + v;
-        return t.length >= d ? t : fill("0", d - t.length) + t;
+        var t2 = "" + v;
+        return t2.length >= d ? t2 : fill("0", d - t2.length) + t2;
       }
       var p2_32 = Math.pow(2, 32);
       function pad0r(v, d) {
@@ -6695,38 +6695,38 @@ var require_xlsx = __commonJS({
         ["N", "Nov", "November"],
         ["D", "Dec", "December"]
       ];
-      function SSF_init_table(t) {
-        if (!t) t = {};
-        t[0] = "General";
-        t[1] = "0";
-        t[2] = "0.00";
-        t[3] = "#,##0";
-        t[4] = "#,##0.00";
-        t[9] = "0%";
-        t[10] = "0.00%";
-        t[11] = "0.00E+00";
-        t[12] = "# ?/?";
-        t[13] = "# ??/??";
-        t[14] = "m/d/yy";
-        t[15] = "d-mmm-yy";
-        t[16] = "d-mmm";
-        t[17] = "mmm-yy";
-        t[18] = "h:mm AM/PM";
-        t[19] = "h:mm:ss AM/PM";
-        t[20] = "h:mm";
-        t[21] = "h:mm:ss";
-        t[22] = "m/d/yy h:mm";
-        t[37] = "#,##0 ;(#,##0)";
-        t[38] = "#,##0 ;[Red](#,##0)";
-        t[39] = "#,##0.00;(#,##0.00)";
-        t[40] = "#,##0.00;[Red](#,##0.00)";
-        t[45] = "mm:ss";
-        t[46] = "[h]:mm:ss";
-        t[47] = "mmss.0";
-        t[48] = "##0.0E+0";
-        t[49] = "@";
-        t[56] = '"\u4E0A\u5348/\u4E0B\u5348 "hh"\u6642"mm"\u5206"ss"\u79D2 "';
-        return t;
+      function SSF_init_table(t2) {
+        if (!t2) t2 = {};
+        t2[0] = "General";
+        t2[1] = "0";
+        t2[2] = "0.00";
+        t2[3] = "#,##0";
+        t2[4] = "#,##0.00";
+        t2[9] = "0%";
+        t2[10] = "0.00%";
+        t2[11] = "0.00E+00";
+        t2[12] = "# ?/?";
+        t2[13] = "# ??/??";
+        t2[14] = "m/d/yy";
+        t2[15] = "d-mmm-yy";
+        t2[16] = "d-mmm";
+        t2[17] = "mmm-yy";
+        t2[18] = "h:mm AM/PM";
+        t2[19] = "h:mm:ss AM/PM";
+        t2[20] = "h:mm";
+        t2[21] = "h:mm:ss";
+        t2[22] = "m/d/yy h:mm";
+        t2[37] = "#,##0 ;(#,##0)";
+        t2[38] = "#,##0 ;[Red](#,##0)";
+        t2[39] = "#,##0.00;(#,##0.00)";
+        t2[40] = "#,##0.00;[Red](#,##0.00)";
+        t2[45] = "mm:ss";
+        t2[46] = "[h]:mm:ss";
+        t2[47] = "mmss.0";
+        t2[48] = "##0.0E+0";
+        t2[49] = "@";
+        t2[56] = '"\u4E0A\u5348/\u4E0B\u5348 "hh"\u6642"mm"\u5206"ss"\u79D2 "';
+        return t2;
       }
       var table_fmt = {
         0: "General",
@@ -7541,8 +7541,8 @@ var require_xlsx = __commonJS({
               ++i;
               break;
             case "\\":
-              var w = fmt.charAt(++i), t = w === "(" || w === ")" ? w : "t";
-              out[out.length] = { t, v: w };
+              var w = fmt.charAt(++i), t2 = w === "(" || w === ")" ? w : "t";
+              out[out.length] = { t: t2, v: w };
               ++i;
               break;
             case "_":
@@ -8920,8 +8920,8 @@ var require_xlsx = __commonJS({
         var LEN_LN = [3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31, 35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258];
         var DST_LN = [1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193, 257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145, 8193, 12289, 16385, 24577];
         function bit_swap_8(n) {
-          var t = (n << 1 | n << 11) & 139536 | (n << 5 | n << 15) & 558144;
-          return (t >> 16 | t >> 8 | t) & 255;
+          var t2 = (n << 1 | n << 11) & 139536 | (n << 5 | n << 15) & 558144;
+          return (t2 >> 16 | t2 >> 8 | t2) & 255;
         }
         var use_typed_arrays = typeof Uint8Array !== "undefined";
         var bitswap8 = use_typed_arrays ? new Uint8Array(1 << 8) : [];
@@ -10369,9 +10369,9 @@ var require_xlsx = __commonJS({
       var matchtag = /* @__PURE__ */ (function() {
         var mtcache = {};
         return function matchtag2(f, g) {
-          var t = f + "|" + (g || "");
-          if (mtcache[t]) return mtcache[t];
-          return mtcache[t] = new RegExp("<(?:\\w+:)?" + f + '(?: xml:space="preserve")?(?:[^>]*)>([\\s\\S]*?)</(?:\\w+:)?' + f + ">", g || "");
+          var t2 = f + "|" + (g || "");
+          if (mtcache[t2]) return mtcache[t2];
+          return mtcache[t2] = new RegExp("<(?:\\w+:)?" + f + '(?: xml:space="preserve")?(?:[^>]*)>([\\s\\S]*?)</(?:\\w+:)?' + f + ">", g || "");
         };
       })();
       var htmldecode = (function() {
@@ -10426,11 +10426,11 @@ var require_xlsx = __commonJS({
       function writextag(f, g, h) {
         return "<" + f + (h != null ? wxt_helper(h) : "") + (g != null ? (g.match(wtregex) ? ' xml:space="preserve"' : "") + ">" + g + "</" + f : "/") + ">";
       }
-      function write_w3cdtf(d, t) {
+      function write_w3cdtf(d, t2) {
         try {
           return d.toISOString().replace(/\.\d*/, "");
         } catch (e) {
-          if (t) throw e;
+          if (t2) throw e;
         }
         return "";
       }
@@ -10670,9 +10670,9 @@ var require_xlsx = __commonJS({
       var __readInt32BE = function(b, idx) {
         return b[idx] << 24 | b[idx + 1] << 16 | b[idx + 2] << 8 | b[idx + 3];
       };
-      function ReadShift(size, t) {
+      function ReadShift(size, t2) {
         var o = "", oI, oR, oo = [], w, vv, i, loc;
-        switch (t) {
+        switch (t2) {
           case "dbcs":
             loc = this.l;
             if (has_buf && Buffer.isBuffer(this) && buf_utf16le) o = this.slice(this.l, this.l + 2 * size).toString("utf16le");
@@ -10781,12 +10781,12 @@ var require_xlsx = __commonJS({
                 this.l++;
                 return oI;
               case 2:
-                oI = (t === "i" ? __readInt16LE : __readUInt16LE)(this, this.l);
+                oI = (t2 === "i" ? __readInt16LE : __readUInt16LE)(this, this.l);
                 this.l += 2;
                 return oI;
               case 4:
               case -4:
-                if (t === "i" || (this[this.l + 3] & 128) === 0) {
+                if (t2 === "i" || (this[this.l + 3] & 128) === 0) {
                   oI = (size > 0 ? __readInt32LE : __readInt32BE)(this, this.l);
                   this.l += 4;
                   return oI;
@@ -10797,7 +10797,7 @@ var require_xlsx = __commonJS({
                 return oR;
               case 8:
               case -8:
-                if (t === "f") {
+                if (t2 === "f") {
                   if (size == 8) oR = __double(this, this.l);
                   else oR = __double([this[this.l + 7], this[this.l + 6], this[this.l + 5], this[this.l + 4], this[this.l + 3], this[this.l + 2], this[this.l + 1], this[this.l + 0]], 0);
                   this.l += 8;
@@ -10828,7 +10828,7 @@ var require_xlsx = __commonJS({
         b[idx] = val & 255;
         b[idx + 1] = val >>> 8 & 255;
       };
-      function WriteShift(t, val, f) {
+      function WriteShift(t2, val, f) {
         var size = 0, i = 0;
         if (f === "dbcs") {
           for (i = 0; i != val.length; ++i) __writeUInt16LE(this, val.charCodeAt(i), this.l + 2 * i);
@@ -10856,20 +10856,20 @@ var require_xlsx = __commonJS({
             size = val.length;
           }
         } else if (f === "hex") {
-          for (; i < t; ++i) {
+          for (; i < t2; ++i) {
             this[this.l++] = parseInt(val.slice(2 * i, 2 * i + 2), 16) || 0;
           }
           return this;
         } else if (f === "utf16le") {
-          var end = Math.min(this.l + t, this.length);
-          for (i = 0; i < Math.min(val.length, t); ++i) {
+          var end = Math.min(this.l + t2, this.length);
+          for (i = 0; i < Math.min(val.length, t2); ++i) {
             var cc = val.charCodeAt(i);
             this[this.l++] = cc & 255;
             this[this.l++] = cc >> 8;
           }
           while (this.l < end) this[this.l++] = 0;
           return this;
-        } else switch (t) {
+        } else switch (t2) {
           case 1:
             size = 1;
             this[this.l] = val & 255;
@@ -10983,18 +10983,18 @@ var require_xlsx = __commonJS({
         return { next, push, end, _bufs: bufs };
       }
       function write_record(ba, type, payload, length) {
-        var t = +type, l;
-        if (isNaN(t)) return;
-        if (!length) length = XLSBRecordEnum[t].p || (payload || []).length || 0;
-        l = 1 + (t >= 128 ? 1 : 0) + 1;
+        var t2 = +type, l;
+        if (isNaN(t2)) return;
+        if (!length) length = XLSBRecordEnum[t2].p || (payload || []).length || 0;
+        l = 1 + (t2 >= 128 ? 1 : 0) + 1;
         if (length >= 128) ++l;
         if (length >= 16384) ++l;
         if (length >= 2097152) ++l;
         var o = ba.next(l);
-        if (t <= 127) o.write_shift(1, t);
+        if (t2 <= 127) o.write_shift(1, t2);
         else {
-          o.write_shift(1, (t & 127) + 128);
-          o.write_shift(1, t >> 7);
+          o.write_shift(1, (t2 & 127) + 128);
+          o.write_shift(1, t2 >> 7);
         }
         for (var i = 0; i != 4; ++i) {
           if (length >= 128) {
@@ -12172,11 +12172,11 @@ var require_xlsx = __commonJS({
             });
           });
         };
-        var f3 = function(t) {
-          (ct[t] || []).forEach(function(v2) {
+        var f3 = function(t2) {
+          (ct[t2] || []).forEach(function(v2) {
             o[o.length] = writextag("Override", null, {
               "PartName": (v2[0] == "/" ? "" : "/") + v2,
-              "ContentType": type2ct[t][0]
+              "ContentType": type2ct[t2][0]
             });
           });
         };
@@ -12699,32 +12699,32 @@ var require_xlsx = __commonJS({
           for (i = 0; i < EXT_PROPS.length; ++i) if (k == EXT_PROPS[i][1]) return;
           for (i = 0; i < BLACKLIST.length; ++i) if (k == BLACKLIST[i]) return;
           var m = Props[k];
-          var t = "string";
+          var t2 = "string";
           if (typeof m == "number") {
-            t = "float";
+            t2 = "float";
             m = String(m);
           } else if (m === true || m === false) {
-            t = "boolean";
+            t2 = "boolean";
             m = m ? "1" : "0";
           } else m = String(m);
-          o.push(writextag(escapexmltag(k), m, { "dt:dt": t }));
+          o.push(writextag(escapexmltag(k), m, { "dt:dt": t2 }));
         });
         if (Custprops) keys(Custprops).forEach(function(k) {
           if (!Object.prototype.hasOwnProperty.call(Custprops, k)) return;
           if (Props && Object.prototype.hasOwnProperty.call(Props, k)) return;
           var m = Custprops[k];
-          var t = "string";
+          var t2 = "string";
           if (typeof m == "number") {
-            t = "float";
+            t2 = "float";
             m = String(m);
           } else if (m === true || m === false) {
-            t = "boolean";
+            t2 = "boolean";
             m = m ? "1" : "0";
           } else if (m instanceof Date) {
-            t = "dateTime.tz";
+            t2 = "dateTime.tz";
             m = m.toISOString();
           } else m = String(m);
-          o.push(writextag(escapexmltag(k), m, { "dt:dt": t }));
+          o.push(writextag(escapexmltag(k), m, { "dt:dt": t2 }));
         });
         return "<" + T + ' xmlns="' + XLMLNS.o + '">' + o.join("") + "</" + T + ">";
       }
@@ -12734,8 +12734,8 @@ var require_xlsx = __commonJS({
       }
       function write_FILETIME(time) {
         var date = typeof time == "string" ? new Date(Date.parse(time)) : time;
-        var t = date.getTime() / 1e3 + 11644473600;
-        var l = t % Math.pow(2, 32), h = (t - l) / Math.pow(2, 32);
+        var t2 = date.getTime() / 1e3 + 11644473600;
+        var l = t2 % Math.pow(2, 32), h = (t2 - l) / Math.pow(2, 32);
         l *= 1e7;
         h *= 1e7;
         var w = l / Math.pow(2, 32) | 0;
@@ -12763,12 +12763,12 @@ var require_xlsx = __commonJS({
         if (stringType === 31) return parse_lpwstr(blob);
         return parse_lpstr(blob, stringType, pad);
       }
-      function parse_VtString(blob, t, pad) {
-        return parse_VtStringBase(blob, t, pad === false ? 0 : 4);
+      function parse_VtString(blob, t2, pad) {
+        return parse_VtStringBase(blob, t2, pad === false ? 0 : 4);
       }
-      function parse_VtUnalignedString(blob, t) {
-        if (!t) throw new Error("VtUnalignedString must have positive length");
-        return parse_VtStringBase(blob, t, 0);
+      function parse_VtUnalignedString(blob, t2) {
+        if (!t2) throw new Error("VtUnalignedString must have positive length");
+        return parse_VtStringBase(blob, t2, 0);
       }
       function parse_VtVecLpwstrValue(blob) {
         var length = blob.read_shift(4);
@@ -12825,12 +12825,12 @@ var require_xlsx = __commonJS({
         return o;
       }
       function parse_TypedPropertyValue(blob, type, _opts) {
-        var t = blob.read_shift(2), ret, opts = _opts || {};
+        var t2 = blob.read_shift(2), ret, opts = _opts || {};
         blob.l += 2;
         if (type !== VT_VARIANT) {
-          if (t !== type && VT_CUSTOM.indexOf(type) === -1 && !((type & 65534) == 4126 && (t & 65534) == 4126)) throw new Error("Expected type " + type + " saw " + t);
+          if (t2 !== type && VT_CUSTOM.indexOf(type) === -1 && !((type & 65534) == 4126 && (t2 & 65534) == 4126)) throw new Error("Expected type " + type + " saw " + t2);
         }
-        switch (type === VT_VARIANT ? t : type) {
+        switch (type === VT_VARIANT ? t2 : type) {
           case 2:
             ret = blob.read_shift(2, "i");
             if (!opts.raw) blob.l += 2;
@@ -12844,7 +12844,7 @@ var require_xlsx = __commonJS({
             ret = blob.read_shift(4);
             return ret;
           case 30:
-            return parse_lpstr(blob, t, 4).replace(chr0, "");
+            return parse_lpstr(blob, t2, 4).replace(chr0, "");
           case 31:
             return parse_lpwstr(blob);
           case 64:
@@ -12854,20 +12854,20 @@ var require_xlsx = __commonJS({
           case 71:
             return parse_ClipboardData(blob);
           case 80:
-            return parse_VtString(blob, t, !opts.raw).replace(chr0, "");
+            return parse_VtString(blob, t2, !opts.raw).replace(chr0, "");
           case 81:
             return parse_VtUnalignedString(
               blob,
-              t
+              t2
               /*, 4*/
             ).replace(chr0, "");
           case 4108:
             return parse_VtVecHeadingPairValue(blob);
           case 4126:
           case 4127:
-            return t == 4127 ? parse_VtVecLpwstrValue(blob) : parse_VtVecUnalignedLpstrValue(blob);
+            return t2 == 4127 ? parse_VtVecLpwstrValue(blob) : parse_VtVecUnalignedLpstrValue(blob);
           default:
-            throw new Error("TypedPropertyValue unrecognized type " + type + " " + t);
+            throw new Error("TypedPropertyValue unrecognized type " + type + " " + t2);
         }
       }
       function write_TypedPropertyValue(type, value) {
@@ -13212,13 +13212,13 @@ var require_xlsx = __commonJS({
         return parslurp(blob, length, parseuint16);
       }
       function parse_Bes(blob) {
-        var v = blob.read_shift(1), t = blob.read_shift(1);
-        return t === 1 ? v : v === 1;
+        var v = blob.read_shift(1), t2 = blob.read_shift(1);
+        return t2 === 1 ? v : v === 1;
       }
-      function write_Bes(v, t, o) {
+      function write_Bes(v, t2, o) {
         if (!o) o = new_buf(2);
-        o.write_shift(1, t == "e" ? +v : +!!v);
-        o.write_shift(1, t == "e" ? 1 : 0);
+        o.write_shift(1, t2 == "e" ? +v : +!!v);
+        o.write_shift(1, t2 == "e" ? 1 : 0);
         return o;
       }
       function parse_ShortXLUnicodeString(blob, length, opts) {
@@ -13623,7 +13623,7 @@ var require_xlsx = __commonJS({
         blob.read_shift(length);
         return o;
       }
-      function write_BOF(wb, t, o) {
+      function write_BOF(wb, t2, o) {
         var h = 1536, w = 16;
         switch (o.bookType) {
           case "biff8":
@@ -13651,7 +13651,7 @@ var require_xlsx = __commonJS({
         }
         var out = new_buf(w);
         out.write_shift(2, h);
-        out.write_shift(2, t);
+        out.write_shift(2, t2);
         if (w > 4) out.write_shift(2, 29282);
         if (w > 6) out.write_shift(2, 1997);
         if (w > 8) {
@@ -14048,10 +14048,10 @@ var require_xlsx = __commonJS({
         cell.t = val === true || val === false ? "b" : "e";
         return cell;
       }
-      function write_BoolErr(R, C, v, os, opts, t) {
+      function write_BoolErr(R, C, v, os, opts, t2) {
         var o = new_buf(8);
         write_XLSCell(R, C, os, o);
-        write_Bes(v, t, o);
+        write_Bes(v, t2, o);
         return o;
       }
       function parse_Number(blob, length, opts) {
@@ -14259,8 +14259,8 @@ var require_xlsx = __commonJS({
           for (var i = 1; i < blob.lens.length - 1; ++i) {
             if (blob.l - s != blob.lens[i]) throw new Error("TxO: bad continue record");
             var hdr = blob[blob.l];
-            var t = parse_XLUnicodeStringNoCch(blob, blob.lens[i + 1] - blob.lens[i] - 1);
-            texts += t;
+            var t2 = parse_XLUnicodeStringNoCch(blob, blob.lens[i + 1] - blob.lens[i] - 1);
+            texts += t2;
             if (texts.length >= (hdr ? cchText : 2 * cchText)) break;
           }
           if (texts.length !== cchText && texts.length !== cchText * 2) {
@@ -15612,11 +15612,11 @@ var require_xlsx = __commonJS({
                   oo[5] = encode(cell.f || (cell.v ? "TRUE" : "FALSE"));
                   break;
                 case "d":
-                  var t = datenum(parseDate(cell.v));
+                  var t2 = datenum(parseDate(cell.v));
                   oo[2] = "vtc";
                   oo[3] = "nd";
-                  oo[4] = "" + t;
-                  oo[5] = cell.w || SSF_format(cell.z || table_fmt[14], t);
+                  oo[4] = "" + t2;
+                  oo[5] = cell.w || SSF_format(cell.z || table_fmt[14], t2);
                   break;
                 case "e":
                   continue;
@@ -17227,9 +17227,9 @@ var require_xlsx = __commonJS({
       var parse_rs = (function() {
         var tregex = matchtag("t"), rpregex = matchtag("rPr");
         function parse_r(r) {
-          var t = r.match(tregex);
-          if (!t) return { t: "s", v: "" };
-          var o = { t: "s", v: unescapexml(t[1]) };
+          var t2 = r.match(tregex);
+          if (!t2) return { t: "s", v: "" };
+          var o = { t: "s", v: unescapexml(t2[1]) };
           var rpr = r.match(rpregex);
           if (rpr) o.s = parse_rpr(rpr[1]);
           return o;
@@ -17960,11 +17960,11 @@ var require_xlsx = __commonJS({
         "ThinReverseDiagStripe": "lightDown",
         "ThinHorzCross": "lightGrid"
       };
-      function parse_borders(t, styles, themes, opts) {
+      function parse_borders(t2, styles, themes, opts) {
         styles.Borders = [];
         var border = {};
         var pass = false;
-        (t[0].match(tagregex) || []).forEach(function(x) {
+        (t2[0].match(tagregex) || []).forEach(function(x) {
           var y = parsexmltag(x);
           switch (strip_ns(y[0])) {
             case "<borders":
@@ -18074,11 +18074,11 @@ var require_xlsx = __commonJS({
           }
         });
       }
-      function parse_fills(t, styles, themes, opts) {
+      function parse_fills(t2, styles, themes, opts) {
         styles.Fills = [];
         var fill2 = {};
         var pass = false;
-        (t[0].match(tagregex) || []).forEach(function(x) {
+        (t2[0].match(tagregex) || []).forEach(function(x) {
           var y = parsexmltag(x);
           switch (strip_ns(y[0])) {
             case "<fills":
@@ -18161,11 +18161,11 @@ var require_xlsx = __commonJS({
           }
         });
       }
-      function parse_fonts(t, styles, themes, opts) {
+      function parse_fonts(t2, styles, themes, opts) {
         styles.Fonts = [];
         var font = {};
         var pass = false;
-        (t[0].match(tagregex) || []).forEach(function(x) {
+        (t2[0].match(tagregex) || []).forEach(function(x) {
           var y = parsexmltag(x);
           switch (strip_ns(y[0])) {
             case "<fonts":
@@ -18340,11 +18340,11 @@ var require_xlsx = __commonJS({
           }
         });
       }
-      function parse_numFmts(t, styles, opts) {
+      function parse_numFmts(t2, styles, opts) {
         styles.NumberFmt = [];
         var k = keys(table_fmt);
         for (var i = 0; i < k.length; ++i) styles.NumberFmt[k[i]] = table_fmt[k[i]];
-        var m = t[0].match(tagregex);
+        var m = t2[0].match(tagregex);
         if (!m) return;
         for (i = 0; i < m.length; ++i) {
           var y = parsexmltag(m[i]);
@@ -18391,11 +18391,11 @@ var require_xlsx = __commonJS({
       }
       var cellXF_uint = ["numFmtId", "fillId", "fontId", "borderId", "xfId"];
       var cellXF_bool = ["applyAlignment", "applyBorder", "applyFill", "applyFont", "applyNumberFormat", "applyProtection", "pivotButton", "quotePrefix"];
-      function parse_cellXfs(t, styles, opts) {
+      function parse_cellXfs(t2, styles, opts) {
         styles.CellXf = [];
         var xf;
         var pass = false;
-        (t[0].match(tagregex) || []).forEach(function(x) {
+        (t2[0].match(tagregex) || []).forEach(function(x) {
           var y = parsexmltag(x), i = 0;
           switch (strip_ns(y[0])) {
             case "<cellXfs":
@@ -18487,12 +18487,12 @@ var require_xlsx = __commonJS({
           var styles = {};
           if (!data) return styles;
           data = data.replace(/<!--([\s\S]*?)-->/mg, "").replace(/<!DOCTYPE[^\[]*\[[^\]]*\]>/gm, "");
-          var t;
-          if (t = data.match(numFmtRegex)) parse_numFmts(t, styles, opts);
-          if (t = data.match(fontsRegex)) parse_fonts(t, styles, themes, opts);
-          if (t = data.match(fillsRegex)) parse_fills(t, styles, themes, opts);
-          if (t = data.match(bordersRegex)) parse_borders(t, styles, themes, opts);
-          if (t = data.match(cellXfRegex)) parse_cellXfs(t, styles, opts);
+          var t2;
+          if (t2 = data.match(numFmtRegex)) parse_numFmts(t2, styles, opts);
+          if (t2 = data.match(fontsRegex)) parse_fonts(t2, styles, themes, opts);
+          if (t2 = data.match(fillsRegex)) parse_fills(t2, styles, themes, opts);
+          if (t2 = data.match(bordersRegex)) parse_borders(t2, styles, themes, opts);
+          if (t2 = data.match(cellXfRegex)) parse_cellXfs(t2, styles, opts);
           return styles;
         };
       })();
@@ -18928,10 +18928,10 @@ var require_xlsx = __commonJS({
         "</a:hlink>",
         "</a:folHlink>"
       ];
-      function parse_clrScheme(t, themes, opts) {
+      function parse_clrScheme(t2, themes, opts) {
         themes.themeElements.clrScheme = [];
         var color = {};
-        (t[0].match(tagregex) || []).forEach(function(x) {
+        (t2[0].match(tagregex) || []).forEach(function(x) {
           var y = parsexmltag(x);
           switch (y[0]) {
             /* 20.1.6.2 clrScheme (Color Scheme) CT_ColorScheme */
@@ -19003,7 +19003,7 @@ var require_xlsx = __commonJS({
       var fmtsregex = /<a:fmtScheme([^>]*)>[\s\S]*<\/a:fmtScheme>/;
       function parse_themeElements(data, themes, opts) {
         themes.themeElements = {};
-        var t;
+        var t2;
         [
           /* clrScheme CT_ColorScheme */
           ["clrScheme", clrsregex, parse_clrScheme],
@@ -19012,17 +19012,17 @@ var require_xlsx = __commonJS({
           /* fmtScheme CT_StyleMatrix */
           ["fmtScheme", fmtsregex, parse_fmtScheme]
         ].forEach(function(m) {
-          if (!(t = data.match(m[1]))) throw new Error(m[0] + " not found in themeElements");
-          m[2](t, themes, opts);
+          if (!(t2 = data.match(m[1]))) throw new Error(m[0] + " not found in themeElements");
+          m[2](t2, themes, opts);
         });
       }
       var themeltregex = /<a:themeElements([^>]*)>[\s\S]*<\/a:themeElements>/;
       function parse_theme_xml(data, opts) {
         if (!data || data.length === 0) data = write_theme();
-        var t;
+        var t2;
         var themes = {};
-        if (!(t = data.match(themeltregex))) throw new Error("themeElements not found in theme");
-        parse_themeElements(t[0], themes, opts);
+        if (!(t2 = data.match(themeltregex))) throw new Error("themeElements not found in theme");
+        parse_themeElements(t2[0], themes, opts);
         themes.raw = data;
         return themes;
       }
@@ -19795,9 +19795,9 @@ var require_xlsx = __commonJS({
             });
           } else {
             o.push('<comment ref="' + d[0] + '" authorId="' + lastauthor + '"><text>');
-            var t = "Comment:\n    " + ts[0] + "\n";
-            for (var i = 1; i < ts.length; ++i) t += "Reply:\n    " + ts[i] + "\n";
-            o.push(writetag("t", escapexml(t)));
+            var t2 = "Comment:\n    " + ts[0] + "\n";
+            for (var i = 1; i < ts.length; ++i) t2 += "Reply:\n    " + ts[i] + "\n";
+            o.push(writetag("t", escapexml(t2)));
             o.push("</text></comment>");
           }
         });
@@ -26867,8 +26867,8 @@ var require_xlsx = __commonJS({
       }
       function write_ws_xlml_comment(comments) {
         return comments.map(function(c) {
-          var t = xlml_unfixstr(c.t || "");
-          var d = writextag("ss:Data", t, { "xmlns": "http://www.w3.org/TR/REC-html40" });
+          var t2 = xlml_unfixstr(c.t || "");
+          var d = writextag("ss:Data", t2, { "xmlns": "http://www.w3.org/TR/REC-html40" });
           return writextag("Comment", d, { "ss:Author": c.a });
         }).join("");
       }
@@ -26892,30 +26892,30 @@ var require_xlsx = __commonJS({
             if (marr[mi].e.r > marr[mi].s.r) attr["ss:MergeDown"] = marr[mi].e.r - marr[mi].s.r;
           }
         }
-        var t = "", p = "";
+        var t2 = "", p = "";
         switch (cell.t) {
           case "z":
             if (!opts.sheetStubs) return "";
             break;
           case "n":
-            t = "Number";
+            t2 = "Number";
             p = String(cell.v);
             break;
           case "b":
-            t = "Boolean";
+            t2 = "Boolean";
             p = cell.v ? "1" : "0";
             break;
           case "e":
-            t = "Error";
+            t2 = "Error";
             p = BErr[cell.v];
             break;
           case "d":
-            t = "DateTime";
+            t2 = "DateTime";
             p = new Date(cell.v).toISOString();
             if (cell.z == null) cell.z = cell.z || table_fmt[14];
             break;
           case "s":
-            t = "String";
+            t2 = "String";
             p = escapexlml(cell.v || "");
             break;
         }
@@ -26923,7 +26923,7 @@ var require_xlsx = __commonJS({
         attr["ss:StyleID"] = "s" + (21 + os);
         attr["ss:Index"] = addr.c + 1;
         var _v = cell.v != null ? p : "";
-        var m = cell.t == "z" ? "" : '<Data ss:Type="' + t + '">' + _v + "</Data>";
+        var m = cell.t == "z" ? "" : '<Data ss:Type="' + t2 + '">' + _v + "</Data>";
         if ((cell.c || []).length > 0) m += write_ws_xlml_comment(cell.c);
         return writextag("Cell", m, attr);
       }
@@ -26977,10 +26977,10 @@ var require_xlsx = __commonJS({
         var o = [];
         var s = wb.SheetNames[idx];
         var ws = wb.Sheets[s];
-        var t = ws ? write_ws_xlml_names(ws, opts, idx, wb) : "";
-        if (t.length > 0) o.push("<Names>" + t + "</Names>");
-        t = ws ? write_ws_xlml_table(ws, opts, idx, wb) : "";
-        if (t.length > 0) o.push("<Table>" + t + "</Table>");
+        var t2 = ws ? write_ws_xlml_names(ws, opts, idx, wb) : "";
+        if (t2.length > 0) o.push("<Names>" + t2 + "</Names>");
+        t2 = ws ? write_ws_xlml_table(ws, opts, idx, wb) : "";
+        if (t2.length > 0) o.push("<Table>" + t2 + "</Table>");
         o.push(write_ws_xlml_wsopts(ws, opts, idx, wb));
         if (ws["!autofilter"]) o.push('<AutoFilter x:Range="' + a1_to_rc(fix_range(ws["!autofilter"].ref), { r: 0, c: 0 }) + '" xmlns="urn:schemas-microsoft-com:office:excel"></AutoFilter>');
         return o.join("");
@@ -27115,8 +27115,8 @@ var require_xlsx = __commonJS({
           }
         }
       }
-      function make_cell(val, ixfe, t) {
-        return { v: val, ixfe, t };
+      function make_cell(val, ixfe, t2) {
+        return { v: val, ixfe, t: t2 };
       }
       function parse_workbook(blob, options) {
         var wb = { opts: {} };
@@ -27148,12 +27148,12 @@ var require_xlsx = __commonJS({
           if (!xfd || !xfd.patternType || !options2 || !options2.cellStyles) return;
           line.s = {};
           line.s.patternType = xfd.patternType;
-          var t;
-          if (t = rgb2Hex(get_rgb(xfd.icvFore))) {
-            line.s.fgColor = { rgb: t };
+          var t2;
+          if (t2 = rgb2Hex(get_rgb(xfd.icvFore))) {
+            line.s.fgColor = { rgb: t2 };
           }
-          if (t = rgb2Hex(get_rgb(xfd.icvBack))) {
-            line.s.bgColor = { rgb: t };
+          if (t2 = rgb2Hex(get_rgb(xfd.icvBack))) {
+            line.s.bgColor = { rgb: t2 };
           }
         };
         var addcell = function addcell2(cell, line, options2) {
@@ -32614,19 +32614,19 @@ var require_xlsx = __commonJS({
         29282: {}
       };
       function write_biff_rec(ba, type, payload, length) {
-        var t = type;
-        if (isNaN(t)) return;
+        var t2 = type;
+        if (isNaN(t2)) return;
         var len = length || (payload || []).length || 0;
         var o = ba.next(4);
-        o.write_shift(2, t);
+        o.write_shift(2, t2);
         o.write_shift(2, len);
         if (len > 0 && is_buf(payload)) ba.push(payload);
       }
       function write_biff_continue(ba, type, payload, length) {
         var len = length || (payload || []).length || 0;
         if (len <= 8224) return write_biff_rec(ba, type, payload, len);
-        var t = type;
-        if (isNaN(t)) return;
+        var t2 = type;
+        if (isNaN(t2)) return;
         var parts = payload.parts || [], sidx = 0;
         var i = 0, w = 0;
         while (w + (parts[sidx] || 8224) <= 8224) {
@@ -32634,7 +32634,7 @@ var require_xlsx = __commonJS({
           sidx++;
         }
         var o = ba.next(4);
-        o.write_shift(2, t);
+        o.write_shift(2, t2);
         o.write_shift(2, w);
         ba.push(payload.slice(i, i + w));
         i += w;
@@ -32659,10 +32659,10 @@ var require_xlsx = __commonJS({
         out.write_shift(1, 0);
         return out;
       }
-      function write_BIFF2BERR(r, c, val, t) {
+      function write_BIFF2BERR(r, c, val, t2) {
         var out = new_buf(9);
         write_BIFF2Cell(out, r, c);
-        write_Bes(val, t || "b", out);
+        write_Bes(val, t2 || "b", out);
         return out;
       }
       function write_BIFF2LABEL(r, c, val) {
@@ -34422,18 +34422,18 @@ var require_xlsx = __commonJS({
             nf = nf.slice(i + 1);
             i = 0;
           }
-          var t = nf.match(/# (\?+)\/(\?+)/);
-          if (t) {
-            payload += writextag("number:fraction", null, { "number:min-integer-digits": 0, "number:min-numerator-digits": t[1].length, "number:max-denominator-value": Math.max(+t[1].replace(/./g, "9"), +t[2].replace(/./g, "9")) });
+          var t2 = nf.match(/# (\?+)\/(\?+)/);
+          if (t2) {
+            payload += writextag("number:fraction", null, { "number:min-integer-digits": 0, "number:min-numerator-digits": t2[1].length, "number:max-denominator-value": Math.max(+t2[1].replace(/./g, "9"), +t2[2].replace(/./g, "9")) });
             break j;
           }
-          if (t = nf.match(/# (\?+)\/(\d+)/)) {
-            payload += writextag("number:fraction", null, { "number:min-integer-digits": 0, "number:min-numerator-digits": t[1].length, "number:denominator-value": +t[2] });
+          if (t2 = nf.match(/# (\?+)\/(\d+)/)) {
+            payload += writextag("number:fraction", null, { "number:min-integer-digits": 0, "number:min-numerator-digits": t2[1].length, "number:denominator-value": +t2[2] });
             break j;
           }
-          if (t = nf.match(/(\d+)(|\.\d+)%/)) {
+          if (t2 = nf.match(/(\d+)(|\.\d+)%/)) {
             type = "percentage";
-            payload += writextag("number:number", null, { "number:decimal-places": t[2] && t.length - 1 || 0, "number:min-decimal-places": t[2] && t.length - 1 || 0, "number:min-integer-digits": t[1].length }) + "<number:text>%</number:text>";
+            payload += writextag("number:number", null, { "number:decimal-places": t2[2] && t2.length - 1 || 0, "number:min-decimal-places": t2[2] && t2.length - 1 || 0, "number:min-integer-digits": t2[1].length }) + "<number:text>%</number:text>";
             break j;
           }
           var has_time = false;
@@ -35290,10 +35290,10 @@ var require_xlsx = __commonJS({
         var out = [];
         var l = 0;
         while (l < buf.length) {
-          var t = buf[l++];
+          var t2 = buf[l++];
           var len = buf[l] | buf[l + 1] << 8 | buf[l + 2] << 16;
           l += 3;
-          out.push.apply(out, parse_snappy_chunk(t, buf[subarray](l, l + len)));
+          out.push.apply(out, parse_snappy_chunk(t2, buf[subarray](l, l + len)));
           l += len;
         }
         if (l !== buf.length)
@@ -35339,9 +35339,9 @@ var require_xlsx = __commonJS({
       var numbers_lut_new = function() {
         return { sst: [], rsst: [], ofmt: [], nfmt: [] };
       };
-      function numbers_format_cell(cell, t, flags, ofmt, nfmt) {
+      function numbers_format_cell(cell, t2, flags, ofmt, nfmt) {
         var _a, _b, _c, _d;
-        var ctype = t & 255, ver = t >> 8;
+        var ctype = t2 & 255, ver = t2 >> 8;
         var fmt = ver >= 5 ? nfmt : ofmt;
         dur:
           if (flags & (ver > 4 ? 8 : 4) && cell.t == "n" && ctype == 7) {
@@ -35489,8 +35489,8 @@ var require_xlsx = __commonJS({
           }
         }
         var ret;
-        var t = buf[v >= 4 ? 1 : 2];
-        switch (t) {
+        var t2 = buf[v >= 4 ? 1 : 2];
+        switch (t2) {
           case 0:
             return void 0;
           case 2:
@@ -35523,8 +35523,8 @@ var require_xlsx = __commonJS({
             throw new Error("Unsupported cell type ".concat(buf[subarray](0, 4)));
         }
         if (zidx > -1)
-          numbers_format_cell(ret, t | v << 8, flags, lut.ofmt[zidx], lut.nfmt[zidx]);
-        if (t == 7)
+          numbers_format_cell(ret, t2 | v << 8, flags, lut.ofmt[zidx], lut.nfmt[zidx]);
+        if (t2 == 7)
           ret.v /= 86400;
         return ret;
       }
@@ -35555,8 +35555,8 @@ var require_xlsx = __commonJS({
           doff += 4;
         }
         var ret;
-        var t = buf[1];
-        switch (t) {
+        var t2 = buf[1];
+        switch (t2) {
           case 0:
             return void 0;
           case 2:
@@ -35593,8 +35593,8 @@ var require_xlsx = __commonJS({
           doff += 4;
         }
         if (zidx > -1)
-          numbers_format_cell(ret, t | 5 << 8, fields >> 13, lut.ofmt[zidx], lut.nfmt[zidx]);
-        if (t == 7)
+          numbers_format_cell(ret, t2 | 5 << 8, fields >> 13, lut.ofmt[zidx], lut.nfmt[zidx]);
+        if (t2 == 7)
           ret.v /= 86400;
         return ret;
       }
@@ -35822,8 +35822,8 @@ var require_xlsx = __commonJS({
           lut.nfmt = parse_TST_TableDataList(M, M[parse_TSP_Reference(store[22][0].data)][0]);
         var tile = parse_shallow(store[3][0].data);
         var _R = 0;
-        tile[1].forEach(function(t) {
-          var tl = parse_shallow(t.data);
+        tile[1].forEach(function(t2) {
+          var tl = parse_shallow(t2.data);
           var ref2 = M[parse_TSP_Reference(tl[2][0].data)][0];
           var mtype2 = varint_to_i32(ref2.meta[1][0].data);
           if (mtype2 != 6002)
@@ -36439,8 +36439,8 @@ var require_xlsx = __commonJS({
             store[1][0].data = write_shallow(row_headers);
             var tiles = parse_shallow(store[3][0].data);
             {
-              tiles[1].forEach(function(t) {
-                var tst = parse_shallow(t.data);
+              tiles[1].forEach(function(t2) {
+                var tst = parse_shallow(t2.data);
                 var oldtileref = parse_TSP_Reference(tst[2][0].data);
                 var newtileref = remap[oldtileref];
                 if (!remap[oldtileref]) {
@@ -36494,7 +36494,7 @@ var require_xlsx = __commonJS({
                   });
                 }
                 tst[2][0].data = write_TSP_Reference(newtileref);
-                t.data = write_shallow(tst);
+                t2.data = write_shallow(tst);
               });
             }
             store[3][0].data = write_shallow(tiles);
@@ -38089,7 +38089,7 @@ var require_xlsx = __commonJS({
           keys(JS).forEach(function(k) {
             if ((C = hdr.indexOf(k)) == -1) hdr[C = hdr.length] = k;
             var v = JS[k];
-            var t = "z";
+            var t2 = "z";
             var z = "";
             var ref = dense ? "" : encode_col(_C + C) + encode_row(_R + R + offset);
             var cell = dense ? ROW[_C + C] : ws[ref];
@@ -38097,25 +38097,25 @@ var require_xlsx = __commonJS({
               if (dense) ROW[_C + C] = v;
               else ws[ref] = v;
             } else {
-              if (typeof v == "number") t = "n";
-              else if (typeof v == "boolean") t = "b";
-              else if (typeof v == "string") t = "s";
+              if (typeof v == "number") t2 = "n";
+              else if (typeof v == "boolean") t2 = "b";
+              else if (typeof v == "string") t2 = "s";
               else if (v instanceof Date) {
-                t = "d";
+                t2 = "d";
                 if (!o.cellDates) {
-                  t = "n";
+                  t2 = "n";
                   v = datenum(v);
                 }
                 z = cell != null && cell.z && fmt_is_date(cell.z) ? cell.z : o.dateNF || table_fmt[14];
               } else if (v === null && o.nullError) {
-                t = "e";
+                t2 = "e";
                 v = 0;
               }
               if (!cell) {
-                if (!dense) ws[ref] = cell = { t, v };
-                else ROW[_C + C] = cell = { t, v };
+                if (!dense) ws[ref] = cell = { t: t2, v };
+                else ROW[_C + C] = cell = { t: t2, v };
               } else {
-                cell.t = t;
+                cell.t = t2;
                 cell.v = v;
                 delete cell.w;
                 delete cell.R;
@@ -39032,24 +39032,24 @@ var require_alasql_fs = __commonJS({
                 break;
               case 176:
                 var joins = $$[$0 - 2];
-                $$[$0].forEach((t) => {
+                $$[$0].forEach((t2) => {
                   var join = new yy2.Join({ joinmode: "CROSS" });
-                  if (t.tableid) {
-                    join.table = new yy2.Table({ databaseid: t.databaseid, tableid: t.tableid });
-                  } else if (t instanceof yy2.Select) {
-                    join.select = t;
-                  } else if (t instanceof yy2.Search) {
-                    join.search = t;
-                  } else if (t instanceof yy2.ParamValue) {
-                    join.param = t;
-                  } else if (t instanceof yy2.VarValue) {
-                    join.variable = t.variable;
-                  } else if (t instanceof yy2.FuncValue) {
-                    join.func = t;
-                  } else if (t instanceof yy2.Json) {
-                    join.json = t;
+                  if (t2.tableid) {
+                    join.table = new yy2.Table({ databaseid: t2.databaseid, tableid: t2.tableid });
+                  } else if (t2 instanceof yy2.Select) {
+                    join.select = t2;
+                  } else if (t2 instanceof yy2.Search) {
+                    join.search = t2;
+                  } else if (t2 instanceof yy2.ParamValue) {
+                    join.param = t2;
+                  } else if (t2 instanceof yy2.VarValue) {
+                    join.variable = t2.variable;
+                  } else if (t2 instanceof yy2.FuncValue) {
+                    join.func = t2;
+                  } else if (t2 instanceof yy2.Json) {
+                    join.json = t2;
                   }
-                  if (t.as) join.as = t.as;
+                  if (t2.as) join.as = t2.as;
                   joins.push(join);
                 });
                 this.$ = { from: $$[$0 - 3], joins };
@@ -47415,31 +47415,31 @@ var require_alasql_fs = __commonJS({
       function decartes(gv, query) {
         if (Array.isArray(gv)) {
           let res = [[]];
-          for (let t = 0; t < gv.length; t++) {
-            if (gv[t] instanceof yy.Column) {
-              gv[t].nick = gv[t].nick ? escapeq(gv[t].nick) : escapeq(gv[t].columnid);
-              query.groupColumns[gv[t].nick] = gv[t].nick;
+          for (let t2 = 0; t2 < gv.length; t2++) {
+            if (gv[t2] instanceof yy.Column) {
+              gv[t2].nick = gv[t2].nick ? escapeq(gv[t2].nick) : escapeq(gv[t2].columnid);
+              query.groupColumns[gv[t2].nick] = gv[t2].nick;
               res = res.map(
-                (r) => r.concat(`${gv[t].nick}	${gv[t].toJS("p", query.sources[0].alias, query.defcols)}`)
+                (r) => r.concat(`${gv[t2].nick}	${gv[t2].toJS("p", query.sources[0].alias, query.defcols)}`)
               );
-            } else if (gv[t] instanceof yy.FuncValue) {
-              query.groupColumns[escapeq(gv[t].toString())] = escapeq(gv[t].toString());
+            } else if (gv[t2] instanceof yy.FuncValue) {
+              query.groupColumns[escapeq(gv[t2].toString())] = escapeq(gv[t2].toString());
               res = res.map(
                 (r) => r.concat(
-                  `${escapeq(gv[t].toString())}	${gv[t].toJS("p", query.sources[0].alias, query.defcols)}`
+                  `${escapeq(gv[t2].toString())}	${gv[t2].toJS("p", query.sources[0].alias, query.defcols)}`
                 )
               );
-            } else if (gv[t] instanceof yy.GroupExpression) {
-              if (gv[t].type == "ROLLUP") res = cartes(res, rollup(gv[t].group, query));
-              else if (gv[t].type == "CUBE") res = cartes(res, cube(gv[t].group, query));
-              else if (gv[t].type == "GROUPING SETS") res = cartes(res, groupingsets(gv[t].group, query));
+            } else if (gv[t2] instanceof yy.GroupExpression) {
+              if (gv[t2].type == "ROLLUP") res = cartes(res, rollup(gv[t2].group, query));
+              else if (gv[t2].type == "CUBE") res = cartes(res, cube(gv[t2].group, query));
+              else if (gv[t2].type == "GROUPING SETS") res = cartes(res, groupingsets(gv[t2].group, query));
               else throw new Error("Unknown grouping function");
-            } else if (gv[t] === "") {
+            } else if (gv[t2] === "") {
               res = [["1	1"]];
             } else {
               res = res.map(
                 (r) => r.concat(
-                  `${escapeq(gv[t].toString())}	${gv[t].toJS("p", query.sources[0].alias, query.defcols)}`
+                  `${escapeq(gv[t2].toString())}	${gv[t2].toJS("p", query.sources[0].alias, query.defcols)}`
                 )
               );
             }
@@ -48928,15 +48928,15 @@ var require_alasql_fs = __commonJS({
         var _a2;
         var val = value;
         var udbtypeid = (_a2 = args.dbtypeid) == null ? void 0 : _a2.toUpperCase();
-        var t;
+        var t2;
         var s;
         if (args.style || args.dbtypeid == "Date" || ["DATE", "DATETIME", "DATETIME2"].indexOf(udbtypeid) > -1) {
           if (/\d{8}/.test(val)) {
-            t = new Date(+val.substr(0, 4), +val.substr(4, 2) - 1, +val.substr(6, 2));
+            t2 = new Date(+val.substr(0, 4), +val.substr(4, 2) - 1, +val.substr(6, 2));
           } else {
-            t = newDate(val);
+            t2 = newDate(val);
           }
-          s = structuredDate(t);
+          s = structuredDate(t2);
         }
         if (args.style) {
           switch (args.style) {
@@ -49399,8 +49399,8 @@ var require_alasql_fs = __commonJS({
           }
           if (toreplace) {
             table2.update(
-              function(t) {
-                for (var f in r) t[f] = r[f];
+              function(t2) {
+                for (var f in r) t2[f] = r[f];
               },
               table2.data.indexOf(toreplace),
               params
@@ -53046,7 +53046,7 @@ var require_alasql_fs = __commonJS({
         function parseText(text) {
           var delimiterCode = opt.separator.charCodeAt(0);
           var quoteCode = opt.quote.charCodeAt(0);
-          var EOL = {}, EOF = {}, rows = [], N = text.length, I = 0, n = 0, t, eol;
+          var EOL = {}, EOF = {}, rows = [], N = text.length, I = 0, n = 0, t2, eol;
           function token() {
             if (I >= N) {
               return EOF;
@@ -53094,11 +53094,11 @@ var require_alasql_fs = __commonJS({
             }
             return text.substring(j);
           }
-          while ((t = token()) !== EOF) {
+          while ((t2 = token()) !== EOF) {
             var a = [];
-            while (t !== EOL && t !== EOF) {
-              a.push(t.trim());
-              t = token();
+            while (t2 !== EOL && t2 !== EOF) {
+              a.push(t2.trim());
+              t2 = token();
             }
             if (opt.headers) {
               if (n === 0) {
@@ -56128,12 +56128,12 @@ var require_html2canvas = __commonJS({
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
       }
       var __assign = function() {
-        __assign = Object.assign || function __assign2(t) {
+        __assign = Object.assign || function __assign2(t2) {
           for (var s, i2 = 1, n = arguments.length; i2 < n; i2++) {
             s = arguments[i2];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t2[p] = s[p];
           }
-          return t;
+          return t2;
         };
         return __assign.apply(this, arguments);
       };
@@ -56166,9 +56166,9 @@ var require_html2canvas = __commonJS({
       }
       function __generator(thisArg, body) {
         var _ = { label: 0, sent: function() {
-          if (t[0] & 1) throw t[1];
-          return t[1];
-        }, trys: [], ops: [] }, f2, y, t, g;
+          if (t2[0] & 1) throw t2[1];
+          return t2[1];
+        }, trys: [], ops: [] }, f2, y, t2, g;
         return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() {
           return this;
         }), g;
@@ -56180,12 +56180,12 @@ var require_html2canvas = __commonJS({
         function step(op) {
           if (f2) throw new TypeError("Generator is already executing.");
           while (_) try {
-            if (f2 = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
-            if (y = 0, t) op = [op[0] & 2, t.value];
+            if (f2 = 1, y && (t2 = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t2 = y["return"]) && t2.call(y), 0) : y.next) && !(t2 = t2.call(y, op[1])).done) return t2;
+            if (y = 0, t2) op = [op[0] & 2, t2.value];
             switch (op[0]) {
               case 0:
               case 1:
-                t = op;
+                t2 = op;
                 break;
               case 4:
                 _.label++;
@@ -56200,25 +56200,25 @@ var require_html2canvas = __commonJS({
                 _.trys.pop();
                 continue;
               default:
-                if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+                if (!(t2 = _.trys, t2 = t2.length > 0 && t2[t2.length - 1]) && (op[0] === 6 || op[0] === 2)) {
                   _ = 0;
                   continue;
                 }
-                if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+                if (op[0] === 3 && (!t2 || op[1] > t2[0] && op[1] < t2[3])) {
                   _.label = op[1];
                   break;
                 }
-                if (op[0] === 6 && _.label < t[1]) {
-                  _.label = t[1];
-                  t = op;
+                if (op[0] === 6 && _.label < t2[1]) {
+                  _.label = t2[1];
+                  t2 = op;
                   break;
                 }
-                if (t && _.label < t[2]) {
-                  _.label = t[2];
+                if (t2 && _.label < t2[2]) {
+                  _.label = t2[2];
                   _.ops.push(op);
                   break;
                 }
-                if (t[2]) _.ops.pop();
+                if (t2[2]) _.ops.pop();
                 _.trys.pop();
                 continue;
             }
@@ -56227,7 +56227,7 @@ var require_html2canvas = __commonJS({
             op = [6, e2];
             y = 0;
           } finally {
-            f2 = t = 0;
+            f2 = t2 = 0;
           }
           if (op[0] & 5) throw op[1];
           return { value: op[0] ? op[1] : void 0, done: true };
@@ -61932,8 +61932,8 @@ var require_html2canvas = __commonJS({
           return Vector2;
         })()
       );
-      var lerp = function(a2, b, t) {
-        return new Vector(a2.x + (b.x - a2.x) * t, a2.y + (b.y - a2.y) * t);
+      var lerp = function(a2, b, t2) {
+        return new Vector(a2.x + (b.x - a2.x) * t2, a2.y + (b.y - a2.y) * t2);
       };
       var BezierCurve = (
         /** @class */
@@ -61945,13 +61945,13 @@ var require_html2canvas = __commonJS({
             this.endControl = endControl;
             this.end = end;
           }
-          BezierCurve2.prototype.subdivide = function(t, firstHalf) {
-            var ab = lerp(this.start, this.startControl, t);
-            var bc = lerp(this.startControl, this.endControl, t);
-            var cd = lerp(this.endControl, this.end, t);
-            var abbc = lerp(ab, bc, t);
-            var bccd = lerp(bc, cd, t);
-            var dest = lerp(abbc, bccd, t);
+          BezierCurve2.prototype.subdivide = function(t2, firstHalf) {
+            var ab = lerp(this.start, this.startControl, t2);
+            var bc = lerp(this.startControl, this.endControl, t2);
+            var cd = lerp(this.endControl, this.end, t2);
+            var abbc = lerp(ab, bc, t2);
+            var bccd = lerp(bc, cd, t2);
+            var dest = lerp(abbc, bccd, t2);
             return firstHalf ? new BezierCurve2(this.start, ab, abbc, dest) : new BezierCurve2(dest, bccd, cd, this.end);
           };
           BezierCurve2.prototype.add = function(deltaX, deltaY) {
@@ -63935,6 +63935,7 @@ Prism.languages.sql = {
 
 // src/utils/constants.ts
 var DEFAULT_SETTINGS = {
+  language: "auto",
   exportFolderName: "sql-exports",
   autoSave: true,
   batchSize: 100,
@@ -63971,6 +63972,9 @@ var SQLSanitizer = class {
   }
   static sanitizeIdentifier(name) {
     return name.replace(/[^a-zA-Z0-9_]/g, "_").substring(0, 64);
+  }
+  static validateIdentifier(name) {
+    return /^[a-zA-Z0-9_]{1,64}$/.test(name);
   }
   static escapeValue(value) {
     if (value === null || value === void 0) return "NULL";
@@ -64233,9 +64237,9 @@ var DatabaseManager = class {
     if (!db) return null;
     const tableNames = Object.keys(db.tables);
     let totalRows = 0;
-    tableNames.forEach((t) => {
-      if (db.tables[t].data) {
-        totalRows += db.tables[t].data.length;
+    tableNames.forEach((t2) => {
+      if (db.tables[t2].data) {
+        totalRows += db.tables[t2].data.length;
       }
     });
     const approxSize = JSON.stringify(db.tables).length;
@@ -64249,8 +64253,8 @@ var DatabaseManager = class {
   }
   async clearDatabase(dbName) {
     const tables = (0, import_alasql.default)(`SHOW TABLES FROM ${dbName}`);
-    for (const t of tables) {
-      await import_alasql.default.promise(`DROP TABLE ${dbName}.${t.tableid}`);
+    for (const t2 of tables) {
+      await import_alasql.default.promise(`DROP TABLE ${dbName}.${t2.tableid}`);
     }
     await this.save();
   }
@@ -64262,8 +64266,8 @@ var DatabaseManager = class {
     try {
       await import_alasql.default.promise(`CREATE DATABASE ${newName}`);
       const tables = (0, import_alasql.default)(`SHOW TABLES FROM ${oldName}`);
-      for (const t of tables) {
-        const tableName = t.tableid;
+      for (const t2 of tables) {
+        const tableName = t2.tableid;
         try {
           await import_alasql.default.promise(`USE [${oldName}]`);
           const createSQL = (0, import_alasql.default)(`SHOW CREATE TABLE [${tableName}]`);
@@ -64295,8 +64299,8 @@ var DatabaseManager = class {
     if (import_alasql.default.databases[newName]) throw new Error(`Database ${newName} already exists`);
     await import_alasql.default.promise(`CREATE DATABASE ${newName}`);
     const tables = (0, import_alasql.default)(`SHOW TABLES FROM ${dbName}`);
-    for (const t of tables) {
-      const tableName = t.tableid;
+    for (const t2 of tables) {
+      const tableName = t2.tableid;
       try {
         await import_alasql.default.promise(`USE [${dbName}]`);
         const createSQL = (0, import_alasql.default)(`SHOW CREATE TABLE [${tableName}]`);
@@ -64339,8 +64343,8 @@ USE ${dbName};
 
 `;
     const tables = (0, import_alasql.default)(`SHOW TABLES FROM ${dbName}`);
-    for (const t of tables) {
-      const tableName = t.tableid;
+    for (const t2 of tables) {
+      const tableName = t2.tableid;
       const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${dbName}.${tableName}`);
       if (createRes == null ? void 0 : createRes[0]) {
         let createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
@@ -64502,36 +64506,45 @@ var SQLTransformer = class {
   static prefixTablesWithDatabase(sql, database) {
     if (!database || database === "alasql") return sql;
     let result = sql;
-    const tableFnCheck = (m, t, after) => {
-      const upperT = t.toUpperCase();
+    const tableFnCheck = (m, t2, after) => {
+      const upperT = t2.toUpperCase();
       const isFunction = after.trim().startsWith("(");
       const isReserved = ["SELECT", "VALUES", "RANGE", "EXPLODE", "JSON", "CSV", "TAB", "TSV", "XLSX"].includes(upperT);
       if (isFunction || isReserved) return m;
-      return m.replace(t, `[${database}].[${t}]`);
+      return m.replace(t2, `[${database}].[${t2}]`);
     };
     result = result.replace(
       /CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
-      (m, i, t) => `CREATE TABLE ${i || ""}[${database}].[${t}]`
+      (m, i, t2) => `CREATE TABLE ${i || ""}[${database}].[${t2}]`
     );
     result = result.replace(
       /INSERT\s+INTO\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
-      (m, t) => `INSERT INTO [${database}].[${t}]`
+      (m, t2) => `INSERT INTO [${database}].[${t2}]`
     );
     result = result.replace(
       /UPDATE\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b(\s+SET)/gi,
-      (m, t, set) => `UPDATE [${database}].[${t}]${set}`
+      (m, t2, set) => `UPDATE [${database}].[${t2}]${set}`
     );
     result = result.replace(
       /DELETE\s+FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
-      (m, t) => `DELETE FROM [${database}].[${t}]`
+      (m, t2) => `DELETE FROM [${database}].[${t2}]`
     );
-    result = result.replace(/FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s]*\(?)/gi, (m, t, after) => {
-      return tableFnCheck(m, t, after);
+    result = result.replace(/FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s]*\(?)/gi, (m, t2, after) => {
+      return tableFnCheck(m, t2, after);
     });
-    result = result.replace(/JOIN\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s]*\(?)/gi, (m, t, after) => {
-      return tableFnCheck(m, t, after);
+    result = result.replace(/JOIN\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s]*\(?)/gi, (m, t2, after) => {
+      return tableFnCheck(m, t2, after);
     });
     return result;
+  }
+  /**
+   * Detects usage of INSERT INTO with explicit column list followed by SELECT.
+   * This pattern often triggers error "$01 is not defined" in AlaSQL.
+   */
+  static hasFragileInsertSelect(sql) {
+    const upper = sql.toUpperCase().replace(/\s+/g, " ");
+    const match = upper.match(/INSERT INTO\s+[^(]+\s*\([^)]+\)\s*SELECT/);
+    return !!match;
   }
 };
 
@@ -64563,6 +64576,7 @@ var QueryExecutor = class {
     try {
       let cleanQuery = SQLSanitizer.clean(query);
       const upperSql = cleanQuery.toUpperCase().trim();
+      let warnings = [];
       if (upperSql.startsWith("FORM")) {
         return await this.handleFormCommand(cleanQuery, currentDB, monitor);
       }
@@ -64605,6 +64619,9 @@ var QueryExecutor = class {
             results.push(formResult.data[0]);
             continue;
           }
+          if (SQLTransformer.hasFragileInsertSelect(stmt)) {
+            warnings.push(`\u26A0\uFE0F Detectado 'INSERT INTO ... (colunas) SELECT'. O AlaSQL pode falhar com erro '$01'. Se ocorrer, remova a lista de colunas, mas garanta que a ordem do SELECT corresponda exatamente \xE0s colunas da tabela.`);
+          }
           stmt = SQLTransformer.prefixTablesWithDatabase(stmt, currentDB);
           const result = await this.executeWithTimeout(stmt, params, 3e4, options.signal);
           results.push(result);
@@ -64612,7 +64629,8 @@ var QueryExecutor = class {
         this.notifyIfModified(statements, currentDB, options.originId);
         const normalizedData2 = this.normalizeResult(results);
         Logger.info(`Batch query executed (${statements.length} statements)`, { executionTime: monitor.end(), finalDatabase: currentDB });
-        return { success: true, data: normalizedData2, executionTime: monitor.end(), activeDatabase: currentDB };
+        const finalWarning = warnings.length > 0 ? warnings.join("\n") : void 0;
+        return { success: true, data: normalizedData2, executionTime: monitor.end(), activeDatabase: currentDB, warning: finalWarning };
       }
       const trimmed = cleanQuery.trim().replace(/;$/, "");
       const trimmedUpper = trimmed.toUpperCase();
@@ -64632,6 +64650,9 @@ var QueryExecutor = class {
           if (pattern.test(trimmed)) throw new Error(`Safe Mode Block: Structural destruction (${pattern.source.replace("\\s+", " ")}) is disabled.`);
         }
       }
+      if (SQLTransformer.hasFragileInsertSelect(trimmed)) {
+        warnings.push(`\u26A0\uFE0F Detectado 'INSERT INTO ... (colunas) SELECT'. O AlaSQL pode falhar com erro '$01'. Se ocorrer, remova e garanta a ordem exata das colunas.`);
+      }
       const looksLikeSingleSelect = trimmedUpper.startsWith("SELECT") && !trimmed.includes(";") && !trimmedUpper.includes("LIMIT");
       let finalQuery = looksLikeSingleSelect ? trimmed + " LIMIT 1000;" : trimmed;
       finalQuery = SQLTransformer.prefixTablesWithDatabase(finalQuery, currentDB);
@@ -64639,7 +64660,7 @@ var QueryExecutor = class {
       const normalizedData = this.normalizeResult(rawResult);
       this.notifyIfModified([finalQuery], currentDB, options.originId);
       Logger.info(`Query executed: ${finalQuery.substring(0, 50)}...`, { executionTime: monitor.end() });
-      return { success: true, data: normalizedData, executionTime: monitor.end(), activeDatabase: currentDB };
+      return { success: true, data: normalizedData, executionTime: monitor.end(), activeDatabase: currentDB, warning: warnings.length > 0 ? warnings.join("\n") : void 0 };
     } catch (error) {
       Logger.error("Query execution failed", error);
       const originalMessage = error.message || String(error);
@@ -64657,6 +64678,13 @@ var QueryExecutor = class {
 
 \u{1F4A1} Dica: '${word}' \xE9 uma palavra reservada do banco de dados. Tente usar aspas (ex: "${word.toLowerCase()}") ou mude o nome (ex: "${word.toLowerCase()}_total").`;
       }
+    }
+    if (message.includes("$01 is not defined")) {
+      return `${message}
+
+\u26A0\uFE0F Erro Conhecido do AlaSQL: O uso de lista de colunas expl\xEDcita em 'INSERT INTO ... SELECT' causou falha.
+
+Solu\xE7\xE3o: Remova a lista de colunas (ex: 'INSERT INTO T SELECT ...') e certifique-se de que a ordem dos campos no SELECT corresponda EXATAMENTE \xE0 ordem das colunas na tabela de destino.`;
     }
     if (message.includes("Parse error")) {
       return `${message}
@@ -64695,7 +64723,11 @@ var QueryExecutor = class {
     if (!tableMatch) throw new Error("Invalid FORM syntax. Expected: FORM table_name");
     let fullTableName = tableMatch[1];
     if (!fullTableName.includes(".")) fullTableName = `${database}.${fullTableName}`;
-    const tableName = fullTableName.split(".").pop();
+    const [dbPart, tablePart] = fullTableName.split(".");
+    if (!SQLSanitizer.validateIdentifier(dbPart) || !SQLSanitizer.validateIdentifier(tablePart)) {
+      throw new Error(`Security Error: Invalid table or database name identifier.`);
+    }
+    const tableName = tablePart;
     let columns = [];
     let tableObj = null;
     try {
@@ -64764,7 +64796,7 @@ var QueryExecutor = class {
   static mapSqlTypeToInput(sqlType) {
     if (!sqlType) return "TEXT";
     const type = sqlType.toUpperCase();
-    if (["INT", "INTEGER", "NUMBER", "DECIMAL", "FLOAT", "DOUBLE"].some((t) => type.includes(t))) return "NUMBER";
+    if (["INT", "INTEGER", "NUMBER", "DECIMAL", "FLOAT", "DOUBLE"].some((t2) => type.includes(t2))) return "NUMBER";
     if (type.includes("DATE") || type.includes("TIME")) return "DATE";
     if (type.includes("BOOLEAN") || type.includes("BOOL")) return "CHECKBOX";
     return "TEXT";
@@ -64816,7 +64848,7 @@ var QueryExecutor = class {
       }
     }
     if (modifiedTables.size > 0 || isStructuralChange) {
-      const tables = Array.from(modifiedTables).map((t) => t.toLowerCase());
+      const tables = Array.from(modifiedTables).map((t2) => t2.toLowerCase());
       DatabaseEventBus.getInstance().emitDatabaseModified({ database, tables, timestamp: Date.now(), originId: originId || "unknown" });
     }
   }
@@ -64828,12 +64860,1606 @@ var import_html2canvas = __toESM(require_html2canvas());
 
 // src/ui/FormRenderer.ts
 var import_obsidian3 = require("obsidian");
+
+// src/locales/en.ts
+var en_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "Database Manager",
+    "btn_atualizar": "Update",
+    "btn_importar": "Import",
+    "btn_novo_db": "New Database",
+    "welcome_title": "Welcome to SQL Notebook!",
+    "welcome_desc": "Manage your local databases, execute queries, and visualize results directly in Obsidian.",
+    "search_placeholder": "Search databases...",
+    "info_title": "Important Information:",
+    "info_li_1": "To delete or rename an <b>active</b> database, switch to another first.",
+    "info_li_2": 'The system database <b>"dbo"</b> cannot be renamed or deleted.',
+    "info_li_3": "<b>Renaming</b> a database automatically updates internal references.",
+    "section_general": "General Settings",
+    "section_appearance": "Appearance",
+    "section_data_security": "Data & Security",
+    "lang_name": "Language",
+    "lang_desc": "Choose the interface language.",
+    "accent_obsidian": "Use Obsidian Accent Color",
+    "accent_obsidian_desc": "Use the global Obsidian accent color instead of a custom color.",
+    "theme_accent": "Theme Accent",
+    "theme_accent_desc": "Choose the primary accent color.",
+    "auto_save": "Auto-save",
+    "auto_save_desc": "Automatically save database changes.",
+    "auto_save_delay": "Auto-save Delay",
+    "auto_save_delay_desc": "Milliseconds to wait before auto-saving.",
+    "export_folder": "Export Folder",
+    "export_folder_desc": "Default folder for CSV exports.",
+    "safe_mode": "Safe Mode",
+    "safe_mode_desc": "Block dangerous commands (DROP, ALTER) and enforce limits.",
+    "enable_logging": "Enable Debug Logging",
+    "enable_logging_desc": "Show detailed logs in the developer console (Ctrl+Shift+I). Useful for debugging synchronization.",
+    "snapshot_limit": "Snapshot Row Limit",
+    "snapshot_limit_desc": "Max rows per table to save (prevents memory issues).",
+    "batch_size": "Batch Size",
+    "batch_size_desc": "Rows to display per page in results.",
+    "reset_all": "Reset All Data",
+    "reset_btn": "Reset Everything",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "SQL Notebook Features",
+    "collapsible_title": "Collapsible Workbench",
+    "collapsible_desc": "Toggle the workbench view to save space. Click the header or the chevron icon.",
+    "auto_collapse_title": "Auto-Collapse",
+    "auto_collapse_desc": "Start a comment with '@' (e.g., '-- @ My Query') to automatically collapse the workbench when the note opens.",
+    "alert_title": "Alert Marker (!)",
+    "alert_desc": "Add '!' to your comment start to highlight it as an alert or warning.",
+    "question_title": "Question Marker (?)",
+    "question_desc": "Add '?' to indicate a query that needs review or is experimental.",
+    "favorite_title": "Favorite Marker (*)",
+    "favorite_desc": "Add '*' to highlight important or frequently used queries.",
+    "copy_edit_title": "Copy & Edit",
+    "copy_edit_desc": "Hover over the workbench to access quick Copy Code and Edit Block buttons."
+  },
+  "modals": {
+    "confirm_delete_title": "Delete Database",
+    "confirm_delete_msg": 'You are about to delete database "{dbName}". This action cannot be undone. All tables and data will be lost.',
+    "confirm_clear_title": "Clear Database",
+    "confirm_clear_msg": 'Are you sure you want to clear all tables in "{dbName}"? This keeps the database but deletes all data.',
+    "btn_cancel": "Cancel",
+    "btn_confirm": "Confirm",
+    "btn_delete": "Delete Database",
+    "btn_clear": "Clear all data",
+    "btn_ativar": "Activate",
+    "btn_duplicar": "Duplicate",
+    "btn_renomear": "Rename",
+    "btn_tabelas": "Tables",
+    "btn_exportar": "Export",
+    "btn_deletar": "Delete",
+    "badge_ativo": "ACTIVE",
+    "badge_system": "System",
+    "stat_tables": "Tables",
+    "stat_rows": "Rows",
+    "stat_size": "Size",
+    "stat_updated": "Updated",
+    "time_just_now": "Just now",
+    "time_ago": "{time} ago",
+    "time_never": "Never",
+    "switch_title": "Switch Database",
+    "no_user_dbs": "No user databases found.",
+    "tip_system_db": "System Default Database. Cannot be deleted.",
+    "tip_protected_db": "Switch to another database to delete this one.",
+    "rename_title": "Rename Database: {name}",
+    "rename_placeholder": "New database name...",
+    "create_title": "Create New Database",
+    "create_placeholder": "Database name (e.g., my_project)",
+    "duplicate_title": "Duplicate Database: {name}",
+    "notice_create_empty": "Database name cannot be empty.",
+    "notice_rename_success": 'Database renamed to "{name}"',
+    "notice_create_success": 'Database "{name}" created.',
+    "notice_duplicate_success": 'Database duplicated to "{name}"',
+    "notice_delete_success": 'Database "{name}" deleted.',
+    "notice_switch_success": 'Switched to "{name}"',
+    "tables_title": 'Tables in "{name}"',
+    "null_value": "NULL",
+    "status_error": "Error",
+    "status_done": "Done",
+    "notice_table_data_copied": "Table data copied to clipboard!",
+    "notice_copy_failed": "Failed to copy: {error}",
+    "notice_screenshot_failed": "Failed to create screenshot: {error}",
+    "notice_no_active_note": "No active note found",
+    "notice_table_inserted": "Table inserted into note!",
+    "notice_insert_failed": "Failed to insert: {error}"
+  },
+  "workbench": {
+    "btn_run": "Run",
+    "btn_executing": "Executing...",
+    "btn_cancel": "Cancel",
+    "notice_copy": "SQL code copied!",
+    "notice_aborted": "Query aborted by user"
+  },
+  "renderer": {
+    "btn_copy": "Copy",
+    "btn_screenshot": "Screenshot",
+    "btn_add_note": "Add to Note",
+    "tip_copy": "Copy result to clipboard",
+    "tip_screenshot": "Take screenshot of result",
+    "tip_add_note": "Insert result into note",
+    "notice_copied": "\u2713 Copied to clipboard!",
+    "notice_copy_failed": "\u274C Failed to copy: {error}",
+    "notice_screenshot_failed": "\u274C Failed to create screenshot: {error}",
+    "notice_screenshot_copied": "\u2713 Screenshot copied to clipboard!",
+    "notice_screenshot_downloaded": "\u2713 Screenshot downloaded!",
+    "notice_insert_no_note": "\u274C No active note found",
+    "notice_insert_success": "\u2713 Result inserted into note!",
+    "notice_insert_failed": "\u274C Failed to insert: {error}",
+    "msg_no_result": "Query executed successfully (no result set)",
+    "msg_rows_found": "{count} rows found",
+    "msg_no_data": "No data found",
+    "msg_showing_rows": "Showing {count} of {total} rows",
+    "msg_showing_all": "Showing all {count} rows",
+    "btn_show_all": "Show All Rows",
+    "err_title": "Execution Error",
+    "result_label": "Result #{idx}",
+    "table_label": "Table: {name}",
+    "query_result": "Query Result",
+    "msg_loading": "Loading data...",
+    "msg_showing_limit": "Showing first {count} rows only.",
+    "msg_no_tables": "No tables found in this database.",
+    "tip_back": "Back to Tables List"
+  },
+  "form": {
+    "title_insert": "Insert into {name}",
+    "btn_save": "Save Record",
+    "btn_saving": "Saving...",
+    "btn_clear": "Clear",
+    "msg_success": "Saved successfully to {name}",
+    "msg_error": "Error: {error}",
+    "msg_unexpected": "Unexpected Error: {error}",
+    "notice_success": "Record saved to {name}",
+    "notice_error": "Error saving record: {error}",
+    "err_invalid_table": "Invalid table name",
+    "err_invalid_col": "Invalid column name: {name}"
+  },
+  "pro": {
+    "label_from": "From:",
+    "label_to": "To:",
+    "label_subject": "Subject:",
+    "from_name": "SQL Notebook Dev Team <dev@obsidian-sql.internal>",
+    "to_name": "Valued Developer",
+    "subject": "Pro Practice Alert: Database Context Best Practices",
+    "hello": "Hello,",
+    "msg_1": "We noticed you're switching databases via the UI. While this is great for quick navigation, we'd like to share a professional tip: using the explicit `USE` command in your scripts can make your workflow even more robust.",
+    "msg_quote": "Explicitly defining your context is a best practice that ensures your scripts are portable and unambiguous across different environments:",
+    "msg_2": "Defining the context within the code helps avoid confusion and makes your intent clear to anyone reviewing your work. You can always continue using the global switcher for convenience!",
+    "punchline": "Happy querying! \u{1F680}",
+    "signature_regards": "Best regards,",
+    "signature_team": "SQL Notebook Development Team",
+    "btn_read": "Mark as Read"
+  },
+  "footer": {
+    "tip_help": "Help & Features",
+    "status_ready": "Ready",
+    "status_error": "Error",
+    "status_aborted": "Aborted",
+    "status_live": "LIVE"
+  },
+  "common": {
+    "error": "Error: {error}",
+    "invalid_name": "New name must be different from the old name.",
+    "notice_export_success": "Exported to {name}",
+    "notice_import_loading": "Importing database...",
+    "notice_import_success": "Database imported successfully!",
+    "notice_anchor_form": "FORM anchored to {name}",
+    "notice_anchor_live": "LIVE block anchored to {name}",
+    "notice_update_live": "Updating LIVE data from {name}..."
+  }
+};
+
+// src/locales/pt-BR.ts
+var pt_BR_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "Database Manager",
+    "btn_atualizar": "Atualizar",
+    "btn_importar": "Importar",
+    "btn_novo_db": "Novo Banco",
+    "welcome_title": "Bem-vindo ao SQL Notebook!",
+    "welcome_desc": "Gerencie seus bancos de dados locais, execute consultas e visualize resultados diretamente no Obsidian.",
+    "search_placeholder": "Buscar bancos de dados...",
+    "info_title": "Informa\xE7\xF5es Importantes:",
+    "info_li_1": "Para excluir ou renomear um banco <b>ativo</b>, mude para outro primeiro.",
+    "info_li_2": 'O banco de sistema <b>"dbo"</b> n\xE3o pode ser renomeado ou exclu\xEDdo.',
+    "info_li_3": "<b>Renomear</b> um banco atualiza automaticamente as refer\xEAncias internas.",
+    "section_general": "Configura\xE7\xF5es Gerais",
+    "section_appearance": "Apar\xEAncia",
+    "section_data_security": "Dados e Seguran\xE7a",
+    "lang_name": "Idioma",
+    "lang_desc": "Escolha o idioma da interface.",
+    "accent_obsidian": "Usar Cor de Destaque do Obsidian",
+    "accent_obsidian_desc": "Usa a cor de destaque global do Obsidian em vez de uma cor personalizada.",
+    "theme_accent": "Cor de Destaque",
+    "theme_accent_desc": "Escolha a cor de destaque principal.",
+    "auto_save": "Salvamento Autom\xE1tico",
+    "auto_save_desc": "Salvar automaticamente as altera\xE7\xF5es no banco.",
+    "auto_save_delay": "Atraso de Salvamento",
+    "auto_save_delay_desc": "Milissegundos a esperar antes de salvar automaticamente.",
+    "export_folder": "Pasta de Exporta\xE7\xE3o",
+    "export_folder_desc": "Pasta padr\xE3o para exporta\xE7\xF5es CSV.",
+    "safe_mode": "Modo Seguro",
+    "safe_mode_desc": "Bloquear comandos perigosos (DROP, ALTER) e impor limites.",
+    "enable_logging": "Habilitar Logs de Depura\xE7\xE3o",
+    "enable_logging_desc": "Mostrar logs detalhados no console (Ctrl+Shift+I). \xDAtil para depura\xE7\xE3o.",
+    "snapshot_limit": "Limite de Linhas do Snapshot",
+    "snapshot_limit_desc": "M\xE1ximo de linhas por tabela para salvar.",
+    "batch_size": "Tamanho do Lote",
+    "batch_size_desc": "Linhas a exibir por p\xE1gina nos resultados.",
+    "reset_all": "Resetar Todos os Dados",
+    "reset_btn": "Resetar Tudo",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "Recursos do SQL Notebook",
+    "collapsible_title": "Bancada Retr\xE1til",
+    "collapsible_desc": "Alterne a visualiza\xE7\xE3o da bancada para economizar espa\xE7o. Clique no cabe\xE7alho ou no \xEDcone.",
+    "auto_collapse_title": "Auto-Recolhimento",
+    "auto_collapse_desc": "Inicie um coment\xE1rio com '@' (ex: '-- @ Minha Query') para recolher automaticamente ao abrir a nota.",
+    "alert_title": "Marcador de Alerta (!)",
+    "alert_desc": "Adicione '!' ao in\xEDcio do coment\xE1rio para destac\xE1-lo como um alerta ou aviso.",
+    "question_title": "Marcador de D\xFAvida (?)",
+    "question_desc": "Adicione '?' para indicar uma consulta que precisa de revis\xE3o ou \xE9 experimental.",
+    "favorite_title": "Marcador de Favorito (*)",
+    "favorite_desc": "Adicione '*' para destacar consultas importantes ou frequentes.",
+    "copy_edit_title": "Copiar e Editar",
+    "copy_edit_desc": "Passe o mouse sobre a bancada para acessar bot\xF5es r\xE1pidos de Copiar C\xF3digo e Editar Bloco."
+  },
+  "modals": {
+    "confirm_delete_title": "Excluir Banco de Dados",
+    "confirm_delete_msg": 'Voc\xEA est\xE1 prestes a excluir o banco "{dbName}". Esta a\xE7\xE3o n\xE3o pode ser desfeita. Todas as tabelas e dados ser\xE3o perdidos.',
+    "confirm_clear_title": "Limpar Banco de Dados",
+    "confirm_clear_msg": 'Tem certeza que deseja limpar todas as tabelas em "{dbName}"? O banco ser\xE1 mantido, mas todos os dados ser\xE3o apagados.',
+    "btn_cancel": "Cancelar",
+    "btn_confirm": "Confirmar",
+    "btn_delete": "Excluir Banco",
+    "btn_clear": "Limpar dados",
+    "btn_ativar": "Ativar",
+    "btn_duplicar": "Duplicar",
+    "btn_renomear": "Renomear",
+    "btn_tabelas": "Tabelas",
+    "btn_exportar": "Exportar",
+    "btn_deletar": "Deletar",
+    "badge_ativo": "ATIVO",
+    "badge_system": "Sistema",
+    "stat_tables": "Tabelas",
+    "stat_rows": "Linhas",
+    "stat_size": "Tamanho",
+    "stat_updated": "Atualizado",
+    "time_just_now": "Agora mesmo",
+    "time_ago": "{time} atr\xE1s",
+    "time_never": "Nunca",
+    "switch_title": "Alternar Banco",
+    "no_user_dbs": "Nenhum banco de usu\xE1rio encontrado.",
+    "tip_system_db": "Banco padr\xE3o do sistema. N\xE3o pode ser exclu\xEDdo.",
+    "tip_protected_db": "Mude para outro banco para excluir este.",
+    "rename_title": "Renomear Banco: {name}",
+    "rename_placeholder": "Novo nome do banco...",
+    "create_title": "Criar Novo Banco",
+    "create_placeholder": "Nome do banco (ex: meu_projeto)",
+    "duplicate_title": "Duplicar Banco: {name}",
+    "notice_create_empty": "Nome do banco n\xE3o pode ser vazio.",
+    "notice_rename_success": 'Banco renomeado para "{name}"',
+    "notice_create_success": 'Banco "{name}" criado.',
+    "notice_duplicate_success": 'Banco duplicado para "{name}"',
+    "notice_delete_success": 'Banco "{name}" exclu\xEDdo.',
+    "notice_switch_success": 'Alternado para "{name}"',
+    "tables_title": 'Tabelas em "{name}"',
+    "null_value": "NULO",
+    "status_error": "Erro",
+    "status_done": "Conclu\xEDdo",
+    "notice_table_data_copied": "Dados da tabela copiados para a \xE1rea de transfer\xEAncia!",
+    "notice_copy_failed": "Falha ao copiar: {error}",
+    "notice_screenshot_failed": "Falha ao criar captura de tela: {error}",
+    "notice_no_active_note": "Nenhuma nota ativa encontrada",
+    "notice_table_inserted": "Tabela inserida na nota!",
+    "notice_insert_failed": "Falha ao inserir: {error}"
+  },
+  "workbench": {
+    "btn_run": "Executar",
+    "btn_executing": "Executando...",
+    "btn_cancel": "Cancelar",
+    "notice_copy": "C\xF3digo SQL copiado!",
+    "notice_aborted": "Consulta abortada pelo usu\xE1rio"
+  },
+  "renderer": {
+    "btn_copy": "Copiar",
+    "btn_screenshot": "Captura",
+    "btn_add_note": "Add na Nota",
+    "tip_copy": "Copiar resultado",
+    "tip_screenshot": "Tirar foto do resultado",
+    "tip_add_note": "Inserir resultado na nota",
+    "notice_copied": "\u2713 Copiado!",
+    "notice_copy_failed": "\u274C Falha ao copiar: {error}",
+    "notice_screenshot_failed": "\u274C Falha ao criar captura de tela: {error}",
+    "notice_screenshot_copied": "\u2713 Captura de tela copiada!",
+    "notice_screenshot_downloaded": "\u2713 Captura de tela baixada!",
+    "notice_insert_no_note": "\u274C Nenhuma nota ativa encontrada",
+    "notice_insert_success": "\u2713 Resultado inserido na nota!",
+    "notice_insert_failed": "\u274C Falha ao inserir: {error}",
+    "msg_no_result": "Consulta executada com sucesso (sem retorno)",
+    "msg_rows_found": "{count} linhas encontradas",
+    "msg_no_data": "Nenhum dado encontrado",
+    "msg_showing_rows": "Mostrando {count} de {total} linhas",
+    "msg_showing_all": "Mostrando todas as {count} linhas",
+    "btn_show_all": "Mostrar Todas",
+    "err_title": "Erro de Execu\xE7\xE3o",
+    "result_label": "Resultado #{idx}",
+    "table_label": "Tabela: {name}",
+    "query_result": "Resultado da Consulta",
+    "msg_loading": "Carregando dados...",
+    "msg_showing_limit": "Mostrando apenas as primeiras {count} linhas.",
+    "msg_no_tables": "Nenhuma tabela encontrada neste banco de dados.",
+    "tip_back": "Voltar para Lista de Tabelas"
+  },
+  "form": {
+    "title_insert": "Inserir em {name}",
+    "btn_save": "Salvar Registro",
+    "btn_saving": "Salvando...",
+    "btn_clear": "Limpar",
+    "msg_success": "Salvo com sucesso em {name}",
+    "msg_error": "Erro: {error}",
+    "msg_unexpected": "Erro Inesperado: {error}",
+    "notice_success": "Registro salvo em {name}",
+    "notice_error": "Erro ao salvar registro: {error}",
+    "err_invalid_table": "Nome de tabela inv\xE1lido",
+    "err_invalid_col": "Nome de coluna inv\xE1lido: {name}"
+  },
+  "pro": {
+    "label_from": "De:",
+    "label_to": "Para:",
+    "label_subject": "Assunto:",
+    "from_name": "Time de Dev do SQL Notebook <dev@obsidian-sql.internal>",
+    "to_name": "Desenvolvedor(a)",
+    "subject": "Alerta Pro Practice: Boas Pr\xE1ticas de Contexto de Banco",
+    "hello": "Ol\xE1,",
+    "msg_1": "Notamos que voc\xEA est\xE1 trocando de banco de dados via interface. Embora isso seja \xF3timo para navega\xE7\xE3o r\xE1pida, gostar\xEDamos de compartilhar uma dica profissional: usar o comando expl\xEDcito `USE` em seus scripts pode tornar seu fluxo de trabalho ainda mais robusto.",
+    "msg_quote": "Definir explicitamente o seu contexto \xE9 uma boa pr\xE1tica que garante que seus scripts sejam port\xE1teis e claros em diferentes ambientes:",
+    "msg_2": "Definir o contexto no c\xF3digo ajuda a evitar confus\xE3o e torna sua inten\xE7\xE3o clara para qualquer pessoa que revise seu trabalho. Voc\xEA sempre pode continuar usando o alternador global para conveni\xEAncia!",
+    "punchline": "Bons c\xF3digos! \u{1F680}",
+    "signature_regards": "Atenciosamente,",
+    "signature_team": "Time de Desenvolvimento do SQL Notebook",
+    "btn_read": "Marcar como Lido"
+  },
+  "footer": {
+    "tip_help": "Ajuda e Recursos",
+    "status_ready": "Pronto",
+    "status_error": "Erro",
+    "status_aborted": "Abortado",
+    "status_live": "AO VIVO"
+  },
+  "common": {
+    "error": "Erro: {error}",
+    "invalid_name": "O novo nome deve ser diferente do antigo.",
+    "notice_export_success": "Exportado para {name}",
+    "notice_import_loading": "Importando banco de dados...",
+    "notice_import_success": "Banco de dados importado com sucesso!",
+    "notice_anchor_form": "FORM ancorado a {name}",
+    "notice_anchor_live": "Bloco LIVE ancorado a {name}",
+    "notice_update_live": "Atualizando dados LIVE de {name}..."
+  }
+};
+
+// src/locales/zh.ts
+var zh_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "\u6570\u636E\u5E93\u7BA1\u7406\u5668",
+    "btn_atualizar": "\u66F4\u65B0",
+    "btn_importar": "\u5BFC\u5165",
+    "btn_novo_db": "\u65B0\u5EFA\u6570\u636E\u5E93",
+    "welcome_title": "\u6B22\u8FCE\u4F7F\u7528 SQL Notebook!",
+    "welcome_desc": "\u5728 Obsidian \u4E2D\u76F4\u63A5\u7BA1\u7406\u672C\u5730\u6570\u636E\u5E93\u3001\u6267\u884C\u67E5\u8BE2\u5E76\u53EF\u89C6\u5316\u7ED3\u679C\u3002",
+    "search_placeholder": "\u641C\u7D22\u6570\u636E\u5E93...",
+    "info_title": "\u91CD\u8981\u4FE1\u606F\uFF1A",
+    "info_li_1": "\u82E5\u8981\u5220\u9664\u6216\u91CD\u547D\u540D<b>\u6D3B\u52A8</b>\u6570\u636E\u5E93\uFF0C\u8BF7\u5148\u5207\u6362\u5230\u53E6\u4E00\u4E2A\u6570\u636E\u5E93\u3002",
+    "info_li_2": '\u7CFB\u7EDF\u6570\u636E\u5E93 <b>"dbo"</b> \u4E0D\u80FD\u88AB\u91CD\u547D\u540D\u6216\u5220\u9664\u3002',
+    "info_li_3": "<b>\u91CD\u547D\u540D</b>\u6570\u636E\u5E93\u4F1A\u81EA\u52A8\u66F4\u65B0\u5185\u90E8\u5F15\u7528\u3002",
+    "section_general": "\u5E38\u89C4\u8BBE\u7F6E",
+    "section_appearance": "\u5916\u89C2",
+    "section_data_security": "\u6570\u636E\u4E0E\u5B89\u5168",
+    "lang_name": "\u8BED\u8A00",
+    "lang_desc": "\u9009\u62E9\u754C\u9762\u8BED\u8A00\u3002",
+    "accent_obsidian": "\u4F7F\u7528 Obsidian \u5F3A\u8C03\u8272",
+    "accent_obsidian_desc": "\u4F7F\u7528\u5168\u5C40 Obsidian \u5F3A\u8C03\u8272\u800C\u975E\u81EA\u5B9A\u4E49\u989C\u8272\u3002",
+    "theme_accent": "\u4E3B\u9898\u5F3A\u8C03\u8272",
+    "theme_accent_desc": "\u9009\u62E9\u4E3B\u5F3A\u8C03\u8272\u3002",
+    "auto_save": "\u81EA\u52A8\u4FDD\u5B58",
+    "auto_save_desc": "\u81EA\u52A8\u4FDD\u5B58\u6570\u636E\u5E93\u66F4\u6539\u3002",
+    "auto_save_delay": "\u81EA\u52A8\u4FDD\u5B58\u5EF6\u8FDF",
+    "auto_save_delay_desc": "\u81EA\u52A8\u4FDD\u5B58\u524D\u7684\u7B49\u5F85\u6BEB\u79D2\u6570\u3002",
+    "export_folder": "\u5BFC\u51FA\u6587\u4EF6\u5939",
+    "export_folder_desc": "CSV \u5BFC\u51FA\u7684\u9ED8\u8BA4\u6587\u4EF6\u5939\u3002",
+    "safe_mode": "\u5B89\u5168\u6A21\u5F0F",
+    "safe_mode_desc": "\u963B\u6B62\u5371\u9669\u547D\u4EE4 (DROP, ALTER) \u5E76\u5F3A\u5236\u6267\u884C\u9650\u5236\u3002",
+    "enable_logging": "\u542F\u7528\u8C03\u8BD5\u65E5\u5FD7",
+    "enable_logging_desc": "\u5728\u5F00\u53D1\u8005\u63A7\u5236\u53F0 (Ctrl+Shift+I) \u4E2D\u663E\u793A\u8BE6\u7EC6\u65E5\u5FD7\u3002\u5BF9\u4E8E\u8C03\u8BD5\u540C\u6B65\u5F88\u6709\u7528\u3002",
+    "snapshot_limit": "\u5FEB\u7167\u884C\u6570\u9650\u5236",
+    "snapshot_limit_desc": "\u6BCF\u5F20\u8868\u4FDD\u5B58\u7684\u6700\u5927\u884C\u6570\uFF08\u9632\u6B62\u5185\u5B58\u95EE\u9898\uFF09\u3002",
+    "batch_size": "\u6279\u5904\u7406\u5927\u5C0F",
+    "batch_size_desc": "\u7ED3\u679C\u4E2D\u6BCF\u9875\u663E\u793A\u7684\u884C\u6570\u3002",
+    "reset_all": "\u91CD\u7F6E\u6240\u6709\u6570\u636E",
+    "reset_btn": "\u91CD\u7F6E\u4E00\u5207",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "SQL Notebook \u529F\u80FD",
+    "collapsible_title": "\u53EF\u6298\u53E0\u5DE5\u4F5C\u53F0",
+    "collapsible_desc": "\u5207\u6362\u5DE5\u4F5C\u53F0\u89C6\u56FE\u4EE5\u8282\u7701\u7A7A\u95F4\u3002\u70B9\u51FB\u9875\u7709\u6216\u6298\u53E0\u56FE\u6807\u3002",
+    "auto_collapse_title": "\u81EA\u52A8\u6298\u53E0",
+    "auto_collapse_desc": "\u4EE5 '@' \u5F00\u59CB\u6CE8\u91CA\uFF08\u4F8B\u5982 '-- @ My Query'\uFF09\uFF0C\u5728\u6253\u5F00\u7B14\u8BB0\u65F6\u81EA\u52A8\u6298\u53E0\u5DE5\u4F5C\u53F0\u3002",
+    "alert_title": "\u8B66\u62A5\u6807\u8BB0 (!)",
+    "alert_desc": "\u5728\u6CE8\u91CA\u5F00\u5934\u6DFB\u52A0 '!' \u4EE5\u5C06\u5176\u7A81\u51FA\u663E\u793A\u4E3A\u8B66\u62A5\u6216\u8B66\u544A\u3002",
+    "question_title": "\u7591\u95EE\u6807\u8BB0 (?)",
+    "question_desc": "\u6DFB\u52A0 '?' \u4EE5\u6307\u793A\u9700\u8981\u5BA1\u67E5\u6216\u5177\u6709\u5B9E\u9A8C\u6027\u7684\u67E5\u8BE2\u3002",
+    "favorite_title": "\u6536\u85CF\u6807\u8BB0 (*)",
+    "favorite_desc": "\u6DFB\u52A0 '*' \u4EE5\u7A81\u51FA\u663E\u793A\u91CD\u8981\u6216\u5E38\u7528\u7684\u67E5\u8BE2\u3002",
+    "copy_edit_title": "\u590D\u5236\u4E0E\u7F16\u8F91",
+    "copy_edit_desc": "\u5C06\u9F20\u6807\u60AC\u505C\u5728\u5DE5\u4F5C\u53F0\u4E0A\u4EE5\u8BBF\u95EE\u5FEB\u901F\u590D\u5236\u4EE3\u7801\u548C\u7F16\u8F91\u5757\u6309\u94AE\u3002"
+  },
+  "modals": {
+    "confirm_delete_title": "\u5220\u9664\u6570\u636E\u5E93",
+    "confirm_delete_msg": '\u60A8\u5373\u5C06\u5220\u9664\u6570\u636E\u5E93 "{dbName}"\u3002\u6B64\u64CD\u4F5C\u65E0\u6CD5\u64A4\u9500\u3002\u6240\u6709\u8868\u548C\u6570\u636E\u90FD\u5C06\u4E22\u5931\u3002',
+    "confirm_clear_title": "\u6E05\u7A7A\u6570\u636E\u5E93",
+    "confirm_clear_msg": '\u60A8\u786E\u5B9A\u8981\u6E05\u7A7A "{dbName}" \u4E2D\u7684\u6240\u6709\u8868\u5417\uFF1F\u8FD9\u5C06\u4FDD\u7559\u6570\u636E\u5E93\u4F46\u5220\u9664\u6240\u6709\u6570\u636E\u3002',
+    "btn_cancel": "\u53D6\u6D88",
+    "btn_confirm": "\u786E\u8BA4",
+    "btn_delete": "\u5220\u9664\u6570\u636E\u5E93",
+    "btn_clear": "\u6E05\u7A7A\u6240\u6709\u6570\u636E",
+    "btn_ativar": "\u6FC0\u6D3B",
+    "btn_duplicar": "\u590D\u5236",
+    "btn_renomear": "\u91CD\u547D\u540D",
+    "btn_tabelas": "\u8868",
+    "btn_exportar": "\u5BFC\u51FA",
+    "btn_deletar": "\u5220\u9664",
+    "badge_ativo": "\u6FC0\u6D3B",
+    "badge_system": "\u7CFB\u7EDF",
+    "stat_tables": "\u8868",
+    "stat_rows": "\u884C",
+    "stat_size": "\u5927\u5C0F",
+    "stat_updated": "\u5DF2\u66F4\u65B0",
+    "time_just_now": "\u521A\u521A",
+    "time_ago": "{time} \u524D",
+    "time_never": "\u4ECE\u4E0D",
+    "switch_title": "\u5207\u6362\u6570\u636E\u5E93",
+    "no_user_dbs": "\u672A\u627E\u5230\u7528\u6237\u6570\u636E\u5E93\u3002",
+    "tip_system_db": "\u7CFB\u7EDF\u9ED8\u8BA4\u6570\u636E\u5E93\u3002\u65E0\u6CD5\u5220\u9664\u3002",
+    "tip_protected_db": "\u5207\u6362\u5230\u53E6\u4E00\u4E2A\u6570\u636E\u5E93\u4EE5\u5220\u9664\u6B64\u6570\u636E\u5E93\u3002",
+    "rename_title": "\u91CD\u547D\u540D\u6570\u636E\u5E93\uFF1A{name}",
+    "rename_placeholder": "\u65B0\u6570\u636E\u5E93\u540D\u79F0...",
+    "create_title": "\u521B\u5EFA\u65B0\u6570\u636E\u5E93",
+    "create_placeholder": "\u6570\u636E\u5E93\u540D\u79F0 (\u4F8B\u5982\uFF1Amy_project)",
+    "duplicate_title": "\u590D\u5236\u6570\u636E\u5E93\uFF1A{name}",
+    "notice_create_empty": "\u6570\u636E\u5E93\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A\u3002",
+    "notice_rename_success": '\u6570\u636E\u5E93\u91CD\u547D\u540D\u4E3A "{name}"',
+    "notice_create_success": '\u6570\u636E\u5E93 "{name}" \u5DF2\u521B\u5EFA\u3002',
+    "notice_duplicate_success": '\u6570\u636E\u5E93\u5DF2\u590D\u5236\u5230 "{name}"',
+    "notice_delete_success": '\u6570\u636E\u5E93 "{name}" \u5DF2\u5220\u9664\u3002',
+    "notice_switch_success": '\u5DF2\u5207\u6362\u5230 "{name}"',
+    "tables_title": '"{name}" \u4E2D\u7684\u8868',
+    "null_value": "\u7A7A",
+    "status_error": "\u9519\u8BEF",
+    "status_done": "\u5B8C\u6210",
+    "notice_table_data_copied": "\u8868\u6570\u636E\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01",
+    "notice_copy_failed": "\u590D\u5236\u5931\u8D25: {error}",
+    "notice_screenshot_failed": "\u521B\u5EFA\u622A\u56FE\u5931\u8D25: {error}",
+    "notice_no_active_note": "\u4E5F\u672A\u627E\u5230\u6D3B\u52A8\u7B14\u8BB0",
+    "notice_table_inserted": "\u8868\u683C\u5DF2\u63D2\u5165\u7B14\u8BB0\uFF01",
+    "notice_insert_failed": "\u63D2\u5165\u5931\u8D25: {error}"
+  },
+  "workbench": {
+    "btn_run": "\u8FD0\u884C",
+    "btn_executing": "\u6B63\u5728\u6267\u884C...",
+    "btn_cancel": "\u53D6\u6D88",
+    "notice_copy": "SQL \u4EE3\u7801\u5DF2\u590D\u5236\uFF01",
+    "notice_aborted": "\u67E5\u8BE2\u5DF2\u88AB\u7528\u6237\u4E2D\u6B62"
+  },
+  "renderer": {
+    "btn_copy": "\u590D\u5236",
+    "btn_screenshot": "\u622A\u56FE",
+    "btn_add_note": "\u6DFB\u52A0\u5230\u7B14\u8BB0",
+    "tip_copy": "\u5C06\u7ED3\u679C\u590D\u5236\u5230\u526A\u8D34\u677F",
+    "tip_screenshot": "\u83B7\u53D6\u7ED3\u679C\u622A\u56FE",
+    "tip_add_note": "\u5C06\u7ED3\u679C\u63D2\u5165\u7B14\u8BB0",
+    "notice_copied": "\u2713 \u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01",
+    "notice_copy_failed": "\u274C \u590D\u5236\u5931\u8D25: {error}",
+    "notice_screenshot_failed": "\u274C \u521B\u5EFA\u622A\u56FE\u5931\u8D25: {error}",
+    "notice_screenshot_copied": "\u2713 \u622A\u56FE\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01",
+    "notice_screenshot_downloaded": "\u2713 \u622A\u56FE\u5DF2\u4E0B\u8F7D\uFF01",
+    "notice_insert_no_note": "\u274C \u672A\u627E\u5230\u6D3B\u52A8\u7B14\u8BB0",
+    "notice_insert_success": "\u2713 \u7ED3\u679C\u5DF2\u63D2\u5165\u7B14\u8BB0\uFF01",
+    "notice_insert_failed": "\u274C \u63D2\u5165\u5931\u8D25: {error}",
+    "msg_no_result": "\u67E5\u8BE2\u6210\u529F\u6267\u884C\uFF08\u65E0\u7ED3\u679C\u96C6\uFF09",
+    "msg_rows_found": "\u627E\u5230 {count} \u884C",
+    "msg_no_data": "\u672A\u627E\u5230\u6570\u636E",
+    "msg_showing_rows": "\u6B63\u5728\u663E\u793A {count} / {total} \u884C",
+    "msg_showing_all": "\u6B63\u5728\u663E\u793A\u5168\u90E8 {count} \u884C",
+    "btn_show_all": "\u663E\u793A\u6240\u6709\u884C",
+    "err_title": "\u6267\u884C\u9519\u8BEF",
+    "result_label": "\u7ED3\u679C #{idx}",
+    "table_label": "\u8868\uFF1A{name}",
+    "query_result": "\u67E5\u8BE2\u7ED3\u679C",
+    "msg_loading": "\u6B63\u5728\u52A0\u8F7D\u6570\u636E...",
+    "msg_showing_limit": "\u4EC5\u663E\u793A\u524D {count} \u884C\u3002",
+    "msg_no_tables": "\u5728\u6B64\u6570\u636E\u5E93\u4E2D\u672A\u627E\u5230\u8868\u3002",
+    "tip_back": "\u8FD4\u56DE\u8868\u5217\u8868"
+  },
+  "form": {
+    "title_insert": "\u63D2\u5165\u5230 {name}",
+    "btn_save": "\u4FDD\u5B58\u8BB0\u5F55",
+    "btn_saving": "\u6B63\u5728\u4FDD\u5B58...",
+    "btn_clear": "\u6E05\u7A7A",
+    "msg_success": "\u5DF2\u6210\u529F\u4FDD\u5B58\u5230 {name}",
+    "msg_error": "\u9519\u8BEF\uFF1A{error}",
+    "msg_unexpected": "\u610F\u5916\u9519\u8BEF\uFF1A{error}",
+    "notice_success": "\u8BB0\u5F55\u5DF2\u4FDD\u5B58\u5230 {name}",
+    "notice_error": "\u4FDD\u5B58\u8BB0\u5F55\u65F6\u51FA\u9519\uFF1A{error}",
+    "err_invalid_table": "\u65E0\u6548\u7684\u8868\u540D",
+    "err_invalid_col": "\u65E0\u6548\u7684\u5217\u540D\uFF1A{name}"
+  },
+  "pro": {
+    "label_from": "\u6765\u81EA\uFF1A",
+    "label_to": "\u53D1\u9001\u81F3\uFF1A",
+    "label_subject": "\u4E3B\u9898\uFF1A",
+    "from_name": "SQL Notebook \u5F00\u53D1\u56E2\u961F <dev@obsidian-sql.internal>",
+    "to_name": "\u4EB2\u7231\u7684\u5F00\u53D1\u8005",
+    "subject": "Pro Practice \u63D0\u9192\uFF1A\u6570\u636E\u5E93\u4E0A\u4E0B\u6587\u6700\u4F73\u5B9E\u8DF5",
+    "hello": "\u60A8\u597D\uFF0C",
+    "msg_1": "\u6211\u4EEC\u6CE8\u610F\u5230\u60A8\u6B63\u5728\u901A\u8FC7 UI \u5207\u6362\u6570\u636E\u5E93\u3002\u867D\u7136\u8FD9\u5BF9\u4E8E\u5FEB\u901F\u5BFC\u822A\u975E\u5E38\u68D2\uFF0C\u4F46\u6211\u4EEC\u60F3\u5206\u4EAB\u4E00\u4E2A\u4E13\u4E1A\u63D0\u793A\uFF1A\u5728\u811A\u672C\u4E2D\u4F7F\u7528\u663E\u5F0F\u7684 `USE` \u547D\u4EE4\u53EF\u4EE5\u4F7F\u60A8\u7684\u5DE5\u4F5C\u6D41\u7A0B\u66F4\u52A0\u5065\u58EE\u3002",
+    "msg_quote": "\u663E\u5F0F\u5B9A\u4E49\u4E0A\u4E0B\u6587\u662F\u4E00\u9879\u6700\u4F73\u5B9E\u8DF5\uFF0C\u53EF\u786E\u4FDD\u60A8\u7684\u811A\u672C\u5728\u4E0D\u540C\u73AF\u5883\u4E2D\u5177\u6709\u53EF\u79FB\u690D\u6027\u4E14\u660E\u786E\uFF1A",
+    "msg_2": "\u5728\u4EE3\u7801\u4E2D\u5B9A\u4E49\u4E0A\u4E0B\u6587\u6709\u52A9\u4E8E\u907F\u514D\u6DF7\u6DC6\uFF0C\u5E76\u4F7F\u4EFB\u4F55\u67E5\u770B\u60A8\u5DE5\u4F5C\u7684\u4EBA\u90FD\u80FD\u6E05\u695A\u60A8\u7684\u610F\u56FE\u3002\u4E3A\u4E86\u65B9\u4FBF\u8D77\u89C1\uFF0C\u60A8\u53EF\u4EE5\u59CB\u7EC8\u7EE7\u7EED\u4F7F\u7528\u5168\u5C40\u5207\u6362\u5668\uFF01",
+    "punchline": "\u795D\u67E5\u8BE2\u6109\u5FEB\uFF01 \u{1F680}",
+    "signature_regards": "\u6B64\u81F4\uFF0C",
+    "signature_team": "SQL Notebook \u5F00\u53D1\u56E2\u961F",
+    "btn_read": "\u6807\u8BB0\u4E3A\u5DF2\u8BFB"
+  },
+  "footer": {
+    "tip_help": "\u5E2E\u52A9\u4E0E\u529F\u80FD",
+    "status_ready": "\u5C31\u7EEA",
+    "status_error": "\u9519\u8BEF",
+    "status_aborted": "\u5DF2\u4E2D\u6B62",
+    "status_live": "\u5B9E\u65F6"
+  },
+  "common": {
+    "error": "\u9519\u8BEF\uFF1A{error}",
+    "invalid_name": "\u65B0\u540D\u79F0\u5FC5\u987B\u4E0E\u65E7\u540D\u79F0\u4E0D\u540C\u3002",
+    "notice_export_success": "\u5DF2\u5BFC\u51FA\u5230 {name}",
+    "notice_import_loading": "\u6B63\u5728\u5BFC\u5165\u6570\u636E\u5E93...",
+    "notice_import_success": "\u6570\u636E\u5E93\u5BFC\u5165\u6210\u529F\uFF01",
+    "notice_anchor_form": "FORM \u5DF2\u951A\u5B9A\u5230 {name}",
+    "notice_anchor_live": "LIVE \u5757\u5DF2\u951A\u5B9A\u5230 {name}",
+    "notice_update_live": "\u6B63\u5728\u4ECE {name} \u66F4\u65B0 LIVE \u6570\u636E..."
+  }
+};
+
+// src/locales/es.ts
+var es_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "Gestor de Base de Datos",
+    "btn_atualizar": "Actualizar",
+    "btn_importar": "Importar",
+    "btn_novo_db": "Nueva Base de Datos",
+    "welcome_title": "\xA1Bienvenido a SQL Notebook!",
+    "welcome_desc": "Administra tus bases de datos locales, ejecuta consultas y visualiza resultados directamente en Obsidian.",
+    "search_placeholder": "Buscar bases de datos...",
+    "info_title": "Informaci\xF3n Importante:",
+    "info_li_1": "Para eliminar o renombrar una base de datos <b>activa</b>, cambia primero a otra.",
+    "info_li_2": 'La base de datos del sistema <b>"dbo"</b> no puede ser renombrada ni eliminada.',
+    "info_li_3": "<b>Renombrar</b> una base de datos actualiza autom\xE1ticamente las referencias internas.",
+    "section_general": "Configuraci\xF3n General",
+    "section_appearance": "Apariencia",
+    "section_data_security": "Datos y Seguridad",
+    "lang_name": "Idioma",
+    "lang_desc": "Elige el idioma de la interfaz.",
+    "accent_obsidian": "Usar Color de Acento de Obsidian",
+    "accent_obsidian_desc": "Usa el color de acento global de Obsidian en lugar de uno personalizado.",
+    "theme_accent": "Acento del Tema",
+    "theme_accent_desc": "Elige el color de acento principal.",
+    "auto_save": "Guardado Autom\xE1tico",
+    "auto_save_desc": "Guardar autom\xE1ticamente los cambios de la base de datos.",
+    "auto_save_delay": "Retraso de Guardado Autom\xE1tico",
+    "auto_save_delay_desc": "Milisegundos a esperar antes de guardar autom\xE1ticamente.",
+    "export_folder": "Carpeta de Exportaci\xF3n",
+    "export_folder_desc": "Carpeta predeterminada para exportaciones CSV.",
+    "safe_mode": "Modo Seguro",
+    "safe_mode_desc": "Bloquear comandos peligrosos (DROP, ALTER) y aplicar l\xEDmites.",
+    "enable_logging": "Activar Registro de Depuraci\xF3n",
+    "enable_logging_desc": "Mostrar registros detallados en la consola de desarrollador (Ctrl+Shift+I). \xDAtil para depurar sincronizaci\xF3n.",
+    "snapshot_limit": "L\xEDmite de Filas de Instant\xE1nea",
+    "snapshot_limit_desc": "M\xE1ximo de filas por tabla para guardar (evita problemas de memoria).",
+    "batch_size": "Tama\xF1o de Lote",
+    "batch_size_desc": "Filas a mostrar por p\xE1gina en los resultados.",
+    "reset_all": "Restablecer Todos los Datos",
+    "reset_btn": "Restablecer Todo",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "Caracter\xEDsticas de SQL Notebook",
+    "collapsible_title": "Panel de Trabajo Plegable",
+    "collapsible_desc": "Alterna la vista del panel para ahorrar espacio. Haz clic en el encabezado o en el icono de flecha.",
+    "auto_collapse_title": "Plegado Autom\xE1tico",
+    "auto_collapse_desc": "Comienza un comentario con '@' (ej., '-- @ Mi Consulta') para plegar autom\xE1ticamente el panel al abrir la nota.",
+    "alert_title": "Marcador de Alerta (!)",
+    "alert_desc": "A\xF1ade '!' al inicio de tu comentario para resaltarlo como una alerta o advertencia.",
+    "question_title": "Marcador de Pregunta (?)",
+    "question_desc": "A\xF1ade '?' para indicar una consulta que necesita revisi\xF3n o es experimental.",
+    "favorite_title": "Marcador de Favorito (*)",
+    "favorite_desc": "A\xF1ade '*' para resaltar consultas importantes o frecuentes.",
+    "copy_edit_title": "Copiar y Editar",
+    "copy_edit_desc": "Pasa el rat\xF3n sobre el panel para acceder a los botones r\xE1pidos de Copiar C\xF3digo y Editar Bloque."
+  },
+  "modals": {
+    "confirm_delete_title": "Eliminar Base de Datos",
+    "confirm_delete_msg": 'Est\xE1s a punto de eliminar la base de datos "{dbName}". Esta acci\xF3n no se puede deshacer. Se perder\xE1n todas las tablas y datos.',
+    "confirm_clear_title": "Limpiar Base de Datos",
+    "confirm_clear_msg": '\xBFEst\xE1s seguro de que quieres limpiar todas las tablas en "{dbName}"? Esto mantiene la base de datos pero elimina todos los datos.',
+    "btn_cancel": "Cancelar",
+    "btn_confirm": "Confirmar",
+    "btn_delete": "Eliminar Base de Datos",
+    "btn_clear": "Limpiar todos los datos",
+    "btn_ativar": "Activar",
+    "btn_duplicar": "Duplicar",
+    "btn_renomear": "Renombrar",
+    "btn_tabelas": "Tablas",
+    "btn_exportar": "Exportar",
+    "btn_deletar": "Eliminar",
+    "badge_ativo": "ACTIVO",
+    "badge_system": "Sistema",
+    "stat_tables": "Tablas",
+    "stat_rows": "Filas",
+    "stat_size": "Tama\xF1o",
+    "stat_updated": "Actualizado",
+    "time_just_now": "Ahora mismo",
+    "time_ago": "hace {time}",
+    "time_never": "Nunca",
+    "switch_title": "Cambiar Base de Datos",
+    "no_user_dbs": "No se encontraron bases de datos de usuario.",
+    "tip_system_db": "Base de datos predeterminada del sistema. No se puede eliminar.",
+    "tip_protected_db": "Cambia a otra base de datos para eliminar esta.",
+    "rename_title": "Renombrar Base de Datos: {name}",
+    "rename_placeholder": "Nuevo nombre de la base de datos...",
+    "create_title": "Crear Nueva Base de Datos",
+    "create_placeholder": "Nombre de la base de datos (ej., mi_proyecto)",
+    "duplicate_title": "Duplicar Base de Datos: {name}",
+    "notice_create_empty": "El nombre de la base de datos no puede estar vac\xEDo.",
+    "notice_rename_success": 'Base de datos renombrada a "{name}"',
+    "notice_create_success": 'Base de datos "{name}" creada.',
+    "notice_duplicate_success": 'Base de datos duplicada a "{name}"',
+    "notice_delete_success": 'Base de datos "{name}" eliminada.',
+    "notice_switch_success": 'Cambiado a "{name}"',
+    "tables_title": 'Tablas en "{name}"',
+    "null_value": "NULO",
+    "status_error": "Error",
+    "status_done": "Hecho",
+    "notice_table_data_copied": "\xA1Datos de la tabla copiados al portapapeles!",
+    "notice_copy_failed": "Error al copiar: {error}",
+    "notice_screenshot_failed": "Error al crear la captura de pantalla: {error}",
+    "notice_no_active_note": "No se encontr\xF3 ninguna nota activa",
+    "notice_table_inserted": "\xA1Tabla insertada en la nota!",
+    "notice_insert_failed": "Error al insertar: {error}"
+  },
+  "workbench": {
+    "btn_run": "Ejecutar",
+    "btn_executing": "Ejecutando...",
+    "btn_cancel": "Cancelar",
+    "notice_copy": "\xA1C\xF3digo SQL copiado!",
+    "notice_aborted": "Consulta abortada por el usuario"
+  },
+  "renderer": {
+    "btn_copy": "Copiar",
+    "btn_screenshot": "Captura",
+    "btn_add_note": "A\xF1adir a Nota",
+    "tip_copy": "Copiar resultado al portapapeles",
+    "tip_screenshot": "Tomar captura del resultado",
+    "tip_add_note": "Insertar resultado en la nota",
+    "notice_copied": "\u2713 \xA1Copiado al portapapeles!",
+    "notice_copy_failed": "\u274C Error al copiar: {error}",
+    "notice_screenshot_failed": "\u274C Error al crear captura: {error}",
+    "notice_screenshot_copied": "\u2713 \xA1Captura copiada al portapapeles!",
+    "notice_screenshot_downloaded": "\u2713 \xA1Captura descargada!",
+    "notice_insert_no_note": "\u274C No se encontr\xF3 nota activa",
+    "notice_insert_success": "\u2713 \xA1Resultado insertado en la nota!",
+    "notice_insert_failed": "\u274C Error al insertar: {error}",
+    "msg_no_result": "Consulta ejecutada con \xE9xito (sin resultados)",
+    "msg_rows_found": "{count} filas encontradas",
+    "msg_no_data": "No se encontraron datos",
+    "msg_showing_rows": "Mostrando {count} de {total} filas",
+    "msg_showing_all": "Mostrando las {count} filas",
+    "btn_show_all": "Mostrar todas las filas",
+    "err_title": "Error de Ejecuci\xF3n",
+    "result_label": "Resultado #{idx}",
+    "table_label": "Tabla: {name}",
+    "query_result": "Resultado de la Consulta",
+    "msg_loading": "Cargando datos...",
+    "msg_showing_limit": "Mostrando solo las primeras {count} filas.",
+    "msg_no_tables": "No se encontraron tablas en esta base de datos.",
+    "tip_back": "Volver a la lista de tablas"
+  },
+  "form": {
+    "title_insert": "Insertar en {name}",
+    "btn_save": "Guardar Registro",
+    "btn_saving": "Guardando...",
+    "btn_clear": "Limpiar",
+    "msg_success": "Guardado con \xE9xito en {name}",
+    "msg_error": "Error: {error}",
+    "msg_unexpected": "Error inesperado: {error}",
+    "notice_success": "Registro guardado en {name}",
+    "notice_error": "Error al guardar registro: {error}",
+    "err_invalid_table": "Nombre de tabla no v\xE1lido",
+    "err_invalid_col": "Nombre de columna no v\xE1lido: {name}"
+  },
+  "pro": {
+    "label_from": "De:",
+    "label_to": "Para:",
+    "label_subject": "Asunto:",
+    "from_name": "Equipo de Desarrollo de SQL Notebook <dev@obsidian-sql.internal>",
+    "to_name": "Estimado Desarrollador",
+    "subject": "Alerta Pro Practice: Mejores Pr\xE1cticas de Contexto de Base de Datos",
+    "hello": "Hola,",
+    "msg_1": "Notamos que est\xE1s cambiando de base de datos a trav\xE9s de la interfaz. Si bien esto es excelente para una navegaci\xF3n r\xE1pida, nos gustar\xEDa compartir un consejo profesional: el uso del comando expl\xEDcito `USE` en tus scripts puede hacer que tu flujo de trabajo sea a\xFAn m\xE1s s\xF3lido.",
+    "msg_quote": "Definir expl\xEDcitamente tu contexto es una mejor pr\xE1ctica que garantiza que tus scripts sean port\xE1tiles y claros en diferentes entornos:",
+    "msg_2": "Definir el contexto dentro del c\xF3digo ayuda a evitar confusiones y aclara tu intenci\xF3n a cualquiera que revise tu trabajo. \xA1Siempre puedes seguir usando el selector global por conveniencia!",
+    "punchline": "\xA1Felices consultas! \u{1F680}",
+    "signature_regards": "Saludos cordiales,",
+    "signature_team": "Equipo de Desarrollo de SQL Notebook",
+    "btn_read": "Marcar como le\xEDdo"
+  },
+  "footer": {
+    "tip_help": "Ayuda y Recursos",
+    "status_ready": "Listo",
+    "status_error": "Error",
+    "status_aborted": "Abortado",
+    "status_live": "EN VIVO"
+  },
+  "common": {
+    "error": "Error: {error}",
+    "invalid_name": "El nuevo nombre debe ser diferente del antiguo.",
+    "notice_export_success": "Exportado a {name}",
+    "notice_import_loading": "Importando base de datos...",
+    "notice_import_success": "\xA1Base de datos importada con \xE9xito!",
+    "notice_anchor_form": "FORM anclado a {name}",
+    "notice_anchor_live": "Bloque LIVE anclado a {name}",
+    "notice_update_live": "Actualizando datos LIVE desde {name}..."
+  }
+};
+
+// src/locales/de.ts
+var de_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "Datenbank-Manager",
+    "btn_atualizar": "Aktualisieren",
+    "btn_importar": "Importieren",
+    "btn_novo_db": "Neue Datenbank",
+    "welcome_title": "Willkommen bei SQL Notebook!",
+    "welcome_desc": "Verwalten Sie Ihre lokalen Datenbanken, f\xFChren Sie Abfragen aus und visualisieren Sie Ergebnisse direkt in Obsidian.",
+    "search_placeholder": "Datenbanken suchen...",
+    "info_title": "Wichtige Informationen:",
+    "info_li_1": "Um eine <b>aktive</b> Datenbank zu l\xF6schen oder umzubenennen, wechseln Sie zuerst zu einer anderen.",
+    "info_li_2": 'Die Systemdatenbank <b>"dbo"</b> kann nicht umbenannt oder gel\xF6scht werden.',
+    "info_li_3": "Das <b>Umbenennen</b> einer Datenbank aktualisiert automatisch interne Referenzen.",
+    "section_general": "Allgemeine Einstellungen",
+    "section_appearance": "Erscheinungsbild",
+    "section_data_security": "Daten & Sicherheit",
+    "lang_name": "Sprache",
+    "lang_desc": "W\xE4hlen Sie die Oberfl\xE4chensprache.",
+    "accent_obsidian": "Obsidian-Akzentfarbe verwenden",
+    "accent_obsidian_desc": "Verwenden Sie die globale Obsidian-Akzentfarbe anstelle einer benutzerdefinierten Farbe.",
+    "theme_accent": "Themen-Akzent",
+    "theme_accent_desc": "W\xE4hlen Sie die prim\xE4re Akzentfarbe.",
+    "auto_save": "Automatisches Speichern",
+    "auto_save_desc": "Datenbank\xE4nderungen automatisch speichern.",
+    "auto_save_delay": "Verz\xF6gerung f\xFCr automatisches Speichern",
+    "auto_save_delay_desc": "Millisekunden, die vor dem automatischen Speichern gewartet werden soll.",
+    "export_folder": "Export-Ordner",
+    "export_folder_desc": "Standardordner f\xFCr CSV-Exporte.",
+    "safe_mode": "Sicherer Modus",
+    "safe_mode_desc": "Gef\xE4hrliche Befehle (DROP, ALTER) blockieren und Limits durchsetzen.",
+    "enable_logging": "Debug-Logging aktivieren",
+    "enable_logging_desc": "Schauen Sie sich detaillierte Protokolle in der Entwicklerkonsole (Strg+Umschalt+I) an. N\xFCtzlich f\xFCr das Debugging der Synchronisation.",
+    "snapshot_limit": "Snapshot-Zeilenlimit",
+    "snapshot_limit_desc": "Maximale Zeilen pro Tabelle zum Speichern (verhindert Speicherprobleme).",
+    "batch_size": "Batch-Gr\xF6\xDFe",
+    "batch_size_desc": "Zeilen, die pro Seite in den Ergebnissen angezeigt werden sollen.",
+    "reset_all": "Alle Daten zur\xFCcksetzen",
+    "reset_btn": "Alles zur\xFCcksetzen",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "SQL Notebook Funktionen",
+    "collapsible_title": "Einklappbare Workbench",
+    "collapsible_desc": "Schalten Sie die Workbench-Ansicht um, um Platz zu sparen. Klicken Sie auf den Header oder das Chevron-Symbol.",
+    "auto_collapse_title": "Automatisches Einklappen",
+    "auto_collapse_desc": "Beginnen Sie einen Kommentar mit '@' (z. B. '-- @ Meine Abfrage'), um die Workbench automatisch einzuklappen, wenn die Notiz ge\xF6ffnet wird.",
+    "alert_title": "Warnungs-Marker (!)",
+    "alert_desc": "F\xFCgen Sie '!' zum Anfang Ihres Kommentars hinzu, um ihn als Warnung hervorzuheben.",
+    "question_title": "Frage-Marker (?)",
+    "question_desc": "F\xFCgen Sie '?' hinzu, um eine Abfrage zu kennzeichnen, die \xFCberpr\xFCft werden muss oder experimentell ist.",
+    "favorite_title": "Favoriten-Marker (*)",
+    "favorite_desc": "F\xFCgen Sie '*' hinzu, um wichtige oder h\xE4ufig verwendete Abfragen hervorzuheben.",
+    "copy_edit_title": "Kopieren & Bearbeiten",
+    "copy_edit_desc": "Bewegen Sie den Mauszeiger \xFCber die Workbench, um auf die Schaltfl\xE4chen zum schnellen Kopieren von Code und Bearbeiten von Bl\xF6cken zuzugreifen."
+  },
+  "modals": {
+    "confirm_delete_title": "Datenbank l\xF6schen",
+    "confirm_delete_msg": 'Sie sind dabei, die Datenbank "{dbName}" zu l\xF6schen. Diese Aktion kann nicht r\xFCckg\xE4ngig gemacht werden. Alle Tabellen und Daten gehen verloren.',
+    "confirm_clear_title": "Datenbank leeren",
+    "confirm_clear_msg": 'Sind Sie sicher, dass Sie alle Tabellen in "{dbName}" leeren m\xF6chten? Die Datenbank bleibt erhalten, aber alle Daten werden gel\xF6scht.',
+    "btn_cancel": "Abbrechen",
+    "btn_confirm": "Best\xE4tigen",
+    "btn_delete": "Datenbank l\xF6schen",
+    "btn_clear": "Alle Daten leeren",
+    "btn_ativar": "Aktivieren",
+    "btn_duplicar": "Duplizieren",
+    "btn_renomear": "Umbenennen",
+    "btn_tabelas": "Tabellen",
+    "btn_exportar": "Exportieren",
+    "btn_deletar": "L\xF6schen",
+    "badge_ativo": "AKTIV",
+    "badge_system": "System",
+    "stat_tables": "Tabellen",
+    "stat_rows": "Zeilen",
+    "stat_size": "Gr\xF6\xDFe",
+    "stat_updated": "Aktualisiert",
+    "time_just_now": "Gerade eben",
+    "time_ago": "vor {time}",
+    "time_never": "Nie",
+    "switch_title": "Datenbank wechseln",
+    "no_user_dbs": "Keine Benutzerdatenbanken gefunden.",
+    "tip_system_db": "System-Standarddatenbank. Kann nicht gel\xF6scht werden.",
+    "tip_protected_db": "Wechseln Sie zu einer anderen Datenbank, um diese zu l\xF6schen.",
+    "rename_title": "Datenbank umbenennen: {name}",
+    "rename_placeholder": "Neuer Datenbankname...",
+    "create_title": "Neue Datenbank erstellen",
+    "create_placeholder": "Datenbankname (z. B. mein_projekt)",
+    "duplicate_title": "Datenbank duplizieren: {name}",
+    "notice_create_empty": "Datenbankname darf nicht leer sein.",
+    "notice_rename_success": 'Datenbank in "{name}" umbenannt',
+    "notice_create_success": 'Datenbank "{name}" erstellt.',
+    "notice_duplicate_success": 'Datenbank nach "{name}" dupliziert',
+    "notice_delete_success": 'Datenbank "{name}" gel\xF6scht.',
+    "notice_switch_success": 'Zu "{name}" gewechselt',
+    "tables_title": 'Tabellen in "{name}"',
+    "null_value": "NULL",
+    "status_error": "Fehler",
+    "status_done": "Fertig",
+    "notice_table_data_copied": "Tabellendaten in die Zwischenablage kopiert!",
+    "notice_copy_failed": "Kopieren fehlgeschlagen: {error}",
+    "notice_screenshot_failed": "Screenshot-Erstellung fehlgeschlagen: {error}",
+    "notice_no_active_note": "Keine aktive Notiz gefunden",
+    "notice_table_inserted": "Tabelle in Notiz eingef\xFCgt!",
+    "notice_insert_failed": "Einf\xFCgen fehlgeschlagen: {error}"
+  },
+  "workbench": {
+    "btn_run": "Ausf\xFChren",
+    "btn_executing": "Wird ausgef\xFChrt...",
+    "btn_cancel": "Abbrechen",
+    "notice_copy": "SQL-Code kopiert!",
+    "notice_aborted": "Abfrage vom Benutzer abgebrochen"
+  },
+  "renderer": {
+    "btn_copy": "Kopieren",
+    "btn_screenshot": "Screenshot",
+    "btn_add_note": "Zur Notiz hinzuf\xFCgen",
+    "tip_copy": "Ergebnis in die Zwischenablage kopieren",
+    "tip_screenshot": "Screenshot vom Ergebnis machen",
+    "tip_add_note": "Ergebnis in die Notiz einf\xFCgen",
+    "notice_copied": "\u2713 In die Zwischenablage kopiert!",
+    "notice_copy_failed": "\u274C Kopieren fehlgeschlagen: {error}",
+    "notice_screenshot_failed": "\u274C Screenshot-Erstellung fehlgeschlagen: {error}",
+    "notice_screenshot_copied": "\u2713 Screenshot in die Zwischenablage kopiert!",
+    "notice_screenshot_downloaded": "\u2713 Screenshot heruntergeladen!",
+    "notice_insert_no_note": "\u274C Keine aktive Notiz gefunden",
+    "notice_insert_success": "\u2713 Ergebnis in Notiz eingef\xFCgt!",
+    "notice_insert_failed": "\u274C Einf\xFCgen fehlgeschlagen: {error}",
+    "msg_no_result": "Abfrage erfolgreich ausgef\xFChrt (kein Ergebnissatz)",
+    "msg_rows_found": "{count} Zeilen gefunden",
+    "msg_no_data": "Keine Daten gefunden",
+    "msg_showing_rows": "Zeige {count} von {total} Zeilen",
+    "msg_showing_all": "Zeige alle {count} Zeilen",
+    "btn_show_all": "Alle Zeilen anzeigen",
+    "err_title": "Ausf\xFChrungsfehler",
+    "result_label": "Ergebnis #{idx}",
+    "table_label": "Tabelle: {name}",
+    "query_result": "Abfrageergebnis",
+    "msg_loading": "Lade Daten...",
+    "msg_showing_limit": "Zeige nur die ersten {count} Zeilen.",
+    "msg_no_tables": "Keine Tabellen in dieser Datenbank gefunden.",
+    "tip_back": "Zur\xFCck zur Tabellenliste"
+  },
+  "form": {
+    "title_insert": "Einf\xFCgen in {name}",
+    "btn_save": "Datensatz speichern",
+    "btn_saving": "Speichere...",
+    "btn_clear": "Leeren",
+    "msg_success": "Erfolgreich in {name} gespeichert",
+    "msg_error": "Fehler: {error}",
+    "msg_unexpected": "Unerwarteter Fehler: {error}",
+    "notice_success": "Datensatz in {name} gespeichert",
+    "notice_error": "Fehler beim Speichern des Datensatzes: {error}",
+    "err_invalid_table": "Ung\xFCltiger Tabellenname",
+    "err_invalid_col": "Ung\xFCltiger Spaltenname: {name}"
+  },
+  "pro": {
+    "label_from": "Von:",
+    "label_to": "An:",
+    "label_subject": "Betreff:",
+    "from_name": "SQL Notebook Entwicklerteam <dev@obsidian-sql.internal>",
+    "to_name": "Gesch\xE4tzter Entwickler",
+    "subject": "Pro Practice Hinweis: Best Practices f\xFCr den Datenbank-Kontext",
+    "hello": "Hallo,",
+    "msg_1": "Wir haben bemerkt, dass Sie die Datenbank \xFCber die Benutzeroberfl\xE4che wechseln. Dies ist zwar hervorragend f\xFCr die schnelle Navigation, aber wir m\xF6chten einen Profi-Tipp teilen: Die Verwendung des expliziten `USE`-Befehls in Ihren Skripten kann Ihren Workflow noch robuster machen.",
+    "msg_quote": "Die explizite Definition Ihres Kontextes ist eine Best Practice, die sicherstellt, dass Ihre Skripte \xFCber verschiedene Umgebungen hinweg portabel und eindeutig sind:",
+    "msg_2": "Die Definition des Kontextes innerhalb des Codes hilft, Verwirrung zu vermeiden und macht Ihre Absicht f\xFCr jeden klar, der Ihre Arbeit \xFCberpr\xFCft. F\xFCr maximale Bequemlichkeit k\xF6nnen Sie nat\xFCrlich weiterhin den globalen Umschalter verwenden!",
+    "punchline": "Viel Spa\xDF beim Abfragen! \u{1F680}",
+    "signature_regards": "Mit freundlichen Gr\xFC\xDFen,",
+    "signature_team": "SQL Notebook Entwicklerteam",
+    "btn_read": "Als gelesen markieren"
+  },
+  "footer": {
+    "tip_help": "Hilfe & Funktionen",
+    "status_ready": "Bereit",
+    "status_error": "Fehler",
+    "status_aborted": "Abgebrochen",
+    "status_live": "LIVE"
+  },
+  "common": {
+    "error": "Fehler: {error}",
+    "invalid_name": "Der neue Name muss sich vom alten unterscheiden.",
+    "notice_export_success": "Exportiert nach {name}",
+    "notice_import_loading": "Importiere Datenbank...",
+    "notice_import_success": "Datenbank erfolgreich importiert!",
+    "notice_anchor_form": "FORM an {name} verankert",
+    "notice_anchor_live": "LIVE-Block an {name} verankert",
+    "notice_update_live": "Aktualisiere LIVE-Daten von {name}..."
+  }
+};
+
+// src/locales/fr.ts
+var fr_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "Gestionnaire de base de donn\xE9es",
+    "btn_atualizar": "Mettre \xE0 jour",
+    "btn_importar": "Importer",
+    "btn_novo_db": "Nouvelle base de donn\xE9es",
+    "welcome_title": "Bienvenue sur SQL Notebook !",
+    "welcome_desc": "G\xE9rez vos bases de donn\xE9es locales, ex\xE9cutez des requ\xEAtes et visualisez les r\xE9sultats directement dans Obsidian.",
+    "search_placeholder": "Rechercher des bases de donn\xE9es...",
+    "info_title": "Informations importantes :",
+    "info_li_1": "Pour supprimer ou renommer une base de donn\xE9es <b>active</b>, passez d'abord \xE0 une autre.",
+    "info_li_2": 'La base de donn\xE9es syst\xE8me <b>"dbo"</b> ne peut pas \xEAtre renomm\xE9e ou supprim\xE9e.',
+    "info_li_3": "Le <b>renommage</b> d'une base de donn\xE9es met automatiquement \xE0 jour les r\xE9f\xE9rences internes.",
+    "section_general": "Param\xE8tres g\xE9n\xE9raux",
+    "section_appearance": "Apparence",
+    "section_data_security": "Donn\xE9es et s\xE9curit\xE9",
+    "lang_name": "Langue",
+    "lang_desc": "Choisissez la langue de l'interface.",
+    "accent_obsidian": "Utiliser la couleur d'accentuation d'Obsidian",
+    "accent_obsidian_desc": "Utilisez la couleur d'accentuation globale d'Obsidian au lieu d'une couleur personnalis\xE9e.",
+    "theme_accent": "Accentuation du th\xE8me",
+    "theme_accent_desc": "Choisissez la couleur d'accentuation principale.",
+    "auto_save": "Sauvegarde automatique",
+    "auto_save_desc": "Sauvegarder automatiquement les modifications de la base de donn\xE9es.",
+    "auto_save_delay": "D\xE9lai de sauvegarde automatique",
+    "auto_save_delay_desc": "Millisecondes \xE0 attendre avant la sauvegarde automatique.",
+    "export_folder": "Dossier d'exportation",
+    "export_folder_desc": "Dossier par d\xE9faut pour les exportations CSV.",
+    "safe_mode": "Mode s\xE9curis\xE9",
+    "safe_mode_desc": "Bloquer les commandes dangereuses (DROP, ALTER) et imposer des limites.",
+    "enable_logging": "Activer le journal de d\xE9bogage",
+    "enable_logging_desc": "Afficher les journaux d\xE9taill\xE9s dans la console d\xE9veloppeur (Ctrl+Shift+I). Utile pour d\xE9boguer la synchronisation.",
+    "snapshot_limit": "Limite de lignes d'instantan\xE9",
+    "snapshot_limit_desc": "Nombre maximal de lignes par tableau \xE0 sauvegarder (\xE9vite les probl\xE8mes de m\xE9moire).",
+    "batch_size": "Taille du lot",
+    "batch_size_desc": "Lignes \xE0 afficher par page dans les r\xE9sultats.",
+    "reset_all": "R\xE9initialiser toutes les donn\xE9es",
+    "reset_btn": "Tout r\xE9initialiser",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "Fonctionnalit\xE9s de SQL Notebook",
+    "collapsible_title": "Banc de travail pliable",
+    "collapsible_desc": "Basculez la vue du banc de travail pour gagner de l'espace. Cliquez sur l'en-t\xEAte ou l'ic\xF4ne chevron.",
+    "auto_collapse_title": "Pliage automatique",
+    "auto_collapse_desc": "Commencez un commentaire par '@' (ex: '-- @ Ma requ\xEAte') pour plier automatiquement le banc de travail \xE0 l'ouverture de la note.",
+    "alert_title": "Marqueur d'alerte (!)",
+    "alert_desc": "Ajoutez '!' au d\xE9but de votre commentaire pour le mettre en \xE9vidence comme une alerte ou un avertissement.",
+    "question_title": "Marqueur de question (?)",
+    "question_desc": "Ajoutez '?' pour indiquer une requ\xEAte n\xE9cessitant une r\xE9vision ou exp\xE9rimentale.",
+    "favorite_title": "Marqueur de favori (*)",
+    "favorite_desc": "Ajoutez '*' pour mettre en \xE9vidence les requ\xEAtes importantes ou fr\xE9quentes.",
+    "copy_edit_title": "Copier et modifier",
+    "copy_edit_desc": "Survolez le banc de travail pour acc\xE9der aux boutons rapides de copie de code et de modification de bloc."
+  },
+  "modals": {
+    "confirm_delete_title": "Supprimer la base de donn\xE9es",
+    "confirm_delete_msg": 'Vous \xEAtes sur le point de supprimer la base de donn\xE9es "{dbName}". Cette action est irr\xE9versible. Toutes les tables et donn\xE9es seront perdues.',
+    "confirm_clear_title": "Effacer la base de donn\xE9es",
+    "confirm_clear_msg": '\xCAtes-vous s\xFBr de vouloir effacer toutes les tables de "{dbName}" ? Cela conserve la base de donn\xE9es mais supprime toutes les donn\xE9es.',
+    "btn_cancel": "Annuler",
+    "btn_confirm": "Confirmer",
+    "btn_delete": "Supprimer la base de donn\xE9es",
+    "btn_clear": "Effacer toutes les donn\xE9es",
+    "btn_ativar": "Activer",
+    "btn_duplicar": "Dupliquer",
+    "btn_renomear": "Renommer",
+    "btn_tabelas": "Tables",
+    "btn_exportar": "Exporter",
+    "btn_deletar": "Supprimer",
+    "badge_ativo": "ACTIF",
+    "badge_system": "Syst\xE8me",
+    "stat_tables": "Tables",
+    "stat_rows": "Lignes",
+    "stat_size": "Taille",
+    "stat_updated": "Mis \xE0 jour",
+    "time_just_now": "\xC0 l'instant",
+    "time_ago": "Il y a {time}",
+    "time_never": "Jamais",
+    "switch_title": "Changer de base de donn\xE9es",
+    "no_user_dbs": "Aucune base de donn\xE9es utilisateur trouv\xE9e.",
+    "tip_system_db": "Base de donn\xE9es syst\xE8me par d\xE9faut. Impossible de la supprimer.",
+    "tip_protected_db": "Passez \xE0 une autre base de donn\xE9es pour supprimer celle-ci.",
+    "rename_title": "Renommer la base de donn\xE9es : {name}",
+    "rename_placeholder": "Nouveau nom de base de donn\xE9es...",
+    "create_title": "Cr\xE9er une nouvelle base de donn\xE9es",
+    "create_placeholder": "Nom de la base de donn\xE9es (ex: mon_projet)",
+    "duplicate_title": "Dupliquer la base de donn\xE9es : {name}",
+    "notice_create_empty": "Le nom de la base de donn\xE9es ne peut pas \xEAtre vide.",
+    "notice_rename_success": 'Base de donn\xE9es renomm\xE9e en "{name}"',
+    "notice_create_success": 'Base de donn\xE9es "{name}" cr\xE9\xE9e.',
+    "notice_duplicate_success": 'Base de donn\xE9es dupliqu\xE9e en "{name}"',
+    "notice_delete_success": 'Base de donn\xE9es "{name}" supprim\xE9e.',
+    "notice_switch_success": 'Pass\xE9 \xE0 "{name}"',
+    "tables_title": 'Tables dans "{name}"',
+    "null_value": "NULL",
+    "status_error": "Erreur",
+    "status_done": "Termin\xE9",
+    "notice_table_data_copied": "Donn\xE9es de table copi\xE9es dans le presse-papiers !",
+    "notice_copy_failed": "\xC9chec de la copie : {error}",
+    "notice_screenshot_failed": "\xC9chec de la capture d'\xE9cran : {error}",
+    "notice_no_active_note": "Aucune note active trouv\xE9e",
+    "notice_table_inserted": "Table ins\xE9r\xE9e dans la note !",
+    "notice_insert_failed": "\xC9chec de l'insertion : {error}"
+  },
+  "workbench": {
+    "btn_run": "Ex\xE9cuter",
+    "btn_executing": "Ex\xE9cution...",
+    "btn_cancel": "Annuler",
+    "notice_copy": "Code SQL copi\xE9 !",
+    "notice_aborted": "Requ\xEAte interrompue par l'utilisateur"
+  },
+  "renderer": {
+    "btn_copy": "Copier",
+    "btn_screenshot": "Capture",
+    "btn_add_note": "Ajouter \xE0 la note",
+    "tip_copy": "Copier le r\xE9sultat dans le presse-papiers",
+    "tip_screenshot": "Prendre une capture du r\xE9sultat",
+    "tip_add_note": "Ins\xE9rer le r\xE9sultat dans la note",
+    "notice_copied": "\u2713 Copi\xE9 dans le presse-papiers !",
+    "notice_copy_failed": "\u274C \xC9chec de la copie : {error}",
+    "notice_screenshot_failed": "\u274C \xC9chec de la capture d'\xE9cran : {error}",
+    "notice_screenshot_copied": "\u2713 Capture copi\xE9e dans le presse-papiers !",
+    "notice_screenshot_downloaded": "\u2713 Capture t\xE9l\xE9charg\xE9e !",
+    "notice_insert_no_note": "\u274C Aucune note active trouv\xE9e",
+    "notice_insert_success": "\u2713 R\xE9sultat ins\xE9r\xE9 dans la note !",
+    "notice_insert_failed": "\u274C \xC9chec de l'insertion : {error}",
+    "msg_no_result": "Requ\xEAte ex\xE9cut\xE9e avec succ\xE8s (aucun r\xE9sultat)",
+    "msg_rows_found": "{count} lignes trouv\xE9es",
+    "msg_no_data": "Aucune donn\xE9e trouv\xE9e",
+    "msg_showing_rows": "Affichage de {count} sur {total} lignes",
+    "msg_showing_all": "Affichage de toutes les {count} lignes",
+    "btn_show_all": "Afficher toutes les lignes",
+    "err_title": "Erreur d'ex\xE9cution",
+    "result_label": "R\xE9sultat #{idx}",
+    "table_label": "Table : {name}",
+    "query_result": "R\xE9sultat de la requ\xEAte",
+    "msg_loading": "Chargement des donn\xE9es...",
+    "msg_showing_limit": "Affichage des {count} premi\xE8res lignes uniquement.",
+    "msg_no_tables": "Aucune table trouv\xE9e dans cette base de donn\xE9es.",
+    "tip_back": "Retour \xE0 la liste des tables"
+  },
+  "form": {
+    "title_insert": "Ins\xE9rer dans {name}",
+    "btn_save": "Enregistrer l'enregistrement",
+    "btn_saving": "Enregistrement...",
+    "btn_clear": "Effacer",
+    "msg_success": "Enregistr\xE9 avec succ\xE8s dans {name}",
+    "msg_error": "Erreur : {error}",
+    "msg_unexpected": "Erreur inattendue : {error}",
+    "notice_success": "Enregistrement sauvegard\xE9 dans {name}",
+    "notice_error": "Erreur lors de l'enregistrement : {error}",
+    "err_invalid_table": "Nom de table non valide",
+    "err_invalid_col": "Nom de colonne non valide : {name}"
+  },
+  "pro": {
+    "label_from": "De :",
+    "label_to": "\xC0 :",
+    "label_subject": "Sujet :",
+    "from_name": "\xC9quipe de d\xE9veloppement SQL Notebook <dev@obsidian-sql.internal>",
+    "to_name": "Cher d\xE9veloppeur",
+    "subject": "Alerte Pro Practice : Bonnes pratiques dans le contexte de base de donn\xE9es",
+    "hello": "Bonjour,",
+    "msg_1": "Nous avons remarqu\xE9 que vous changez de base de donn\xE9es via l'interface. Bien que cela soit pratique pour une navigation rapide, nous aimerions partager un conseil : l'utilisation de la commande explicite `USE` dans vos scripts peut rendre votre flux de travail encore plus robuste.",
+    "msg_quote": "D\xE9finir explicitement votre contexte est une bonne pratique qui garantit que vos scripts sont portables et clairs dans diff\xE9rents environnements :",
+    "msg_2": "D\xE9finir le contexte dans le code aide \xE0 \xE9viter la confusion et rend votre intention claire pour quiconque examine votre travail. Vous pouvez toujours continuer \xE0 utiliser le s\xE9lecteur global pour plus de commodit\xE9 !",
+    "punchline": "Bonnes requ\xEAtes ! \u{1F680}",
+    "signature_regards": "Cordialement,",
+    "signature_team": "L'\xE9quipe de d\xE9veloppement SQL Notebook",
+    "btn_read": "Marquer comme lu"
+  },
+  "footer": {
+    "tip_help": "Aide et ressources",
+    "status_ready": "Pr\xEAt",
+    "status_error": "Erreur",
+    "status_aborted": "Interrompu",
+    "status_live": "EN DIRECT"
+  },
+  "common": {
+    "error": "Erreur : {error}",
+    "invalid_name": "Le nouveau nom doit \xEAtre diff\xE9rent de l'ancien.",
+    "notice_export_success": "Export\xE9 dans {name}",
+    "notice_import_loading": "Importation de la base de donn\xE9es...",
+    "notice_import_success": "Base de donn\xE9es import\xE9e avec succ\xE8s !",
+    "notice_anchor_form": "FORM ancr\xE9 \xE0 {name}",
+    "notice_anchor_live": "Bloc LIVE ancr\xE9 \xE0 {name}",
+    "notice_update_live": "Mise \xE0 jour des donn\xE9es LIVE depuis {name}..."
+  }
+};
+
+// src/locales/ja.ts
+var ja_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u30DE\u30CD\u30FC\u30B8\u30E3\u30FC",
+    "btn_atualizar": "\u66F4\u65B0",
+    "btn_importar": "\u30A4\u30F3\u30DD\u30FC\u30C8",
+    "btn_novo_db": "\u65B0\u898F\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9",
+    "welcome_title": "SQL Notebook \u3078\u3088\u3046\u3053\u305D\uFF01",
+    "welcome_desc": "Obsidian \u5185\u3067\u30ED\u30FC\u30AB\u30EB\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u7BA1\u7406\u3001\u30AF\u30A8\u30EA\u306E\u5B9F\u884C\u3001\u7D50\u679C\u306E\u8996\u899A\u5316\u3092\u76F4\u63A5\u884C\u3048\u307E\u3059\u3002",
+    "search_placeholder": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u691C\u7D22...",
+    "info_title": "\u91CD\u8981\u306A\u60C5\u5831:",
+    "info_li_1": "<b>\u30A2\u30AF\u30C6\u30A3\u30D6</b>\u306A\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u524A\u9664\u307E\u305F\u306F\u540D\u524D\u5909\u66F4\u3059\u308B\u306B\u306F\u3001\u307E\u305A\u5225\u306E\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306B\u5207\u308A\u66FF\u3048\u3066\u304F\u3060\u3055\u3044\u3002",
+    "info_li_2": '\u30B7\u30B9\u30C6\u30E0\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9 <b>"dbo"</b> \u306F\u540D\u524D\u306E\u5909\u66F4\u3084\u524A\u9664\u304C\u3067\u304D\u307E\u305B\u3093\u3002',
+    "info_li_3": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E<b>\u540D\u524D\u5909\u66F4</b>\u306F\u3001\u5185\u90E8\u306E\u53C2\u7167\u3092\u81EA\u52D5\u7684\u306B\u66F4\u65B0\u3057\u307E\u3059\u3002",
+    "section_general": "\u4E00\u822C\u8A2D\u5B9A",
+    "section_appearance": "\u5916\u89B3",
+    "section_data_security": "\u30C7\u30FC\u30BF\u3068\u30BB\u30AD\u30E5\u30EA\u30C6\u30A3",
+    "lang_name": "\u8A00\u8A9E",
+    "lang_desc": "\u30A4\u30F3\u30BF\u30FC\u30D5\u30A7\u30FC\u30B9\u306E\u8A00\u8A9E\u3092\u9078\u629E\u3057\u307E\u3059\u3002",
+    "accent_obsidian": "Obsidian \u306E\u30A2\u30AF\u30BB\u30F3\u30C8\u30AB\u30E9\u30FC\u3092\u4F7F\u7528",
+    "accent_obsidian_desc": "\u30AB\u30B9\u30BF\u30E0\u30AB\u30E9\u30FC\u306E\u4EE3\u308F\u308A\u306B Obsidian \u5168\u4F53\u306E\u30A2\u30AF\u30BB\u30F3\u30C8\u30AB\u30E9\u30FC\u3092\u4F7F\u7528\u3057\u307E\u3059\u3002",
+    "theme_accent": "\u30C6\u30FC\u30DE\u306E\u30A2\u30AF\u30BB\u30F3\u30C8\u30AB\u30E9\u30FC",
+    "theme_accent_desc": "\u30E1\u30A4\u30F3\u306E\u30A2\u30AF\u30BB\u30F3\u30C8\u30AB\u30E9\u30FC\u3092\u9078\u629E\u3057\u307E\u3059\u3002",
+    "auto_save": "\u81EA\u52D5\u4FDD\u5B58",
+    "auto_save_desc": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u5909\u66F4\u3092\u81EA\u52D5\u7684\u306B\u4FDD\u5B58\u3057\u307E\u3059\u3002",
+    "auto_save_delay": "\u81EA\u52D5\u4FDD\u5B58\u306E\u9045\u5EF6",
+    "auto_save_delay_desc": "\u81EA\u52D5\u4FDD\u5B58\u307E\u3067\u5F85\u6A5F\u3059\u308B\u30DF\u30EA\u79D2\u6570\u3002",
+    "export_folder": "\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8\u5148\u30D5\u30A9\u30EB\u30C0\u30FC",
+    "export_folder_desc": "CSV \u30A8\u30AF\u30B9\u30DD\u30FC\u30C8\u306E\u30C7\u30D5\u30A9\u30EB\u30C8\u30D5\u30A9\u30EB\u30C0\u30FC\u3002",
+    "safe_mode": "\u30BB\u30FC\u30D5\u30E2\u30FC\u30C9",
+    "safe_mode_desc": "\u5371\u967A\u306A\u30B3\u30DE\u30F3\u30C9 (DROP, ALTER) \u3092\u30D6\u30ED\u30C3\u30AF\u3057\u3001\u5236\u9650\u3092\u9069\u7528\u3057\u307E\u3059\u3002",
+    "enable_logging": "\u30C7\u30D0\u30C3\u30B0\u30ED\u30B0\u3092\u6709\u52B9\u5316",
+    "enable_logging_desc": "\u958B\u767A\u8005\u30B3\u30F3\u30BD\u30FC\u30EB (Ctrl+Shift+I) \u306B\u8A73\u7D30\u306A\u30ED\u30B0\u3092\u8868\u793A\u3057\u307E\u3059\u3002\u540C\u671F\u306E\u30C7\u30D0\u30C3\u30B0\u306B\u4FBF\u5229\u3067\u3059\u3002",
+    "snapshot_limit": "\u30B9\u30CA\u30C3\u30D7\u30B7\u30E7\u30C3\u30C8\u884C\u6570\u5236\u9650",
+    "snapshot_limit_desc": "\u4FDD\u5B58\u3059\u308B\u30C6\u30FC\u30D6\u30EB\u3054\u3068\u306E\u6700\u5927\u884C\u6570 (\u30E1\u30E2\u30EA\u306E\u554F\u984C\u3092\u9632\u6B62)\u3002",
+    "batch_size": "\u30D0\u30C3\u30C1\u30B5\u30A4\u30BA",
+    "batch_size_desc": "\u7D50\u679C\u306E 1 \u30DA\u30FC\u30B8\u3042\u305F\u308A\u306B\u8868\u793A\u3059\u308B\u884C\u6570\u3002",
+    "reset_all": "\u3059\u3079\u3066\u306E\u30C7\u30FC\u30BF\u3092\u30EA\u30BB\u30C3\u30C8",
+    "reset_btn": "\u3059\u3079\u3066\u3092\u30EA\u30BB\u30C3\u30C8",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "SQL Notebook \u306E\u6A5F\u80FD",
+    "collapsible_title": "\u6298\u308A\u305F\u305F\u307F\u53EF\u80FD\u306A\u30EF\u30FC\u30AF\u30D9\u30F3\u30C1",
+    "collapsible_desc": "\u30EF\u30FC\u30AF\u30D9\u30F3\u30C1\u306E\u8868\u793A\u3092\u5207\u308A\u66FF\u3048\u3066\u30B9\u30DA\u30FC\u30B9\u3092\u7BC0\u7D04\u3057\u307E\u3059\u3002\u30D8\u30C3\u30C0\u30FC\u307E\u305F\u306F\u30B7\u30A7\u30D6\u30ED\u30F3\u30A2\u30A4\u30B3\u30F3\u3092\u30AF\u30EA\u30C3\u30AF\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
+    "auto_collapse_title": "\u81EA\u52D5\u6298\u308A\u305F\u305F\u307F",
+    "auto_collapse_desc": "\u30B3\u30E1\u30F3\u30C8\u3092 '@' \u3067\u59CB\u3081\u308B (\u4F8B: '-- @ My Query') \u3068\u3001\u30CE\u30FC\u30C8\u3092\u958B\u3044\u305F\u3068\u304D\u306B\u30EF\u30FC\u30AF\u30D9\u30F3\u30C1\u304C\u81EA\u52D5\u7684\u306B\u6298\u308A\u305F\u305F\u307E\u308C\u307E\u3059\u3002",
+    "alert_title": "\u30A2\u30E9\u30FC\u30C8\u30DE\u30FC\u30AB\u30FC (!)",
+    "alert_desc": "\u30B3\u30E1\u30F3\u30C8\u306E\u6700\u521D\u306B '!' \u3092\u8FFD\u52A0\u3059\u308B\u3068\u3001\u30A2\u30E9\u30FC\u30C8\u307E\u305F\u306F\u8B66\u544A\u3068\u3057\u3066\u5F37\u8ABF\u8868\u793A\u3055\u308C\u307E\u3059\u3002",
+    "question_title": "\u8CEA\u554F\u30DE\u30FC\u30AB\u30FC (?)",
+    "question_desc": "\u30EC\u30D3\u30E5\u30FC\u304C\u5FC5\u8981\u306A\u30AF\u30A8\u30EA\u3084\u5B9F\u9A13\u7684\u306A\u30AF\u30A8\u30EA\u3092\u793A\u3059\u306B\u306F '?' \u3092\u8FFD\u52A0\u3057\u307E\u3059\u3002",
+    "favorite_title": "\u304A\u6C17\u306B\u5165\u308A\u30DE\u30FC\u30AB\u30FC (*)",
+    "favorite_desc": "\u91CD\u8981\u307E\u305F\u306F\u983B\u7E41\u306B\u4F7F\u7528\u3059\u308B\u30AF\u30A8\u30EA\u3092\u5F37\u8ABF\u8868\u793A\u3059\u308B\u306B\u306F '*' \u3092\u8FFD\u52A0\u3057\u307E\u3059\u3002",
+    "copy_edit_title": "\u30B3\u30D4\u30FC\u3068\u7DE8\u96C6",
+    "copy_edit_desc": "\u30EF\u30FC\u30AF\u30D9\u30F3\u30C1\u306B\u30DE\u30A6\u30B9\u3092\u5408\u308F\u305B\u308B\u3068\u3001\u30B3\u30FC\u30C9\u306E\u30B3\u30D4\u30FC\u3068\u30D6\u30ED\u30C3\u30AF\u7DE8\u96C6\u306E\u30AF\u30A4\u30C3\u30AF\u30DC\u30BF\u30F3\u304C\u8868\u793A\u3055\u308C\u307E\u3059\u3002"
+  },
+  "modals": {
+    "confirm_delete_title": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u524A\u9664",
+    "confirm_delete_msg": '\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9 "{dbName}" \u3092\u524A\u9664\u3057\u3088\u3046\u3068\u3057\u3066\u3044\u307E\u3059\u3002\u3053\u306E\u64CD\u4F5C\u306F\u53D6\u308A\u6D88\u305B\u307E\u305B\u3093\u3002\u3059\u3079\u3066\u306E\u30C6\u30FC\u30D6\u30EB\u3068\u30C7\u30FC\u30BF\u304C\u5931\u308F\u308C\u307E\u3059\u3002',
+    "confirm_clear_title": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u30AF\u30EA\u30A2",
+    "confirm_clear_msg": '"{dbName}" \u5185\u306E\u3059\u3079\u3066\u306E\u30C6\u30FC\u30D6\u30EB\u3092\u30AF\u30EA\u30A2\u3057\u3066\u3082\u3088\u308D\u3057\u3044\u3067\u3059\u304B\uFF1F\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306F\u4FDD\u6301\u3055\u308C\u307E\u3059\u304C\u3001\u30C7\u30FC\u30BF\u306F\u3059\u3079\u3066\u524A\u9664\u3055\u308C\u307E\u3059\u3002',
+    "btn_cancel": "\u30AD\u30E3\u30F3\u30BB\u30EB",
+    "btn_confirm": "\u78BA\u8A8D",
+    "btn_delete": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u524A\u9664",
+    "btn_clear": "\u3059\u3079\u3066\u306E\u30C7\u30FC\u30BF\u3092\u30AF\u30EA\u30A2",
+    "btn_ativar": "\u6709\u52B9\u5316",
+    "btn_duplicar": "\u8907\u88FD",
+    "btn_renomear": "\u540D\u524D\u5909\u66F4",
+    "btn_tabelas": "\u30C6\u30FC\u30D6\u30EB",
+    "btn_exportar": "\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8",
+    "btn_deletar": "\u524A\u9664",
+    "badge_ativo": "\u6709\u52B9",
+    "badge_system": "\u30B7\u30B9\u30C6\u30E0",
+    "stat_tables": "\u30C6\u30FC\u30D6\u30EB",
+    "stat_rows": "\u884C",
+    "stat_size": "\u30B5\u30A4\u30BA",
+    "stat_updated": "\u66F4\u65B0\u65E5\u6642",
+    "time_just_now": "\u305F\u3063\u305F\u4ECA",
+    "time_ago": "{time} \u524D",
+    "time_never": "\u306A\u3057",
+    "switch_title": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u5207\u308A\u66FF\u3048",
+    "no_user_dbs": "\u30E6\u30FC\u30B6\u30FC\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3002",
+    "tip_system_db": "\u30B7\u30B9\u30C6\u30E0\u30C7\u30D5\u30A9\u30EB\u30C8\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3002\u524A\u9664\u3067\u304D\u307E\u305B\u3093\u3002",
+    "tip_protected_db": "\u3053\u306E\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u524A\u9664\u3059\u308B\u306B\u306F\u3001\u5225\u306E\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306B\u5207\u308A\u66FF\u3048\u3066\u304F\u3060\u3055\u3044\u3002",
+    "rename_title": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u540D\u524D\u5909\u66F4: {name}",
+    "rename_placeholder": "\u65B0\u3057\u3044\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u540D...",
+    "create_title": "\u65B0\u898F\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u4F5C\u6210",
+    "create_placeholder": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u540D (\u4F8B: my_project)",
+    "duplicate_title": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u8907\u88FD: {name}",
+    "notice_create_empty": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u540D\u306F\u7A7A\u306B\u3067\u304D\u307E\u305B\u3093\u3002",
+    "notice_rename_success": '\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u540D\u524D\u304C "{name}" \u306B\u5909\u66F4\u3055\u308C\u307E\u3057\u305F',
+    "notice_create_success": '\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9 "{name}" \u304C\u4F5C\u6210\u3055\u308C\u307E\u3057\u305F\u3002',
+    "notice_duplicate_success": '\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u304C "{name}" \u306B\u8907\u88FD\u3055\u308C\u307E\u3057\u305F',
+    "notice_delete_success": '\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9 "{name}" \u304C\u524A\u9664\u3055\u308C\u307E\u3057\u305F\u3002',
+    "notice_switch_success": '"{name}" \u306B\u5207\u308A\u66FF\u3048\u307E\u3057\u305F',
+    "tables_title": '"{name}" \u5185\u306E\u30C6\u30FC\u30D6\u30EB',
+    "null_value": "NULL",
+    "status_error": "\u30A8\u30E9\u30FC",
+    "status_done": "\u5B8C\u4E86",
+    "notice_table_data_copied": "\u30C6\u30FC\u30D6\u30EB\u30C7\u30FC\u30BF\u3092\u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
+    "notice_copy_failed": "\u30B3\u30D4\u30FC\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
+    "notice_screenshot_failed": "\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u306E\u4F5C\u6210\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
+    "notice_no_active_note": "\u30A2\u30AF\u30C6\u30A3\u30D6\u306A\u30CE\u30FC\u30C8\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093",
+    "notice_table_inserted": "\u30C6\u30FC\u30D6\u30EB\u3092\u30CE\u30FC\u30C8\u306B\u633F\u5165\u3057\u307E\u3057\u305F\uFF01",
+    "notice_insert_failed": "\u633F\u5165\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}"
+  },
+  "workbench": {
+    "btn_run": "\u5B9F\u884C",
+    "btn_executing": "\u5B9F\u884C\u4E2D...",
+    "btn_cancel": "\u30AD\u30E3\u30F3\u30BB\u30EB",
+    "notice_copy": "SQL \u30B3\u30FC\u30C9\u3092\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
+    "notice_aborted": "\u30E6\u30FC\u30B6\u30FC\u306B\u3088\u308A\u30AF\u30A8\u30EA\u304C\u4E2D\u65AD\u3055\u308C\u307E\u3057\u305F"
+  },
+  "renderer": {
+    "btn_copy": "\u30B3\u30D4\u30FC",
+    "btn_screenshot": "SS",
+    "btn_add_note": "\u30CE\u30FC\u30C8\u3078\u8FFD\u52A0",
+    "tip_copy": "\u7D50\u679C\u3092\u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC",
+    "tip_screenshot": "\u7D50\u679C\u306E\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u64AE\u308B",
+    "tip_add_note": "\u7D50\u679C\u3092\u30CE\u30FC\u30C8\u306B\u633F\u5165",
+    "notice_copied": "\u2713 \u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
+    "notice_copy_failed": "\u274C \u30B3\u30D4\u30FC\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
+    "notice_screenshot_failed": "\u274C \u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u306E\u4F5C\u6210\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
+    "notice_screenshot_copied": "\u2713 \u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
+    "notice_screenshot_downloaded": "\u2713 \u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u30C0\u30A6\u30F3\u30ED\u30FC\u30C9\u3057\u307E\u3057\u305F\uFF01",
+    "notice_insert_no_note": "\u274C \u30A2\u30AF\u30C6\u30A3\u30D6\u306A\u30CE\u30FC\u30C8\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093",
+    "notice_insert_success": "\u2713 \u7D50\u679C\u3092\u30CE\u30FC\u30C8\u306B\u633F\u5165\u3057\u307E\u3057\u305F\uFF01",
+    "notice_insert_failed": "\u274C \u633F\u5165\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
+    "msg_no_result": "\u30AF\u30A8\u30EA\u306F\u6B63\u5E38\u306B\u5B9F\u884C\u3055\u308C\u307E\u3057\u305F (\u7D50\u679C\u30BB\u30C3\u30C8\u306A\u3057)",
+    "msg_rows_found": "{count} \u884C\u898B\u3064\u304B\u308A\u307E\u3057\u305F",
+    "msg_no_data": "\u30C7\u30FC\u30BF\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093",
+    "msg_showing_rows": "{total} \u884C\u4E2D {count} \u884C\u3092\u8868\u793A\u4E2D",
+    "msg_showing_all": "\u5168 {count} \u884C\u3092\u8868\u793A\u4E2D",
+    "btn_show_all": "\u3059\u3079\u3066\u306E\u884C\u3092\u8868\u793A",
+    "err_title": "\u5B9F\u884C\u30A8\u30E9\u30FC",
+    "result_label": "\u7D50\u679C #{idx}",
+    "table_label": "\u30C6\u30FC\u30D6\u30EB: {name}",
+    "query_result": "\u30AF\u30A8\u30EA\u7D50\u679C",
+    "msg_loading": "\u30C7\u30FC\u30BF\u3092\u8AAD\u307F\u8FBC\u307F\u4E2D...",
+    "msg_showing_limit": "\u6700\u521D\u306E {count} \u884C\u306E\u307F\u8868\u793A\u3057\u3066\u3044\u307E\u3059\u3002",
+    "msg_no_tables": "\u3053\u306E\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306B\u306F\u30C6\u30FC\u30D6\u30EB\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3002",
+    "tip_back": "\u30C6\u30FC\u30D6\u30EB\u4E00\u89A7\u306B\u623B\u308B"
+  },
+  "form": {
+    "title_insert": "{name} \u306B\u633F\u5165",
+    "btn_save": "\u30EC\u30B3\u30FC\u30C9\u4FDD\u5B58",
+    "btn_saving": "\u4FDD\u5B58\u4E2D...",
+    "btn_clear": "\u30AF\u30EA\u30A2",
+    "msg_success": "{name} \u3078\u306E\u4FDD\u5B58\u304C\u6210\u529F\u3057\u307E\u3057\u305F",
+    "msg_error": "\u30A8\u30E9\u30FC: {error}",
+    "msg_unexpected": "\u4E88\u671F\u3057\u306A\u3044\u30A8\u30E9\u30FC: {error}",
+    "notice_success": "{name} \u306B\u30EC\u30B3\u30FC\u30C9\u3092\u4FDD\u5B58\u3057\u307E\u3057\u305F",
+    "notice_error": "\u30EC\u30B3\u30FC\u30C9\u4FDD\u5B58\u30A8\u30E9\u30FC: {error}",
+    "err_invalid_table": "\u7121\u52B9\u306A\u30C6\u30FC\u30D6\u30EB\u540D",
+    "err_invalid_col": "\u7121\u52B9\u306A\u5217\u540D: {name}"
+  },
+  "pro": {
+    "label_from": "\u5DEE\u51FA\u4EBA:",
+    "label_to": "\u5B9B\u5148:",
+    "label_subject": "\u4EF6\u540D:",
+    "from_name": "SQL Notebook \u958B\u767A\u30C1\u30FC\u30E0 <dev@obsidian-sql.internal>",
+    "to_name": "\u89AA\u611B\u306A\u308B\u958B\u767A\u8005\u69D8",
+    "subject": "\u30D7\u30ED\u306E\u79D8\u8A23: \u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u30B3\u30F3\u30C6\u30AD\u30B9\u30C8\u306E\u30D9\u30B9\u30C8\u30D7\u30E9\u30AF\u30C6\u30A3\u30B9",
+    "hello": "\u3053\u3093\u306B\u3061\u306F\u3001",
+    "msg_1": "UI \u304B\u3089\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u5207\u308A\u66FF\u3048\u3066\u3044\u308B\u3088\u3046\u3067\u3059\u306D\u3002\u30AF\u30A4\u30C3\u30AF\u30CA\u30D3\u30B2\u30FC\u30B7\u30E7\u30F3\u306B\u306F\u6700\u9069\u3067\u3059\u304C\u3001\u30D7\u30ED\u304B\u3089\u306E\u30A2\u30C9\u30D0\u30A4\u30B9\u3067\u3059\u3002\u30B9\u30AF\u30EA\u30D7\u30C8\u5185\u3067\u660E\u793A\u7684\u306A `USE` \u30B3\u30DE\u30F3\u30C9\u3092\u4F7F\u7528\u3059\u308B\u3053\u3068\u3067\u3001\u30EF\u30FC\u30AF\u30D5\u30ED\u30FC\u304C\u3088\u308A\u5805\u7262\u306B\u306A\u308A\u307E\u3059\u3002",
+    "msg_quote": "\u30B3\u30F3\u30C6\u30AD\u30B9\u30C8\u3092\u660E\u793A\u7684\u306B\u5B9A\u7FA9\u3059\u308B\u3053\u3068\u306F\u3001\u7570\u306A\u308B\u74B0\u5883\u9593\u3067\u3082\u30B9\u30AF\u30EA\u30D7\u30C8\u306E\u79FB\u690D\u6027\u3068\u660E\u78BA\u3055\u3092\u78BA\u4FDD\u3059\u308B\u305F\u3081\u306E\u30D9\u30B9\u30C8\u30D7\u30E9\u30AF\u30C6\u30A3\u30B9\u3067\u3059\u3002",
+    "msg_2": "\u30B3\u30FC\u30C9\u5185\u3067\u30B3\u30F3\u30C6\u30AD\u30B9\u30C8\u3092\u5B9A\u7FA9\u3059\u308B\u3053\u3068\u3067\u6DF7\u4E71\u3092\u907F\u3051\u3001\u4F5C\u696D\u3092\u78BA\u8A8D\u3059\u308B\u8AB0\u306B\u3068\u3063\u3066\u3082\u610F\u56F3\u3092\u660E\u78BA\u306B\u3067\u304D\u307E\u3059\u3002\u3082\u3061\u308D\u3093\u3001\u4FBF\u5229\u306A\u30B0\u30ED\u30FC\u30D0\u30EB\u30B9\u30A4\u30C3\u30C1\u3082\u5F15\u304D\u7D9A\u304D\u3054\u5229\u7528\u3044\u305F\u3060\u3051\u307E\u3059\uFF01",
+    "punchline": "\u5FEB\u9069\u306A\u30AF\u30A8\u30EA\u30E9\u30A4\u30D5\u3092\uFF01 \u{1F680}",
+    "signature_regards": "\u656C\u5177",
+    "signature_team": "SQL Notebook \u958B\u767A\u30C1\u30FC\u30E0",
+    "btn_read": "\u65E2\u8AAD\u306B\u3059\u308B"
+  },
+  "footer": {
+    "tip_help": "\u30D8\u30EB\u30D7\u3068\u6A5F\u80FD",
+    "status_ready": "\u6E96\u5099\u5B8C\u4E86",
+    "status_error": "\u30A8\u30E9\u30FC",
+    "status_aborted": "\u4E2D\u65AD",
+    "status_live": "\u30E9\u30A4\u30D6"
+  },
+  "common": {
+    "error": "\u30A8\u30E9\u30FC: {error}",
+    "invalid_name": "\u65B0\u3057\u3044\u540D\u524D\u306F\u5143\u306E\u540D\u524D\u3068\u7570\u306A\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059\u3002",
+    "notice_export_success": "{name} \u306B\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8\u3057\u307E\u3057\u305F",
+    "notice_import_loading": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u30A4\u30F3\u30DD\u30FC\u30C8\u4E2D...",
+    "notice_import_success": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u30A4\u30F3\u30DD\u30FC\u30C8\u306B\u6210\u529F\u3057\u307E\u3057\u305F\uFF01",
+    "notice_anchor_form": "FORM \u3092 {name} \u306B\u56FA\u5B9A\u3057\u307E\u3057\u305F",
+    "notice_anchor_live": "LIVE \u30D6\u30ED\u30C3\u30AF\u3092 {name} \u306B\u56FA\u5B9A\u3057\u307E\u3057\u305F",
+    "notice_update_live": "{name} \u304B\u3089 LIVE \u30C7\u30FC\u30BF\u3092\u66F4\u65B0\u4E2D..."
+  }
+};
+
+// src/locales/ko.ts
+var ko_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uAD00\uB9AC\uC790",
+    "btn_atualizar": "\uC5C5\uB370\uC774\uD2B8",
+    "btn_importar": "\uAC00\uC838\uC624\uAE30",
+    "btn_novo_db": "\uC0C8 \uB370\uC774\uD130\uBCA0\uC774\uC2A4",
+    "welcome_title": "SQL Notebook\uC5D0 \uC624\uC2E0 \uAC83\uC744 \uD658\uC601\uD569\uB2C8\uB2E4!",
+    "welcome_desc": "Obsidian\uC5D0\uC11C \uC9C1\uC811 \uB85C\uCEEC \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uAD00\uB9AC\uD558\uACE0, \uCFFC\uB9AC\uB97C \uC2E4\uD589\uD558\uBA70, \uACB0\uACFC\uB97C \uC2DC\uAC01\uD654\uD558\uC138\uC694.",
+    "search_placeholder": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uAC80\uC0C9...",
+    "info_title": "\uC911\uC694 \uC815\uBCF4:",
+    "info_li_1": "<b>\uD65C\uC131</b> \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uC0AD\uC81C\uD558\uAC70\uB098 \uC774\uB984\uC744 \uBC14\uAFB8\uB824\uBA74 \uBA3C\uC800 \uB2E4\uB978 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB85C \uC804\uD658\uD558\uC138\uC694.",
+    "info_li_2": '\uC2DC\uC2A4\uD15C \uB370\uC774\uD130\uBCA0\uC774\uC2A4 <b>"dbo"</b>\uB294 \uC774\uB984\uC744 \uBC14\uAFB8\uAC70\uB098 \uC0AD\uC81C\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.',
+    "info_li_3": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 <b>\uC774\uB984\uC744 \uBCC0\uACBD</b>\uD558\uBA74 \uB0B4\uBD80 \uCC38\uC870\uAC00 \uC790\uB3D9\uC73C\uB85C \uC5C5\uB370\uC774\uD2B8\uB429\uB2C8\uB2E4.",
+    "section_general": "\uAE30\uBCF8 \uC124\uC815",
+    "section_appearance": "\uBAA8\uC591",
+    "section_data_security": "\uB370\uC774\uD130 \uBC0F \uBCF4\uC548",
+    "lang_name": "\uC5B8\uC5B4",
+    "lang_desc": "\uC778\uD130\uD398\uC774\uC2A4 \uC5B8\uC5B4\uB97C \uC120\uD0DD\uD558\uC138\uC694.",
+    "accent_obsidian": "Obsidian \uAC15\uC870 \uC0C9\uC0C1 \uC0AC\uC6A9",
+    "accent_obsidian_desc": "\uC0AC\uC6A9\uC790 \uC815\uC758 \uC0C9\uC0C1 \uB300\uC2E0 \uC804\uC5ED Obsidian \uAC15\uC870 \uC0C9\uC0C1\uC744 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.",
+    "theme_accent": "\uD14C\uB9C8 \uAC15\uC870 \uC0C9\uC0C1",
+    "theme_accent_desc": "\uC8FC\uC694 \uAC15\uC870 \uC0C9\uC0C1\uC744 \uC120\uD0DD\uD558\uC138\uC694.",
+    "auto_save": "\uC790\uB3D9 \uC800\uC7A5",
+    "auto_save_desc": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uBCC0\uACBD \uC0AC\uD56D\uC744 \uC790\uB3D9\uC73C\uB85C \uC800\uC7A5\uD569\uB2C8\uB2E4.",
+    "auto_save_delay": "\uC790\uB3D9 \uC800\uC7A5 \uC9C0\uC5F0",
+    "auto_save_delay_desc": "\uC790\uB3D9 \uC800\uC7A5\uC744 \uC2DC\uC791\uD558\uAE30 \uC804 \uB300\uAE30\uD560 \uBC00\uB9AC\uCD08\uC785\uB2C8\uB2E4.",
+    "export_folder": "\uB0B4\uBCF4\uB0B4\uAE30 \uD3F4\uB354",
+    "export_folder_desc": "CSV \uB0B4\uBCF4\uB0B4\uAE30\uB97C \uC704\uD55C \uAE30\uBCF8 \uD3F4\uB354\uC785\uB2C8\uB2E4.",
+    "safe_mode": "\uC548\uC804 \uBAA8\uB4DC",
+    "safe_mode_desc": "\uC704\uD5D8\uD55C \uBA85\uB839(DROP, ALTER)\uC744 \uCC28\uB2E8\uD558\uACE0 \uC81C\uD55C\uC744 \uC801\uC6A9\uD569\uB2C8\uB2E4.",
+    "enable_logging": "\uB514\uBC84\uADF8 \uB85C\uAE45 \uD65C\uC131\uD654",
+    "enable_logging_desc": "\uAC1C\uBC1C\uC790 \uCF58\uC194(Ctrl+Shift+I)\uC5D0 \uC790\uC138\uD55C \uB85C\uADF8\uB97C \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uB3D9\uAE30\uD654 \uB514\uBC84\uAE45\uC5D0 \uC720\uC6A9\uD569\uB2C8\uB2E4.",
+    "snapshot_limit": "\uC2A4\uB0C5\uC0F7 \uD589 \uC81C\uD55C",
+    "snapshot_limit_desc": "\uC800\uC7A5\uD560 \uD14C\uC774\uBE14\uB2F9 \uCD5C\uB300 \uD589 \uC218\uC785\uB2C8\uB2E4(\uBA54\uBAA8\uB9AC \uBB38\uC81C \uBC29\uC9C0).",
+    "batch_size": "\uBC30\uCE58 \uD06C\uAE30",
+    "batch_size_desc": "\uACB0\uACFC \uD398\uC774\uC9C0\uB2F9 \uD45C\uC2DC\uD560 \uD589 \uC218\uC785\uB2C8\uB2E4.",
+    "reset_all": "\uBAA8\uB4E0 \uB370\uC774\uD130 \uCD08\uAE30\uD654",
+    "reset_btn": "\uBAA8\uB4E0 \uD56D\uBAA9 \uCD08\uAE30\uD654",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "SQL Notebook \uAE30\uB2A5",
+    "collapsible_title": "\uC811\uC774\uC2DD \uC6CC\uD06C\uBCA4\uCE58",
+    "collapsible_desc": "\uC6CC\uD06C\uBCA4\uCE58 \uBCF4\uAE30\uB97C \uC804\uD658\uD558\uC5EC \uACF5\uAC04\uC744 \uC808\uC57D\uD558\uC138\uC694. \uD5E4\uB354\uB098 \uC170\uBE0C\uB860 \uC544\uC774\uCF58\uC744 \uD074\uB9AD\uD558\uC138\uC694.",
+    "auto_collapse_title": "\uC790\uB3D9 \uC811\uAE30",
+    "auto_collapse_desc": "\uC8FC\uC11D\uC744 '@'\uB85C \uC2DC\uC791\uD558\uBA74(\uC608: '-- @ My Query') \uB178\uD2B8\uB97C \uC5F4 \uB54C \uC6CC\uD06C\uBCA4\uCE58\uAC00 \uC790\uB3D9\uC73C\uB85C \uC811\uD799\uB2C8\uB2E4.",
+    "alert_title": "\uACBD\uACE0 \uD45C\uC2DC (!)",
+    "alert_desc": "\uC8FC\uC11D \uC2DC\uC791 \uBD80\uBD84\uC5D0 '!'\uB97C \uCD94\uAC00\uD558\uC5EC \uACBD\uACE0\uB098 \uC8FC\uC758 \uC0AC\uD56D\uC73C\uB85C \uAC15\uC870\uD558\uC138\uC694.",
+    "question_title": "\uC9C8\uBB38 \uD45C\uC2DC (?)",
+    "question_desc": "\uAC80\uD1A0\uAC00 \uD544\uC694\uD558\uAC70\uB098 \uC2E4\uD5D8\uC801\uC778 \uCFFC\uB9AC\uC784\uC744 \uB098\uD0C0\uB0B4\uB824\uBA74 '?'\uB97C \uCD94\uAC00\uD558\uC138\uC694.",
+    "favorite_title": "\uC990\uACA8\uCC3E\uAE30 \uD45C\uC2DC (*)",
+    "favorite_desc": "\uC911\uC694\uD558\uAC70\uB098 \uC790\uC8FC \uC0AC\uC6A9\uD558\uB294 \uCFFC\uB9AC\uB97C \uAC15\uC870\uD558\uB824\uBA74 '*'\uB97C \uCD94\uAC00\uD558\uC138\uC694.",
+    "copy_edit_title": "\uBCF5\uC0AC \uBC0F \uD3B8\uC9D1",
+    "copy_edit_desc": "\uC6CC\uD06C\uBCA4\uCE58 \uC704\uC5D0 \uB9C8\uC6B0\uC2A4\uB97C \uC62C\uB824 \uCF54\uB4DC \uBCF5\uC0AC \uBC0F \uBE14\uB85D \uD3B8\uC9D1 \uBC84\uD2BC\uC744 \uC0AC\uC6A9\uD558\uC138\uC694."
+  },
+  "modals": {
+    "confirm_delete_title": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC0AD\uC81C",
+    "confirm_delete_msg": '"{dbName}" \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uC0AD\uC81C\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C? \uC774 \uC791\uC5C5\uC740 \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC73C\uBA70 \uBAA8\uB4E0 \uD14C\uC774\uBE14\uACFC \uB370\uC774\uD130\uAC00 \uC720\uC2E4\uB429\uB2C8\uB2E4.',
+    "confirm_clear_title": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uBE44\uC6B0\uAE30",
+    "confirm_clear_msg": '"{dbName}"\uC758 \uBAA8\uB4E0 \uD14C\uC774\uBE14 \uB370\uC774\uD130\uB97C \uBE44\uC6B0\uC2DC\uACA0\uC2B5\uB2C8\uAE4C? \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB294 \uC720\uC9C0\uB418\uC9C0\uB9CC \uB370\uC774\uD130\uB294 \uBAA8\uB450 \uC0AD\uC81C\uB429\uB2C8\uB2E4.',
+    "btn_cancel": "\uCDE8\uC18C",
+    "btn_confirm": "\uD655\uC778",
+    "btn_delete": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC0AD\uC81C",
+    "btn_clear": "\uBAA8\uB4E0 \uB370\uC774\uD130 \uC9C0\uC6B0\uAE30",
+    "btn_ativar": "\uD65C\uC131\uD654",
+    "btn_duplicar": "\uBCF5\uC81C",
+    "btn_renomear": "\uC774\uB984 \uBCC0\uACBD",
+    "btn_tabelas": "\uD14C\uC774\uBE14",
+    "btn_exportar": "\uB0B4\uBCF4\uB0B4\uAE30",
+    "btn_deletar": "\uC0AD\uC81C",
+    "badge_ativo": "\uD65C\uC131",
+    "badge_system": "\uC2DC\uC2A4\uD15C",
+    "stat_tables": "\uD14C\uC774\uBE14",
+    "stat_rows": "\uD589",
+    "stat_size": "\uD06C\uAE30",
+    "stat_updated": "\uC5C5\uB370\uC774\uD2B8\uB428",
+    "time_just_now": "\uBC29\uAE08 \uC804",
+    "time_ago": "{time} \uC804",
+    "time_never": "\uC5C6\uC74C",
+    "switch_title": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC804\uD658",
+    "no_user_dbs": "\uC0AC\uC6A9\uC790 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+    "tip_system_db": "\uC2DC\uC2A4\uD15C \uAE30\uBCF8 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uC785\uB2C8\uB2E4. \uC0AD\uC81C\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+    "tip_protected_db": "\uC774 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uC0AD\uC81C\uD558\uB824\uBA74 \uBA3C\uC800 \uB2E4\uB978 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB85C \uC804\uD658\uD558\uC138\uC694.",
+    "rename_title": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC774\uB984 \uBCC0\uACBD: {name}",
+    "rename_placeholder": "\uC0C8 \uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC774\uB984...",
+    "create_title": "\uC0C8 \uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC0DD\uC131",
+    "create_placeholder": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC774\uB984 (\uC608: my_project)",
+    "duplicate_title": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uBCF5\uC81C: {name}",
+    "notice_create_empty": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC774\uB984\uC740 \uBE44\uC6CC\uB458 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+    "notice_rename_success": '\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC774\uB984\uC744 "{name}"(\uC73C)\uB85C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.',
+    "notice_create_success": '"{name}" \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uAC00 \uC0DD\uC131\uB418\uC5C8\uC2B5\uB2C8\uB2E4.',
+    "notice_duplicate_success": '\uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C "{name}"(\uC73C)\uB85C \uBCF5\uC81C\uD588\uC2B5\uB2C8\uB2E4.',
+    "notice_delete_success": '"{name}" \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uAC00 \uC0AD\uC81C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.',
+    "notice_switch_success": '"{name}"(\uC73C)\uB85C \uC804\uD658\uD588\uC2B5\uB2C8\uB2E4.',
+    "tables_title": '"{name}"\uC758 \uD14C\uC774\uBE14',
+    "null_value": "NULL",
+    "status_error": "\uC624\uB958",
+    "status_done": "\uC644\uB8CC",
+    "notice_table_data_copied": "\uD14C\uC774\uBE14 \uB370\uC774\uD130\uB97C \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4!",
+    "notice_copy_failed": "\uBCF5\uC0AC \uC2E4\uD328: {error}",
+    "notice_screenshot_failed": "\uC2A4\uD06C\uB9B0\uC0F7 \uC0DD\uC131\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4: {error}",
+    "notice_no_active_note": "\uD65C\uC131 \uB178\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+    "notice_table_inserted": "\uB178\uD2B8\uC5D0 \uD14C\uC774\uBE14\uC744 \uC0BD\uC785\uD588\uC2B5\uB2C8\uB2E4!",
+    "notice_insert_failed": "\uC0BD\uC785 \uC2E4\uD328: {error}"
+  },
+  "workbench": {
+    "btn_run": "\uC2E4\uD589",
+    "btn_executing": "\uC2E4\uD589 \uC911...",
+    "btn_cancel": "\uCDE8\uC18C",
+    "notice_copy": "SQL \uCF54\uB4DC\uB97C \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4!",
+    "notice_aborted": "\uC0AC\uC6A9\uC790\uC5D0 \uC758\uD574 \uCFFC\uB9AC\uAC00 \uC911\uB2E8\uB428"
+  },
+  "renderer": {
+    "btn_copy": "\uBCF5\uC0AC",
+    "btn_screenshot": "\uC2A4\uB0C5\uC0F7",
+    "btn_add_note": "\uB178\uD2B8\uC5D0 \uCD94\uAC00",
+    "tip_copy": "\uACB0\uACFC\uB97C \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC",
+    "tip_screenshot": "\uACB0\uACFC \uC2A4\uD06C\uB9B0\uC0F7 \uCC0D\uAE30",
+    "tip_add_note": "\uACB0\uACFC\uB97C \uB178\uD2B8\uC5D0 \uC0BD\uC785",
+    "notice_copied": "\u2713 \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4!",
+    "notice_copy_failed": "\u274C \uBCF5\uC0AC \uC2E4\uD328: {error}",
+    "notice_screenshot_failed": "\u274C \uC2A4\uD06C\uB9B0\uC0F7 \uC0DD\uC131 \uC2E4\uD328: {error}",
+    "notice_screenshot_copied": "\u2713 \uC2A4\uD06C\uB9B0\uC0F7\uC774 \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4!",
+    "notice_screenshot_downloaded": "\u2713 \uC2A4\uD06C\uB9B0\uC0F7\uC744 \uB2E4\uC6B4\uB85C\uB4DC\uD588\uC2B5\uB2C8\uB2E4!",
+    "notice_insert_no_note": "\u274C \uD65C\uC131 \uB178\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+    "notice_insert_success": "\u2713 \uACB0\uACFC\uB97C \uB178\uD2B8\uC5D0 \uC0BD\uC785\uD588\uC2B5\uB2C8\uB2E4!",
+    "notice_insert_failed": "\u274C \uC0BD\uC785 \uC2E4\uD328: {error}",
+    "msg_no_result": "\uCFFC\uB9AC\uAC00 \uC131\uACF5\uC801\uC73C\uB85C \uC2E4\uD589\uB418\uC5C8\uC2B5\uB2C8\uB2E4(\uACB0\uACFC \uC5C6\uC74C)",
+    "msg_rows_found": "{count}\uAC1C\uC758 \uD589\uC744 \uBC1C\uACAC\uD588\uC2B5\uB2C8\uB2E4",
+    "msg_no_data": "\uB370\uC774\uD130\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+    "msg_showing_rows": "{total}\uD589 \uC911 {count}\uD589 \uD45C\uC2DC \uC911",
+    "msg_showing_all": "\uC804\uCCB4 {count}\uD589 \uD45C\uC2DC \uC911",
+    "btn_show_all": "\uBAA8\uB4E0 \uD589 \uD45C\uC2DC",
+    "err_title": "\uC2E4\uD589 \uC624\uB958",
+    "result_label": "\uACB0\uACFC #{idx}",
+    "table_label": "\uD14C\uC774\uBE14: {name}",
+    "query_result": "\uCFFC\uB9AC \uACB0\uACFC",
+    "msg_loading": "\uB370\uC774\uD130 \uB85C\uB4DC \uC911...",
+    "msg_showing_limit": "\uCC98\uC74C {count}\uD589\uB9CC \uD45C\uC2DC\uB429\uB2C8\uB2E4.",
+    "msg_no_tables": "\uC774 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uC5D0\uC11C \uD14C\uC774\uBE14\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+    "tip_back": "\uD14C\uC774\uBE14 \uBAA9\uB85D\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30"
+  },
+  "form": {
+    "title_insert": "{name}\uC5D0 \uC0BD\uC785",
+    "btn_save": "\uB808\uCF54\uB4DC \uC800\uC7A5",
+    "btn_saving": "\uC800\uC7A5 \uC911...",
+    "btn_clear": "\uC9C0\uC6B0\uAE30",
+    "msg_success": "{name}\uC5D0 \uC131\uACF5\uC801\uC73C\uB85C \uC800\uC7A5\uB418\uC5C8\uC2B5\uB2C8\uB2E4",
+    "msg_error": "\uC624\uB958: {error}",
+    "msg_unexpected": "\uC608\uAE30\uCE58 \uC54A\uC740 \uC624\uB958: {error}",
+    "notice_success": "{name}\uC5D0 \uB808\uCF54\uB4DC\uB97C \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4",
+    "notice_error": "\uB808\uCF54\uB4DC \uC800\uC7A5 \uC624\uB958: {error}",
+    "err_invalid_table": "\uC720\uD6A8\uD558\uC9C0 \uC54A\uC740 \uD14C\uC774\uBE14 \uC774\uB984",
+    "err_invalid_col": "\uC720\uD6A8\uD558\uC9C0 \uC54A\uC740 \uCEEC\uB7FC \uC774\uB984: {name}"
+  },
+  "pro": {
+    "label_from": "\uBCF4\uB0B4\uB294 \uC0AC\uB78C:",
+    "label_to": "\uBC1B\uB294 \uC0AC\uB78C:",
+    "label_subject": "\uC81C\uBAA9:",
+    "from_name": "SQL Notebook \uAC1C\uBC1C \uD300 <dev@obsidian-sql.internal>",
+    "to_name": "\uC874\uACBD\uD558\uB294 \uAC1C\uBC1C\uC790\uB2D8",
+    "subject": "Pro Practice \uC54C\uB9BC: \uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uCEE8\uD14D\uC2A4\uD2B8 \uBAA8\uBC94 \uC0AC\uB840",
+    "hello": "\uC548\uB155\uD558\uC138\uC694,",
+    "msg_1": "UI\uB97C \uD1B5\uD574 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uC804\uD658\uD558\uACE0 \uACC4\uC2DC\uB124\uC694. \uBE60\uB978 \uD0D0\uC0C9\uC5D0\uB294 \uC88B\uC9C0\uB9CC, \uD55C \uAC00\uC9C0 \uD301\uC744 \uB4DC\uB9AC\uC790\uBA74 \uC2A4\uD06C\uB9BD\uD2B8\uC5D0\uC11C \uBA85\uC2DC\uC801\uC778 `USE` \uBA85\uB839\uC744 \uC0AC\uC6A9\uD558\uB294 \uAC83\uC774 \uC6CC\uD06C\uD50C\uB85C\uC6B0\uB97C \uB354\uC6B1 \uACAC\uACE0\uD558\uAC8C \uB9CC\uB4E4\uC5B4 \uC90D\uB2C8\uB2E4.",
+    "msg_quote": "\uCEE8\uD14D\uC2A4\uD2B8\uB97C \uBA85\uC2DC\uC801\uC73C\uB85C \uC815\uC758\uD558\uB294 \uAC83\uC740 \uC2A4\uD06C\uB9BD\uD2B8\uC758 \uC774\uC2DD\uC131\uACFC \uBA85\uD655\uC131\uC744 \uBCF4\uC7A5\uD558\uB294 \uBAA8\uBC94 \uC0AC\uB840\uC785\uB2C8\uB2E4.",
+    "msg_2": "\uCF54\uB4DC \uB0B4\uC5D0\uC11C \uCEE8\uD14D\uC2A4\uD2B8\uB97C \uC815\uC758\uD558\uBA74 \uD63C\uB780\uC744 \uBC29\uC9C0\uD558\uACE0 \uCF54\uB4DC \uB9AC\uBDF0 \uC2DC \uC758\uB3C4\uB97C \uBA85\uD655\uD788 \uC804\uB2EC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uBB3C\uB860 \uD3B8\uB9AC\uD55C \uC804\uC5ED \uC804\uD658\uAE30\uB3C4 \uACC4\uC18D \uC0AC\uC6A9\uD558\uC2E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4!",
+    "punchline": "\uC990\uAC70\uC6B4 \uCFFC\uB9AC \uB418\uC138\uC694! \u{1F680}",
+    "signature_regards": "\uAC10\uC0AC\uD569\uB2C8\uB2E4.",
+    "signature_team": "SQL Notebook \uAC1C\uBC1C \uD300",
+    "btn_read": "\uC77D\uC74C\uC73C\uB85C \uD45C\uC2DC"
+  },
+  "footer": {
+    "tip_help": "\uB3C4\uC6C0\uB9D0 \uBC0F \uAE30\uB2A5",
+    "status_ready": "\uC900\uBE44\uB428",
+    "status_error": "\uC624\uB958",
+    "status_aborted": "\uC911\uB2E8\uB428",
+    "status_live": "\uC2E4\uC2DC\uAC04"
+  },
+  "common": {
+    "error": "\uC624\uB958: {error}",
+    "invalid_name": "\uC0C8 \uC774\uB984\uC740 \uAE30\uC874 \uC774\uB984\uACFC \uB2EC\uB77C\uC57C \uD569\uB2C8\uB2E4.",
+    "notice_export_success": "{name}(\uC73C)\uB85C \uB0B4\uBCF4\uB0C8\uC2B5\uB2C8\uB2E4",
+    "notice_import_loading": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uAC00\uC838\uC624\uB294 \uC911...",
+    "notice_import_success": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uAC00\uC838\uC624\uAE30\uC5D0 \uC131\uACF5\uD588\uC2B5\uB2C8\uB2E4!",
+    "notice_anchor_form": "FORM\uC744 {name}\uC5D0 \uACE0\uC815\uD588\uC2B5\uB2C8\uB2E4",
+    "notice_anchor_live": "LIVE \uBE14\uB85D\uC744 {name}\uC5D0 \uACE0\uC815\uD588\uC2B5\uB2C8\uB2E4",
+    "notice_update_live": "{name}\uC5D0\uC11C \uC2E4\uC2DC\uAC04 \uB370\uC774\uD130\uB97C \uC5C5\uB370\uC774\uD2B8\uD558\uB294 \uC911..."
+  }
+};
+
+// src/utils/i18n.ts
+var locales = {
+  "en": en_default,
+  "pt-BR": pt_BR_default,
+  "zh": zh_default,
+  "es": es_default,
+  "de": de_default,
+  "fr": fr_default,
+  "ja": ja_default,
+  "ko": ko_default
+};
+var currentLanguage = "en";
+function resolveLanguage(lang) {
+  if (lang !== "auto") return lang;
+  const obsidianLang = (window.localStorage.getItem("language") || "en").toLowerCase();
+  if (obsidianLang.startsWith("pt")) return "pt-BR";
+  if (obsidianLang.startsWith("zh")) return "zh";
+  if (obsidianLang.startsWith("es")) return "es";
+  if (obsidianLang.startsWith("de")) return "de";
+  if (obsidianLang.startsWith("fr")) return "fr";
+  if (obsidianLang.startsWith("ja")) return "ja";
+  if (obsidianLang.startsWith("ko")) return "ko";
+  return "en";
+}
+function setLanguage(lang) {
+  currentLanguage = lang;
+}
+function t(keyPath, vars) {
+  const keys = keyPath.split(".");
+  const resolvedLang = resolveLanguage(currentLanguage);
+  let value = locales[resolvedLang];
+  for (const key of keys) {
+    if (!value || typeof value !== "object") {
+      value = locales["en"];
+      for (const fallbackKey of keys) {
+        if (!value) break;
+        value = value[fallbackKey];
+      }
+      break;
+    }
+    value = value[key];
+  }
+  if (typeof value !== "string") {
+    return keyPath;
+  }
+  if (vars) {
+    let interpolated = value;
+    for (const [varName, varValue] of Object.entries(vars)) {
+      const sanitizedValue = String(varValue).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      interpolated = interpolated.replace(new RegExp(`{${varName}}`, "g"), sanitizedValue);
+    }
+    return interpolated;
+  }
+  return value;
+}
+
+// src/ui/FormRenderer.ts
 var FormRenderer = class {
   static render(data, container, app, plugin) {
     const formWrapper = container.createDiv({ cls: "mysql-form-wrapper" });
     const header = formWrapper.createDiv({ cls: "mysql-form-header" });
     (0, import_obsidian3.setIcon)(header, "file-edit");
-    header.createSpan({ text: `Insert into ${data.baseTableName}`, cls: "mysql-form-title" });
+    header.createSpan({ text: t("form.title_insert", { name: data.baseTableName }), cls: "mysql-form-title" });
     const form = formWrapper.createEl("form", { cls: "mysql-form" });
     const fieldInputs = {};
     data.fields.forEach((field) => {
@@ -64874,8 +66500,8 @@ var FormRenderer = class {
     const footer = formWrapper.createDiv({ cls: "mysql-form-footer" });
     const submitBtn = footer.createEl("button", { cls: "mysql-btn mysql-form-submit-btn", type: "button" });
     (0, import_obsidian3.setIcon)(submitBtn, "save");
-    submitBtn.createSpan({ text: "Save Record" });
-    const clearBtn = footer.createEl("button", { cls: "mysql-btn", type: "button", text: "Clear" });
+    submitBtn.createSpan({ text: t("form.btn_save") });
+    const clearBtn = footer.createEl("button", { cls: "mysql-btn", type: "button", text: t("form.btn_clear") });
     submitBtn.onclick = async () => {
       if (!form.checkValidity()) {
         form.reportValidity();
@@ -64891,11 +66517,17 @@ var FormRenderer = class {
   static async handleSave(data, inputs, btn, statusMsg, form, plugin) {
     btn.disabled = true;
     const originalText = btn.innerText;
-    btn.innerText = "Saving...";
+    btn.innerText = t("form.btn_saving");
     statusMsg.style.display = "none";
     try {
+      if (!SQLSanitizer.validateIdentifier(data.tableName.split(".").pop())) {
+        throw new Error(t("form.err_invalid_table"));
+      }
       const values = {};
       for (const [name, input] of Object.entries(inputs)) {
+        if (!SQLSanitizer.validateIdentifier(name)) {
+          throw new Error(t("form.err_invalid_col", { name }));
+        }
         if (input instanceof HTMLInputElement && input.type === "checkbox") {
           values[name] = input.checked ? 1 : 0;
         } else if (input instanceof HTMLInputElement && input.type === "number") {
@@ -64918,33 +66550,33 @@ var FormRenderer = class {
         const iconWrapper = statusMsg.createDiv({ cls: "mysql-success-icon" });
         (0, import_obsidian3.setIcon)(iconWrapper, "check-circle");
         statusMsg.createDiv({
-          text: `Saved successfully to ${data.baseTableName}`,
+          text: t("form.msg_success", { name: data.baseTableName }),
           cls: "mysql-success"
         });
         statusMsg.style.display = "flex";
         form.reset();
-        new import_obsidian3.Notice(`Record saved to ${data.baseTableName}`);
+        new import_obsidian3.Notice(t("form.notice_success", { name: data.baseTableName }));
       } else {
         statusMsg.empty();
         statusMsg.className = "mysql-error-inline mysql-msg-compact error";
         const iconWrapper = statusMsg.createDiv({ cls: "mysql-error-icon" });
         (0, import_obsidian3.setIcon)(iconWrapper, "alert-circle");
-        statusMsg.createSpan({ text: `Error: ${result.error}` });
+        statusMsg.createSpan({ text: t("form.msg_error", { error: result.error || "" }) });
         statusMsg.style.display = "flex";
-        new import_obsidian3.Notice(`Error saving record: ${result.error}`);
+        new import_obsidian3.Notice(t("form.notice_error", { error: result.error || "" }));
       }
     } catch (e) {
       statusMsg.empty();
       statusMsg.className = "mysql-error-inline mysql-msg-compact error";
       const iconWrapper = statusMsg.createDiv({ cls: "mysql-error-icon" });
       (0, import_obsidian3.setIcon)(iconWrapper, "alert-circle");
-      statusMsg.createSpan({ text: `Unexpected Error: ${e.message}` });
+      statusMsg.createSpan({ text: t("form.msg_unexpected", { error: e.message }) });
       statusMsg.style.display = "flex";
     } finally {
       btn.disabled = false;
       btn.innerHTML = "";
       (0, import_obsidian3.setIcon)(btn, "save");
-      btn.createSpan({ text: "Save Record" });
+      btn.createSpan({ text: t("form.btn_save") });
     }
   }
 };
@@ -64954,7 +66586,7 @@ var ResultRenderer = class {
   static render(result, container, app, plugin, tableName, isLive = false) {
     container.empty();
     if (!result.success) {
-      this.renderError(result.error || "Unknown error", container);
+      this.renderError(result.error || t("modals.badge_system"), container);
       return;
     }
     const data = result.data || [];
@@ -64964,24 +66596,24 @@ var ResultRenderer = class {
   static addActionButtons(container, data, resultWrapper, app, plugin, tableName) {
     const copyBtn = container.createEl("button", {
       cls: "mysql-action-btn",
-      attr: { title: "Copy result to clipboard" }
+      attr: { title: t("renderer.tip_copy") }
     });
     (0, import_obsidian4.setIcon)(copyBtn, "copy");
-    copyBtn.createSpan({ text: "Copy" });
+    copyBtn.createSpan({ text: t("renderer.btn_copy") });
     copyBtn.onclick = () => this.copyToClipboard(data);
     const screenshotBtn = container.createEl("button", {
       cls: "mysql-action-btn",
-      attr: { title: "Take screenshot of result" }
+      attr: { title: t("renderer.tip_screenshot") }
     });
     (0, import_obsidian4.setIcon)(screenshotBtn, "camera");
-    screenshotBtn.createSpan({ text: "Screenshot" });
+    screenshotBtn.createSpan({ text: t("renderer.btn_screenshot") });
     screenshotBtn.onclick = () => this.takeScreenshot(resultWrapper);
     const insertBtn = container.createEl("button", {
       cls: "mysql-action-btn",
-      attr: { title: "Insert result into note" }
+      attr: { title: t("renderer.tip_add_note") }
     });
     (0, import_obsidian4.setIcon)(insertBtn, "file-plus");
-    insertBtn.createSpan({ text: "Add to Note" });
+    insertBtn.createSpan({ text: t("renderer.btn_add_note") });
     insertBtn.onclick = () => this.insertIntoNote(data, app);
   }
   static async copyToClipboard(data) {
@@ -65003,9 +66635,9 @@ var ResultRenderer = class {
         textToCopy = JSON.stringify(data, null, 2);
       }
       await navigator.clipboard.writeText(textToCopy);
-      new import_obsidian4.Notice("\u2713 Copied to clipboard!");
+      new import_obsidian4.Notice(t("renderer.notice_copied"));
     } catch (error) {
-      new import_obsidian4.Notice("\u274C Failed to copy: " + error.message);
+      new import_obsidian4.Notice(t("renderer.notice_copy_failed", { error: error.message }));
     }
   }
   static async takeScreenshot(element) {
@@ -65017,14 +66649,14 @@ var ResultRenderer = class {
       });
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          new import_obsidian4.Notice("\u274C Failed to create screenshot");
+          new import_obsidian4.Notice(t("renderer.notice_screenshot_failed", { error: "Canvas blob failed" }));
           return;
         }
         try {
           await navigator.clipboard.write([
             new ClipboardItem({ "image/png": blob })
           ]);
-          new import_obsidian4.Notice("\u2713 Screenshot copied to clipboard!");
+          new import_obsidian4.Notice(t("renderer.notice_screenshot_copied"));
         } catch (clipboardError) {
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
@@ -65032,11 +66664,11 @@ var ResultRenderer = class {
           a.download = `mysql-result-${Date.now()}.png`;
           a.click();
           URL.revokeObjectURL(url);
-          new import_obsidian4.Notice("\u2713 Screenshot downloaded!");
+          new import_obsidian4.Notice(t("renderer.notice_screenshot_downloaded"));
         }
       });
     } catch (error) {
-      new import_obsidian4.Notice("\u274C Screenshot failed: " + error.message);
+      new import_obsidian4.Notice(t("renderer.notice_screenshot_failed", { error: error.message }));
       console.error("Screenshot error:", error);
     }
   }
@@ -65044,7 +66676,7 @@ var ResultRenderer = class {
     try {
       const activeView = app.workspace.getActiveViewOfType(import_obsidian4.MarkdownView);
       if (!activeView) {
-        new import_obsidian4.Notice("\u274C No active note found");
+        new import_obsidian4.Notice(t("renderer.notice_insert_no_note"));
         return;
       }
       const editor = activeView.editor;
@@ -65060,9 +66692,9 @@ var ResultRenderer = class {
       editor.replaceRange("\n" + textToInsert + "\n", cursor);
       const lines = textToInsert.split("\n").length;
       editor.setCursor({ line: cursor.line + lines + 1, ch: 0 });
-      new import_obsidian4.Notice("\u2713 Result inserted into note!");
+      new import_obsidian4.Notice(t("renderer.notice_insert_success"));
     } catch (error) {
-      new import_obsidian4.Notice("\u274C Failed to insert: " + error.message);
+      new import_obsidian4.Notice(t("renderer.notice_insert_failed", { error: error.message }));
     }
   }
   static dataToMarkdownTable(rows) {
@@ -65083,7 +66715,7 @@ var ResultRenderer = class {
   static renderData(results, container, app, plugin, tableName, isLive = false) {
     if (!Array.isArray(results) || results.length === 0) {
       container.createEl("p", {
-        text: "Query executed successfully (no result set)",
+        text: t("renderer.msg_no_result"),
         cls: "mysql-info"
       });
       return;
@@ -65095,7 +66727,7 @@ var ResultRenderer = class {
       const contentWrapper = rsWrapper.createDiv({ cls: "mysql-result-content" });
       const left = header.createDiv({ cls: "mysql-header-left" });
       (0, import_obsidian4.setIcon)(left, results.length > 1 ? "list" : "database");
-      const labelText = results.length > 1 ? `Result #${idx + 1}` : tableName ? `Table: ${tableName}` : "Query Result";
+      const labelText = results.length > 1 ? t("renderer.result_label", { idx: String(idx + 1) }) : tableName ? t("renderer.table_label", { name: tableName }) : t("renderer.query_result");
       left.createSpan({ text: labelText, cls: "mysql-result-label" });
       const right = header.createDiv({ cls: "mysql-header-right" });
       if (rs.type === "table" || rs.type === "scalar") {
@@ -65128,12 +66760,12 @@ var ResultRenderer = class {
           if (rs.type === "error") {
             const iconWrapper = msgWrapper.createDiv({ cls: "mysql-error-icon" });
             (0, import_obsidian4.setIcon)(iconWrapper, "alert-circle");
-            msgWrapper.createSpan({ text: rs.message || "Error" });
+            msgWrapper.createSpan({ text: rs.message || t("modals.status_error") });
           } else {
             const iconWrapper = msgWrapper.createDiv({ cls: isDML ? "mysql-success-icon" : "mysql-info-icon" });
             (0, import_obsidian4.setIcon)(iconWrapper, isDML ? "check-circle" : "info");
             msgWrapper.createDiv({
-              text: rs.message || "Done",
+              text: rs.message || t("modals.status_done"),
               cls: isDML ? "mysql-success" : "mysql-info-text"
             });
           }
@@ -65147,13 +66779,13 @@ var ResultRenderer = class {
         if (isLive) rowInfo.style.display = "none";
         const countIcon = rowInfo.createDiv({ cls: "mysql-count-icon" });
         (0, import_obsidian4.setIcon)(countIcon, "list-ordered");
-        rowInfo.createSpan({ text: `${rs.rowCount} rows found`, cls: "mysql-row-count-text" });
+        rowInfo.createSpan({ text: t("renderer.msg_rows_found", { count: String(rs.rowCount) }), cls: "mysql-row-count-text" });
       }
     });
   }
   static renderTable(rows, container, batchSize = 100) {
     if (!rows || rows.length === 0) {
-      container.createEl("p", { text: "No data found", cls: "mysql-empty-state" });
+      container.createEl("p", { text: t("renderer.msg_no_data"), cls: "mysql-empty-state" });
       return;
     }
     const keys = Object.keys(rows[0]);
@@ -65169,7 +66801,7 @@ var ResultRenderer = class {
         keys.forEach((key) => {
           const val = row[key];
           tr.createEl("td", {
-            text: val === null || val === void 0 ? "NULL" : String(val)
+            text: val === null || val === void 0 ? t("modals.null_value") : String(val)
           });
         });
       });
@@ -65180,18 +66812,18 @@ var ResultRenderer = class {
     if (rows.length > batchSize) {
       const controls = container.createEl("div", { cls: "mysql-pagination-controls" });
       const statusSpan = controls.createEl("span", {
-        text: `Showing ${currentCount} of ${rows.length} rows`,
+        text: t("renderer.msg_showing_rows", { count: String(currentCount), total: String(rows.length) }),
         cls: "mysql-pagination-status"
       });
       const showAllBtn = controls.createEl("button", {
-        text: "Show All Rows",
+        text: t("renderer.btn_show_all"),
         cls: "mysql-pagination-btn"
       });
       showAllBtn.onclick = () => {
         const remaining = rows.slice(currentCount);
         renderBatch(remaining);
         showAllBtn.remove();
-        statusSpan.setText(`Showing all ${rows.length} rows`);
+        statusSpan.setText(t("renderer.msg_showing_all", { count: String(rows.length) }));
       };
     }
   }
@@ -65200,7 +66832,7 @@ var ResultRenderer = class {
     const header = errorDiv.createDiv({ cls: "mysql-error-header" });
     const iconWrapper = header.createDiv({ cls: "mysql-error-icon" });
     (0, import_obsidian4.setIcon)(iconWrapper, "alert-circle");
-    header.createSpan({ text: "Execution Error", cls: "mysql-error-title" });
+    header.createSpan({ text: t("renderer.err_title"), cls: "mysql-error-title" });
     errorDiv.createDiv({ text: message, cls: "mysql-error-message" });
   }
 };
@@ -65274,11 +66906,11 @@ var DatabaseSwitcherModal = class extends import_obsidian7.Modal {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.addClass("mysql-switcher-modal");
-    contentEl.createEl("h2", { text: "Switch Database" });
+    contentEl.createEl("h2", { text: t("modals.switch_title") });
     const dbs = Object.keys(import_alasql4.default.databases).filter((db) => db !== "alasql");
     const list = contentEl.createDiv({ cls: "mysql-db-list" });
     if (dbs.length === 0) {
-      list.createDiv({ text: "No user databases found.", cls: "mysql-db-list-empty" });
+      list.createDiv({ text: t("modals.no_user_dbs"), cls: "mysql-db-list-empty" });
       return;
     }
     dbs.forEach((dbName) => {
@@ -65293,13 +66925,13 @@ var DatabaseSwitcherModal = class extends import_obsidian7.Modal {
       const info = infoArea.createDiv({ cls: "mysql-db-list-info" });
       info.createDiv({ text: dbName, cls: "mysql-db-list-name" });
       info.createDiv({
-        text: `${stats.tables} tables \u2022 ${stats.rows.toLocaleString()} rows`,
+        text: `${stats.tables} ${t("modals.stat_tables").toLowerCase()} \u2022 ${stats.rows.toLocaleString()} ${t("modals.stat_rows").toLowerCase()}`,
         cls: "mysql-db-list-meta"
       });
       if (isActive) {
-        const activeBadge = item.createDiv({ text: "ACTIVE", cls: "mysql-db-list-badge" });
+        const activeBadge = item.createDiv({ text: t("modals.badge_ativo"), cls: "mysql-db-list-badge" });
         activeBadge.style.marginLeft = "auto";
-        activeBadge.setAttribute("aria-label", "Switch to another database to delete this one.");
+        activeBadge.setAttribute("aria-label", t("modals.tip_protected_db"));
       } else {
         if (isProtected) {
           if (dbName === "dbo") {
@@ -65307,7 +66939,7 @@ var DatabaseSwitcherModal = class extends import_obsidian7.Modal {
             dboBadge.style.marginLeft = "auto";
             const lockIcon = dboBadge.createDiv({ cls: "mysql-table-icon" });
             (0, import_obsidian7.setIcon)(lockIcon, "lock");
-            lockIcon.setAttribute("aria-label", "System Default Database. Cannot be deleted.");
+            lockIcon.setAttribute("aria-label", t("modals.tip_system_db"));
             lockIcon.style.opacity = "0.5";
           }
         }
@@ -65320,7 +66952,7 @@ var DatabaseSwitcherModal = class extends import_obsidian7.Modal {
         actions.style.marginLeft = "auto";
         const deleteBtn = actions.createEl("button", {
           cls: "mysql-db-list-delete-btn",
-          attr: { "aria-label": "Delete Database" }
+          attr: { "aria-label": t("modals.btn_delete") }
         });
         (0, import_obsidian7.setIcon)(deleteBtn, "trash-2");
         deleteBtn.onclick = (e) => {
@@ -65335,29 +66967,29 @@ var DatabaseSwitcherModal = class extends import_obsidian7.Modal {
     await import_alasql4.default.promise(`USE ${dbName}`);
     this.plugin.activeDatabase = dbName;
     await dbManager.save();
-    new import_obsidian7.Notice(`Switched to "${dbName}"`);
+    new import_obsidian7.Notice(t("modals.notice_switch_success", { name: dbName }));
     this.onSelect();
     this.close();
   }
   confirmDelete(dbName) {
     new ConfirmationModal(
       this.app,
-      "Delete Database",
-      `Are you sure you want to delete "${dbName}"? This action cannot be undone.`,
+      t("modals.confirm_delete_title"),
+      t("modals.confirm_delete_msg", { dbName }),
       async (confirmed) => {
         if (confirmed) {
           try {
             const dbManager = this.plugin.dbManager;
             await dbManager.deleteDatabase(dbName);
-            new import_obsidian7.Notice(`Database "${dbName}" deleted.`);
+            new import_obsidian7.Notice(t("modals.notice_delete_success", { name: dbName }));
             this.onOpen();
           } catch (e) {
-            new import_obsidian7.Notice(`Error: ${e.message}`);
+            new import_obsidian7.Notice(t("common.error", { error: e.message }));
           }
         }
       },
-      "Delete",
-      "Cancel"
+      t("modals.btn_delete"),
+      t("modals.btn_cancel")
     ).open();
   }
   onClose() {
@@ -65375,14 +67007,14 @@ var RenameDatabaseModal = class extends import_obsidian7.Modal {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.addClass("mysql-rename-modal");
-    contentEl.createEl("h2", { text: `Rename Database: ${this.oldName}` });
-    const input = new import_obsidian7.TextComponent(contentEl).setPlaceholder("New database name...").setValue(this.oldName);
+    contentEl.createEl("h2", { text: t("modals.rename_title", { name: this.oldName }) });
+    const input = new import_obsidian7.TextComponent(contentEl).setPlaceholder(t("modals.rename_placeholder")).setValue(this.oldName);
     input.inputEl.addClass("mysql-rename-input");
     input.inputEl.style.width = "100%";
     input.inputEl.style.marginBottom = "20px";
     const buttons = contentEl.createDiv({ cls: "mysql-modal-footer" });
-    new import_obsidian7.ButtonComponent(buttons).setButtonText("Cancel").onClick(() => this.close());
-    const confirmBtn = new import_obsidian7.ButtonComponent(buttons).setButtonText("Rename").setCta().onClick(async () => {
+    new import_obsidian7.ButtonComponent(buttons).setButtonText(t("modals.btn_cancel")).onClick(() => this.close());
+    const confirmBtn = new import_obsidian7.ButtonComponent(buttons).setButtonText(t("modals.btn_renomear")).setCta().onClick(async () => {
       const newName = input.getValue().trim();
       if (!newName || newName === this.oldName) {
         this.close();
@@ -65391,11 +67023,11 @@ var RenameDatabaseModal = class extends import_obsidian7.Modal {
       try {
         const dbManager = this.plugin.dbManager;
         await dbManager.renameDatabase(this.oldName, newName);
-        new import_obsidian7.Notice(`Database renamed to "${newName}"`);
+        new import_obsidian7.Notice(t("modals.notice_rename_success", { name: newName }));
         this.onSuccess();
         this.close();
       } catch (e) {
-        new import_obsidian7.Notice(`Error: ${e.message}`);
+        new import_obsidian7.Notice(t("common.error", { error: e.message }));
       }
     });
   }
@@ -65413,29 +67045,29 @@ var CreateDatabaseModal = class extends import_obsidian7.Modal {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.addClass("mysql-create-db-modal");
-    contentEl.createEl("h2", { text: "Create New Database" });
-    const input = new import_obsidian7.TextComponent(contentEl).setPlaceholder("Database name (e.g., my_project)").setValue("");
+    contentEl.createEl("h2", { text: t("modals.create_title") });
+    const input = new import_obsidian7.TextComponent(contentEl).setPlaceholder(t("modals.create_placeholder")).setValue("");
     input.inputEl.style.width = "100%";
     input.inputEl.style.marginBottom = "20px";
     const buttons = contentEl.createDiv({ cls: "mysql-modal-footer" });
-    new import_obsidian7.ButtonComponent(buttons).setButtonText("Cancel").onClick(() => this.close());
-    const confirmBtn = new import_obsidian7.ButtonComponent(buttons).setButtonText("Create").setCta().onClick(async () => {
+    new import_obsidian7.ButtonComponent(buttons).setButtonText(t("modals.btn_cancel")).onClick(() => this.close());
+    const confirmBtn = new import_obsidian7.ButtonComponent(buttons).setButtonText(t("modals.btn_confirm")).setCta().onClick(async () => {
       const dbName = input.getValue().trim();
       if (!dbName) {
-        new import_obsidian7.Notice("Database name cannot be empty.");
+        new import_obsidian7.Notice(t("modals.notice_create_empty"));
         return;
       }
       try {
         const dbManager = this.plugin.dbManager;
         await dbManager.createDatabase(dbName);
-        new import_obsidian7.Notice(`Database "${dbName}" created.`);
+        new import_obsidian7.Notice(t("modals.notice_create_success", { name: dbName }));
         this.plugin.activeDatabase = dbName;
         await dbManager.save();
-        new import_obsidian7.Notice(`Switched to "${dbName}"`);
+        new import_obsidian7.Notice(t("modals.notice_switch_success", { name: dbName }));
         this.onSuccess();
         this.close();
       } catch (e) {
-        new import_obsidian7.Notice(`Error: ${e.message}`);
+        new import_obsidian7.Notice(t("common.error", { error: e.message }));
       }
     });
     setTimeout(() => input.inputEl.focus(), 50);
@@ -65455,30 +67087,30 @@ var DuplicateDatabaseModal = class extends import_obsidian7.Modal {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.addClass("mysql-duplicate-modal");
-    contentEl.createEl("h2", { text: `Duplicate Database: ${this.oldName}` });
-    const input = new import_obsidian7.TextComponent(contentEl).setPlaceholder("New database name...").setValue(`${this.oldName}_copy`);
+    contentEl.createEl("h2", { text: t("modals.duplicate_title", { name: this.oldName }) });
+    const input = new import_obsidian7.TextComponent(contentEl).setPlaceholder(t("modals.rename_placeholder")).setValue(`${this.oldName}_copy`);
     input.inputEl.style.width = "100%";
     input.inputEl.style.marginBottom = "20px";
     const buttons = contentEl.createDiv({ cls: "mysql-modal-footer" });
-    new import_obsidian7.ButtonComponent(buttons).setButtonText("Cancel").onClick(() => this.close());
-    const confirmBtn = new import_obsidian7.ButtonComponent(buttons).setButtonText("Duplicate").setCta().onClick(async () => {
+    new import_obsidian7.ButtonComponent(buttons).setButtonText(t("modals.btn_cancel")).onClick(() => this.close());
+    const confirmBtn = new import_obsidian7.ButtonComponent(buttons).setButtonText(t("modals.btn_duplicar")).setCta().onClick(async () => {
       const newName = input.getValue().trim();
       if (!newName) {
-        new import_obsidian7.Notice("Database name cannot be empty.");
+        new import_obsidian7.Notice(t("modals.notice_create_empty"));
         return;
       }
       if (newName === this.oldName) {
-        new import_obsidian7.Notice("New name must be different from the old name.");
+        new import_obsidian7.Notice(t("common.invalid_name"));
         return;
       }
       try {
         const dbManager = this.plugin.dbManager;
         await dbManager.duplicateDatabase(this.oldName, newName);
-        new import_obsidian7.Notice(`Database duplicatd to "${newName}"`);
+        new import_obsidian7.Notice(t("modals.notice_duplicate_success", { name: newName }));
         this.onSuccess();
         this.close();
       } catch (e) {
-        new import_obsidian7.Notice(`Error: ${e.message}`);
+        new import_obsidian7.Notice(t("common.error", { error: e.message }));
       }
     });
     setTimeout(() => input.inputEl.focus(), 50);
@@ -65502,10 +67134,10 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.addClass("mysql-tables-modal");
-    contentEl.createEl("h2", { text: `Tables in "${this.dbName}"` });
+    contentEl.createEl("h2", { text: t("modals.tables_title", { name: this.dbName }) });
     const db = import_alasql4.default.databases[this.dbName];
     if (!db || !db.tables || Object.keys(db.tables).length === 0) {
-      contentEl.createDiv({ text: "No tables found in this database.", cls: "mysql-empty-state" });
+      contentEl.createDiv({ text: t("renderer.msg_no_tables"), cls: "mysql-empty-state" });
       return;
     }
     const list = contentEl.createDiv({ cls: "mysql-table-list" });
@@ -65521,7 +67153,7 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
       const info = item.createDiv({ cls: "mysql-table-info" });
       info.createDiv({ text: tableName, cls: "mysql-table-name" });
       info.createDiv({
-        text: `${rowCount} rows \u2022 ~${this.formatBytes(sizeEstimate)}`,
+        text: `${rowCount} ${t("modals.stat_rows").toLowerCase()} \u2022 ~${this.formatBytes(sizeEstimate)}`,
         cls: "mysql-table-meta"
       });
       item.onclick = () => this.showTableData(tableName);
@@ -65535,65 +67167,65 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
     left.style.display = "flex";
     left.style.alignItems = "center";
     left.style.gap = "8px";
-    new import_obsidian7.ButtonComponent(left).setIcon("arrow-left").setTooltip("Back to Tables List").onClick(() => this.renderList());
+    new import_obsidian7.ButtonComponent(left).setIcon("arrow-left").setTooltip(t("renderer.tip_back")).onClick(() => this.renderList());
     const title = left.createEl("h3", { text: tableName });
     title.style.margin = "0";
     const actions = header.createDiv({ cls: "mysql-table-detail-actions" });
-    new import_obsidian7.ButtonComponent(actions).setIcon("copy").setTooltip("Copy to clipboard").onClick(async () => {
+    new import_obsidian7.ButtonComponent(actions).setIcon("copy").setTooltip(t("renderer.tip_copy")).onClick(async () => {
       try {
         const query = `SELECT * FROM ${this.dbName}.${tableName}`;
         const result = await QueryExecutor.execute(query);
         if (result.success && result.data && result.data[0] && result.data[0].data) {
           await this.copyToClipboard(result.data[0].data);
         } else {
-          new import_obsidian7.Notice("No data to copy");
+          new import_obsidian7.Notice(t("renderer.notice_copy_failed", { error: t("renderer.msg_no_data") }));
         }
       } catch (e) {
-        new import_obsidian7.Notice(`Copy failed: ${e.message}`);
+        new import_obsidian7.Notice(t("modals.notice_copy_failed", { error: e.message }));
       }
     });
-    new import_obsidian7.ButtonComponent(actions).setIcon("camera").setTooltip("Take screenshot").onClick(async () => {
+    new import_obsidian7.ButtonComponent(actions).setIcon("camera").setTooltip(t("renderer.tip_screenshot")).onClick(async () => {
       try {
         const tableElement = dataContainer.querySelector(".mysql-direct-table-wrapper");
         if (tableElement) {
           await this.takeScreenshot(tableElement);
         } else {
-          new import_obsidian7.Notice("No table to screenshot");
+          new import_obsidian7.Notice(t("renderer.notice_screenshot_failed", { error: "No table element" }));
         }
       } catch (e) {
-        new import_obsidian7.Notice(`Screenshot failed: ${e.message}`);
+        new import_obsidian7.Notice(t("renderer.notice_screenshot_failed", { error: e.message }));
       }
     });
-    new import_obsidian7.ButtonComponent(actions).setIcon("file-plus").setTooltip("Add to note").onClick(async () => {
+    new import_obsidian7.ButtonComponent(actions).setIcon("file-plus").setTooltip(t("renderer.tip_add_note")).onClick(async () => {
       try {
         const query = `SELECT * FROM ${this.dbName}.${tableName}`;
         const result = await QueryExecutor.execute(query);
         if (result.success && result.data && result.data[0] && result.data[0].data) {
           await this.insertIntoNote(result.data[0].data);
         } else {
-          new import_obsidian7.Notice("No data to insert");
+          new import_obsidian7.Notice(t("renderer.notice_insert_failed", { error: t("renderer.msg_no_data") }));
         }
       } catch (e) {
-        new import_obsidian7.Notice(`Insert failed: ${e.message}`);
+        new import_obsidian7.Notice(t("renderer.notice_insert_failed", { error: e.message }));
       }
     });
-    new import_obsidian7.ButtonComponent(actions).setIcon("download").setTooltip("Export CSV").onClick(async () => {
+    new import_obsidian7.ButtonComponent(actions).setIcon("download").setTooltip(t("modals.btn_exportar")).onClick(async () => {
       try {
         const query = `SELECT * FROM ${this.dbName}.${tableName}`;
         const result = await QueryExecutor.execute(query);
         if (result.success && result.data && result.data[0] && result.data[0].data) {
           await this.exportTableData(tableName, result.data[0].data);
         } else {
-          new import_obsidian7.Notice("No data to export");
+          new import_obsidian7.Notice(t("renderer.msg_no_data"));
         }
       } catch (e) {
-        new import_obsidian7.Notice(`Export failed: ${e.message}`);
+        new import_obsidian7.Notice(t("common.error", { error: e.message }));
       }
     });
-    new import_obsidian7.ButtonComponent(actions).setIcon("x").setTooltip("Close").onClick(() => this.close());
+    new import_obsidian7.ButtonComponent(actions).setIcon("x").setTooltip(t("workbench.btn_cancel")).onClick(() => this.close());
     const separator = contentEl.createDiv({ cls: "mysql-table-detail-separator" });
     const dataContainer = contentEl.createDiv({ cls: "mysql-table-detail-content" });
-    const loadingMsg = dataContainer.createEl("p", { text: "Loading data..." });
+    const loadingMsg = dataContainer.createEl("p", { text: t("renderer.msg_loading") });
     loadingMsg.style.color = "var(--text-muted)";
     try {
       const query = `SELECT * FROM ${this.dbName}.${tableName} LIMIT 100`;
@@ -65603,7 +67235,7 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
         this.renderTableDataDirect(result, dataContainer, tableName);
         if (result.data && result.data[0] && result.data[0].rowCount >= 100) {
           const note = dataContainer.createDiv({
-            text: "Showing first 100 rows only.",
+            text: t("renderer.msg_showing_limit", { count: "100" }),
             cls: "mysql-table-limit-note"
           });
         }
@@ -65617,7 +67249,7 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
   }
   renderTableDataDirect(result, container, tableName) {
     if (!result.success || !result.data || result.data.length === 0) {
-      container.createEl("p", { text: "No data found", cls: "mysql-empty-state" });
+      container.createEl("p", { text: t("renderer.msg_no_data"), cls: "mysql-empty-state" });
       return;
     }
     const data = result.data[0];
@@ -65637,7 +67269,7 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
           keys.forEach((key) => {
             const val = row[key];
             tr.createEl("td", {
-              text: val === null || val === void 0 ? "NULL" : String(val)
+              text: val === null || val === void 0 ? t("modals.null_value") : String(val)
             });
           });
         });
@@ -65652,24 +67284,24 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
           cls: "mysql-pagination-status"
         });
         const showAllBtn = controls.createEl("button", {
-          text: "Show All Rows",
+          text: t("renderer.btn_show_all"),
           cls: "mysql-pagination-btn"
         });
         showAllBtn.onclick = () => {
           const remaining = data.data.slice(currentCount);
           renderBatch(remaining);
           showAllBtn.remove();
-          statusSpan.setText(`Showing all ${data.data.length} rows`);
+          statusSpan.setText(t("renderer.msg_showing_all", { count: String(data.data.length) }));
         };
       }
     } else {
-      container.createEl("p", { text: "No table data found", cls: "mysql-empty-state" });
+      container.createEl("p", { text: t("renderer.msg_no_data"), cls: "mysql-empty-state" });
     }
   }
   async copyToClipboard(data) {
     try {
       if (!data || data.length === 0) {
-        new import_obsidian7.Notice("No data to copy");
+        new import_obsidian7.Notice(t("renderer.msg_no_data"));
         return;
       }
       const keys = Object.keys(data[0]);
@@ -65682,9 +67314,9 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
         textToCopy += values.join("	") + "\n";
       });
       await navigator.clipboard.writeText(textToCopy);
-      new import_obsidian7.Notice("Table data copied to clipboard!");
+      new import_obsidian7.Notice(t("modals.notice_table_data_copied"));
     } catch (error) {
-      new import_obsidian7.Notice("Failed to copy: " + error.message);
+      new import_obsidian7.Notice(t("modals.notice_copy_failed", { error: error.message }));
     }
   }
   async takeScreenshot(element) {
@@ -65697,14 +67329,14 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
       });
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          new import_obsidian7.Notice("Failed to create screenshot");
+          new import_obsidian7.Notice(t("modals.notice_screenshot_failed", { error: "Blob creation failed" }));
           return;
         }
         try {
           await navigator.clipboard.write([
             new ClipboardItem({ "image/png": blob })
           ]);
-          new import_obsidian7.Notice("Screenshot copied to clipboard!");
+          new import_obsidian7.Notice(t("renderer.notice_screenshot_copied"));
         } catch (clipboardError) {
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
@@ -65712,11 +67344,11 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
           a.download = `table-screenshot-${Date.now()}.png`;
           a.click();
           URL.revokeObjectURL(url);
-          new import_obsidian7.Notice("Screenshot downloaded!");
+          new import_obsidian7.Notice(t("renderer.notice_screenshot_downloaded"));
         }
       });
     } catch (error) {
-      new import_obsidian7.Notice("Screenshot failed: " + error.message);
+      new import_obsidian7.Notice(t("renderer.notice_screenshot_failed", { error: error.message }));
       console.error("Screenshot error:", error);
     }
   }
@@ -65725,7 +67357,7 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
       const { MarkdownView: MarkdownView2 } = await import("obsidian");
       const activeView = this.app.workspace.getActiveViewOfType(MarkdownView2);
       if (!activeView) {
-        new import_obsidian7.Notice("No active note found");
+        new import_obsidian7.Notice(t("modals.notice_no_active_note"));
         return;
       }
       const editor = activeView.editor;
@@ -65734,15 +67366,15 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
       editor.replaceRange("\n" + textToInsert + "\n", cursor);
       const lines = textToInsert.split("\n").length;
       editor.setCursor({ line: cursor.line + lines + 1, ch: 0 });
-      new import_obsidian7.Notice("Table inserted into note!");
+      new import_obsidian7.Notice(t("modals.notice_table_inserted"));
     } catch (error) {
-      new import_obsidian7.Notice("Failed to insert: " + error.message);
+      new import_obsidian7.Notice(t("modals.notice_insert_failed", { error: error.message }));
     }
   }
   async exportTableData(tableName, data) {
     try {
       if (!data || data.length === 0) {
-        new import_obsidian7.Notice("Table is empty");
+        new import_obsidian7.Notice(t("renderer.msg_no_data"));
         return;
       }
       const csv = this.jsonToCSV(data);
@@ -65752,10 +67384,10 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
       }
       const fileName = `${exportFolder}/${tableName}_${Date.now()}.csv`;
       await this.plugin.app.vault.create(fileName, csv);
-      new import_obsidian7.Notice(`Table exported to ${fileName}`);
+      new import_obsidian7.Notice(t("common.notice_export_success", { name: fileName }));
     } catch (error) {
       console.error("CSV Export Error:", error);
-      new import_obsidian7.Notice(`Export failed: ${error.message}`);
+      new import_obsidian7.Notice(t("common.error", { error: error.message }));
     }
   }
   jsonToCSV(data) {
@@ -65847,8 +67479,8 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
 </svg>`;
     logo.style.color = "var(--mysql-accent, var(--interactive-accent))";
     const titleText = titleGroup.createDiv({ cls: "mysql-title-text" });
-    titleText.createEl("h2", { text: "SQL Notebook", attr: { style: "margin: 0; line-height: 1.2;" } });
-    titleText.createEl("span", { text: "Database Manager", attr: { style: "font-size: 13px; color: var(--text-muted);" } });
+    titleText.createEl("h2", { text: t("settings.title"), attr: { style: "margin: 0; line-height: 1.2;" } });
+    titleText.createEl("span", { text: t("settings.subtitle"), attr: { style: "font-size: 13px; color: var(--text-muted);" } });
     const actions = header.createDiv({ cls: "mysql-header-actions" });
     const importBtnContainer = actions.createDiv({ cls: "mysql-import-wrapper" });
     const importInput = importBtnContainer.createEl("input", {
@@ -65863,20 +67495,20 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
         importInput.value = "";
       }
     };
-    new import_obsidian8.ButtonComponent(actions).setButtonText("Atualizar").setIcon("refresh-cw").setTooltip("Atualizar Lista").onClick(() => {
+    new import_obsidian8.ButtonComponent(actions).setButtonText(t("settings.btn_atualizar")).setIcon("refresh-cw").setTooltip(t("settings.btn_atualizar")).onClick(() => {
       this.display();
-      new import_obsidian8.Notice("Lista atualizada!");
+      new import_obsidian8.Notice(t("settings.btn_atualizar") + "!");
     });
-    new import_obsidian8.ButtonComponent(importBtnContainer).setButtonText("Importar").setIcon("import").setTooltip("Importar Database (.sql)").onClick(() => importInput.click());
-    new import_obsidian8.ButtonComponent(actions).setButtonText("Novo Database").setIcon("plus").setCta().onClick(() => this.openCreateModal());
+    new import_obsidian8.ButtonComponent(importBtnContainer).setButtonText(t("settings.btn_importar")).setIcon("import").setTooltip(t("settings.btn_importar")).onClick(() => importInput.click());
+    new import_obsidian8.ButtonComponent(actions).setButtonText(t("settings.btn_novo_db")).setIcon("plus").setCta().onClick(() => this.openCreateModal());
     const welcomeSection = containerEl.createDiv({ cls: "mysql-welcome-section" });
     welcomeSection.style.marginBottom = "20px";
     welcomeSection.style.padding = "15px";
     welcomeSection.style.background = "color-mix(in srgb, var(--mysql-accent), transparent 90%)";
     welcomeSection.style.borderRadius = "8px";
     welcomeSection.style.border = "1px solid color-mix(in srgb, var(--mysql-accent), transparent 70%)";
-    welcomeSection.createEl("h3", { text: "Bem vindo ao SQL Notebook!", attr: { style: "margin: 0 0 5px 0; color: var(--mysql-accent);" } });
-    welcomeSection.createEl("p", { text: "Gerencie seus bancos de dados locais, execute queries e visualize resultados diretamente no Obsidian.", attr: { style: "margin: 0; font-size: 14px; color: var(--text-normal);" } });
+    welcomeSection.createEl("h3", { text: t("settings.welcome_title"), attr: { style: "margin: 0 0 5px 0; color: var(--mysql-accent);" } });
+    welcomeSection.createEl("p", { text: t("settings.welcome_desc"), attr: { style: "margin: 0; font-size: 14px; color: var(--text-normal);" } });
     const searchSection = containerEl.createDiv({ cls: "mysql-search-section" });
     const searchWrapper = searchSection.createDiv({ cls: "mysql-search-wrapper" });
     searchWrapper.style.display = "flex";
@@ -65893,7 +67525,7 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
     const searchInput = searchWrapper.createEl("input", {
       type: "text",
       cls: "mysql-search-box",
-      placeholder: "Buscar databases...",
+      placeholder: t("settings.search_placeholder"),
       attr: { style: "border: none; box-shadow: none; background: transparent; width: 100%; padding: 8px; outline: none;" }
     });
     const grid = containerEl.createDiv({ cls: "mysql-databases-grid" });
@@ -65908,16 +67540,16 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
     infoSection.style.borderRadius = "6px";
     infoSection.style.marginTop = "20px";
     infoSection.style.border = "1px solid var(--background-modifier-border)";
-    infoSection.createEl("h4", { text: "Informa\xE7\xF5es Importantes:", attr: { style: "margin-top: 0; margin-bottom: 10px; color: var(--mysql-accent, var(--interactive-accent));" } });
+    infoSection.createEl("h4", { text: t("settings.info_title"), attr: { style: "margin-top: 0; margin-bottom: 10px; color: var(--mysql-accent, var(--interactive-accent));" } });
     const list = infoSection.createEl("ul", { attr: { style: "margin: 0; padding-left: 20px; color: var(--text-muted); font-size: 13px;" } });
     const li1 = list.createEl("li");
-    li1.innerHTML = "Para excluir ou renomear um banco de dados <b>ativo</b>, mude para outro primeiro.";
+    li1.innerHTML = t("settings.info_li_1");
     const li2 = list.createEl("li");
-    li2.innerHTML = 'O banco de dados do sistema <b>"dbo"</b> n\xE3o pode ser renomeado ou exclu\xEDdo.';
+    li2.innerHTML = t("settings.info_li_2");
     const li3 = list.createEl("li");
-    li3.innerHTML = "<b>Renomear</b> um banco de dados atualiza automaticamente refer\xEAncias internas.";
+    li3.innerHTML = t("settings.info_li_3");
     containerEl.createEl("hr", { attr: { style: "margin: 40px 0; border: none; border-top: 1px solid var(--background-modifier-border);" } });
-    this.createSectionHeader(containerEl, "General Settings", "settings");
+    this.createSectionHeader(containerEl, t("settings.section_general"), "settings");
     this.renderGeneralSettings(containerEl);
     const footer = containerEl.createDiv({ cls: "mysql-settings-footer" });
     footer.style.display = "flex";
@@ -65946,8 +67578,8 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
 </svg>`;
     footerLogo.style.color = "var(--mysql-accent, var(--interactive-accent))";
     footerLogo.style.marginBottom = "10px";
-    footer.createEl("h3", { text: "SQL Notebook", attr: { style: "margin: 0; font-size: 16px; color: var(--text-normal);" } });
-    footer.createEl("span", { text: "Diego Pena", attr: { style: "font-size: 12px; color: var(--text-muted);" } });
+    footer.createEl("h3", { text: t("settings.title"), attr: { style: "margin: 0; font-size: 16px; color: var(--text-normal);" } });
+    footer.createEl("span", { text: t("settings.footer_by"), attr: { style: "font-size: 12px; color: var(--text-muted);" } });
   }
   renderDatabaseGrid(container, searchTerm, page = 1) {
     container.empty();
@@ -65962,7 +67594,7 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
     });
     if (sortedDbs.length === 0) {
       container.addClass("mysql-databases-grid");
-      container.createDiv({ text: "No databases found.", cls: "mysql-empty-msg" });
+      container.createDiv({ text: t("settings.search_placeholder"), cls: "mysql-empty-msg" });
       return;
     }
     const pageSize = 4;
@@ -66013,39 +67645,45 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
     const nameDiv = header.createDiv({ cls: "mysql-db-name" });
     nameDiv.createSpan({ text: dbName });
     if (isActive) {
-      nameDiv.createSpan({ text: "Ativo", cls: "mysql-badge badge-active" });
+      nameDiv.createSpan({ text: t("modals.badge_ativo"), cls: "mysql-badge badge-active" });
     } else if (isSystem) {
-      nameDiv.createSpan({ text: "System", cls: "mysql-badge badge-system" });
+      nameDiv.createSpan({ text: t("modals.badge_system"), cls: "mysql-badge badge-system" });
     }
     const statsGrid = card.createDiv({ cls: "mysql-db-stats" });
-    this.addStat(statsGrid, "Tabelas", stats.tables.toString());
-    this.addStat(statsGrid, "Linhas", stats.rows.toLocaleString());
-    this.addStat(statsGrid, "Tamanho", this.formatBytes(stats.sizeBytes));
-    this.addStat(statsGrid, "Atualizado", this.timeAgo(stats.lastUpdated));
+    this.addStat(statsGrid, t("modals.stat_tables"), stats.tables.toString());
+    this.addStat(statsGrid, t("modals.stat_rows"), stats.rows.toLocaleString());
+    this.addStat(statsGrid, t("modals.stat_size"), this.formatBytes(stats.sizeBytes));
+    this.addStat(statsGrid, t("modals.stat_updated"), this.timeAgo(stats.lastUpdated));
     const actions = card.createDiv({ cls: "mysql-db-actions" });
     if (!isActive) {
-      new import_obsidian8.ButtonComponent(actions).setIcon("check").setTooltip("Ativar").setClass("btn-success").onClick(async () => {
+      new import_obsidian8.ButtonComponent(actions).setIcon("check").setTooltip(t("modals.btn_ativar")).setClass("btn-success").onClick(async () => {
         await this.switchDatabase(dbName);
       });
     }
-    new import_obsidian8.ButtonComponent(actions).setIcon("copy").setTooltip("Duplicar").onClick(() => {
+    new import_obsidian8.ButtonComponent(actions).setIcon("copy").setTooltip(t("modals.btn_duplicar")).onClick(() => {
       const modal = new DuplicateDatabaseModal(this.app, this.plugin, dbName, () => this.display());
       modal.open();
     });
     if (!isActive && !isSystem) {
-      new import_obsidian8.ButtonComponent(actions).setIcon("pencil").setTooltip("Renomear").onClick(() => {
+      new import_obsidian8.ButtonComponent(actions).setIcon("pencil").setTooltip(t("modals.btn_renomear")).onClick(() => {
         const modal = new RenameDatabaseModal(this.app, this.plugin, dbName, () => this.display());
         modal.open();
       });
     }
-    new import_obsidian8.ButtonComponent(actions).setIcon("table").setTooltip("Visualizar Tabelas").onClick(() => this.openTablesModal(dbName));
-    new import_obsidian8.ButtonComponent(actions).setIcon("upload").setTooltip("Exportar").onClick(() => this.exportDatabaseSQL(dbName));
+    new import_obsidian8.ButtonComponent(actions).setIcon("table").setTooltip(t("modals.btn_tabelas")).onClick(() => this.openTablesModal(dbName));
+    new import_obsidian8.ButtonComponent(actions).setIcon("upload").setTooltip(t("modals.btn_exportar")).onClick(() => this.exportDatabaseSQL(dbName));
     if (!isActive && !isSystem) {
-      new import_obsidian8.ButtonComponent(actions).setIcon("trash-2").setTooltip("Deletar").setWarning().onClick(() => this.confirmDelete(dbName));
+      new import_obsidian8.ButtonComponent(actions).setIcon("trash-2").setTooltip(t("modals.btn_deletar")).setWarning().onClick(() => this.confirmDelete(dbName));
     }
   }
   renderGeneralSettings(containerEl) {
-    this.createSectionHeader(containerEl, "Appearance", "palette");
+    new import_obsidian8.Setting(containerEl).setName(t("settings.lang_name")).setDesc(t("settings.lang_desc")).addDropdown((dropdown) => dropdown.addOption("auto", "Automatic (Obsidian Preference)").addOption("en", "English").addOption("pt-BR", "Portugu\xEAs (Brasil)").addOption("es", "Espa\xF1ol").addOption("de", "Deutsch").addOption("fr", "Fran\xE7ais").addOption("zh", "\u7B80\u4F53\u4E2D\u6587").addOption("ja", "\u65E5\u672C\u8A9E").addOption("ko", "\uD55C\uAD6D\uC5B4").setValue(this.plugin.settings.language).onChange(async (value) => {
+      this.plugin.settings.language = value;
+      setLanguage(value);
+      await this.plugin.saveSettings();
+      this.display();
+    }));
+    this.createSectionHeader(containerEl, t("settings.section_appearance"), "palette");
     const colors = [
       { name: "Purple (Default)", value: "#9d7cd8" },
       { name: "Blue", value: "#61afef" },
@@ -66053,16 +67691,16 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
       { name: "Orange", value: "#e5c07b" },
       { name: "Red", value: "#e06c75" }
     ];
-    new import_obsidian8.Setting(containerEl).setName("Use Obsidian Accent Color").setDesc("Use the global Obsidian accent color instead of a custom color.").addToggle((toggle) => toggle.setValue(this.plugin.settings.useObsidianAccent).onChange(async (value) => {
+    new import_obsidian8.Setting(containerEl).setName(t("settings.accent_obsidian")).setDesc(t("settings.accent_obsidian_desc")).addToggle((toggle) => toggle.setValue(this.plugin.settings.useObsidianAccent).onChange(async (value) => {
       this.plugin.settings.useObsidianAccent = value;
       await this.plugin.saveSettings();
       this.display();
     }));
-    const colorSetting = new import_obsidian8.Setting(containerEl).setName("Theme Accent").setDesc("Choose the primary accent color.").addText((text) => text.inputEl.style.display = "none");
+    const colorSetting = new import_obsidian8.Setting(containerEl).setName(t("settings.theme_accent")).setDesc(t("settings.theme_accent_desc")).addText((text) => text.inputEl.style.display = "none");
     if (this.plugin.settings.useObsidianAccent) {
       colorSetting.settingEl.style.opacity = "0.5";
       colorSetting.settingEl.style.pointerEvents = "none";
-      colorSetting.setDesc('Disabled because "Use Obsidian Accent Color" is enabled.');
+      colorSetting.setDesc(t("settings.accent_obsidian_desc"));
     }
     colorSetting.then((setting) => {
       const colorContainer = setting.controlEl.createDiv({ cls: "mysql-color-picker" });
@@ -66089,48 +67727,48 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
         });
       });
     });
-    new import_obsidian8.Setting(containerEl).setName("Auto-save").setDesc("Automatically save database changes.").addToggle((toggle) => toggle.setValue(this.plugin.settings.autoSave).onChange(async (value) => {
+    new import_obsidian8.Setting(containerEl).setName(t("settings.auto_save")).setDesc(t("settings.auto_save_desc")).addToggle((toggle) => toggle.setValue(this.plugin.settings.autoSave).onChange(async (value) => {
       this.plugin.settings.autoSave = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian8.Setting(containerEl).setName("Auto-save Delay").setDesc("Milliseconds to wait before auto-saving.").addText((text) => text.setPlaceholder("2000").setValue(String(this.plugin.settings.autoSaveDelay)).onChange(async (value) => {
+    new import_obsidian8.Setting(containerEl).setName(t("settings.auto_save_delay")).setDesc(t("settings.auto_save_delay_desc")).addText((text) => text.setPlaceholder("2000").setValue(String(this.plugin.settings.autoSaveDelay)).onChange(async (value) => {
       const num = parseInt(value);
       if (!isNaN(num) && num > 0) {
         this.plugin.settings.autoSaveDelay = num;
         await this.plugin.saveSettings();
       }
     }));
-    new import_obsidian8.Setting(containerEl).setName("Export Folder").setDesc("Default folder for CSV exports.").addText((text) => text.setPlaceholder("sql-exports").setValue(this.plugin.settings.exportFolderName).onChange(async (value) => {
+    new import_obsidian8.Setting(containerEl).setName(t("settings.export_folder")).setDesc(t("settings.export_folder_desc")).addText((text) => text.setPlaceholder("sql-exports").setValue(this.plugin.settings.exportFolderName).onChange(async (value) => {
       this.plugin.settings.exportFolderName = value || "sql-exports";
       await this.plugin.saveSettings();
     }));
-    this.createSectionHeader(containerEl, "Data & Security", "shield");
-    new import_obsidian8.Setting(containerEl).setName("Safe Mode").setDesc("Block dangerous commands (DROP, ALTER) and enforce limits.").addToggle((toggle) => toggle.setValue(this.plugin.settings.safeMode).onChange(async (value) => {
+    this.createSectionHeader(containerEl, t("settings.section_data_security"), "shield");
+    new import_obsidian8.Setting(containerEl).setName(t("settings.safe_mode")).setDesc(t("settings.safe_mode_desc")).addToggle((toggle) => toggle.setValue(this.plugin.settings.safeMode).onChange(async (value) => {
       this.plugin.settings.safeMode = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian8.Setting(containerEl).setName("Enable Debug Logging").setDesc("Show detailed logs in the developer console (Ctrl+Shift+I). Useful for debugging synchronization.").addToggle((toggle) => toggle.setValue(this.plugin.settings.enableLogging).onChange(async (value) => {
+    new import_obsidian8.Setting(containerEl).setName(t("settings.enable_logging")).setDesc(t("settings.enable_logging_desc")).addToggle((toggle) => toggle.setValue(this.plugin.settings.enableLogging).onChange(async (value) => {
       this.plugin.settings.enableLogging = value;
       const { Logger: Logger2 } = await Promise.resolve().then(() => (init_Logger(), Logger_exports));
       Logger2.setEnabled(value);
       await this.plugin.saveSettings();
     }));
-    new import_obsidian8.Setting(containerEl).setName("Snapshot Row Limit").setDesc("Max rows per table to save (prevents memory issues).").addText((text) => text.setPlaceholder("10000").setValue(String(this.plugin.settings.snapshotRowLimit)).onChange(async (value) => {
+    new import_obsidian8.Setting(containerEl).setName(t("settings.snapshot_limit")).setDesc(t("settings.snapshot_limit_desc")).addText((text) => text.setPlaceholder("10000").setValue(String(this.plugin.settings.snapshotRowLimit)).onChange(async (value) => {
       const num = parseInt(value);
       if (!isNaN(num) && num > 0) {
         this.plugin.settings.snapshotRowLimit = num;
         await this.plugin.saveSettings();
       }
     }));
-    new import_obsidian8.Setting(containerEl).setName("Batch Size").setDesc("Rows to display per page in results.").addText((text) => text.setPlaceholder("100").setValue(String(this.plugin.settings.batchSize)).onChange(async (value) => {
+    new import_obsidian8.Setting(containerEl).setName(t("settings.batch_size")).setDesc(t("settings.batch_size_desc")).addText((text) => text.setPlaceholder("100").setValue(String(this.plugin.settings.batchSize)).onChange(async (value) => {
       const num = parseInt(value);
       if (!isNaN(num) && num > 0) {
         this.plugin.settings.batchSize = num;
         await this.plugin.saveSettings();
       }
     }));
-    new import_obsidian8.Setting(containerEl).setName("Reset All Data").addButton((btn) => {
-      btn.setButtonText("Reset Everything");
+    new import_obsidian8.Setting(containerEl).setName(t("settings.reset_all")).addButton((btn) => {
+      btn.setButtonText(t("settings.reset_btn"));
       btn.setWarning();
       btn.onClick(() => this.openClearConfirm());
     });
@@ -66139,7 +67777,8 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
     const dbManager = this.plugin.dbManager;
     this.plugin.activeDatabase = dbName;
     await dbManager.save();
-    new import_obsidian8.Notice(`Switched to "${dbName}"`);
+    new import_obsidian8.Notice(t("modals.time_ago", { time: dbName }));
+    new import_obsidian8.Notice(`${t("modals.btn_ativar")}: ${dbName}`);
     this.display();
   }
   createSectionHeader(container, text, icon) {
@@ -66219,13 +67858,13 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
   }
   timeAgo(timestamp) {
-    if (!timestamp) return "Never";
+    if (!timestamp) return t("modals.time_never");
     const seconds = Math.floor((Date.now() - timestamp) / 1e3);
-    if (seconds < 60) return "Just now";
+    if (seconds < 60) return t("modals.time_just_now");
     const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes} min ago`;
+    if (minutes < 60) return t("modals.time_ago", { time: `${minutes} min` });
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
+    if (hours < 24) return t("modals.time_ago", { time: `${hours}h` });
     return new Date(timestamp).toLocaleDateString();
   }
   openSwitcherModal() {
@@ -66249,38 +67888,38 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
     const activeDB = this.plugin.activeDatabase;
     new ConfirmationModal(
       this.app,
-      "Clear Database",
-      `Are you sure you want to clear all tables in "${activeDB}"? This keeps the database but deletes all data.`,
+      t("modals.confirm_clear_title"),
+      t("modals.confirm_clear_msg", { dbName: activeDB }),
       async (confirmed) => {
         if (confirmed) {
           await this.plugin.dbManager.clearDatabase(activeDB);
-          new import_obsidian8.Notice(`Database "${activeDB}" cleared.`);
+          new import_obsidian8.Notice(`${t("modals.confirm_clear_title")}: ${activeDB}`);
           this.display();
         }
       },
-      "Clear all data",
-      "Cancel"
+      t("modals.btn_clear"),
+      t("modals.btn_cancel")
     ).open();
   }
   confirmDelete(dbName) {
     new ConfirmationModal(
       this.app,
-      "Delete Database",
-      `You are about to delete database "${dbName}". This action cannot be undone. All tables and data will be lost.`,
+      t("modals.confirm_delete_title"),
+      t("modals.confirm_delete_msg", { dbName }),
       async (confirmed) => {
         if (confirmed) {
           try {
             const dbManager = this.plugin.dbManager;
             await dbManager.deleteDatabase(dbName);
-            new import_obsidian8.Notice(`Database "${dbName}" deleted.`);
+            new import_obsidian8.Notice(`${t("modals.confirm_delete_title")}: ${dbName}`);
             this.display();
           } catch (e) {
-            new import_obsidian8.Notice(`Error: ${e.message}`);
+            new import_obsidian8.Notice(t("common.error", { error: e.message }));
           }
         }
       },
-      "Delete Database",
-      "Cancel"
+      t("modals.btn_delete"),
+      t("modals.btn_cancel")
     ).open();
   }
   async exportDatabaseSQL(dbName) {
@@ -66293,9 +67932,9 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
       }
       const fileName = `${exportFolder}/${dbName}_backup_${Date.now()}.sql`;
       await this.plugin.app.vault.create(fileName, sql);
-      new import_obsidian8.Notice(`Exported to ${fileName}`);
+      new import_obsidian8.Notice(t("common.notice_export_success", { name: fileName }));
     } catch (e) {
-      new import_obsidian8.Notice(`Export failed: ${e.message}`);
+      new import_obsidian8.Notice(t("common.error", { error: e.message }));
       console.error(e);
     }
   }
@@ -66306,13 +67945,13 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
       const sql = (_a = e.target) == null ? void 0 : _a.result;
       if (typeof sql === "string") {
         try {
-          new import_obsidian8.Notice("Importing database...");
+          new import_obsidian8.Notice(t("common.notice_import_loading"));
           const dbManager = this.plugin.dbManager;
           await dbManager.importDatabase(sql);
-          new import_obsidian8.Notice("Database imported successfully!");
+          new import_obsidian8.Notice(t("common.notice_import_success"));
           this.display();
         } catch (err) {
-          new import_obsidian8.Notice(`Import failed: ${err.message}`);
+          new import_obsidian8.Notice(t("common.error", { error: err.message }));
           console.error(err);
         }
       }
@@ -66333,41 +67972,41 @@ var HelpModal = class extends import_obsidian9.Modal {
   onOpen() {
     const { contentEl } = this;
     contentEl.addClass("mysql-help-modal");
-    contentEl.createEl("h2", { text: "SQL Notebook Features" });
+    contentEl.createEl("h2", { text: t("help.title") });
     const features = [
       {
         icon: "chevron-down",
-        title: "Collapsible Workbench",
-        description: "Toggle the workbench view to save space. Click the header or the chevron icon."
+        title: t("help.collapsible_title"),
+        description: t("help.collapsible_desc")
       },
       {
         icon: "at-sign",
-        title: "Auto-Collapse",
-        description: "Start a comment with '@' (e.g., '-- @ My Query') to automatically collapse the workbench when the note opens.",
+        title: t("help.auto_collapse_title"),
+        description: t("help.auto_collapse_desc"),
         example: "-- @ Initial Setup"
       },
       {
         icon: "alert-triangle",
-        title: "Alert Marker (!)",
-        description: "Add '!' to your comment start to highlight it as an alert or warning.",
+        title: t("help.alert_title"),
+        description: t("help.alert_desc"),
         example: "-- ! DROP TABLE users"
       },
       {
         icon: "help-circle",
-        title: "Question Marker (?)",
-        description: "Add '?' to indicate a query that needs review or is experimental.",
+        title: t("help.question_title"),
+        description: t("help.question_desc"),
         example: "-- ? optimizing join"
       },
       {
         icon: "star",
-        title: "Favorite Marker (*)",
-        description: "Add '*' to highlight important or frequently used queries.",
+        title: t("help.favorite_title"),
+        description: t("help.favorite_desc"),
         example: "-- * Production Report"
       },
       {
         icon: "copy",
-        title: "Copy & Edit",
-        description: "Hover over the workbench to access quick Copy Code and Edit Block buttons."
+        title: t("help.copy_edit_title"),
+        description: t("help.copy_edit_desc")
       }
     ];
     const list = contentEl.createDiv({ cls: "mysql-help-list" });
@@ -66402,41 +68041,41 @@ var ProPracticeModal = class extends import_obsidian10.Modal {
     contentEl.addClass("mysql-email-theme");
     const emailHeader = contentEl.createDiv({ cls: "mysql-email-header" });
     const fromRow = emailHeader.createDiv({ cls: "mysql-email-row" });
-    fromRow.createSpan({ text: "From:", cls: "mysql-email-label" });
-    fromRow.createSpan({ text: "SQL Notebook Dev Team <dev@obsidian-sql.internal>", cls: "mysql-email-value" });
+    fromRow.createSpan({ text: t("pro.label_from"), cls: "mysql-email-label" });
+    fromRow.createSpan({ text: t("pro.from_name"), cls: "mysql-email-value" });
     const toRow = emailHeader.createDiv({ cls: "mysql-email-row" });
-    toRow.createSpan({ text: "To:", cls: "mysql-email-label" });
-    toRow.createSpan({ text: "Valued Developer", cls: "mysql-email-value" });
+    toRow.createSpan({ text: t("pro.label_to"), cls: "mysql-email-label" });
+    toRow.createSpan({ text: t("pro.to_name"), cls: "mysql-email-value" });
     const subjectRow = emailHeader.createDiv({ cls: "mysql-email-row" });
-    subjectRow.createSpan({ text: "Subject:", cls: "mysql-email-label" });
-    subjectRow.createSpan({ text: "Pro Practice Alert: Database Context Best Practices", cls: "mysql-email-value mysql-email-subject" });
+    subjectRow.createSpan({ text: t("pro.label_subject"), cls: "mysql-email-label" });
+    subjectRow.createSpan({ text: t("pro.subject"), cls: "mysql-email-value mysql-email-subject" });
     const body = contentEl.createDiv({ cls: "mysql-pro-practice-body" });
     body.createEl("p", {
-      text: "Hello,"
+      text: t("pro.hello")
     });
     body.createEl("p", {
-      text: "We noticed you're switching databases via the UI. While this is great for quick navigation, we'd like to share a professional tip: using the explicit `USE` command in your scripts can make your workflow even more robust."
+      text: t("pro.msg_1")
     });
     const quote = body.createEl("blockquote", { cls: "mysql-pro-quote" });
     quote.createEl("p", {
-      text: "Explicitly defining your context is a best practice that ensures your scripts are portable and unambiguous across different environments:"
+      text: t("pro.msg_quote")
     });
     const codeBlock = quote.createDiv({ cls: "mysql-pro-code-examples" });
     codeBlock.createEl("code", { text: "USE staging;" });
     codeBlock.createEl("code", { text: "USE production;" });
     body.createEl("p", {
-      text: "Defining the context within the code helps avoid confusion and makes your intent clear to anyone reviewing your work. You can always continue using the global switcher for convenience!"
+      text: t("pro.msg_2")
     });
     const punchline = body.createEl("div", { cls: "mysql-pro-punchline" });
-    punchline.createSpan({ text: "Happy querying! \u{1F680}" });
+    punchline.createSpan({ text: t("pro.punchline") });
     const signature = contentEl.createDiv({ cls: "mysql-pro-signature" });
     const sigLogo = signature.createDiv({ cls: "mysql-pro-signature-logo" });
     (0, import_obsidian10.setIcon)(sigLogo, "circle");
     const sigText = signature.createDiv({ cls: "mysql-pro-signature-text" });
-    sigText.createEl("p", { text: "Best regards," });
-    sigText.createEl("p", { text: "SQL Notebook Development Team", cls: "mysql-pro-team" });
+    sigText.createEl("p", { text: t("pro.signature_regards") });
+    sigText.createEl("p", { text: t("pro.signature_team"), cls: "mysql-pro-team" });
     const btnContainer = contentEl.createDiv({ cls: "mysql-modal-buttons" });
-    const closeBtn = btnContainer.createEl("button", { text: "Mark as Read", cls: "mod-cta" });
+    const closeBtn = btnContainer.createEl("button", { text: t("pro.btn_read"), cls: "mod-cta" });
     closeBtn.onclick = () => this.close();
   }
   onClose() {
@@ -66462,14 +68101,14 @@ var WorkbenchFooter = class {
     this.setActiveDatabase("dbo");
     const helpBtn = this.rightEl.createDiv({
       cls: "mysql-footer-help-btn",
-      attr: { "aria-label": "Help & Features" }
+      attr: { "aria-label": t("footer.tip_help") }
     });
     (0, import_obsidian11.setIcon)(helpBtn, "help-circle");
     helpBtn.onclick = () => {
       new HelpModal(this.app).open();
     };
     this.statusEl = this.rightEl.createDiv({ cls: "mysql-footer-status-container" });
-    this.setStatus("Ready");
+    this.setStatus(t("footer.status_ready"));
   }
   setStatus(text, isRunning = false) {
     this.statusEl.empty();
@@ -66495,13 +68134,13 @@ var WorkbenchFooter = class {
     this.statusEl.empty();
     const indicator = this.statusEl.createDiv({ cls: "mysql-live-indicator" });
     indicator.createDiv({ cls: "mysql-pulse-dot" });
-    indicator.createSpan({ text: "LIVE" });
+    indicator.createSpan({ text: t("footer.status_live") });
   }
   setError() {
-    this.setStatus("Error");
+    this.setStatus(t("footer.status_error"));
   }
   setAborted() {
-    this.setStatus("Aborted");
+    this.setStatus(t("footer.status_aborted"));
   }
   getContainer() {
     return this.footerEl;
@@ -66526,6 +68165,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
   }
   async onload() {
     await this.loadSettings();
+    setLanguage(this.settings.language);
     Logger.setEnabled(this.settings.enableLogging);
     this.applyTheme();
     import_alasql6.default.options.autocommit = true;
@@ -66574,6 +68214,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
   }
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    setLanguage(this.settings.language);
   }
   async saveSettings() {
     await this.saveData(this.settings);
@@ -66754,24 +68395,24 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
     copyCodeBtn.onclick = async (e) => {
       e.stopPropagation();
       await navigator.clipboard.writeText(source);
-      new import_obsidian12.Notice("SQL code copied!");
+      new import_obsidian12.Notice(t("workbench.notice_copy"));
     };
     const codeBlock = body.createEl("pre", { cls: "mysql-source-code" });
     codeBlock.innerHTML = `<code class="language-sql">${this.safeHighlight(source)}</code>`;
     const controls = body.createEl("div", { cls: "mysql-controls" });
     const runBtn = controls.createEl("button", { cls: "mysql-btn mysql-btn-run" });
     (0, import_obsidian12.setIcon)(runBtn, "play");
-    runBtn.createSpan({ text: "Run" });
+    runBtn.createSpan({ text: t("workbench.btn_run") });
     const rightControls = controls.createEl("div", { cls: "mysql-controls-right" });
     const showTablesBtn = rightControls.createEl("button", { cls: "mysql-btn" });
     (0, import_obsidian12.setIcon)(showTablesBtn, "table");
-    showTablesBtn.createSpan({ text: "Tables" });
+    showTablesBtn.createSpan({ text: t("modals.btn_tabelas") });
     const importBtn = rightControls.createEl("button", { cls: "mysql-btn" });
     (0, import_obsidian12.setIcon)(importBtn, "file-up");
-    importBtn.createSpan({ text: "Import CSV" });
+    importBtn.createSpan({ text: t("settings.btn_importar") });
     const resetBtn = rightControls.createEl("button", { cls: "mysql-btn mysql-btn-danger" });
     (0, import_obsidian12.setIcon)(resetBtn, "trash-2");
-    resetBtn.createSpan({ text: "Reset" });
+    resetBtn.createSpan({ text: t("settings.reset_btn") });
     const resultContainer = body.createEl("div", { cls: "mysql-result-container" });
     const footer = new WorkbenchFooter(body, this.app);
     footer.setActiveDatabase(this.activeDatabase);
@@ -66827,7 +68468,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
                 await this.saveSettings();
               }
               dbNameSpan.setText(db);
-              new import_obsidian12.Notice(`FORM anchored to ${db}`);
+              new import_obsidian12.Notice(t("common.notice_anchor_form", { name: db }));
               this.executeQuery(source, params, runBtn, resultContainer, footer, { activeDatabase: anchoredDB });
             });
           });
@@ -66867,7 +68508,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
                 await this.saveSettings();
               }
               dbNameSpan.setText(db);
-              new import_obsidian12.Notice(`LIVE block anchored to ${db}`);
+              new import_obsidian12.Notice(t("common.notice_anchor_live", { name: db }));
               this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                 activeDatabase: anchoredDB,
                 originId: stableId,
@@ -66886,7 +68527,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
       (0, import_obsidian12.setIcon)(refreshBtn, "refresh-cw");
       refreshBtn.onclick = () => {
         refreshBtn.addClass("is-spinning");
-        new import_obsidian12.Notice(`Updating LIVE data from ${anchoredDB}...`);
+        new import_obsidian12.Notice(t("common.notice_update_live", { name: anchoredDB }));
         this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
           activeDatabase: anchoredDB,
           originId: stableId,
@@ -66918,7 +68559,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
         if (stableId && event.originId === stableId) return;
         if (event.database !== anchoredDB) return;
         const hasIntersection = event.tables.length === 0 || // Structural change
-        event.tables.some((t) => observedTables.includes(t));
+        event.tables.some((t2) => observedTables.includes(t2));
         Logger.info(`[LIVE] Modification detected in ${event.database}. Tables: ${event.tables.join(",")}. Match? ${hasIntersection} (Sender: ${event.originId})`);
         if (hasIntersection) {
           debouncedExec(event.tables.length === 0);
@@ -66977,7 +68618,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
     });
     if (cancelBtn) {
       (0, import_obsidian12.setIcon)(cancelBtn, "stop-circle");
-      cancelBtn.createSpan({ text: "Cancel" });
+      cancelBtn.createSpan({ text: t("workbench.btn_cancel") });
     }
     const abortController = new AbortController();
     if (cancelBtn) {
@@ -66987,16 +68628,16 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
         btn.disabled = false;
         btn.empty();
         (0, import_obsidian12.setIcon)(btn, "play");
-        btn.createSpan({ text: "Run" });
+        btn.createSpan({ text: t("workbench.btn_run") });
         if (footer) {
           footer.setAborted();
         }
-        new import_obsidian12.Notice("Query aborted by user");
+        new import_obsidian12.Notice(t("workbench.notice_aborted"));
       };
     }
-    btn.innerHTML = `\u23F3 Executing...`;
+    btn.innerHTML = `\u23F3 ${t("workbench.btn_executing")}`;
     if (footer) {
-      footer.setStatus("Executing...", true);
+      footer.setStatus(t("workbench.btn_executing"), true);
     }
     let finalQuery = query;
     if (Object.keys(params).length > 0) {
@@ -67041,7 +68682,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
       btn.disabled = false;
       btn.empty();
       (0, import_obsidian12.setIcon)(btn, "play");
-      btn.createSpan({ text: "Run" });
+      btn.createSpan({ text: t("workbench.btn_run") });
     }
   }
   injectParams(query, params) {
@@ -67104,11 +68745,11 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
       (0, import_obsidian12.setIcon)(headerLeft, "database");
       headerLeft.createSpan({ text: "Active Tables", cls: "mysql-result-label" });
       const grid = container.createEl("div", { cls: "mysql-table-grid" });
-      tables.forEach((t) => {
+      tables.forEach((t2) => {
         const card = grid.createEl("div", { cls: "mysql-table-card" });
         const iconSlot = card.createDiv({ cls: "mysql-card-icon" });
         (0, import_obsidian12.setIcon)(iconSlot, "table");
-        card.createEl("strong", { text: t.tableid });
+        card.createEl("strong", { text: t2.tableid });
         card.onclick = async () => {
           container.empty();
           const header = container.createEl("div", { cls: "mysql-result-header" });
@@ -67129,10 +68770,10 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
           });
           (0, import_obsidian12.setIcon)(exportBtn, "file-output");
           exportBtn.createSpan({ text: "Export CSV" });
-          exportBtn.onclick = () => this.csvManager.exportTable(t.tableid);
+          exportBtn.onclick = () => this.csvManager.exportTable(t2.tableid);
           const dataContainer = container.createDiv({ cls: "mysql-table-detail-content" });
-          const result = await QueryExecutor.execute(`SELECT * FROM ${activeDB}.${t.tableid}`);
-          ResultRenderer.render(result, dataContainer, this.app, this, t.tableid);
+          const result = await QueryExecutor.execute(`SELECT * FROM ${activeDB}.${t2.tableid}`);
+          ResultRenderer.render(result, dataContainer, this.app, this, t2.tableid);
         };
       });
     } catch (error) {

@@ -99,7 +99,7 @@ export default {
         "status_done": "Concluído",
         "notice_table_data_copied": "Dados da tabela copiados para a área de transferência!",
         "notice_copy_failed": "Falha ao copiar: {error}",
-        "notice_screenshot_failed": "Falha ao criar captura de tela",
+        "notice_screenshot_failed": "Falha ao criar captura de tela: {error}",
         "notice_no_active_note": "Nenhuma nota ativa encontrada",
         "notice_table_inserted": "Tabela inserida na nota!",
         "notice_insert_failed": "Falha ao inserir: {error}"
@@ -119,13 +119,13 @@ export default {
         "tip_screenshot": "Tirar foto do resultado",
         "tip_add_note": "Inserir resultado na nota",
         "notice_copied": "✓ Copiado!",
-        "notice_copy_failed": "❌ Falha ao copiar: ",
-        "notice_screenshot_failed": "❌ Falha na captura",
-        "notice_screenshot_copied": "✓ Captura copiada!",
-        "notice_screenshot_downloaded": "✓ Captura baixada!",
-        "notice_insert_no_note": "❌ Nenhuma nota ativa",
-        "notice_insert_success": "✓ Resultado inserido!",
-        "notice_insert_failed": "❌ Falha ao inserir: ",
+        "notice_copy_failed": "❌ Falha ao copiar: {error}",
+        "notice_screenshot_failed": "❌ Falha ao criar captura de tela: {error}",
+        "notice_screenshot_copied": "✓ Captura de tela copiada!",
+        "notice_screenshot_downloaded": "✓ Captura de tela baixada!",
+        "notice_insert_no_note": "❌ Nenhuma nota ativa encontrada",
+        "notice_insert_success": "✓ Resultado inserido na nota!",
+        "notice_insert_failed": "❌ Falha ao inserir: {error}",
         "msg_no_result": "Consulta executada com sucesso (sem retorno)",
         "msg_rows_found": "{count} linhas encontradas",
         "msg_no_data": "Nenhum dado encontrado",
@@ -171,10 +171,20 @@ export default {
         "btn_read": "Marcar como Lido"
     },
     "footer": {
-        "tip_help": "Ajuda e Funcionalidades",
+        "tip_help": "Ajuda e Recursos",
         "status_ready": "Pronto",
         "status_error": "Erro",
         "status_aborted": "Abortado",
         "status_live": "AO VIVO"
+    },
+    "common": {
+        "error": "Erro: {error}",
+        "invalid_name": "O novo nome deve ser diferente do antigo.",
+        "notice_export_success": "Exportado para {name}",
+        "notice_import_loading": "Importando banco de dados...",
+        "notice_import_success": "Banco de dados importado com sucesso!",
+        "notice_anchor_form": "FORM ancorado a {name}",
+        "notice_anchor_live": "Bloco LIVE ancorado a {name}",
+        "notice_update_live": "Atualizando dados LIVE de {name}..."
     }
 }
