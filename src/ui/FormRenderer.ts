@@ -109,8 +109,16 @@ export class FormRenderer {
         statusMsg.style.display = "none";
 
         try {
+            if (!SQLSanitizer.validateIdentifier(data.tableName.split('.').pop()!)) {
+                throw new Error("Invalid table name");
+            }
+
             const values: Record<string, any> = {};
             for (const [name, input] of Object.entries(inputs)) {
+                if (!SQLSanitizer.validateIdentifier(name)) {
+                    throw new Error(`Invalid column name: ${name}`);
+                }
+
                 if (input instanceof HTMLInputElement && input.type === 'checkbox') {
                     values[name] = input.checked ? 1 : 0;
                 } else if (input instanceof HTMLInputElement && input.type === 'number') {

@@ -15,6 +15,13 @@ export class SQLSanitizer {
         return name.replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 64);
     }
 
+    static validateIdentifier(name: string): boolean {
+        // Strict whitelist: alpha-numeric and underscore only.
+        // No length greater than 64.
+        // Reject empty strings.
+        return /^[a-zA-Z0-9_]{1,64}$/.test(name);
+    }
+
     static escapeValue(value: any): string {
         if (value === null || value === undefined) return 'NULL';
         if (typeof value === 'number') return String(value);

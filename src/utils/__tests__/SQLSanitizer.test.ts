@@ -26,6 +26,30 @@ describe('SQLSanitizer', () => {
         });
     });
 
+    describe('validateIdentifier', () => {
+        it('should return true for valid identifiers', () => {
+            expect(SQLSanitizer.validateIdentifier('valid_name')).toBe(true);
+            expect(SQLSanitizer.validateIdentifier('valid123')).toBe(true);
+            expect(SQLSanitizer.validateIdentifier('_private')).toBe(true);
+        });
+
+        it('should return false for invalid characters', () => {
+            expect(SQLSanitizer.validateIdentifier('invalid-name')).toBe(false);
+            expect(SQLSanitizer.validateIdentifier('drop;table')).toBe(false);
+            expect(SQLSanitizer.validateIdentifier('name with spaces')).toBe(false);
+            expect(SQLSanitizer.validateIdentifier("'quoted'")).toBe(false);
+        });
+
+        it('should return false for empty strings', () => {
+            expect(SQLSanitizer.validateIdentifier('')).toBe(false);
+        });
+
+        it('should return false for too long strings', () => {
+            const longName = 'a'.repeat(65);
+            expect(SQLSanitizer.validateIdentifier(longName)).toBe(false);
+        });
+    });
+
     describe('escapeValue', () => {
         it('should handle strings with single quotes', () => {
             expect(SQLSanitizer.escapeValue("It's a test")).toBe("'It''s a test'");

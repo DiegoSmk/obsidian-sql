@@ -216,7 +216,13 @@ export class QueryExecutor {
 
         let fullTableName = tableMatch[1];
         if (!fullTableName.includes('.')) fullTableName = `${database}.${fullTableName}`;
-        const tableName = fullTableName.split('.').pop()!;
+
+        const [dbPart, tablePart] = fullTableName.split('.');
+        if (!SQLSanitizer.validateIdentifier(dbPart) || !SQLSanitizer.validateIdentifier(tablePart)) {
+            throw new Error(`Security Error: Invalid table or database name identifier.`);
+        }
+
+        const tableName = tablePart;
 
         let columns: any[] = [];
         let tableObj: any = null;
