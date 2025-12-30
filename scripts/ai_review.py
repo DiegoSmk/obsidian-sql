@@ -60,8 +60,8 @@ def main():
         # -----------------
 
         # 3. Preparação para o Gemini (v1 estável)
-        # Usamos gemini-2.5-flash conforme solicitado
-        api_url = f'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key={gemini_key}'
+        # Usamos gemini-3.0-flash conforme solicitado
+        api_url = f'https://generativelanguage.googleapis.com/v1/models/gemini-3.0-flash:generateContent?key={gemini_key}'
         
         # Reduzindo para 100k para ser mais conservador com a quota
         prompt_text = f'Atue como um desenvolvedor Senior. Revise o seguinte código (Diff). Aponte bugs, falhas de segurança e melhorias. Responda em Português de forma direta:\n\n{diff_data[:100000]}'
@@ -71,7 +71,7 @@ def main():
             'generationConfig': {'temperature': 0.2} 
         }
 
-        print(f'Enviando {len(diff_data[:200000])} caracteres para o Gemini 1.5 Flash...')
+        print(f'Enviando {len(diff_data[:200000])} caracteres para o Gemini 3.0 Flash...')
         
         response_req = requests.post(api_url, json=payload, timeout=60)
         response = response_req.json()
@@ -89,7 +89,7 @@ def main():
 
         # 4. Posta o Comentário de volta no PR
         comment_url = f'{server_url}/api/v1/repos/{repo}/issues/{pr_number}/comments'
-        comment_payload = {'body': f'### 🤖 AI Code Review (Gemini 1.5 Flash)\n\n{review_text}'}
+        comment_payload = {'body': f'### 🤖 AI Code Review (Gemini 3.0 Flash)\n\n{review_text}'}
         
         res_comment = requests.post(comment_url, json=comment_payload, headers=headers, timeout=30)
         

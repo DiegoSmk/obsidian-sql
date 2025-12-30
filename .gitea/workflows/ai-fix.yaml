@@ -1,0 +1,31 @@
+name: AI Auto-Fix
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  ai-fix:
+    if: startsWith(github.event.comment.body, '/gemini fix')
+    runs-on: docker
+    container:
+      image: python:3.9-slim  # Use python image directly to save install time
+      
+    steps:
+      - name: Install System Deps
+        run: apt-get update && apt-get install -y git
+
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        # We start with basic checkout, the script handles the branch switch
+
+      - name: Install Python Deps
+        run: pip install requests
+
+      - name: Run AI Fix
+        env:
+          GEMINI_KEY: ${{ secrets.GEMINI_KEY }}
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN }} # Ensure this secret exists and has write access
+          GITEA_SERVER_URL: ${{ gitea.server_url }}
+          GITEA_REPO: ${{ gitea.repository }}
+          GITEA_PR_NUMBER: ${{ github.event.issue.number }}
+        run: python scripts/ai_fix.py
