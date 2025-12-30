@@ -344,11 +344,22 @@ export class DatabaseManager {
                 // and alasql supports "CREATE TABLE new.tab AS SELECT * FROM old.tab" but that copies data + structure (sometimes without constraints)
                 // A safer bet given alasql limitations:
 
-                // Copy Table Struct and Data using robust two-step process with context switching
+                // Copy Table Struct and Data using SHOW CREATE TABLE approach
                 try {
-                    await alasql.promise(`USE ${newName}`);
-                    await alasql.promise(`CREATE TABLE \`${tableName}\` AS SELECT * FROM ${oldName}.\`${tableName}\` WHERE 1=0`);
-                    await alasql.promise(`INSERT INTO \`${tableName}\` SELECT * FROM ${oldName}.\`${tableName}\``);
+                    // 1. Get Schema (Source Context)
+                    await alasql.promise(`USE [${oldName}]`);
+                    const createSQL = alasql(`SHOW CREATE TABLE [${tableName}]`) as string;
+
+                    // 2. Get Data (Source Context)
+                    const sourceData = alasql(`SELECT * FROM [${tableName}]`) as any[];
+
+                    // 3. Create & Insert (Target Context)
+                    await alasql.promise(`USE [${newName}]`);
+                    await alasql.promise(createSQL);
+
+                    if (sourceData && sourceData.length > 0) {
+                        await alasql.promise(`INSERT INTO [${tableName}] SELECT * FROM ?`, [sourceData]);
+                    }
                 } catch (e) {
                     console.error(`Failed to copy table ${tableName} during rename:`, e);
                 }
@@ -391,9 +402,20 @@ export class DatabaseManager {
         for (const t of tables) {
             const tableName = t.tableid;
             try {
-                await alasql.promise(`USE ${newName}`);
-                await alasql.promise(`CREATE TABLE \`${tableName}\` AS SELECT * FROM ${dbName}.\`${tableName}\` WHERE 1=0`);
-                await alasql.promise(`INSERT INTO \`${tableName}\` SELECT * FROM ${dbName}.\`${tableName}\``);
+                // 1. Get Schema (Source Context)
+                await alasql.promise(`USE [${dbName}]`);
+                const createSQL = alasql(`SHOW CREATE TABLE [${tableName}]`) as string;
+
+                // 2. Get Data (Source Context)
+                const sourceData = alasql(`SELECT * FROM [${tableName}]`) as any[];
+
+                // 3. Create & Insert (Target Context)
+                await alasql.promise(`USE [${newName}]`);
+                await alasql.promise(createSQL);
+
+                if (sourceData && sourceData.length > 0) {
+                    await alasql.promise(`INSERT INTO [${tableName}] SELECT * FROM ?`, [sourceData]);
+                }
             } catch (e) {
                 console.error(`Failed to duplicate table ${tableName}:`, e);
             }

@@ -97,7 +97,7 @@ describe('DatabaseManager', () => {
         await dbManager.duplicateDatabase('dbo', 'dbo_copy');
 
         expect(alasql.databases.dbo_copy).toBeDefined();
-        const res = alasql('SELECT * FROM dbo_copy.source') as any;
+        const res = alasql('SELECT * FROM [dbo_copy].[source]') as any;
         expect(res[0].v).toBe(42);
     });
 
@@ -111,7 +111,7 @@ describe('DatabaseManager', () => {
 
         expect(alasql.databases.old_name).toBeUndefined();
         expect(alasql.databases.new_name).toBeDefined();
-        const res = alasql('SELECT * FROM new_name.t1') as any;
+        const res = alasql('SELECT * FROM [new_name].[t1]') as any;
         expect(res[0].v).toBe(10);
     });
 

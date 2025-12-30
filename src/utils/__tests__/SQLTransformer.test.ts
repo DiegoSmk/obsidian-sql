@@ -7,12 +7,12 @@ describe('SQLTransformer', () => {
 
         it('should prefix simple SELECT FROM', () => {
             const sql = 'SELECT * FROM users';
-            expect(SQLTransformer.prefixTablesWithDatabase(sql, db)).toBe('SELECT * FROM my_db.users');
+            expect(SQLTransformer.prefixTablesWithDatabase(sql, db)).toBe('SELECT * FROM [my_db].[users]');
         });
 
         it('should prefix INSERT INTO', () => {
             const sql = 'INSERT INTO logs (msg) VALUES ("test")';
-            expect(SQLTransformer.prefixTablesWithDatabase(sql, db)).toBe('INSERT INTO my_db.logs (msg) VALUES ("test")');
+            expect(SQLTransformer.prefixTablesWithDatabase(sql, db)).toBe('INSERT INTO [my_db].[logs] (msg) VALUES ("test")');
         });
 
         it('should NOT prefix functions like RANGE()', () => {
@@ -25,18 +25,19 @@ describe('SQLTransformer', () => {
             expect(SQLTransformer.prefixTablesWithDatabase(sql, db)).toBe('SELECT * FROM other_db.items');
         });
 
+
         it('should prefix JOINs', () => {
             const sql = 'SELECT * FROM users JOIN profiles ON users.id = profiles.user_id';
             const transformed = SQLTransformer.prefixTablesWithDatabase(sql, db);
-            expect(transformed).toContain('FROM my_db.users');
-            expect(transformed).toContain('JOIN my_db.profiles');
+            expect(transformed).toContain('FROM [my_db].[users]');
+            expect(transformed).toContain('JOIN [my_db].[profiles]');
         });
 
         it('should NOT prefix system keywords in FROM like (SELECT...)', () => {
             const sql = 'SELECT * FROM (SELECT id FROM users)';
             // Note: The inner SELECT will also be processed in a real execution loop, 
             // but the regex itself should ignore the LPAR.
-            expect(SQLTransformer.prefixTablesWithDatabase(sql, db)).toContain('FROM (SELECT id FROM my_db.users)');
+            expect(SQLTransformer.prefixTablesWithDatabase(sql, db)).toContain('FROM (SELECT id FROM [my_db].[users])');
         });
 
         it('should handle complex AlaSQL data sources like JSON()', () => {
