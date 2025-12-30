@@ -1,4 +1,5 @@
 import { Modal, App, setIcon } from "obsidian";
+import { t } from "../utils/i18n";
 
 export class ProPracticeModal extends Modal {
     constructor(app: App) {
@@ -15,52 +16,52 @@ export class ProPracticeModal extends Modal {
         const emailHeader = contentEl.createDiv({ cls: "mysql-email-header" });
 
         const fromRow = emailHeader.createDiv({ cls: "mysql-email-row" });
-        fromRow.createSpan({ text: "From:", cls: "mysql-email-label" });
-        fromRow.createSpan({ text: "SQL Notebook Dev Team <dev@obsidian-sql.internal>", cls: "mysql-email-value" });
+        fromRow.createSpan({ text: t('pro.label_from'), cls: "mysql-email-label" });
+        fromRow.createSpan({ text: t('pro.from_name'), cls: "mysql-email-value" });
 
         const toRow = emailHeader.createDiv({ cls: "mysql-email-row" });
-        toRow.createSpan({ text: "To:", cls: "mysql-email-label" });
-        toRow.createSpan({ text: "Valued Developer", cls: "mysql-email-value" });
+        toRow.createSpan({ text: t('pro.label_to'), cls: "mysql-email-label" });
+        toRow.createSpan({ text: t('pro.to_name'), cls: "mysql-email-value" });
 
         const subjectRow = emailHeader.createDiv({ cls: "mysql-email-row" });
-        subjectRow.createSpan({ text: "Subject:", cls: "mysql-email-label" });
-        subjectRow.createSpan({ text: "Pro Practice Alert: Database Context Best Practices", cls: "mysql-email-value mysql-email-subject" });
+        subjectRow.createSpan({ text: t('pro.label_subject'), cls: "mysql-email-label" });
+        subjectRow.createSpan({ text: t('pro.subject'), cls: "mysql-email-value mysql-email-subject" });
 
         const body = contentEl.createDiv({ cls: "mysql-pro-practice-body" });
 
         body.createEl("p", {
-            text: "Hello,"
+            text: t('pro.hello')
         });
 
         body.createEl("p", {
-            text: "We noticed you're switching databases via the UI. While this is great for quick navigation, we'd like to share a professional tip: using the explicit `USE` command in your scripts can make your workflow even more robust."
+            text: t('pro.msg_1')
         });
 
         const quote = body.createEl("blockquote", { cls: "mysql-pro-quote" });
         quote.createEl("p", {
-            text: "Explicitly defining your context is a best practice that ensures your scripts are portable and unambiguous across different environments:"
+            text: t('pro.msg_quote')
         });
         const codeBlock = quote.createDiv({ cls: "mysql-pro-code-examples" });
         codeBlock.createEl("code", { text: "USE staging;" });
         codeBlock.createEl("code", { text: "USE production;" });
 
         body.createEl("p", {
-            text: "Defining the context within the code helps avoid confusion and makes your intent clear to anyone reviewing your work. You can always continue using the global switcher for convenience!"
+            text: t('pro.msg_2')
         });
 
         const punchline = body.createEl("div", { cls: "mysql-pro-punchline" });
-        punchline.createSpan({ text: "Happy querying! 🚀" });
+        punchline.createSpan({ text: t('pro.punchline') });
 
         const signature = contentEl.createDiv({ cls: "mysql-pro-signature" });
         const sigLogo = signature.createDiv({ cls: "mysql-pro-signature-logo" });
         setIcon(sigLogo, "circle");
 
         const sigText = signature.createDiv({ cls: "mysql-pro-signature-text" });
-        sigText.createEl("p", { text: "Best regards," });
-        sigText.createEl("p", { text: "SQL Notebook Development Team", cls: "mysql-pro-team" });
+        sigText.createEl("p", { text: t('pro.signature_regards') });
+        sigText.createEl("p", { text: t('pro.signature_team'), cls: "mysql-pro-team" });
 
         const btnContainer = contentEl.createDiv({ cls: "mysql-modal-buttons" });
-        const closeBtn = btnContainer.createEl("button", { text: "Mark as Read", cls: "mod-cta" });
+        const closeBtn = btnContainer.createEl("button", { text: t('pro.btn_read'), cls: "mod-cta" });
         closeBtn.onclick = () => this.close();
     }
 

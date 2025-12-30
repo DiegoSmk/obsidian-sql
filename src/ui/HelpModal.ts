@@ -1,4 +1,5 @@
 import { Modal, App, setIcon } from "obsidian";
+import { t } from "../utils/i18n";
 
 interface Feature {
     icon: string;
@@ -16,42 +17,42 @@ export class HelpModal extends Modal {
         const { contentEl } = this;
         contentEl.addClass("mysql-help-modal");
 
-        contentEl.createEl("h2", { text: "SQL Notebook Features" });
+        contentEl.createEl("h2", { text: t('help.title') });
 
         const features: Feature[] = [
             {
                 icon: "chevron-down",
-                title: "Collapsible Workbench",
-                description: "Toggle the workbench view to save space. Click the header or the chevron icon."
+                title: t('help.collapsible_title'),
+                description: t('help.collapsible_desc')
             },
             {
                 icon: "at-sign",
-                title: "Auto-Collapse",
-                description: "Start a comment with '@' (e.g., '-- @ My Query') to automatically collapse the workbench when the note opens.",
+                title: t('help.auto_collapse_title'),
+                description: t('help.auto_collapse_desc'),
                 example: "-- @ Initial Setup"
             },
             {
                 icon: "alert-triangle",
-                title: "Alert Marker (!)",
-                description: "Add '!' to your comment start to highlight it as an alert or warning.",
+                title: t('help.alert_title'),
+                description: t('help.alert_desc'),
                 example: "-- ! DROP TABLE users"
             },
             {
                 icon: "help-circle",
-                title: "Question Marker (?)",
-                description: "Add '?' to indicate a query that needs review or is experimental.",
+                title: t('help.question_title'),
+                description: t('help.question_desc'),
                 example: "-- ? optimizing join"
             },
             {
                 icon: "star",
-                title: "Favorite Marker (*)",
-                description: "Add '*' to highlight important or frequently used queries.",
+                title: t('help.favorite_title'),
+                description: t('help.favorite_desc'),
                 example: "-- * Production Report"
             },
             {
                 icon: "copy",
-                title: "Copy & Edit",
-                description: "Hover over the workbench to access quick Copy Code and Edit Block buttons."
+                title: t('help.copy_edit_title'),
+                description: t('help.copy_edit_desc')
             }
         ];
 

@@ -19,6 +19,7 @@ import { CSVSelectionModal } from './ui/CSVSelectionModal';
 import { MySQLSettingTab } from './settings';
 import { ConfirmationModal } from './ui/ConfirmationModal';
 import { WorkbenchFooter } from './ui/WorkbenchFooter';
+import { setLanguage, t } from './utils/i18n';
 
 /**
  * Component to manage the lifecycle of a LIVE block synchronization listener.
@@ -43,6 +44,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
     async onload() {
         await this.loadSettings();
+
+        // Initialize i18n
+        setLanguage(this.settings.language);
 
         // Initialize Logger State
         Logger.setEnabled(this.settings.enableLogging);
@@ -120,6 +124,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
     async loadSettings() {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        setLanguage(this.settings.language);
     }
 
     async saveSettings() {
@@ -356,7 +361,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         copyCodeBtn.onclick = async (e) => {
             e.stopPropagation(); // Prevent header toggle if clicked (though it's in body, safety)
             await navigator.clipboard.writeText(source);
-            new Notice("SQL code copied!");
+            new Notice(t('workbench.notice_copy'));
         };
 
         // Safe Code Highlighting
@@ -368,7 +373,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         // Run Button
         const runBtn = controls.createEl("button", { cls: "mysql-btn mysql-btn-run" });
         setIcon(runBtn, "play");
-        runBtn.createSpan({ text: "Run" });
+        runBtn.createSpan({ text: t('workbench.btn_run') });
 
         // Container for right-aligned buttons
         const rightControls = controls.createEl("div", { cls: "mysql-controls-right" });
@@ -376,17 +381,17 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         // Add Tables Button
         const showTablesBtn = rightControls.createEl("button", { cls: "mysql-btn" });
         setIcon(showTablesBtn, "table");
-        showTablesBtn.createSpan({ text: "Tables" });
+        showTablesBtn.createSpan({ text: t('modals.btn_tabelas') });
 
         // Add Import CSV Button
         const importBtn = rightControls.createEl("button", { cls: "mysql-btn" });
         setIcon(importBtn, "file-up");
-        importBtn.createSpan({ text: "Import CSV" });
+        importBtn.createSpan({ text: t('settings.btn_importar') });
 
         // Add Reset Button
         const resetBtn = rightControls.createEl("button", { cls: "mysql-btn mysql-btn-danger" });
         setIcon(resetBtn, "trash-2");
-        resetBtn.createSpan({ text: "Reset" });
+        resetBtn.createSpan({ text: t('settings.reset_btn') });
 
         const resultContainer = body.createEl("div", { cls: "mysql-result-container" });
 
@@ -464,7 +469,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                                     await this.saveSettings();
                                 }
                                 dbNameSpan.setText(db);
-                                new Notice(`FORM anchored to ${db}`);
+                                new Notice(t('common.notice_anchor_form', { name: db }));
                                 this.executeQuery(source, params, runBtn, resultContainer, footer, { activeDatabase: anchoredDB });
                             });
                     });
@@ -527,7 +532,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
                                 // Update UI
                                 dbNameSpan.setText(db);
-                                new Notice(`LIVE block anchored to ${db}`);
+                                new Notice(t('common.notice_anchor_live', { name: db }));
 
                                 // Re-execute immediately
                                 this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
@@ -550,7 +555,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             setIcon(refreshBtn, "refresh-cw");
             refreshBtn.onclick = () => {
                 refreshBtn.addClass("is-spinning");
-                new Notice(`Updating LIVE data from ${anchoredDB}...`);
+                new Notice(t('common.notice_update_live', { name: anchoredDB }));
                 this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                     activeDatabase: anchoredDB,
                     originId: stableId, // Strictly stableId
@@ -676,7 +681,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         });
         if (cancelBtn) {
             setIcon(cancelBtn, "stop-circle");
-            cancelBtn.createSpan({ text: "Cancel" });
+            cancelBtn.createSpan({ text: t('workbench.btn_cancel') });
         }
 
         const abortController = new AbortController();
@@ -688,17 +693,17 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 btn.disabled = false;
                 btn.empty();
                 setIcon(btn, "play");
-                btn.createSpan({ text: "Run" });
+                btn.createSpan({ text: t('workbench.btn_run') });
                 if (footer) {
                     footer.setAborted();
                 }
-                new Notice("Query aborted by user");
+                new Notice(t('workbench.notice_aborted'));
             };
         }
 
-        btn.innerHTML = `⏳ Executing...`;
+        btn.innerHTML = `⏳ ${t('workbench.btn_executing')}`;
         if (footer) {
-            footer.setStatus("Executing...", true);
+            footer.setStatus(t('workbench.btn_executing'), true);
         }
 
         // Handle Special Commands like SHOW TABLES (custom view?)
@@ -779,12 +784,12 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 workbench.removeClass('is-loading');
             }
             if (footer) {
-                footer.setStatus("Ready");
+                footer.setStatus("Ready"); // Ready is a technical state, maybe it stays? Or translates?
             }
             btn.disabled = false;
             btn.empty();
             setIcon(btn, "play");
-            btn.createSpan({ text: "Run" });
+            btn.createSpan({ text: t('workbench.btn_run') });
         }
     }
 

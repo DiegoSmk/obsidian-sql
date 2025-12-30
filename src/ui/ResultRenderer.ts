@@ -2,13 +2,14 @@ import { App, MarkdownView, Notice, setIcon } from 'obsidian';
 import html2canvas from 'html2canvas';
 import { IMySQLPlugin, QueryResult } from '../types';
 import { FormRenderer } from './FormRenderer';
+import { t } from '../utils/i18n';
 
 export class ResultRenderer {
     static render(result: QueryResult, container: HTMLElement, app: App, plugin: IMySQLPlugin, tableName?: string, isLive: boolean = false): void {
         container.empty();
 
         if (!result.success) {
-            this.renderError(result.error || 'Unknown error', container);
+            this.renderError(result.error || t('modals.badge_system'), container); // Fallback to 'System' or generic if not found
             return;
         }
 
@@ -29,28 +30,28 @@ export class ResultRenderer {
         // Botão: Copiar
         const copyBtn = container.createEl("button", {
             cls: "mysql-action-btn",
-            attr: { title: "Copy result to clipboard" }
+            attr: { title: t('renderer.tip_copy') }
         });
         setIcon(copyBtn, "copy");
-        copyBtn.createSpan({ text: "Copy" });
+        copyBtn.createSpan({ text: t('renderer.btn_copy') });
         copyBtn.onclick = () => this.copyToClipboard(data);
 
         // Botão: Screenshot
         const screenshotBtn = container.createEl("button", {
             cls: "mysql-action-btn",
-            attr: { title: "Take screenshot of result" }
+            attr: { title: t('renderer.tip_screenshot') }
         });
         setIcon(screenshotBtn, "camera");
-        screenshotBtn.createSpan({ text: "Screenshot" });
+        screenshotBtn.createSpan({ text: t('renderer.btn_screenshot') });
         screenshotBtn.onclick = () => this.takeScreenshot(resultWrapper);
 
         // Botão: Inserir na nota
         const insertBtn = container.createEl("button", {
             cls: "mysql-action-btn",
-            attr: { title: "Insert result into note" }
+            attr: { title: t('renderer.tip_add_note') }
         });
         setIcon(insertBtn, "file-plus");
-        insertBtn.createSpan({ text: "Add to Note" });
+        insertBtn.createSpan({ text: t('renderer.btn_add_note') });
         insertBtn.onclick = () => this.insertIntoNote(data, app);
     }
 
@@ -76,9 +77,9 @@ export class ResultRenderer {
             }
 
             await navigator.clipboard.writeText(textToCopy);
-            new Notice('✓ Copied to clipboard!');
+            new Notice(t('renderer.notice_copied'));
         } catch (error) {
-            new Notice('❌ Failed to copy: ' + error.message);
+            new Notice(t('renderer.notice_copy_failed', { error: error.message }));
         }
     }
 
@@ -92,7 +93,7 @@ export class ResultRenderer {
 
             canvas.toBlob(async (blob: Blob | null) => {
                 if (!blob) {
-                    new Notice('❌ Failed to create screenshot');
+                    new Notice(t('renderer.notice_screenshot_failed', { error: 'Canvas blob failed' }));
                     return;
                 }
 
@@ -100,7 +101,7 @@ export class ResultRenderer {
                     await navigator.clipboard.write([
                         new ClipboardItem({ 'image/png': blob })
                     ]);
-                    new Notice('✓ Screenshot copied to clipboard!');
+                    new Notice(t('renderer.notice_screenshot_copied'));
                 } catch (clipboardError) {
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -108,11 +109,11 @@ export class ResultRenderer {
                     a.download = `mysql-result-${Date.now()}.png`;
                     a.click();
                     URL.revokeObjectURL(url);
-                    new Notice('✓ Screenshot downloaded!');
+                    new Notice(t('renderer.notice_screenshot_downloaded'));
                 }
             });
         } catch (error) {
-            new Notice('❌ Screenshot failed: ' + error.message);
+            new Notice(t('renderer.notice_screenshot_failed', { error: error.message }));
             console.error('Screenshot error:', error);
         }
     }
@@ -122,7 +123,7 @@ export class ResultRenderer {
             const activeView = app.workspace.getActiveViewOfType(MarkdownView);
 
             if (!activeView) {
-                new Notice('❌ No active note found');
+                new Notice(t('renderer.notice_insert_no_note'));
                 return;
             }
 
@@ -143,9 +144,9 @@ export class ResultRenderer {
             const lines = textToInsert.split('\n').length;
             editor.setCursor({ line: cursor.line + lines + 1, ch: 0 });
 
-            new Notice('✓ Result inserted into note!');
+            new Notice(t('renderer.notice_insert_success'));
         } catch (error) {
-            new Notice('❌ Failed to insert: ' + error.message);
+            new Notice(t('renderer.notice_insert_failed', { error: error.message }));
         }
     }
 
@@ -171,7 +172,7 @@ export class ResultRenderer {
     private static renderData(results: any[], container: HTMLElement, app: App, plugin: IMySQLPlugin, tableName?: string, isLive: boolean = false): void {
         if (!Array.isArray(results) || results.length === 0) {
             container.createEl("p", {
-                text: "Query executed successfully (no result set)",
+                text: t('renderer.msg_no_result'),
                 cls: "mysql-info"
             });
             return;
@@ -190,7 +191,7 @@ export class ResultRenderer {
             // Left: Title / Source
             const left = header.createDiv({ cls: "mysql-header-left" });
             setIcon(left, results.length > 1 ? "list" : "database");
-            const labelText = results.length > 1 ? `Result #${idx + 1}` : (tableName ? `Table: ${tableName}` : "Query Result");
+            const labelText = results.length > 1 ? t('renderer.result_label', { idx: String(idx + 1) }) : (tableName ? t('renderer.table_label', { name: tableName }) : t('renderer.query_result'));
             left.createSpan({ text: labelText, cls: "mysql-result-label" });
 
             // Right: Meta + Actions
@@ -229,12 +230,12 @@ export class ResultRenderer {
                     if (rs.type === 'error') {
                         const iconWrapper = msgWrapper.createDiv({ cls: "mysql-error-icon" });
                         setIcon(iconWrapper, "alert-circle");
-                        msgWrapper.createSpan({ text: rs.message || "Error" });
+                        msgWrapper.createSpan({ text: rs.message || t('modals.status_error') });
                     } else {
                         const iconWrapper = msgWrapper.createDiv({ cls: isDML ? "mysql-success-icon" : "mysql-info-icon" });
                         setIcon(iconWrapper, isDML ? "check-circle" : "info");
                         msgWrapper.createDiv({
-                            text: rs.message || "Done",
+                            text: rs.message || t('modals.status_done'),
                             cls: isDML ? "mysql-success" : "mysql-info-text"
                         });
                     }
@@ -250,14 +251,14 @@ export class ResultRenderer {
                 if (isLive) rowInfo.style.display = "none";
                 const countIcon = rowInfo.createDiv({ cls: "mysql-count-icon" });
                 setIcon(countIcon, "list-ordered");
-                rowInfo.createSpan({ text: `${rs.rowCount} rows found`, cls: "mysql-row-count-text" });
+                rowInfo.createSpan({ text: t('renderer.msg_rows_found', { count: String(rs.rowCount) }), cls: "mysql-row-count-text" });
             }
         });
     }
 
     private static renderTable(rows: any[], container: HTMLElement, batchSize: number = 100): void {
         if (!rows || rows.length === 0) {
-            container.createEl("p", { text: "No data found", cls: "mysql-empty-state" });
+            container.createEl("p", { text: t('renderer.msg_no_data'), cls: "mysql-empty-state" });
             return;
         }
 
@@ -277,7 +278,7 @@ export class ResultRenderer {
                 keys.forEach(key => {
                     const val = row[key];
                     tr.createEl("td", {
-                        text: val === null || val === undefined ? "NULL" : String(val)
+                        text: val === null || val === undefined ? t('modals.null_value') : String(val)
                     });
                 });
             });
@@ -291,12 +292,12 @@ export class ResultRenderer {
             const controls = container.createEl("div", { cls: "mysql-pagination-controls" });
 
             const statusSpan = controls.createEl("span", {
-                text: `Showing ${currentCount} of ${rows.length} rows`,
+                text: t('renderer.msg_showing_rows', { count: String(currentCount), total: String(rows.length) }),
                 cls: "mysql-pagination-status"
             });
 
             const showAllBtn = controls.createEl("button", {
-                text: "Show All Rows",
+                text: t('renderer.btn_show_all'),
                 cls: "mysql-pagination-btn"
             });
 
@@ -305,7 +306,7 @@ export class ResultRenderer {
                 const remaining = rows.slice(currentCount);
                 renderBatch(remaining);
                 showAllBtn.remove();
-                statusSpan.setText(`Showing all ${rows.length} rows`);
+                statusSpan.setText(t('renderer.msg_showing_all', { count: String(rows.length) }));
             };
         }
     }
@@ -316,7 +317,7 @@ export class ResultRenderer {
         const header = errorDiv.createDiv({ cls: "mysql-error-header" });
         const iconWrapper = header.createDiv({ cls: "mysql-error-icon" });
         setIcon(iconWrapper, "alert-circle");
-        header.createSpan({ text: "Execution Error", cls: "mysql-error-title" });
+        header.createSpan({ text: t('renderer.err_title'), cls: "mysql-error-title" });
 
         errorDiv.createDiv({ text: message, cls: "mysql-error-message" });
     }

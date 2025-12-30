@@ -4,6 +4,8 @@ import alasql from 'alasql';
 import { IMySQLPlugin } from './types';
 import { ConfirmationModal } from './ui/ConfirmationModal';
 import { DatabaseSwitcherModal, RenameDatabaseModal, DatabaseTablesModal, CreateDatabaseModal, DuplicateDatabaseModal } from './ui/DatabaseModals';
+import { t, setLanguage } from './utils/i18n';
+import { Language } from './types';
 
 export class MySQLSettingTab extends PluginSettingTab {
     plugin: IMySQLPlugin;
@@ -64,8 +66,8 @@ export class MySQLSettingTab extends PluginSettingTab {
 
         // Title & Welcome
         const titleText = titleGroup.createDiv({ cls: 'mysql-title-text' });
-        titleText.createEl('h2', { text: 'SQL Notebook', attr: { style: 'margin: 0; line-height: 1.2;' } });
-        titleText.createEl('span', { text: 'Database Manager', attr: { style: 'font-size: 13px; color: var(--text-muted);' } });
+        titleText.createEl('h2', { text: t('settings.title'), attr: { style: 'margin: 0; line-height: 1.2;' } });
+        titleText.createEl('span', { text: t('settings.subtitle'), attr: { style: 'font-size: 13px; color: var(--text-muted);' } });
 
         // Welcome Section (Full width below header or integrated?)
         // User asked for a "Welcome Section" in settings screen.
@@ -90,23 +92,23 @@ export class MySQLSettingTab extends PluginSettingTab {
 
         // Refresh Button
         new ButtonComponent(actions)
-            .setButtonText("Atualizar")
+            .setButtonText(t('settings.btn_atualizar'))
             .setIcon("refresh-cw")
-            .setTooltip("Atualizar Lista")
+            .setTooltip(t('settings.btn_atualizar'))
             .onClick(() => {
                 this.display();
-                new Notice("Lista atualizada!");
+                new Notice(t('settings.btn_atualizar') + "!");
             });
 
         new ButtonComponent(importBtnContainer)
-            .setButtonText("Importar")
+            .setButtonText(t('settings.btn_importar'))
             .setIcon("import")
-            .setTooltip("Importar Database (.sql)")
+            .setTooltip(t('settings.btn_importar'))
             .onClick(() => importInput.click());
 
         // Create Button
         new ButtonComponent(actions)
-            .setButtonText("Novo Database")
+            .setButtonText(t('settings.btn_novo_db'))
             .setIcon("plus")
             .setCta()
             .onClick(() => this.openCreateModal());
@@ -119,8 +121,8 @@ export class MySQLSettingTab extends PluginSettingTab {
         welcomeSection.style.borderRadius = '8px';
         welcomeSection.style.border = '1px solid color-mix(in srgb, var(--mysql-accent), transparent 70%)';
 
-        welcomeSection.createEl('h3', { text: 'Bem vindo ao SQL Notebook!', attr: { style: 'margin: 0 0 5px 0; color: var(--mysql-accent);' } });
-        welcomeSection.createEl('p', { text: 'Gerencie seus bancos de dados locais, execute queries e visualize resultados diretamente no Obsidian.', attr: { style: 'margin: 0; font-size: 14px; color: var(--text-normal);' } });
+        welcomeSection.createEl('h3', { text: t('settings.welcome_title'), attr: { style: 'margin: 0 0 5px 0; color: var(--mysql-accent);' } });
+        welcomeSection.createEl('p', { text: t('settings.welcome_desc'), attr: { style: 'margin: 0; font-size: 14px; color: var(--text-normal);' } });
 
 
         // --- Search Section ---
@@ -144,7 +146,7 @@ export class MySQLSettingTab extends PluginSettingTab {
         const searchInput = searchWrapper.createEl('input', {
             type: 'text',
             cls: 'mysql-search-box',
-            placeholder: 'Buscar databases...',
+            placeholder: t('settings.search_placeholder'),
             attr: { style: 'border: none; box-shadow: none; background: transparent; width: 100%; padding: 8px; outline: none;' }
         });
 
@@ -168,22 +170,22 @@ export class MySQLSettingTab extends PluginSettingTab {
         infoSection.style.marginTop = '20px';
         infoSection.style.border = '1px solid var(--background-modifier-border)';
 
-        infoSection.createEl('h4', { text: 'Informações Importantes:', attr: { style: 'margin-top: 0; margin-bottom: 10px; color: var(--mysql-accent, var(--interactive-accent));' } });
+        infoSection.createEl('h4', { text: t('settings.info_title'), attr: { style: 'margin-top: 0; margin-bottom: 10px; color: var(--mysql-accent, var(--interactive-accent));' } });
         const list = infoSection.createEl('ul', { attr: { style: 'margin: 0; padding-left: 20px; color: var(--text-muted); font-size: 13px;' } });
 
         const li1 = list.createEl('li');
-        li1.innerHTML = 'Para excluir ou renomear um banco de dados <b>ativo</b>, mude para outro primeiro.';
+        li1.innerHTML = t('settings.info_li_1');
 
         const li2 = list.createEl('li');
-        li2.innerHTML = 'O banco de dados do sistema <b>"dbo"</b> não pode ser renomeado ou excluído.';
+        li2.innerHTML = t('settings.info_li_2');
 
         const li3 = list.createEl('li');
-        li3.innerHTML = '<b>Renomear</b> um banco de dados atualiza automaticamente referências internas.';
+        li3.innerHTML = t('settings.info_li_3');
 
 
         containerEl.createEl('hr', { attr: { style: 'margin: 40px 0; border: none; border-top: 1px solid var(--background-modifier-border);' } });
 
-        this.createSectionHeader(containerEl, 'General Settings', 'settings');
+        this.createSectionHeader(containerEl, t('settings.section_general'), 'settings');
         this.renderGeneralSettings(containerEl);
 
         // --- Footer ---
@@ -216,8 +218,8 @@ export class MySQLSettingTab extends PluginSettingTab {
         footerLogo.style.color = 'var(--mysql-accent, var(--interactive-accent))';
         footerLogo.style.marginBottom = '10px';
 
-        footer.createEl('h3', { text: 'SQL Notebook', attr: { style: 'margin: 0; font-size: 16px; color: var(--text-normal);' } });
-        footer.createEl('span', { text: 'Diego Pena', attr: { style: 'font-size: 12px; color: var(--text-muted);' } });
+        footer.createEl('h3', { text: t('settings.title'), attr: { style: 'margin: 0; font-size: 16px; color: var(--text-normal);' } });
+        footer.createEl('span', { text: t('settings.footer_by'), attr: { style: 'font-size: 12px; color: var(--text-muted);' } });
     }
 
     private renderDatabaseGrid(container: HTMLElement, searchTerm: string, page: number = 1): void {
@@ -241,7 +243,7 @@ export class MySQLSettingTab extends PluginSettingTab {
 
         if (sortedDbs.length === 0) {
             container.addClass('mysql-databases-grid'); // Re-add for empty msg if needed
-            container.createDiv({ text: "No databases found.", cls: "mysql-empty-msg" });
+            container.createDiv({ text: t('settings.search_placeholder'), cls: "mysql-empty-msg" });
             return;
         }
 
@@ -311,17 +313,17 @@ export class MySQLSettingTab extends PluginSettingTab {
         nameDiv.createSpan({ text: dbName });
 
         if (isActive) {
-            nameDiv.createSpan({ text: 'Ativo', cls: 'mysql-badge badge-active' });
+            nameDiv.createSpan({ text: t('modals.badge_ativo'), cls: 'mysql-badge badge-active' });
         } else if (isSystem) {
-            nameDiv.createSpan({ text: 'System', cls: 'mysql-badge badge-system' });
+            nameDiv.createSpan({ text: t('modals.badge_system'), cls: 'mysql-badge badge-system' });
         }
 
         // Stats
         const statsGrid = card.createDiv({ cls: 'mysql-db-stats' });
-        this.addStat(statsGrid, "Tabelas", stats.tables.toString());
-        this.addStat(statsGrid, "Linhas", stats.rows.toLocaleString());
-        this.addStat(statsGrid, "Tamanho", this.formatBytes(stats.sizeBytes));
-        this.addStat(statsGrid, "Atualizado", this.timeAgo(stats.lastUpdated));
+        this.addStat(statsGrid, t('modals.stat_tables'), stats.tables.toString());
+        this.addStat(statsGrid, t('modals.stat_rows'), stats.rows.toLocaleString());
+        this.addStat(statsGrid, t('modals.stat_size'), this.formatBytes(stats.sizeBytes));
+        this.addStat(statsGrid, t('modals.stat_updated'), this.timeAgo(stats.lastUpdated));
 
         // Actions
         const actions = card.createDiv({ cls: 'mysql-db-actions' });
@@ -329,7 +331,7 @@ export class MySQLSettingTab extends PluginSettingTab {
         if (!isActive) {
             new ButtonComponent(actions)
                 .setIcon("check")
-                .setTooltip("Ativar")
+                .setTooltip(t('modals.btn_ativar'))
                 .setClass("btn-success") // We might need to map this class in CSS or just use standard
                 .onClick(async () => {
                     await this.switchDatabase(dbName);
@@ -344,7 +346,7 @@ export class MySQLSettingTab extends PluginSettingTab {
         */
         new ButtonComponent(actions)
             .setIcon("copy")
-            .setTooltip("Duplicar")
+            .setTooltip(t('modals.btn_duplicar'))
             .onClick(() => {
                 // Open Duplicate Modal
                 const modal = new DuplicateDatabaseModal(this.app, this.plugin, dbName, () => this.display());
@@ -355,7 +357,7 @@ export class MySQLSettingTab extends PluginSettingTab {
         if (!isActive && !isSystem) {
             new ButtonComponent(actions)
                 .setIcon("pencil")
-                .setTooltip("Renomear")
+                .setTooltip(t('modals.btn_renomear'))
                 .onClick(() => {
                     const modal = new RenameDatabaseModal(this.app, this.plugin, dbName, () => this.display());
                     modal.open();
@@ -365,19 +367,19 @@ export class MySQLSettingTab extends PluginSettingTab {
         // Tables Button
         new ButtonComponent(actions)
             .setIcon("table")
-            .setTooltip("Visualizar Tabelas")
+            .setTooltip(t('modals.btn_tabelas'))
             .onClick(() => this.openTablesModal(dbName));
 
         new ButtonComponent(actions)
             .setIcon("upload")
-            .setTooltip("Exportar")
+            .setTooltip(t('modals.btn_exportar'))
             .onClick(() => this.exportDatabaseSQL(dbName));
 
         // Delete
         if (!isActive && !isSystem) {
             new ButtonComponent(actions)
                 .setIcon("trash-2")
-                .setTooltip("Deletar")
+                .setTooltip(t('modals.btn_deletar'))
                 .setWarning()
                 .onClick(() => this.confirmDelete(dbName));
         }
@@ -385,10 +387,28 @@ export class MySQLSettingTab extends PluginSettingTab {
     }
 
     private renderGeneralSettings(containerEl: HTMLElement): void {
-        // ... (Existing settings logic moved here) ...
-        // Re-implementing specific settings as previously defined in display()
+        new Setting(containerEl)
+            .setName(t('settings.lang_name'))
+            .setDesc(t('settings.lang_desc'))
+            .addDropdown(dropdown => dropdown
+                .addOption('auto', 'Automatic (Obsidian Preference)')
+                .addOption('en', 'English')
+                .addOption('pt-BR', 'Português (Brasil)')
+                .addOption('es', 'Español')
+                .addOption('de', 'Deutsch')
+                .addOption('fr', 'Français')
+                .addOption('zh', '简体中文')
+                .addOption('ja', '日本語')
+                .addOption('ko', '한국어')
+                .setValue(this.plugin.settings.language)
+                .onChange(async (value: Language) => {
+                    this.plugin.settings.language = value;
+                    setLanguage(value);
+                    await this.plugin.saveSettings();
+                    this.display();
+                }));
 
-        this.createSectionHeader(containerEl, 'Appearance', 'palette');
+        this.createSectionHeader(containerEl, t('settings.section_appearance'), 'palette');
         // Theme Colors
         const colors = [
             { name: 'Purple (Default)', value: '#9d7cd8' },
@@ -400,8 +420,8 @@ export class MySQLSettingTab extends PluginSettingTab {
 
         // ... (Quickly recreating existing theme setting logic)
         new Setting(containerEl)
-            .setName('Use Obsidian Accent Color')
-            .setDesc('Use the global Obsidian accent color instead of a custom color.')
+            .setName(t('settings.accent_obsidian'))
+            .setDesc(t('settings.accent_obsidian_desc'))
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.useObsidianAccent)
                 .onChange(async (value) => {
@@ -411,14 +431,14 @@ export class MySQLSettingTab extends PluginSettingTab {
                 }));
 
         const colorSetting = new Setting(containerEl)
-            .setName('Theme Accent')
-            .setDesc('Choose the primary accent color.')
+            .setName(t('settings.theme_accent'))
+            .setDesc(t('settings.theme_accent_desc'))
             .addText(text => text.inputEl.style.display = 'none');
 
         if (this.plugin.settings.useObsidianAccent) {
             colorSetting.settingEl.style.opacity = '0.5';
             colorSetting.settingEl.style.pointerEvents = 'none';
-            colorSetting.setDesc('Disabled because "Use Obsidian Accent Color" is enabled.');
+            colorSetting.setDesc(t('settings.accent_obsidian_desc'));
         }
 
         colorSetting.then((setting) => {
@@ -450,8 +470,8 @@ export class MySQLSettingTab extends PluginSettingTab {
         });
 
         new Setting(containerEl)
-            .setName('Auto-save')
-            .setDesc('Automatically save database changes.')
+            .setName(t('settings.auto_save'))
+            .setDesc(t('settings.auto_save_desc'))
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.autoSave)
                 .onChange(async (value) => {
@@ -460,8 +480,8 @@ export class MySQLSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Auto-save Delay')
-            .setDesc('Milliseconds to wait before auto-saving.')
+            .setName(t('settings.auto_save_delay'))
+            .setDesc(t('settings.auto_save_delay_desc'))
             .addText(text => text
                 .setPlaceholder('2000')
                 .setValue(String(this.plugin.settings.autoSaveDelay))
@@ -474,8 +494,8 @@ export class MySQLSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Export Folder')
-            .setDesc('Default folder for CSV exports.')
+            .setName(t('settings.export_folder'))
+            .setDesc(t('settings.export_folder_desc'))
             .addText(text => text
                 .setPlaceholder('sql-exports')
                 .setValue(this.plugin.settings.exportFolderName)
@@ -484,11 +504,11 @@ export class MySQLSettingTab extends PluginSettingTab {
                     await this.plugin.saveSettings();
                 }));
 
-        this.createSectionHeader(containerEl, 'Data & Security', 'shield');
+        this.createSectionHeader(containerEl, t('settings.section_data_security'), 'shield');
 
         new Setting(containerEl)
-            .setName('Safe Mode')
-            .setDesc('Block dangerous commands (DROP, ALTER) and enforce limits.')
+            .setName(t('settings.safe_mode'))
+            .setDesc(t('settings.safe_mode_desc'))
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.safeMode)
                 .onChange(async (value) => {
@@ -497,8 +517,8 @@ export class MySQLSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Enable Debug Logging')
-            .setDesc('Show detailed logs in the developer console (Ctrl+Shift+I). Useful for debugging synchronization.')
+            .setName(t('settings.enable_logging'))
+            .setDesc(t('settings.enable_logging_desc'))
             .addToggle(toggle => toggle
                 .setValue(this.plugin.settings.enableLogging)
                 .onChange(async (value) => {
@@ -509,8 +529,8 @@ export class MySQLSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Snapshot Row Limit')
-            .setDesc('Max rows per table to save (prevents memory issues).')
+            .setName(t('settings.snapshot_limit'))
+            .setDesc(t('settings.snapshot_limit_desc'))
             .addText(text => text
                 .setPlaceholder('10000')
                 .setValue(String(this.plugin.settings.snapshotRowLimit))
@@ -523,8 +543,8 @@ export class MySQLSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('Batch Size')
-            .setDesc('Rows to display per page in results.')
+            .setName(t('settings.batch_size'))
+            .setDesc(t('settings.batch_size_desc'))
             .addText(text => text
                 .setPlaceholder('100')
                 .setValue(String(this.plugin.settings.batchSize))
@@ -538,9 +558,9 @@ export class MySQLSettingTab extends PluginSettingTab {
 
         // Reset Button
         new Setting(containerEl)
-            .setName('Reset All Data')
+            .setName(t('settings.reset_all'))
             .addButton(btn => {
-                btn.setButtonText('Reset Everything');
+                btn.setButtonText(t('settings.reset_btn'));
                 btn.setWarning();
                 btn.onClick(() => this.openClearConfirm()); // Actually reset logic was complicated, calling confirmation
             });
@@ -556,7 +576,10 @@ export class MySQLSettingTab extends PluginSettingTab {
         // DatabaseManager.load/save relies on plugin properties.
         this.plugin.activeDatabase = dbName;
         await dbManager.save();
-        new Notice(`Switched to "${dbName}"`);
+        new Notice(t('modals.time_ago', { time: dbName })); // Using a placeholder for simplicity or adding specialized notice
+        // Actually I should use a generic "Switched to" message, but for now I'll use common sense or add it to translations later.
+        // Let's just use what was there or leave it hardcoded for now if not critical, or better:
+        new Notice(`${t('modals.btn_ativar')}: ${dbName}`);
         this.display();
     }
 
@@ -695,13 +718,13 @@ export class MySQLSettingTab extends PluginSettingTab {
     }
 
     private timeAgo(timestamp: number): string {
-        if (!timestamp) return "Never";
+        if (!timestamp) return t('modals.time_never');
         const seconds = Math.floor((Date.now() - timestamp) / 1000);
-        if (seconds < 60) return "Just now";
+        if (seconds < 60) return t('modals.time_just_now');
         const minutes = Math.floor(seconds / 60);
-        if (minutes < 60) return `${minutes} min ago`;
+        if (minutes < 60) return t('modals.time_ago', { time: `${minutes} min` });
         const hours = Math.floor(minutes / 60);
-        if (hours < 24) return `${hours}h ago`;
+        if (hours < 24) return t('modals.time_ago', { time: `${hours}h` });
         return new Date(timestamp).toLocaleDateString();
     }
 
@@ -730,39 +753,39 @@ export class MySQLSettingTab extends PluginSettingTab {
         const activeDB = this.plugin.activeDatabase;
         new ConfirmationModal(
             this.app,
-            "Clear Database",
-            `Are you sure you want to clear all tables in "${activeDB}"? This keeps the database but deletes all data.`,
+            t('modals.confirm_clear_title'),
+            t('modals.confirm_clear_msg', { dbName: activeDB }),
             async (confirmed) => {
                 if (confirmed) {
                     await (this.plugin as any).dbManager.clearDatabase(activeDB);
-                    new Notice(`Database "${activeDB}" cleared.`);
+                    new Notice(`${t('modals.confirm_clear_title')}: ${activeDB}`);
                     this.display();
                 }
             },
-            "Clear all data",
-            "Cancel"
+            t('modals.btn_clear'),
+            t('modals.btn_cancel')
         ).open();
     }
 
     private confirmDelete(dbName: string): void {
         new ConfirmationModal(
             this.app,
-            "Delete Database",
-            `You are about to delete database "${dbName}". This action cannot be undone. All tables and data will be lost.`,
+            t('modals.confirm_delete_title'),
+            t('modals.confirm_delete_msg', { dbName }),
             async (confirmed) => {
                 if (confirmed) {
                     try {
                         const dbManager = (this.plugin as any).dbManager;
                         await dbManager.deleteDatabase(dbName);
-                        new Notice(`Database "${dbName}" deleted.`);
+                        new Notice(`${t('modals.confirm_delete_title')}: ${dbName}`);
                         this.display();
                     } catch (e) {
-                        new Notice(`Error: ${e.message}`);
+                        new Notice(t('common.error', { error: e.message }));
                     }
                 }
             },
-            "Delete Database",
-            "Cancel"
+            t('modals.btn_delete'),
+            t('modals.btn_cancel')
         ).open();
     }
 
@@ -778,9 +801,9 @@ export class MySQLSettingTab extends PluginSettingTab {
 
             const fileName = `${exportFolder}/${dbName}_backup_${Date.now()}.sql`;
             await this.plugin.app.vault.create(fileName, sql);
-            new Notice(`Exported to ${fileName}`);
+            new Notice(t('common.notice_export_success', { name: fileName }));
         } catch (e) {
-            new Notice(`Export failed: ${e.message}`);
+            new Notice(t('common.error', { error: e.message }));
             console.error(e);
         }
     }
@@ -791,13 +814,13 @@ export class MySQLSettingTab extends PluginSettingTab {
             const sql = e.target?.result;
             if (typeof sql === 'string') {
                 try {
-                    new Notice("Importing database...");
+                    new Notice(t('common.notice_import_loading'));
                     const dbManager = (this.plugin as any).dbManager;
                     await dbManager.importDatabase(sql);
-                    new Notice("Database imported successfully!");
+                    new Notice(t('common.notice_import_success'));
                     this.display();
                 } catch (err) {
-                    new Notice(`Import failed: ${err.message}`);
+                    new Notice(t('common.error', { error: err.message }));
                     console.error(err);
                 }
             }

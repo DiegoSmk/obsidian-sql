@@ -1,6 +1,7 @@
 import { MySQLSettings } from '../types';
 
 export const DEFAULT_SETTINGS: MySQLSettings = {
+    language: 'auto',
     exportFolderName: 'sql-exports',
     autoSave: true,
     batchSize: 100,

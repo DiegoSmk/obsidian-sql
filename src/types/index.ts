@@ -1,4 +1,7 @@
+export type Language = 'auto' | 'en' | 'pt-BR' | 'zh' | 'es' | 'de' | 'fr' | 'ja' | 'ko';
+
 export interface MySQLSettings {
+    language: Language;
     exportFolderName: string;
     autoSave: boolean;
     batchSize: number;
