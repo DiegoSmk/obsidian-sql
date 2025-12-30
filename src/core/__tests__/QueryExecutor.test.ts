@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 // @ts-ignore
 import alasql from 'alasql';
 import { QueryExecutor } from '../QueryExecutor';
+import { SQLTransformer } from '../../utils/SQLTransformer';
+
 
 describe('QueryExecutor', () => {
     beforeEach(() => {
@@ -100,6 +102,47 @@ describe('QueryExecutor', () => {
 
         const idField = formData.fields.find((f: any) => f.name === 'id');
         expect(idField.isAutoIncrement).toBe(true); // Since it is HIDDEN or id PK
+    });
+
+    it('should handle complex INSERT SELECT with RANGE', async () => {
+        alasql('CREATE TABLE estoque (produto STRING, qtd INT)');
+        const sql = `DELETE FROM estoque;
+INSERT INTO estoque
+SELECT 'Item ' || CAST(VALUE AS STRING), RANDOM() * 100
+FROM RANGE(1, 10);`;
+
+
+
+        const stmts = sql.split(';').filter(s => s.trim().length > 0);
+        for (let stmt of stmts) {
+            stmt = SQLTransformer.prefixTablesWithDatabase(stmt, 'dbo');
+            await alasql.promise(stmt);
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        const res = alasql('SELECT COUNT(*) as cnt FROM estoque') as any;
+        expect(res[0].cnt).toBe(10);
     });
 
     it('should automatically prepend LIMIT to single SELECTs', async () => {

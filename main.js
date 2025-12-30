@@ -64264,14 +64264,12 @@ var DatabaseManager = class {
       const tables = (0, import_alasql.default)(`SHOW TABLES FROM ${oldName}`);
       for (const t of tables) {
         const tableName = t.tableid;
-        const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${oldName}.${tableName}`);
-        if (createRes == null ? void 0 : createRes[0]) {
-          let createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
-          if (createSQL.toUpperCase().startsWith("CREATE TABLE")) {
-            createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)`?([a-zA-Z0-9_]+)`?/i, `CREATE TABLE ${newName}.$1`);
-          }
-          await import_alasql.default.promise(createSQL);
-          await import_alasql.default.promise(`INSERT INTO ${newName}.${tableName} SELECT * FROM ${oldName}.${tableName}`);
+        try {
+          await import_alasql.default.promise(`USE ${newName}`);
+          await import_alasql.default.promise(`CREATE TABLE \`${tableName}\` AS SELECT * FROM ${oldName}.\`${tableName}\` WHERE 1=0`);
+          await import_alasql.default.promise(`INSERT INTO \`${tableName}\` SELECT * FROM ${oldName}.\`${tableName}\``);
+        } catch (e) {
+          console.error(`Failed to copy table ${tableName} during rename:`, e);
         }
       }
       await import_alasql.default.promise(`DROP DATABASE ${oldName}`);
@@ -64294,14 +64292,12 @@ var DatabaseManager = class {
     const tables = (0, import_alasql.default)(`SHOW TABLES FROM ${dbName}`);
     for (const t of tables) {
       const tableName = t.tableid;
-      const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${dbName}.${tableName}`);
-      if (createRes == null ? void 0 : createRes[0]) {
-        let createSQL = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
-        if (createSQL.toUpperCase().startsWith("CREATE TABLE")) {
-          createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)`?([a-zA-Z0-9_]+)`?/i, `CREATE TABLE ${newName}.$1`);
-        }
-        await import_alasql.default.promise(createSQL);
-        await import_alasql.default.promise(`INSERT INTO ${newName}.${tableName} SELECT * FROM ${dbName}.${tableName}`);
+      try {
+        await import_alasql.default.promise(`USE ${newName}`);
+        await import_alasql.default.promise(`CREATE TABLE \`${tableName}\` AS SELECT * FROM ${dbName}.\`${tableName}\` WHERE 1=0`);
+        await import_alasql.default.promise(`INSERT INTO \`${tableName}\` SELECT * FROM ${dbName}.\`${tableName}\``);
+      } catch (e) {
+        console.error(`Failed to duplicate table ${tableName}:`, e);
       }
     }
     await this.save();
@@ -64496,32 +64492,34 @@ var SQLTransformer = class {
   static prefixTablesWithDatabase(sql, database) {
     if (!database || database === "alasql") return sql;
     let result = sql;
-    const notAFunction = /(?![\s]*\()/.source;
+    const tableFnCheck = (m, t, after) => {
+      const upperT = t.toUpperCase();
+      const isFunction = after.trim().startsWith("(");
+      const isReserved = ["SELECT", "VALUES", "RANGE", "EXPLODE", "JSON", "CSV", "TAB", "TSV", "XLSX"].includes(upperT);
+      if (isFunction || isReserved) return m;
+      return m.replace(t, `${database}.${t}`);
+    };
     result = result.replace(
-      new RegExp(/CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source, "gi"),
+      /CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
       (m, i, t) => `CREATE TABLE ${i || ""}${database}.${t}`
     );
     result = result.replace(
-      new RegExp(/INSERT\s+INTO\s+(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source, "gi"),
+      /INSERT\s+INTO\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
       (m, t) => `INSERT INTO ${database}.${t}`
     );
     result = result.replace(
-      new RegExp(/UPDATE\s+(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source + /\s+SET/.source, "gi"),
+      /UPDATE\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)\s+SET/gi,
       (m, t) => `UPDATE ${database}.${t} SET`
     );
     result = result.replace(
-      new RegExp(/DELETE\s+FROM\s+(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source, "gi"),
+      /DELETE\s+FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
       (m, t) => `DELETE FROM ${database}.${t}`
     );
-    result = result.replace(new RegExp(/FROM\s+(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source + notAFunction, "gi"), (m, t) => {
-      const upperT = t.toUpperCase();
-      if (["SELECT", "VALUES", "(", "RANGE", "EXPLODE", "JSON", "CSV", "TAB", "TSV", "XLSX"].includes(upperT)) return m;
-      return `FROM ${database}.${t}`;
+    result = result.replace(/FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s]*\(?)/gi, (m, t, after) => {
+      return tableFnCheck(m, t, after);
     });
-    result = result.replace(new RegExp(/JOIN\s+(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source + notAFunction, "gi"), (m, t) => {
-      const upperT = t.toUpperCase();
-      if (["SELECT", "VALUES", "(", "RANGE", "EXPLODE", "JSON", "CSV", "TAB", "TSV", "XLSX"].includes(upperT)) return m;
-      return `JOIN ${database}.${t}`;
+    result = result.replace(/JOIN\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s]*\(?)/gi, (m, t, after) => {
+      return tableFnCheck(m, t, after);
     });
     return result;
   }

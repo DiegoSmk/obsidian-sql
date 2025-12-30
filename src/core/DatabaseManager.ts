@@ -344,16 +344,17 @@ export class DatabaseManager {
                 // and alasql supports "CREATE TABLE new.tab AS SELECT * FROM old.tab" but that copies data + structure (sometimes without constraints)
                 // A safer bet given alasql limitations:
 
-                // Deep clone table using internal structures
+                // Copy Table Struct and Data using robust two-step process with context switching
                 try {
-                    const sourceData = alasql(`SELECT * FROM ${oldName}.\`${tableName}\``) as any[];
-                    await alasql.promise(`CREATE TABLE ${newName}.\`${tableName}\``);
-                    if (sourceData.length > 0) {
-                        alasql.databases[newName].tables[tableName].data = JSON.parse(JSON.stringify(sourceData));
-                    }
+                    await alasql.promise(`USE ${newName}`);
+                    await alasql.promise(`CREATE TABLE \`${tableName}\` AS SELECT * FROM ${oldName}.\`${tableName}\` WHERE 1=0`);
+                    await alasql.promise(`INSERT INTO \`${tableName}\` SELECT * FROM ${oldName}.\`${tableName}\``);
                 } catch (e) {
                     console.error(`Failed to copy table ${tableName} during rename:`, e);
                 }
+
+
+
 
 
 
@@ -390,15 +391,16 @@ export class DatabaseManager {
         for (const t of tables) {
             const tableName = t.tableid;
             try {
-                const sourceData = alasql(`SELECT * FROM ${dbName}.\`${tableName}\``) as any[];
-                await alasql.promise(`CREATE TABLE ${newName}.\`${tableName}\``);
-                if (sourceData.length > 0) {
-                    alasql.databases[newName].tables[tableName].data = JSON.parse(JSON.stringify(sourceData));
-                }
+                await alasql.promise(`USE ${newName}`);
+                await alasql.promise(`CREATE TABLE \`${tableName}\` AS SELECT * FROM ${dbName}.\`${tableName}\` WHERE 1=0`);
+                await alasql.promise(`INSERT INTO \`${tableName}\` SELECT * FROM ${dbName}.\`${tableName}\``);
             } catch (e) {
                 console.error(`Failed to duplicate table ${tableName}:`, e);
             }
         }
+
+
+
 
 
 

@@ -9,40 +9,43 @@ export class SQLTransformer {
         if (!database || database === 'alasql') return sql;
         let result = sql;
 
-        // Skip prefixing if followed by ( indicating a function call (e.g., RANGE())
-        // Used primarily in FROM and JOIN
-        const notAFunction = /(?![\s]*\()/.source;
+        // Skip transformation if already prefixed or is a function call
+        const tableFnCheck = (m: string, t: string, after: string) => {
+            const upperT = t.toUpperCase();
+            const isFunction = after.trim().startsWith('(');
+            const isReserved = ['SELECT', 'VALUES', 'RANGE', 'EXPLODE', 'JSON', 'CSV', 'TAB', 'TSV', 'XLSX'].includes(upperT);
+
+            if (isFunction || isReserved) return m;
+            return m.replace(t, `[${database}].[${t}]`);
+        };
 
         // CREATE TABLE [IF NOT EXISTS] table
-        result = result.replace(new RegExp(/CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source, 'gi'),
-            (m, i, t) => `CREATE TABLE ${i || ''}${database}.${t}`);
+        result = result.replace(/CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+            (m, i, t) => `CREATE TABLE ${i || ''}[${database}].[${t}]`);
 
         // INSERT INTO table
-        result = result.replace(new RegExp(/INSERT\s+INTO\s+(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source, 'gi'),
-            (m, t) => `INSERT INTO ${database}.${t}`);
+        result = result.replace(/INSERT\s+INTO\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+            (m, t) => `INSERT INTO [${database}].[${t}]`);
 
         // UPDATE table SET
-        result = result.replace(new RegExp(/UPDATE\s+(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source + /\s+SET/.source, 'gi'),
-            (m, t) => `UPDATE ${database}.${t} SET`);
+        result = result.replace(/UPDATE\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b(\s+SET)/gi,
+            (m, t, set) => `UPDATE [${database}].[${t}]${set}`);
 
         // DELETE FROM table
-        result = result.replace(new RegExp(/DELETE\s+FROM\s+(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source, 'gi'),
-            (m, t) => `DELETE FROM ${database}.${t}`);
+        result = result.replace(/DELETE\s+FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
+            (m, t) => `DELETE FROM [${database}].[${t}]`);
 
-        // FROM table (Most critical for skipping functions like RANGE)
-        result = result.replace(new RegExp(/FROM\s+(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source + notAFunction, 'gi'), (m, t) => {
-            const upperT = t.toUpperCase();
-            if (['SELECT', 'VALUES', '(', 'RANGE', 'EXPLODE', 'JSON', 'CSV', 'TAB', 'TSV', 'XLSX'].includes(upperT)) return m;
-            return `FROM ${database}.${t}`;
+        // FROM table
+        result = result.replace(/FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s]*\(?)/gi, (m, t, after) => {
+            return tableFnCheck(m, t, after);
         });
 
         // JOIN table
-        result = result.replace(new RegExp(/JOIN\s+(?!\w+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b/.source + notAFunction, 'gi'), (m, t) => {
-            const upperT = t.toUpperCase();
-            if (['SELECT', 'VALUES', '(', 'RANGE', 'EXPLODE', 'JSON', 'CSV', 'TAB', 'TSV', 'XLSX'].includes(upperT)) return m;
-            return `JOIN ${database}.${t}`;
+        result = result.replace(/JOIN\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s]*\(?)/gi, (m, t, after) => {
+            return tableFnCheck(m, t, after);
         });
 
         return result;
     }
+
 }
