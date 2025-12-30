@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.5.0] - 2024-12-30
+
+### 🌍 Added
+- **Internationalization (i18n)**: Full support for multiple languages with automatic detection of Obsidian's locale.
+- **New Languages**: Added support for:
+  - 🇧🇷 Portuguese (Brazil)
+  - 🇪🇸 Spanish
+  - 🇩🇪 German
+  - 🇫🇷 French
+  - 🇨🇳 Chinese (Simplified)
+  - 🇯🇵 Japanese
+  - 🇰🇷 Korean
+- **Language Settings**: New dropdown in Generic Settings to manually override the language.
+
+### 🛡️ Security
+- **XSS Mitigation**: Implemented strict sanitization for all variables in translation strings to prevent HTML injection in error messages.
+
+### ✨ Improved
+- **Error Messages**: Standardized error notifications across the app to carry specific details while being translatable.
+- UI strings in Modals, Settings, and Workbench are now fully localized.
+
+
 ## [0.4.1] - 2025-12-30
 
 ### ✨ New Features
