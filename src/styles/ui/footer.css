@@ -27,7 +27,7 @@
 }
 
 .mysql-workbench-container:hover .mysql-footer-logo {
-    color: var(--mysql-accent-purple);
+    color: var(--mysql-accent);
     /* Colored on hover */
 }
 
@@ -52,11 +52,11 @@
 .mysql-footer-time-wrapper svg {
     width: 12px;
     height: 12px;
-    color: var(--mysql-accent-purple);
+    color: var(--mysql-accent);
 }
 
 .mysql-footer-time-val {
-    color: var(--mysql-accent-purple);
+    color: var(--mysql-accent);
     font-weight: 700;
 }
 
@@ -67,7 +67,7 @@
 .mysql-footer-status-running {
     font-style: italic;
     opacity: 0.9;
-    color: var(--mysql-accent-purple);
+    color: var(--mysql-accent);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -107,6 +107,6 @@
 }
 
 .mysql-footer-db-interactive:hover {
-    background: rgba(var(--mysql-accent-rgb), 0.1);
-    color: var(--mysql-accent-purple);
+    background: color-mix(in srgb, var(--mysql-accent), transparent 90%);
+    color: var(--mysql-accent);
 }

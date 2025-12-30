@@ -48,7 +48,7 @@ export interface DatabaseStats {
 export type Row = Record<string, any>;
 
 export interface ResultSet {
-    type: 'table' | 'scalar' | 'message' | 'error';
+    type: 'table' | 'scalar' | 'message' | 'error' | 'form';
     data: Row[] | any;
     columns?: string[];
     message?: string;
@@ -59,6 +59,7 @@ export interface QueryResult {
     success: boolean;
     data?: ResultSet[];
     error?: string;
+    warning?: string;
     executionTime?: number;
     activeDatabase?: string;
 }

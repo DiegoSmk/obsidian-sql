@@ -28,43 +28,11 @@ export class MySQLSettingTab extends PluginSettingTab {
         containerEl.addClass('mysql-settings-modal');
 
         // Apply Theme Color
-        // Apply Theme Color
-        // Apply Theme Color
-        let themeColor = this.plugin.settings.themeColor || '#9d7cd8';
-        let rgb = this.hexToRgb(themeColor);
+        const themeColor = this.plugin.settings.themeColor || '#9d7cd8';
+        const color = this.plugin.settings.useObsidianAccent ? 'var(--interactive-accent)' : themeColor;
 
-        if (this.plugin.settings.useObsidianAccent) {
-            // Robustly resolve the accent color to RGB
-            const dummy = document.createElement('div');
-            dummy.style.color = 'var(--interactive-accent)';
-            dummy.style.display = 'none';
-            document.body.appendChild(dummy);
-            const computedColor = getComputedStyle(dummy).color; // returns "rgb(r, g, b)"
-            document.body.removeChild(dummy);
-
-            let rgbValues = '157, 124, 216'; // Fallback
-            if (computedColor && computedColor.includes('rgb')) {
-                const match = computedColor.match(/\d+,\s*\d+,\s*\d+/);
-                if (match) rgbValues = match[0];
-            }
-
-            containerEl.style.setProperty('--mysql-accent', `rgb(${rgbValues})`);
-            containerEl.style.setProperty('--mysql-accent-purple', `rgb(${rgbValues})`);
-            containerEl.style.setProperty('--interactive-accent', `rgb(${rgbValues})`);
-
-            containerEl.style.setProperty('--mysql-accent-rgb', rgbValues);
-            containerEl.style.setProperty('--interactive-accent-rgb', rgbValues);
-        } else {
-            // Use Custom Theme Color
-            containerEl.style.setProperty('--mysql-accent', themeColor);
-            containerEl.style.setProperty('--mysql-accent-purple', themeColor);
-            containerEl.style.setProperty('--interactive-accent', themeColor);
-
-            if (rgb) {
-                containerEl.style.setProperty('--mysql-accent-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
-                containerEl.style.setProperty('--interactive-accent-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
-            }
-        }
+        containerEl.style.setProperty('--mysql-accent', color);
+        containerEl.style.setProperty('--mysql-accent-purple', color);
 
         // --- Header (Title + Import/Create) ---
         const header = containerEl.createDiv({ cls: 'mysql-settings-header' });
@@ -147,12 +115,13 @@ export class MySQLSettingTab extends PluginSettingTab {
         const welcomeSection = containerEl.createDiv({ cls: 'mysql-welcome-section' });
         welcomeSection.style.marginBottom = '20px';
         welcomeSection.style.padding = '15px';
-        welcomeSection.style.background = 'rgba(var(--mysql-accent-rgb, var(--interactive-accent-rgb)), 0.1)';
+        welcomeSection.style.background = 'color-mix(in srgb, var(--mysql-accent), transparent 90%)';
         welcomeSection.style.borderRadius = '8px';
-        welcomeSection.style.border = '1px solid var(--mysql-accent, var(--interactive-accent))';
+        welcomeSection.style.border = '1px solid color-mix(in srgb, var(--mysql-accent), transparent 70%)';
 
-        welcomeSection.createEl('h3', { text: 'Bem vindo ao SQL Notebook!', attr: { style: 'margin: 0 0 5px 0; color: var(--mysql-accent, var(--interactive-accent));' } });
+        welcomeSection.createEl('h3', { text: 'Bem vindo ao SQL Notebook!', attr: { style: 'margin: 0 0 5px 0; color: var(--mysql-accent);' } });
         welcomeSection.createEl('p', { text: 'Gerencie seus bancos de dados locais, execute queries e visualize resultados diretamente no Obsidian.', attr: { style: 'margin: 0; font-size: 14px; color: var(--text-normal);' } });
+
 
         // --- Search Section ---
         const searchSection = containerEl.createDiv({ cls: 'mysql-search-section' });

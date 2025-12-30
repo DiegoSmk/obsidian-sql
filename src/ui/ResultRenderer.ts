@@ -1,6 +1,7 @@
 import { App, MarkdownView, Notice, setIcon } from 'obsidian';
 import html2canvas from 'html2canvas';
 import { IMySQLPlugin, QueryResult } from '../types';
+import { FormRenderer } from './FormRenderer';
 
 export class ResultRenderer {
     static render(result: QueryResult, container: HTMLElement, app: App, plugin: IMySQLPlugin, tableName?: string, isLive: boolean = false): void {
@@ -226,15 +227,21 @@ export class ResultRenderer {
                     });
 
                     if (rs.type === 'error') {
-                        msgWrapper.createEl("p", { text: rs.message || "Error" });
+                        const iconWrapper = msgWrapper.createDiv({ cls: "mysql-error-icon" });
+                        setIcon(iconWrapper, "alert-circle");
+                        msgWrapper.createSpan({ text: rs.message || "Error" });
                     } else {
                         const iconWrapper = msgWrapper.createDiv({ cls: isDML ? "mysql-success-icon" : "mysql-info-icon" });
-                        setIcon(iconWrapper, isDML ? "database" : "info");
+                        setIcon(iconWrapper, isDML ? "check-circle" : "info");
                         msgWrapper.createDiv({
                             text: rs.message || "Done",
                             cls: isDML ? "mysql-success" : "mysql-info-text"
                         });
                     }
+
+                    break;
+                case 'form':
+                    FormRenderer.render(rs.data, contentWrapper, app, plugin);
                     break;
             }
 
@@ -281,35 +288,18 @@ export class ResultRenderer {
         currentCount += initialBatch.length;
 
         if (rows.length > batchSize) {
-            const controls = container.createEl("div", { cls: "mysql-pagination" });
-            controls.style.padding = "12px 16px";
-            controls.style.backgroundColor = "var(--background-secondary-alt)";
-            controls.style.borderTop = "1px solid var(--background-modifier-border)";
-            controls.style.display = "flex";
-            controls.style.alignItems = "center";
-            controls.style.gap = "12px";
-            controls.style.fontSize = "0.85em";
+            const controls = container.createEl("div", { cls: "mysql-pagination-controls" });
 
             const statusSpan = controls.createEl("span", {
                 text: `Showing ${currentCount} of ${rows.length} rows`,
                 cls: "mysql-pagination-status"
             });
-            statusSpan.style.color = "var(--text-muted)";
-            statusSpan.style.fontWeight = "600";
-            statusSpan.style.marginRight = "auto";
 
             const showAllBtn = controls.createEl("button", {
                 text: "Show All Rows",
                 cls: "mysql-pagination-btn"
             });
-            showAllBtn.style.padding = "6px 12px";
-            showAllBtn.style.backgroundColor = "var(--interactive-accent)";
-            showAllBtn.style.color = "white";
-            showAllBtn.style.border = "none";
-            showAllBtn.style.borderRadius = "4px";
-            showAllBtn.style.cursor = "pointer";
-            showAllBtn.style.fontSize = "0.8em";
-            showAllBtn.style.fontWeight = "600";
+
 
             showAllBtn.onclick = () => {
                 const remaining = rows.slice(currentCount);

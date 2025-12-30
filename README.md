@@ -6,7 +6,8 @@ Execute SQL queries directly from your notes using an in-memory database powered
 
 ## 🚀 Features
 
-- **In-Memory SQL**: Powered by AlaSQL with MySQL compatibility mode.
+- **In-Memory SQL**: Powered by AlaSQL with MySQL-like syntax.
+- **SQL Forms (New)**: Generate dynamic HTML forms from table schemas for instant data entry.
 - **Multi-Database Support**: Create and switch between isolated database environments (e.g., `work`, `learning`, `dbo`).
 - **Persistent Schema**: Your `CREATE TABLE` definitions are preserved across reloads.
 - **Parameterized Queries**: Support for `:variable` syntax with dynamic UI input fields.

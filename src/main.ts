@@ -140,27 +140,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         const settings = this.settings;
         const color = settings.useObsidianAccent ? 'var(--interactive-accent)' : settings.themeColor;
 
+        // Set variables on body for global availability
+        document.body.style.setProperty('--mysql-accent', color);
         document.body.style.setProperty('--mysql-accent-purple', color);
-        document.body.style.setProperty('--mysql-accent', color); // For consistency
-
-        if (settings.useObsidianAccent) {
-            document.body.style.setProperty('--mysql-accent-rgb', 'var(--interactive-accent-rgb)');
-        } else {
-            // We need to calc rgb for custom color. 
-            // Duplicate hexToRgb logic or make it static utility? 
-            // It's in MySQLSettingTab currently. 
-            // I'll implement a simple hexToRgb here or assume standard opaque for now if simpler, 
-            // but transparency is used in 'rgba(var(--mysql-accent-rgb), 0.1)'.
-            // So I must provide it.
-            const hex = settings.themeColor;
-            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            if (result) {
-                const r = parseInt(result[1], 16);
-                const g = parseInt(result[2], 16);
-                const b = parseInt(result[3], 16);
-                document.body.style.setProperty('--mysql-accent-rgb', `${r}, ${g}, ${b}`);
-            }
-        }
     }
 
     // ========================================================================
@@ -188,10 +170,11 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         // Phase 2: LIVE Mode Detection & Identity
         const trimmedSource = source.trim();
         const isLive = trimmedSource.toUpperCase().startsWith("LIVE SELECT");
+        const isForm = trimmedSource.toUpperCase().startsWith("FORM");
         const sectionInfo = ctx.getSectionInfo(el);
         const liveBlockId = isLive && sectionInfo ? `${ctx.sourcePath}:${sectionInfo.lineStart}-${sectionInfo.lineEnd}` :
             (isLive ? `${ctx.sourcePath}:unknown-${Date.now()}` : null);
-        const stableId = isLive ? this.generateBlockStableId(source, ctx) : null;
+        const stableId = (isLive || isForm) ? this.generateBlockStableId(source, ctx) : null;
 
         if (isLive && this.settings.enableLogging) {
             Logger.info(`[LIVE] Initializing block: stableId=${stableId}, liveBlockId=${liveBlockId}`);
@@ -199,7 +182,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
         // Resolve Anchored Database (Priority: Params > Settings Cache > Global Active)
         let anchoredDB: string | null = null;
-        if (isLive) {
+        if (isLive || isForm) {
             // Check for explicit 'db' param in comments: /* params: { "db": "empresa" } */ or -- db: empresa
             const jsonParamMatch = source.match(/\/\*\s*params\s*:\s*({[\s\S]*?})\s*\*\//);
             const lineParamMatch = source.match(/--\s*db:\s*([a-zA-Z_][a-zA-Z0-9_]*)/i);
@@ -274,8 +257,8 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         // Parse Title & State from First Line
         const rawFirstLine = source.split('\n')[0].trim();
 
-        let displayTitle = "MySQL Query";
-        let icon = "database";
+        let displayTitle = isForm ? "Data Form" : (isLive ? "Live Result" : "SQL Query");
+        let icon = isForm ? "file-edit" : (isLive ? "pulse" : "database");
         let titleColorClass = "";
         let startCollapsed = false;
 
@@ -424,7 +407,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
         // Event Handlers for new buttons
         showTablesBtn.onclick = () => this.showTables(resultContainer, showTablesBtn);
-        resetBtn.onclick = () => this.resetDatabase(resultContainer);
+        resetBtn.onclick = () => this.resetDatabase(resultContainer, footer);
 
         // Parse optional parameters JSON in comments
         const paramMatch = source.match(/\/\*\s*params\s*:\s*({[\s\S]*?})\s*\*\//);
@@ -437,6 +420,62 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         }
 
         runBtn.onclick = () => this.executeQuery(source, params, runBtn, resultContainer, footer);
+
+        // FORM Mode: Auto-run and Minimalist UI
+        if (isForm && anchoredDB) {
+            workbench.addClass("mysql-form-mode");
+            body.addClass("mysql-view-only");
+            previewBar.style.display = "none";
+            footer.getContainer().style.display = "none";
+            codeBlock.style.display = "none";
+            controls.style.display = "none"; // Hide all controls including Run button
+
+            // Create FORM dashboard bar
+            const dashboardBar = body.createDiv({ cls: "mysql-live-dashboard-bar mysql-form-dashboard-bar" });
+            body.prepend(dashboardBar);
+
+            const dashboardLeft = dashboardBar.createDiv({ cls: "mysql-dashboard-left" });
+            dashboardLeft.style.display = "flex";
+            dashboardLeft.style.alignItems = "center";
+            dashboardLeft.style.gap = "12px";
+
+            const formIndicator = dashboardLeft.createDiv({ cls: "mysql-live-indicator mysql-form-indicator" });
+            setIcon(formIndicator, "file-edit");
+            formIndicator.createSpan({ text: "FORM" });
+
+            const dbInfo = dashboardLeft.createDiv({ cls: "mysql-footer-db-container mysql-live-db-switcher" });
+            const dbIcon = dbInfo.createDiv({ cls: "mysql-footer-db-icon" });
+            setIcon(dbIcon, "database-backup");
+            const dbNameSpan = dbInfo.createSpan({ text: anchoredDB, cls: "mysql-footer-db-name" });
+
+            // Database Switcher logic
+            dbInfo.onclick = (e) => {
+                const menu = new Menu();
+                const dbs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
+                dbs.sort().forEach(db => {
+                    menu.addItem((item) => {
+                        item.setTitle(db)
+                            .setIcon(db === anchoredDB ? "check" : "database")
+                            .onClick(async () => {
+                                if (db === anchoredDB) return;
+                                anchoredDB = db;
+                                if (stableId) {
+                                    this.settings.liveBlockAnchors[stableId] = db;
+                                    await this.saveSettings();
+                                }
+                                dbNameSpan.setText(db);
+                                new Notice(`FORM anchored to ${db}`);
+                                this.executeQuery(source, params, runBtn, resultContainer, footer, { activeDatabase: anchoredDB });
+                            });
+                    });
+                });
+                menu.showAtMouseEvent(e);
+            };
+
+            // Execute initially
+            this.executeQuery(source, params, runBtn, resultContainer, footer, { activeDatabase: anchoredDB });
+
+        }
 
         // If LIVE, trigger initial execution and hide editor
         if (isLive && liveBlockId && anchoredDB) {
@@ -794,7 +833,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 const msg = titleRow.createEl("p", { cls: "mysql-info-text" });
                 msg.setText("No tables found in database ");
                 const span = msg.createSpan({ text: activeDB });
-                span.style.color = "var(--mysql-accent-purple)";
+                span.style.color = "var(--mysql-accent)";
                 span.style.fontWeight = "bold";
 
                 const help = content.createEl("p", {
@@ -808,7 +847,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 const settingsBtn = help.createEl("a", {
                     text: "Open Settings"
                 });
-                settingsBtn.style.color = "var(--mysql-accent-purple)";
+                settingsBtn.style.color = "var(--mysql-accent)";
                 settingsBtn.style.cursor = "pointer";
                 settingsBtn.style.textDecoration = "underline";
 
@@ -875,7 +914,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         }
     }
 
-    private async resetDatabase(container: HTMLElement): Promise<void> {
+    private async resetDatabase(container: HTMLElement, footer?: WorkbenchFooter): Promise<void> {
         new ConfirmationModal(
             this.app,
             "Reset Database",
@@ -885,6 +924,11 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                     try {
                         await this.dbManager.reset();
                         container.empty();
+
+                        if (footer) {
+                            footer.setActiveDatabase('dbo');
+                        }
+
 
                         const successState = container.createDiv({ cls: "mysql-success-state" });
                         const iconWrapper = successState.createDiv({ cls: "mysql-success-icon" });

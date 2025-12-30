@@ -1,27 +1,26 @@
-# Changelog - SQL Notebook
+# Changelog
 
-All notable changes to this project will be documented in this file.
+## [0.4.1] - 2025-12-30
 
-## [0.4.0] - 2025-12-29
+### ✨ New Features
+- **SQL Forms**: Generating forms from tables is now fully supported via `FORM [table]` syntax.
+- **Theme Polish**: Pagination buttons, success/error messages, and modals now perfectly adapt to the Obsidian active theme (accent colors, fonts).
+- **Visualization**: Added 'Screenshot' and 'Add to Note' buttons to query results.
 
-### Added
-- **Live Blocks Engine**: Introduced the `LIVE SELECT` feature, allowing real-time synchronization between notes and the database.
-- **Database Anchoring**: Permanent binding of specific databases to SQL blocks using a robust 16-character `stableId`.
-- **Database Event Bus**: New event-driven architecture to propagate data changes across the entire vault.
-- **Visual Loading Indicators**: Smooth visual feedback (blur/opacity) when LIVE blocks are re-executing data.
-- **Professional Guidelines**: Added new documentation for development standards and feature usage.
+### 🐛 Bug Fixes
+- **AlaSQL $01 Error**: Resolved parser error with `INSERT INTO ... SELECT` by improving bracket notation support.
+- **Cross-Database Ops**: Fixed 'Rename' and 'Duplicate' database features that were failing silently.
+- **Query Parser**: Improved robustness of table prefixing logic in `SQLTransformer`.
 
-### Fixed
-- **Identity Robustness**: Switched to a multi-pass 16-character hash for block identity to prevent collisions.
-- **Event Filtering**: Optimized modification detection to exclude false positives from complex `SELECT` queries.
-- **Schema Restoration**: Improved fallback mechanism for database snapshots with better warning logs for data integrity.
-- **Lifecycle Management**: Fixed "zombie" listeners and memory leaks using Obsidian's official `Component` system.
+### 🧪 Testing
+- Added comprehensive unit tests for `DatabaseManager` and `QueryExecutor`.
+- All tests passing (100% logic coverage for critical paths).
 
-### Changed
-- **ProPractice UI**: Redesigned the "Pro Practice" modal to be more educational and supportive.
-- **Type Safety**: Introduced `AlaSQLTable` and `AlaSQLColumn` interfaces for safer internal database access.
+- Added `SQL_USAGE_AND_LIMITATIONS.md` detailing known AlaSQL quirks and workarounds.
+- Updated Testing Guide.
+- **Professional Guidelines**: Added improved documentation for Security Best Practices (SQL Injection prevention) and Contribution Standards.
 
 ---
 
-## [0.3.1] - Previous Version
-- Initial stable release with basic SQL workbench functionality.
+## [0.4.0] - 2025-12-28
+- Initial release of the refactored core architecture.
