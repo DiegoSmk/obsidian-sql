@@ -176,5 +176,15 @@ export default {
         "status_error": "Error",
         "status_aborted": "Aborted",
         "status_live": "LIVE"
+    },
+    "common": {
+        "error": "Error: {error}",
+        "invalid_name": "New name must be different from the old name.",
+        "notice_export_success": "Exported to {name}",
+        "notice_import_loading": "Importing database...",
+        "notice_import_success": "Database imported successfully!",
+        "notice_anchor_form": "FORM anchored to {name}",
+        "notice_anchor_live": "LIVE block anchored to {name}",
+        "notice_update_live": "Updating LIVE data from {name}..."
     }
 }

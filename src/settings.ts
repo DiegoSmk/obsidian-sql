@@ -391,9 +391,15 @@ export class MySQLSettingTab extends PluginSettingTab {
             .setName(t('settings.lang_name'))
             .setDesc(t('settings.lang_desc'))
             .addDropdown(dropdown => dropdown
+                .addOption('auto', 'Automatic (Obsidian Preference)')
                 .addOption('en', 'English')
                 .addOption('pt-BR', 'Português (Brasil)')
+                .addOption('es', 'Español')
+                .addOption('de', 'Deutsch')
+                .addOption('fr', 'Français')
                 .addOption('zh', '简体中文')
+                .addOption('ja', '日本語')
+                .addOption('ko', '한국어')
                 .setValue(this.plugin.settings.language)
                 .onChange(async (value: Language) => {
                     this.plugin.settings.language = value;
@@ -774,7 +780,7 @@ export class MySQLSettingTab extends PluginSettingTab {
                         new Notice(`${t('modals.confirm_delete_title')}: ${dbName}`);
                         this.display();
                     } catch (e) {
-                        new Notice(`Error: ${e.message}`);
+                        new Notice(t('common.error', { error: e.message }));
                     }
                 }
             },
@@ -795,9 +801,9 @@ export class MySQLSettingTab extends PluginSettingTab {
 
             const fileName = `${exportFolder}/${dbName}_backup_${Date.now()}.sql`;
             await this.plugin.app.vault.create(fileName, sql);
-            new Notice(`Exported to ${fileName}`);
+            new Notice(t('common.notice_export_success', { name: fileName }));
         } catch (e) {
-            new Notice(`Export failed: ${e.message}`);
+            new Notice(t('common.error', { error: e.message }));
             console.error(e);
         }
     }
@@ -808,13 +814,13 @@ export class MySQLSettingTab extends PluginSettingTab {
             const sql = e.target?.result;
             if (typeof sql === 'string') {
                 try {
-                    new Notice("Importing database...");
+                    new Notice(t('common.notice_import_loading'));
                     const dbManager = (this.plugin as any).dbManager;
                     await dbManager.importDatabase(sql);
-                    new Notice("Database imported successfully!");
+                    new Notice(t('common.notice_import_success'));
                     this.display();
                 } catch (err) {
-                    new Notice(`Import failed: ${err.message}`);
+                    new Notice(t('common.error', { error: err.message }));
                     console.error(err);
                 }
             }

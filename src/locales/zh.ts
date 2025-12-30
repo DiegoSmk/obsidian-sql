@@ -176,5 +176,15 @@ export default {
         "status_error": "错误",
         "status_aborted": "已中止",
         "status_live": "实时"
+    },
+    "common": {
+        "error": "错误：{error}",
+        "invalid_name": "新名称必须与旧名称不同。",
+        "notice_export_success": "已导出到 {name}",
+        "notice_import_loading": "正在导入数据库...",
+        "notice_import_success": "数据库导入成功！",
+        "notice_anchor_form": "FORM 已锚定到 {name}",
+        "notice_anchor_live": "LIVE 块已锚定到 {name}",
+        "notice_update_live": "正在从 {name} 更新 LIVE 数据..."
     }
 }

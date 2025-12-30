@@ -469,7 +469,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                                     await this.saveSettings();
                                 }
                                 dbNameSpan.setText(db);
-                                new Notice(`FORM anchored to ${db}`);
+                                new Notice(t('common.notice_anchor_form', { name: db }));
                                 this.executeQuery(source, params, runBtn, resultContainer, footer, { activeDatabase: anchoredDB });
                             });
                     });
@@ -532,7 +532,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
                                 // Update UI
                                 dbNameSpan.setText(db);
-                                new Notice(`LIVE block anchored to ${db}`);
+                                new Notice(t('common.notice_anchor_live', { name: db }));
 
                                 // Re-execute immediately
                                 this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
@@ -555,7 +555,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             setIcon(refreshBtn, "refresh-cw");
             refreshBtn.onclick = () => {
                 refreshBtn.addClass("is-spinning");
-                new Notice(`Updating LIVE data from ${anchoredDB}...`);
+                new Notice(t('common.notice_update_live', { name: anchoredDB }));
                 this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
                     activeDatabase: anchoredDB,
                     originId: stableId, // Strictly stableId
