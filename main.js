@@ -64963,7 +64963,7 @@ var en_default = {
     "status_done": "Done",
     "notice_table_data_copied": "Table data copied to clipboard!",
     "notice_copy_failed": "Failed to copy: {error}",
-    "notice_screenshot_failed": "Failed to create screenshot",
+    "notice_screenshot_failed": "Failed to create screenshot: {error}",
     "notice_no_active_note": "No active note found",
     "notice_table_inserted": "Table inserted into note!",
     "notice_insert_failed": "Failed to insert: {error}"
@@ -64983,13 +64983,13 @@ var en_default = {
     "tip_screenshot": "Take screenshot of result",
     "tip_add_note": "Insert result into note",
     "notice_copied": "\u2713 Copied to clipboard!",
-    "notice_copy_failed": "\u274C Failed to copy: ",
-    "notice_screenshot_failed": "\u274C Failed to create screenshot",
+    "notice_copy_failed": "\u274C Failed to copy: {error}",
+    "notice_screenshot_failed": "\u274C Failed to create screenshot: {error}",
     "notice_screenshot_copied": "\u2713 Screenshot copied to clipboard!",
     "notice_screenshot_downloaded": "\u2713 Screenshot downloaded!",
     "notice_insert_no_note": "\u274C No active note found",
     "notice_insert_success": "\u2713 Result inserted into note!",
-    "notice_insert_failed": "\u274C Failed to insert: ",
+    "notice_insert_failed": "\u274C Failed to insert: {error}",
     "msg_no_result": "Query executed successfully (no result set)",
     "msg_rows_found": "{count} rows found",
     "msg_no_data": "No data found",
@@ -65155,7 +65155,7 @@ var pt_BR_default = {
     "status_done": "Conclu\xEDdo",
     "notice_table_data_copied": "Dados da tabela copiados para a \xE1rea de transfer\xEAncia!",
     "notice_copy_failed": "Falha ao copiar: {error}",
-    "notice_screenshot_failed": "Falha ao criar captura de tela",
+    "notice_screenshot_failed": "Falha ao criar captura de tela: {error}",
     "notice_no_active_note": "Nenhuma nota ativa encontrada",
     "notice_table_inserted": "Tabela inserida na nota!",
     "notice_insert_failed": "Falha ao inserir: {error}"
@@ -65175,13 +65175,13 @@ var pt_BR_default = {
     "tip_screenshot": "Tirar foto do resultado",
     "tip_add_note": "Inserir resultado na nota",
     "notice_copied": "\u2713 Copiado!",
-    "notice_copy_failed": "\u274C Falha ao copiar: ",
-    "notice_screenshot_failed": "\u274C Falha na captura",
-    "notice_screenshot_copied": "\u2713 Captura copiada!",
-    "notice_screenshot_downloaded": "\u2713 Captura baixada!",
-    "notice_insert_no_note": "\u274C Nenhuma nota ativa",
-    "notice_insert_success": "\u2713 Resultado inserido!",
-    "notice_insert_failed": "\u274C Falha ao inserir: ",
+    "notice_copy_failed": "\u274C Falha ao copiar: {error}",
+    "notice_screenshot_failed": "\u274C Falha ao criar captura de tela: {error}",
+    "notice_screenshot_copied": "\u2713 Captura de tela copiada!",
+    "notice_screenshot_downloaded": "\u2713 Captura de tela baixada!",
+    "notice_insert_no_note": "\u274C Nenhuma nota ativa encontrada",
+    "notice_insert_success": "\u2713 Resultado inserido na nota!",
+    "notice_insert_failed": "\u274C Falha ao inserir: {error}",
     "msg_no_result": "Consulta executada com sucesso (sem retorno)",
     "msg_rows_found": "{count} linhas encontradas",
     "msg_no_data": "Nenhum dado encontrado",
@@ -65346,11 +65346,11 @@ var zh_default = {
     "status_error": "\u9519\u8BEF",
     "status_done": "\u5B8C\u6210",
     "notice_table_data_copied": "\u8868\u6570\u636E\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01",
-    "notice_copy_failed": "\u590D\u5236\u5931\u8D25\uFF1A{error}",
-    "notice_screenshot_failed": "\u521B\u5EFA\u622A\u56FE\u5931\u8D25",
-    "notice_no_active_note": "\u672A\u627E\u5230\u6D3B\u52A8\u7B14\u8BB0",
-    "notice_table_inserted": "\u8868\u5DF2\u63D2\u5165\u7B14\u8BB0\uFF01",
-    "notice_insert_failed": "\u63D2\u5165\u5931\u8D25\uFF1A{error}"
+    "notice_copy_failed": "\u590D\u5236\u5931\u8D25: {error}",
+    "notice_screenshot_failed": "\u521B\u5EFA\u622A\u56FE\u5931\u8D25: {error}",
+    "notice_no_active_note": "\u4E5F\u672A\u627E\u5230\u6D3B\u52A8\u7B14\u8BB0",
+    "notice_table_inserted": "\u8868\u683C\u5DF2\u63D2\u5165\u7B14\u8BB0\uFF01",
+    "notice_insert_failed": "\u63D2\u5165\u5931\u8D25: {error}"
   },
   "workbench": {
     "btn_run": "\u8FD0\u884C",
@@ -65367,13 +65367,13 @@ var zh_default = {
     "tip_screenshot": "\u83B7\u53D6\u7ED3\u679C\u622A\u56FE",
     "tip_add_note": "\u5C06\u7ED3\u679C\u63D2\u5165\u7B14\u8BB0",
     "notice_copied": "\u2713 \u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01",
-    "notice_copy_failed": "\u274C \u590D\u5236\u5931\u8D25\uFF1A",
-    "notice_screenshot_failed": "\u274C \u521B\u5EFA\u622A\u56FE\u5931\u8D25",
+    "notice_copy_failed": "\u274C \u590D\u5236\u5931\u8D25: {error}",
+    "notice_screenshot_failed": "\u274C \u521B\u5EFA\u622A\u56FE\u5931\u8D25: {error}",
     "notice_screenshot_copied": "\u2713 \u622A\u56FE\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01",
     "notice_screenshot_downloaded": "\u2713 \u622A\u56FE\u5DF2\u4E0B\u8F7D\uFF01",
     "notice_insert_no_note": "\u274C \u672A\u627E\u5230\u6D3B\u52A8\u7B14\u8BB0",
     "notice_insert_success": "\u2713 \u7ED3\u679C\u5DF2\u63D2\u5165\u7B14\u8BB0\uFF01",
-    "notice_insert_failed": "\u274C \u63D2\u5165\u5931\u8D25\uFF1A",
+    "notice_insert_failed": "\u274C \u63D2\u5165\u5931\u8D25: {error}",
     "msg_no_result": "\u67E5\u8BE2\u6210\u529F\u6267\u884C\uFF08\u65E0\u7ED3\u679C\u96C6\uFF09",
     "msg_rows_found": "\u627E\u5230 {count} \u884C",
     "msg_no_data": "\u672A\u627E\u5230\u6570\u636E",
@@ -65539,7 +65539,7 @@ var es_default = {
     "status_done": "Hecho",
     "notice_table_data_copied": "\xA1Datos de la tabla copiados al portapapeles!",
     "notice_copy_failed": "Error al copiar: {error}",
-    "notice_screenshot_failed": "Error al crear la captura de pantalla",
+    "notice_screenshot_failed": "Error al crear la captura de pantalla: {error}",
     "notice_no_active_note": "No se encontr\xF3 ninguna nota activa",
     "notice_table_inserted": "\xA1Tabla insertada en la nota!",
     "notice_insert_failed": "Error al insertar: {error}"
@@ -65559,13 +65559,13 @@ var es_default = {
     "tip_screenshot": "Tomar captura del resultado",
     "tip_add_note": "Insertar resultado en la nota",
     "notice_copied": "\u2713 \xA1Copiado al portapapeles!",
-    "notice_copy_failed": "\u274C Error al copiar: ",
-    "notice_screenshot_failed": "\u274C Error al crear captura",
+    "notice_copy_failed": "\u274C Error al copiar: {error}",
+    "notice_screenshot_failed": "\u274C Error al crear captura: {error}",
     "notice_screenshot_copied": "\u2713 \xA1Captura copiada al portapapeles!",
     "notice_screenshot_downloaded": "\u2713 \xA1Captura descargada!",
     "notice_insert_no_note": "\u274C No se encontr\xF3 nota activa",
     "notice_insert_success": "\u2713 \xA1Resultado insertado en la nota!",
-    "notice_insert_failed": "\u274C Error al insertar: ",
+    "notice_insert_failed": "\u274C Error al insertar: {error}",
     "msg_no_result": "Consulta ejecutada con \xE9xito (sin resultados)",
     "msg_rows_found": "{count} filas encontradas",
     "msg_no_data": "No se encontraron datos",
@@ -65731,7 +65731,7 @@ var de_default = {
     "status_done": "Fertig",
     "notice_table_data_copied": "Tabellendaten in die Zwischenablage kopiert!",
     "notice_copy_failed": "Kopieren fehlgeschlagen: {error}",
-    "notice_screenshot_failed": "Screenshot-Erstellung fehlgeschlagen",
+    "notice_screenshot_failed": "Screenshot-Erstellung fehlgeschlagen: {error}",
     "notice_no_active_note": "Keine aktive Notiz gefunden",
     "notice_table_inserted": "Tabelle in Notiz eingef\xFCgt!",
     "notice_insert_failed": "Einf\xFCgen fehlgeschlagen: {error}"
@@ -65751,13 +65751,13 @@ var de_default = {
     "tip_screenshot": "Screenshot vom Ergebnis machen",
     "tip_add_note": "Ergebnis in die Notiz einf\xFCgen",
     "notice_copied": "\u2713 In die Zwischenablage kopiert!",
-    "notice_copy_failed": "\u274C Kopieren fehlgeschlagen: ",
-    "notice_screenshot_failed": "\u274C Screenshot-Erstellung fehlgeschlagen",
+    "notice_copy_failed": "\u274C Kopieren fehlgeschlagen: {error}",
+    "notice_screenshot_failed": "\u274C Screenshot-Erstellung fehlgeschlagen: {error}",
     "notice_screenshot_copied": "\u2713 Screenshot in die Zwischenablage kopiert!",
     "notice_screenshot_downloaded": "\u2713 Screenshot heruntergeladen!",
     "notice_insert_no_note": "\u274C Keine aktive Notiz gefunden",
     "notice_insert_success": "\u2713 Ergebnis in Notiz eingef\xFCgt!",
-    "notice_insert_failed": "\u274C Einf\xFCgen fehlgeschlagen: ",
+    "notice_insert_failed": "\u274C Einf\xFCgen fehlgeschlagen: {error}",
     "msg_no_result": "Abfrage erfolgreich ausgef\xFChrt (kein Ergebnissatz)",
     "msg_rows_found": "{count} Zeilen gefunden",
     "msg_no_data": "Keine Daten gefunden",
@@ -65882,7 +65882,7 @@ var fr_default = {
     "confirm_delete_title": "Supprimer la base de donn\xE9es",
     "confirm_delete_msg": 'Vous \xEAtes sur le point de supprimer la base de donn\xE9es "{dbName}". Cette action est irr\xE9versible. Toutes les tables et donn\xE9es seront perdues.',
     "confirm_clear_title": "Effacer la base de donn\xE9es",
-    "confirm_clear_msg": '\xCAtes-vous s\xFBr de vouloir effacer toutes les tables de "{dbName}" ? Cela conserve la base de donn\xE9es mais supprime todas les donn\xE9es.',
+    "confirm_clear_msg": '\xCAtes-vous s\xFBr de vouloir effacer toutes les tables de "{dbName}" ? Cela conserve la base de donn\xE9es mais supprime toutes les donn\xE9es.',
     "btn_cancel": "Annuler",
     "btn_confirm": "Confirmer",
     "btn_delete": "Supprimer la base de donn\xE9es",
@@ -65923,7 +65923,7 @@ var fr_default = {
     "status_done": "Termin\xE9",
     "notice_table_data_copied": "Donn\xE9es de table copi\xE9es dans le presse-papiers !",
     "notice_copy_failed": "\xC9chec de la copie : {error}",
-    "notice_screenshot_failed": "\xC9chec de la capture d'\xE9cran",
+    "notice_screenshot_failed": "\xC9chec de la capture d'\xE9cran : {error}",
     "notice_no_active_note": "Aucune note active trouv\xE9e",
     "notice_table_inserted": "Table ins\xE9r\xE9e dans la note !",
     "notice_insert_failed": "\xC9chec de l'insertion : {error}"
@@ -65939,17 +65939,17 @@ var fr_default = {
     "btn_copy": "Copier",
     "btn_screenshot": "Capture",
     "btn_add_note": "Ajouter \xE0 la note",
-    "tip_copy": "Copier le r\xE9sultat no presse-papiers",
+    "tip_copy": "Copier le r\xE9sultat dans le presse-papiers",
     "tip_screenshot": "Prendre une capture du r\xE9sultat",
-    "tip_add_note": "Ins\xE9rer le r\xE9sultat no la note",
+    "tip_add_note": "Ins\xE9rer le r\xE9sultat dans la note",
     "notice_copied": "\u2713 Copi\xE9 dans le presse-papiers !",
-    "notice_copy_failed": "\u274C \xC9chec de la copie : ",
-    "notice_screenshot_failed": "\u274C \xC9chec de la capture d'\xE9cran",
-    "notice_screenshot_copied": "\u2713 Capture copi\xE9e no le presse-papiers !",
+    "notice_copy_failed": "\u274C \xC9chec de la copie : {error}",
+    "notice_screenshot_failed": "\u274C \xC9chec de la capture d'\xE9cran : {error}",
+    "notice_screenshot_copied": "\u2713 Capture copi\xE9e dans le presse-papiers !",
     "notice_screenshot_downloaded": "\u2713 Capture t\xE9l\xE9charg\xE9e !",
     "notice_insert_no_note": "\u274C Aucune note active trouv\xE9e",
-    "notice_insert_success": "\u2713 R\xE9sultat ins\xE9r\xE9 no la note !",
-    "notice_insert_failed": "\u274C \xC9chec de l'insertion : ",
+    "notice_insert_success": "\u2713 R\xE9sultat ins\xE9r\xE9 dans la note !",
+    "notice_insert_failed": "\u274C \xC9chec de l'insertion : {error}",
     "msg_no_result": "Requ\xEAte ex\xE9cut\xE9e avec succ\xE8s (aucun r\xE9sultat)",
     "msg_rows_found": "{count} lignes trouv\xE9es",
     "msg_no_data": "Aucune donn\xE9e trouv\xE9e",
@@ -65962,18 +65962,18 @@ var fr_default = {
     "query_result": "R\xE9sultat de la requ\xEAte",
     "msg_loading": "Chargement des donn\xE9es...",
     "msg_showing_limit": "Affichage des {count} premi\xE8res lignes uniquement.",
-    "msg_no_tables": "Aucune table trouv\xE9e no cette base de donn\xE9es.",
+    "msg_no_tables": "Aucune table trouv\xE9e dans cette base de donn\xE9es.",
     "tip_back": "Retour \xE0 la liste des tables"
   },
   "form": {
-    "title_insert": "Ins\xE9rer no {name}",
-    "btn_save": "Enregistrer le record",
+    "title_insert": "Ins\xE9rer dans {name}",
+    "btn_save": "Enregistrer l'enregistrement",
     "btn_saving": "Enregistrement...",
     "btn_clear": "Effacer",
-    "msg_success": "Enregistr\xE9 avec succ\xE8s no {name}",
+    "msg_success": "Enregistr\xE9 avec succ\xE8s dans {name}",
     "msg_error": "Erreur : {error}",
     "msg_unexpected": "Erreur inattendue : {error}",
-    "notice_success": "Enregistrement sauvegard\xE9 no {name}",
+    "notice_success": "Enregistrement sauvegard\xE9 dans {name}",
     "notice_error": "Erreur lors de l'enregistrement : {error}",
     "err_invalid_table": "Nom de table non valide",
     "err_invalid_col": "Nom de colonne non valide : {name}"
@@ -65984,11 +65984,11 @@ var fr_default = {
     "label_subject": "Sujet :",
     "from_name": "\xC9quipe de d\xE9veloppement SQL Notebook <dev@obsidian-sql.internal>",
     "to_name": "Cher d\xE9veloppeur",
-    "subject": "Alerte Pro Practice : Bonnes pratiques no le contexte de base de donn\xE9es",
+    "subject": "Alerte Pro Practice : Bonnes pratiques dans le contexte de base de donn\xE9es",
     "hello": "Bonjour,",
-    "msg_1": "Nous avons remarqu\xE9 que vous changez de base de donn\xE9es via l'interface. Bien que cela soit pratique para une navigation rapide, nous aimerions partager un conseil : l'utilisation da la commande explicite `USE` no vos scripts pode rendre votre fluxo de trabalho encore plus robuste.",
-    "msg_quote": "D\xE9finir explicitement votre contexte est une bonne pratique qui garantit que vos scripts s\xE3o portables et clairs no diff\xE9rents environnements :",
-    "msg_2": "D\xE9finir le contexte no le code aide \xE0 \xE9viter la confusion et rend votre intention claire para quiconque examine votre travail. Vous pouvez toujours continuer \xE0 utiliser le s\xE9lecteur global para plus de commodit\xE9 !",
+    "msg_1": "Nous avons remarqu\xE9 que vous changez de base de donn\xE9es via l'interface. Bien que cela soit pratique pour une navigation rapide, nous aimerions partager un conseil : l'utilisation de la commande explicite `USE` dans vos scripts peut rendre votre flux de travail encore plus robuste.",
+    "msg_quote": "D\xE9finir explicitement votre contexte est une bonne pratique qui garantit que vos scripts sont portables et clairs dans diff\xE9rents environnements :",
+    "msg_2": "D\xE9finir le contexte dans le code aide \xE0 \xE9viter la confusion et rend votre intention claire pour quiconque examine votre travail. Vous pouvez toujours continuer \xE0 utiliser le s\xE9lecteur global pour plus de commodit\xE9 !",
     "punchline": "Bonnes requ\xEAtes ! \u{1F680}",
     "signature_regards": "Cordialement,",
     "signature_team": "L'\xE9quipe de d\xE9veloppement SQL Notebook",
@@ -66004,12 +66004,12 @@ var fr_default = {
   "common": {
     "error": "Erreur : {error}",
     "invalid_name": "Le nouveau nom doit \xEAtre diff\xE9rent de l'ancien.",
-    "notice_export_success": "Export\xE9 no {name}",
-    "notice_import_loading": "Importation da la base de donn\xE9es...",
+    "notice_export_success": "Export\xE9 dans {name}",
+    "notice_import_loading": "Importation de la base de donn\xE9es...",
     "notice_import_success": "Base de donn\xE9es import\xE9e avec succ\xE8s !",
     "notice_anchor_form": "FORM ancr\xE9 \xE0 {name}",
     "notice_anchor_live": "Bloc LIVE ancr\xE9 \xE0 {name}",
-    "notice_update_live": "Mise \xE0 jour das donn\xE9es LIVE depuis {name}..."
+    "notice_update_live": "Mise \xE0 jour des donn\xE9es LIVE depuis {name}..."
   }
 };
 
@@ -66115,7 +66115,7 @@ var ja_default = {
     "status_done": "\u5B8C\u4E86",
     "notice_table_data_copied": "\u30C6\u30FC\u30D6\u30EB\u30C7\u30FC\u30BF\u3092\u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
     "notice_copy_failed": "\u30B3\u30D4\u30FC\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
-    "notice_screenshot_failed": "\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u306E\u4F5C\u6210\u306B\u5931\u6557\u3057\u307E\u3057\u305F",
+    "notice_screenshot_failed": "\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u306E\u4F5C\u6210\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
     "notice_no_active_note": "\u30A2\u30AF\u30C6\u30A3\u30D6\u306A\u30CE\u30FC\u30C8\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093",
     "notice_table_inserted": "\u30C6\u30FC\u30D6\u30EB\u3092\u30CE\u30FC\u30C8\u306B\u633F\u5165\u3057\u307E\u3057\u305F\uFF01",
     "notice_insert_failed": "\u633F\u5165\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}"
@@ -66135,13 +66135,13 @@ var ja_default = {
     "tip_screenshot": "\u7D50\u679C\u306E\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u64AE\u308B",
     "tip_add_note": "\u7D50\u679C\u3092\u30CE\u30FC\u30C8\u306B\u633F\u5165",
     "notice_copied": "\u2713 \u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
-    "notice_copy_failed": "\u274C \u30B3\u30D4\u30FC\u5931\u6557: ",
-    "notice_screenshot_failed": "\u274C SS\u4F5C\u6210\u5931\u6557",
-    "notice_screenshot_copied": "\u2713 SS\u3092\u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
-    "notice_screenshot_downloaded": "\u2713 SS\u3092\u30C0\u30A6\u30F3\u30ED\u30FC\u30C9\u3057\u307E\u3057\u305F\uFF01",
+    "notice_copy_failed": "\u274C \u30B3\u30D4\u30FC\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
+    "notice_screenshot_failed": "\u274C \u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u306E\u4F5C\u6210\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
+    "notice_screenshot_copied": "\u2713 \u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
+    "notice_screenshot_downloaded": "\u2713 \u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u30C0\u30A6\u30F3\u30ED\u30FC\u30C9\u3057\u307E\u3057\u305F\uFF01",
     "notice_insert_no_note": "\u274C \u30A2\u30AF\u30C6\u30A3\u30D6\u306A\u30CE\u30FC\u30C8\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093",
     "notice_insert_success": "\u2713 \u7D50\u679C\u3092\u30CE\u30FC\u30C8\u306B\u633F\u5165\u3057\u307E\u3057\u305F\uFF01",
-    "notice_insert_failed": "\u274C \u633F\u5165\u5931\u6557: ",
+    "notice_insert_failed": "\u274C \u633F\u5165\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
     "msg_no_result": "\u30AF\u30A8\u30EA\u306F\u6B63\u5E38\u306B\u5B9F\u884C\u3055\u308C\u307E\u3057\u305F (\u7D50\u679C\u30BB\u30C3\u30C8\u306A\u3057)",
     "msg_rows_found": "{count} \u884C\u898B\u3064\u304B\u308A\u307E\u3057\u305F",
     "msg_no_data": "\u30C7\u30FC\u30BF\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093",
@@ -66307,8 +66307,8 @@ var ko_default = {
     "status_done": "\uC644\uB8CC",
     "notice_table_data_copied": "\uD14C\uC774\uBE14 \uB370\uC774\uD130\uB97C \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4!",
     "notice_copy_failed": "\uBCF5\uC0AC \uC2E4\uD328: {error}",
-    "notice_screenshot_failed": "\uC2A4\uD06C\uB9B0\uC0F7 \uC0DD\uC131\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.",
-    "notice_no_active_note": "\uD65C\uC131 \uB178\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+    "notice_screenshot_failed": "\uC2A4\uD06C\uB9B0\uC0F7 \uC0DD\uC131\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4: {error}",
+    "notice_no_active_note": "\uD65C\uC131 \uB178\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
     "notice_table_inserted": "\uB178\uD2B8\uC5D0 \uD14C\uC774\uBE14\uC744 \uC0BD\uC785\uD588\uC2B5\uB2C8\uB2E4!",
     "notice_insert_failed": "\uC0BD\uC785 \uC2E4\uD328: {error}"
   },
@@ -66327,13 +66327,13 @@ var ko_default = {
     "tip_screenshot": "\uACB0\uACFC \uC2A4\uD06C\uB9B0\uC0F7 \uCC0D\uAE30",
     "tip_add_note": "\uACB0\uACFC\uB97C \uB178\uD2B8\uC5D0 \uC0BD\uC785",
     "notice_copied": "\u2713 \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4!",
-    "notice_copy_failed": "\u274C \uBCF5\uC0AC \uC2E4\uD328: ",
-    "notice_screenshot_failed": "\u274C \uC2A4\uD06C\uB9B0\uC0F7 \uC0DD\uC131 \uC2E4\uD328",
+    "notice_copy_failed": "\u274C \uBCF5\uC0AC \uC2E4\uD328: {error}",
+    "notice_screenshot_failed": "\u274C \uC2A4\uD06C\uB9B0\uC0F7 \uC0DD\uC131 \uC2E4\uD328: {error}",
     "notice_screenshot_copied": "\u2713 \uC2A4\uD06C\uB9B0\uC0F7\uC774 \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4!",
     "notice_screenshot_downloaded": "\u2713 \uC2A4\uD06C\uB9B0\uC0F7\uC744 \uB2E4\uC6B4\uB85C\uB4DC\uD588\uC2B5\uB2C8\uB2E4!",
     "notice_insert_no_note": "\u274C \uD65C\uC131 \uB178\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
     "notice_insert_success": "\u2713 \uACB0\uACFC\uB97C \uB178\uD2B8\uC5D0 \uC0BD\uC785\uD588\uC2B5\uB2C8\uB2E4!",
-    "notice_insert_failed": "\u274C \uC0BD\uC785 \uC2E4\uD328: ",
+    "notice_insert_failed": "\u274C \uC0BD\uC785 \uC2E4\uD328: {error}",
     "msg_no_result": "\uCFFC\uB9AC\uAC00 \uC131\uACF5\uC801\uC73C\uB85C \uC2E4\uD589\uB418\uC5C8\uC2B5\uB2C8\uB2E4(\uACB0\uACFC \uC5C6\uC74C)",
     "msg_rows_found": "{count}\uAC1C\uC758 \uD589\uC744 \uBC1C\uACAC\uD588\uC2B5\uB2C8\uB2E4",
     "msg_no_data": "\uB370\uC774\uD130\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
@@ -66636,7 +66636,7 @@ var ResultRenderer = class {
       await navigator.clipboard.writeText(textToCopy);
       new import_obsidian4.Notice(t("renderer.notice_copied"));
     } catch (error) {
-      new import_obsidian4.Notice(t("renderer.notice_copy_failed") + error.message);
+      new import_obsidian4.Notice(t("renderer.notice_copy_failed", { error: error.message }));
     }
   }
   static async takeScreenshot(element) {
@@ -66648,7 +66648,7 @@ var ResultRenderer = class {
       });
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          new import_obsidian4.Notice("\u274C Failed to create screenshot");
+          new import_obsidian4.Notice(t("renderer.notice_screenshot_failed", { error: "Canvas blob failed" }));
           return;
         }
         try {
@@ -66667,7 +66667,7 @@ var ResultRenderer = class {
         }
       });
     } catch (error) {
-      new import_obsidian4.Notice("\u274C Screenshot failed: " + error.message);
+      new import_obsidian4.Notice(t("renderer.notice_screenshot_failed", { error: error.message }));
       console.error("Screenshot error:", error);
     }
   }
@@ -66693,7 +66693,7 @@ var ResultRenderer = class {
       editor.setCursor({ line: cursor.line + lines + 1, ch: 0 });
       new import_obsidian4.Notice(t("renderer.notice_insert_success"));
     } catch (error) {
-      new import_obsidian4.Notice(t("renderer.notice_insert_failed") + error.message);
+      new import_obsidian4.Notice(t("renderer.notice_insert_failed", { error: error.message }));
     }
   }
   static dataToMarkdownTable(rows) {
@@ -67177,7 +67177,7 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
         if (result.success && result.data && result.data[0] && result.data[0].data) {
           await this.copyToClipboard(result.data[0].data);
         } else {
-          new import_obsidian7.Notice(t("renderer.notice_copy_failed"));
+          new import_obsidian7.Notice(t("renderer.notice_copy_failed", { error: t("renderer.msg_no_data") }));
         }
       } catch (e) {
         new import_obsidian7.Notice(t("modals.notice_copy_failed", { error: e.message }));
@@ -67189,10 +67189,10 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
         if (tableElement) {
           await this.takeScreenshot(tableElement);
         } else {
-          new import_obsidian7.Notice(t("renderer.notice_screenshot_failed"));
+          new import_obsidian7.Notice(t("renderer.notice_screenshot_failed", { error: "No table element" }));
         }
       } catch (e) {
-        new import_obsidian7.Notice(t("renderer.notice_screenshot_failed") + ": " + e.message);
+        new import_obsidian7.Notice(t("renderer.notice_screenshot_failed", { error: e.message }));
       }
     });
     new import_obsidian7.ButtonComponent(actions).setIcon("file-plus").setTooltip(t("renderer.tip_add_note")).onClick(async () => {
@@ -67202,10 +67202,10 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
         if (result.success && result.data && result.data[0] && result.data[0].data) {
           await this.insertIntoNote(result.data[0].data);
         } else {
-          new import_obsidian7.Notice(t("renderer.notice_insert_failed"));
+          new import_obsidian7.Notice(t("renderer.notice_insert_failed", { error: t("renderer.msg_no_data") }));
         }
       } catch (e) {
-        new import_obsidian7.Notice(t("renderer.notice_insert_failed") + e.message);
+        new import_obsidian7.Notice(t("renderer.notice_insert_failed", { error: e.message }));
       }
     });
     new import_obsidian7.ButtonComponent(actions).setIcon("download").setTooltip(t("modals.btn_exportar")).onClick(async () => {
@@ -67328,7 +67328,7 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
       });
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          new import_obsidian7.Notice(t("modals.notice_screenshot_failed"));
+          new import_obsidian7.Notice(t("modals.notice_screenshot_failed", { error: "Blob creation failed" }));
           return;
         }
         try {
@@ -67347,7 +67347,7 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
         }
       });
     } catch (error) {
-      new import_obsidian7.Notice(t("renderer.notice_screenshot_failed") + ": " + error.message);
+      new import_obsidian7.Notice(t("renderer.notice_screenshot_failed", { error: error.message }));
       console.error("Screenshot error:", error);
     }
   }

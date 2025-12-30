@@ -383,7 +383,7 @@ export class DatabaseTablesModal extends Modal {
                     if (result.success && result.data && result.data[0] && result.data[0].data) {
                         await this.copyToClipboard(result.data[0].data);
                     } else {
-                        new Notice(t('renderer.notice_copy_failed'));
+                        new Notice(t('renderer.notice_copy_failed', { error: t('renderer.msg_no_data') }));
                     }
                 } catch (e) {
                     new Notice(t('modals.notice_copy_failed', { error: e.message }));
@@ -400,10 +400,10 @@ export class DatabaseTablesModal extends Modal {
                     if (tableElement) {
                         await this.takeScreenshot(tableElement as HTMLElement);
                     } else {
-                        new Notice(t('renderer.notice_screenshot_failed'));
+                        new Notice(t('renderer.notice_screenshot_failed', { error: 'No table element' }));
                     }
                 } catch (e) {
-                    new Notice(t('renderer.notice_screenshot_failed') + ': ' + e.message);
+                    new Notice(t('renderer.notice_screenshot_failed', { error: e.message }));
                 }
             });
 
@@ -419,10 +419,10 @@ export class DatabaseTablesModal extends Modal {
                     if (result.success && result.data && result.data[0] && result.data[0].data) {
                         await this.insertIntoNote(result.data[0].data);
                     } else {
-                        new Notice(t('renderer.notice_insert_failed'));
+                        new Notice(t('renderer.notice_insert_failed', { error: t('renderer.msg_no_data') }));
                     }
                 } catch (e) {
-                    new Notice(t('renderer.notice_insert_failed') + e.message);
+                    new Notice(t('renderer.notice_insert_failed', { error: e.message }));
                 }
             });
 
@@ -585,7 +585,7 @@ export class DatabaseTablesModal extends Modal {
 
             canvas.toBlob(async (blob: Blob | null) => {
                 if (!blob) {
-                    new Notice(t('modals.notice_screenshot_failed'));
+                    new Notice(t('modals.notice_screenshot_failed', { error: 'Blob creation failed' }));
                     return;
                 }
 
@@ -605,7 +605,7 @@ export class DatabaseTablesModal extends Modal {
                 }
             });
         } catch (error) {
-            new Notice(t('renderer.notice_screenshot_failed') + ': ' + error.message);
+            new Notice(t('renderer.notice_screenshot_failed', { error: error.message }));
             console.error('Screenshot error:', error);
         }
     }

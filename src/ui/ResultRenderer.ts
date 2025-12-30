@@ -79,7 +79,7 @@ export class ResultRenderer {
             await navigator.clipboard.writeText(textToCopy);
             new Notice(t('renderer.notice_copied'));
         } catch (error) {
-            new Notice(t('renderer.notice_copy_failed') + error.message);
+            new Notice(t('renderer.notice_copy_failed', { error: error.message }));
         }
     }
 
@@ -93,7 +93,7 @@ export class ResultRenderer {
 
             canvas.toBlob(async (blob: Blob | null) => {
                 if (!blob) {
-                    new Notice('❌ Failed to create screenshot');
+                    new Notice(t('renderer.notice_screenshot_failed', { error: 'Canvas blob failed' }));
                     return;
                 }
 
@@ -113,7 +113,7 @@ export class ResultRenderer {
                 }
             });
         } catch (error) {
-            new Notice('❌ Screenshot failed: ' + error.message);
+            new Notice(t('renderer.notice_screenshot_failed', { error: error.message }));
             console.error('Screenshot error:', error);
         }
     }
@@ -146,7 +146,7 @@ export class ResultRenderer {
 
             new Notice(t('renderer.notice_insert_success'));
         } catch (error) {
-            new Notice(t('renderer.notice_insert_failed') + error.message);
+            new Notice(t('renderer.notice_insert_failed', { error: error.message }));
         }
     }
 
