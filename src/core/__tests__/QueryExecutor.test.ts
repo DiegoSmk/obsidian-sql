@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 // @ts-ignore
 import alasql from 'alasql';
 import { QueryExecutor } from '../QueryExecutor';
@@ -13,7 +13,7 @@ describe('QueryExecutor', () => {
             for (const db of dbs) {
                 alasql(`DROP DATABASE IF EXISTS \`${db}\``);
             }
-        } catch (e) {
+        } catch {
             // Ignore reset failures
         }
 
@@ -31,9 +31,9 @@ describe('QueryExecutor', () => {
         const result = await QueryExecutor.execute('SELECT * FROM users');
 
         expect(result.success).toBe(true);
-        expect(result.data![0].type).toBe('table');
-        expect(result.data![0].data).toHaveLength(1);
-        expect((result.data![0].data as any[])[0].name).toBe('Alice');
+        expect(result.data?.[0].type).toBe('table');
+        expect(result.data?.[0].data).toHaveLength(1);
+        expect((result.data?.[0].data as any[])[0].name).toBe('Alice');
     });
 
     it('should intercept USE statements', async () => {
@@ -77,8 +77,8 @@ describe('QueryExecutor', () => {
 
         expect(result.success).toBe(true);
         expect(result.activeDatabase).toBe('db2');
-        expect((alasql('SELECT * FROM db1.t1') as any)[0].v).toBe(1);
-        expect((alasql('SELECT * FROM db2.t2') as any)[0].v).toBe(2);
+        expect((alasql('SELECT * FROM db1.t1') as any[])[0].v).toBe(1);
+        expect((alasql('SELECT * FROM db2.t2') as any[])[0].v).toBe(2);
     });
 
 
@@ -92,15 +92,15 @@ describe('QueryExecutor', () => {
         const result = await QueryExecutor.execute(sql);
 
         expect(result.success).toBe(true);
-        const formData = result.data![0].data;
+        const formData = result.data?.[0].data as any;
         expect(formData.tableName).toBe('dbo.clients');
         expect(formData.fields).toHaveLength(3);
 
-        const nameField = formData.fields.find((f: any) => f.name === 'name');
+        const nameField = (formData.fields as any[]).find((f: any) => f.name === 'name');
         expect(nameField.label).toBe('Full Name');
         expect(nameField.type).toBe('TEXT');
 
-        const idField = formData.fields.find((f: any) => f.name === 'id');
+        const idField = (formData.fields as any[]).find((f: any) => f.name === 'id');
         expect(idField.isAutoIncrement).toBe(true); // Since it is HIDDEN or id PK
     });
 
@@ -141,7 +141,7 @@ FROM RANGE(1, 10);`;
 
 
 
-        const res = alasql('SELECT COUNT(*) as cnt FROM estoque') as any;
+        const res = alasql('SELECT COUNT(*) as cnt FROM estoque') as any[];
         expect(res[0].cnt).toBe(10);
     });
 

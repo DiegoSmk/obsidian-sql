@@ -1,31 +1,34 @@
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 // @ts-ignore
 import alasql from 'alasql';
 import { DatabaseManager } from '../DatabaseManager';
+import { IMySQLPlugin, AlaSQLInstance } from '../../types';
 
 describe('DatabaseManager Extra Coverage', () => {
-    let mockPlugin: any;
+    let mockPlugin: IMySQLPlugin;
     let dbManager: DatabaseManager;
 
     beforeEach(async () => {
         // Reset AlaSQL databases
         try {
-            const dbs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
+            const dbs = Object.keys((alasql as unknown as AlaSQLInstance).databases).filter(d => d !== 'alasql');
             for (const db of dbs) {
                 alasql(`DROP DATABASE IF EXISTS \`${db}\``);
             }
-        } catch (e) { console.error(e); }
+        } catch {
+            // Ignore reset failures
+        }
 
         mockPlugin = {
             settings: { snapshotRowLimit: 1000 },
             saveData: vi.fn().mockResolvedValue(true),
             loadData: vi.fn(),
             activeDatabase: 'dbo'
-        };
+        } as unknown as IMySQLPlugin;
 
-        dbManager = new DatabaseManager(mockPlugin as any);
+        dbManager = new DatabaseManager(mockPlugin);
 
-        if (!alasql.databases.dbo) {
+        if (!(alasql as unknown as AlaSQLInstance).databases.dbo) {
             alasql('CREATE DATABASE dbo');
         }
         alasql('USE dbo');
@@ -37,12 +40,12 @@ describe('DatabaseManager Extra Coverage', () => {
             alasql('INSERT INTO test_save VALUES (1)');
 
             // Mock loadData to return previous state (empty or existing)
-            mockPlugin.loadData.mockResolvedValue({});
+            vi.mocked(mockPlugin.loadData).mockResolvedValue({});
 
             await dbManager.save();
 
             expect(mockPlugin.saveData).toHaveBeenCalledTimes(2); // Temp + Final
-            const saveDataCall = (mockPlugin.saveData.mock.calls[1] as any[])[0];
+            const saveDataCall = vi.mocked(mockPlugin.saveData).mock.calls[1][0] as any;
             expect(saveDataCall.databases.dbo).toBeDefined();
             expect(saveDataCall.databases.dbo.tables.test_save).toHaveLength(1);
         });
@@ -63,14 +66,14 @@ describe('DatabaseManager Extra Coverage', () => {
                     }
                 }
             };
-            mockPlugin.loadData.mockResolvedValue(mockData);
+            vi.mocked(mockPlugin.loadData).mockResolvedValue(mockData);
 
             await dbManager.load();
 
             expect(alasql.databases.restored_db).toBeDefined();
-            const res = alasql('SELECT * FROM restored_db.users');
+            const res = alasql('SELECT * FROM restored_db.users') as unknown[];
             expect(res).toHaveLength(1);
-            expect(res[0].name).toBe('Test');
+            expect((res[0] as Record<string, unknown>).name).toBe('Test');
             expect(mockPlugin.activeDatabase).toBe('restored_db');
         });
 
@@ -87,7 +90,7 @@ describe('DatabaseManager Extra Coverage', () => {
                     }
                 }
             };
-            mockPlugin.loadData.mockResolvedValue(mockData);
+            vi.mocked(mockPlugin.loadData).mockResolvedValue(mockData);
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
             await dbManager.load();
@@ -101,12 +104,12 @@ describe('DatabaseManager Extra Coverage', () => {
             // If create failed, table won't exist. So data load shouldn't happen.
             expect(consoleSpy).toHaveBeenCalled();
 
-            const tables = alasql('SHOW TABLES FROM corrupted_db') as any[];
+            const tables = alasql('SHOW TABLES FROM corrupted_db') as unknown[];
             // Expect table NOT to exist because CREATE failed and we don't infer schema if explicit schema string was present but failed?
             // Let's verify implementation: if(db.schema) loop tries to create. Catch logs error.
             // THEN data loop: checks if table exists. 
             // So improper schema => table doesn't exist => data skipped. Correct.
-            expect(tables.find((t: any) => t.tableid === 'bad_table')).toBeUndefined();
+            expect(tables.find((t: any) => (t as Record<string, unknown>).tableid === 'bad_table')).toBeUndefined();
 
             consoleSpy.mockRestore();
         });

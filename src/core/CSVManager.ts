@@ -1,7 +1,7 @@
 import { TFile, Notice } from 'obsidian';
 // @ts-ignore
 import alasql from 'alasql';
-import { IMySQLPlugin } from '../types';
+import { IMySQLPlugin, AlaSQLInstance } from '../types';
 import { SQLSanitizer } from '../utils/SQLSanitizer';
 
 export class CSVManager {
@@ -37,16 +37,15 @@ export class CSVManager {
 
             // Batch insert
             const BATCH_SIZE = 5000;
-            const totalBatches = Math.ceil(dataLines.length / BATCH_SIZE);
 
             for (let i = 0; i < dataLines.length; i += BATCH_SIZE) {
                 const batchLines = dataLines.slice(i, i + BATCH_SIZE);
                 // Parse CSV chunk
-                const batchData = alasql(`SELECT * FROM CSV(?, {headers:false})`, [batchLines.join('\n')]) as any[];
+                const batchData = (alasql as unknown as AlaSQLInstance)(`SELECT * FROM CSV(?, {headers:false})`, [batchLines.join('\n')]) as unknown[][];
 
                 // Map array results to objects using headers
-                const mappedData = batchData.map((row: any[]) => {
-                    const obj: any = {};
+                const mappedData = batchData.map((row: unknown[]) => {
+                    const obj: Record<string, unknown> = {};
                     headers.forEach((h, idx) => obj[h] = row[idx]);
                     return obj;
                 });
@@ -60,14 +59,14 @@ export class CSVManager {
             return true;
         } catch (error) {
             console.error("CSV Import Error:", error);
-            new Notice(`Import failed: ${error.message}`);
+            new Notice(`Import failed: ${(error as Error).message}`);
             return false;
         }
     }
 
     async exportTable(tableName: string): Promise<void> {
         try {
-            const data = (await alasql.promise(`SELECT * FROM ${tableName}`)) as any[];
+            const data = await (alasql as unknown as AlaSQLInstance).promise<unknown[]>(`SELECT * FROM ${tableName}`);
             if (!data || data.length === 0) {
                 new Notice("Table is empty");
                 return;
@@ -88,19 +87,19 @@ export class CSVManager {
             new Notice(`Table exported to ${fileName}`);
         } catch (error) {
             console.error("CSV Export Error:", error);
-            new Notice(`Export failed: ${error.message}`);
+            new Notice(`Export failed: ${(error as Error).message}`);
         }
     }
 
-    private jsonToCSV(data: any[]): string {
+    private jsonToCSV(data: unknown[]): string {
         if (data.length === 0) return '';
         const keys = Object.keys(data[0]);
         const header = keys.join(',') + '\n';
         const rows = data.map(row =>
             keys.map(k => {
-                const val = row[k];
+                const val = (row as Record<string, unknown>)[k];
                 if (val === null || val === undefined) return '';
-                const str = String(val);
+                const str = (typeof val === 'object' && val !== null) ? JSON.stringify(val) : String(val as string | number | boolean);
                 // Quote if contains comma, quote or newline
                 if (str.match(/[,"]/)) {
                     return `"${str.replace(/"/g, '""')}"`;

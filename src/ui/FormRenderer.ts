@@ -9,7 +9,7 @@ export interface FormField {
     type: string;
     label: string;
     required: boolean;
-    defaultValue?: any;
+    defaultValue?: unknown;
     options?: string[];
     isPrimaryKey: boolean;
     isAutoIncrement: boolean;
@@ -61,9 +61,10 @@ export class FormRenderer {
             if (field.required) input.setAttr("required", "true");
 
             if (field.defaultValue !== undefined && field.defaultValue !== null) {
-                const cleanDefault = String(field.defaultValue).replace(/^'|'$/g, '');
+                const defaultValue = (field.defaultValue !== null && typeof field.defaultValue === 'object') ? JSON.stringify(field.defaultValue) : String(field.defaultValue as string | number | boolean);
+                const cleanDefault = defaultValue.replace(/^'|'$/g, '');
                 if (input instanceof HTMLInputElement && input.type === 'checkbox') {
-                    (input as HTMLInputElement).checked = cleanDefault === 'true' || cleanDefault === '1';
+                    (input).checked = cleanDefault === 'true' || cleanDefault === '1';
                 } else {
                     input.value = cleanDefault;
                 }
@@ -72,8 +73,7 @@ export class FormRenderer {
             fieldInputs[field.name] = input;
         });
 
-        const statusMsg = formWrapper.createDiv({ cls: "mysql-form-status" });
-        statusMsg.style.display = "none";
+        const statusMsg = formWrapper.createDiv({ cls: "mysql-form-status u-display-none" });
 
         const footer = formWrapper.createDiv({ cls: "mysql-form-footer" });
         const submitBtn = footer.createEl("button", { cls: "mysql-btn mysql-form-submit-btn", type: "button" });
@@ -92,7 +92,7 @@ export class FormRenderer {
 
         clearBtn.onclick = () => {
             form.reset();
-            statusMsg.style.display = "none";
+            statusMsg.addClass("u-display-none");
         };
     }
 
@@ -105,16 +105,15 @@ export class FormRenderer {
         plugin: IMySQLPlugin
     ): Promise<void> {
         btn.disabled = true;
-        const originalText = btn.innerText;
         btn.innerText = t('form.btn_saving');
-        statusMsg.style.display = "none";
+        statusMsg.addClass("u-display-none");
 
         try {
-            if (!SQLSanitizer.validateIdentifier(data.tableName.split('.').pop()!)) {
+            if (!SQLSanitizer.validateIdentifier(data.tableName.split('.').pop() ?? data.tableName)) {
                 throw new Error(t('form.err_invalid_table'));
             }
 
-            const values: Record<string, any> = {};
+            const values: Record<string, unknown> = {};
             for (const [name, input] of Object.entries(inputs)) {
                 if (!SQLSanitizer.validateIdentifier(name)) {
                     throw new Error(t('form.err_invalid_col', { name }));
@@ -152,7 +151,8 @@ export class FormRenderer {
                 });
 
 
-                statusMsg.style.display = "flex";
+                statusMsg.removeClass("u-display-none");
+                statusMsg.addClass("u-display-flex");
                 form.reset();
                 new Notice(t('form.notice_success', { name: data.baseTableName }));
             } else {
@@ -163,23 +163,26 @@ export class FormRenderer {
                 setIcon(iconWrapper, "alert-circle");
 
                 statusMsg.createSpan({ text: t('form.msg_error', { error: result.error || "" }) });
-                statusMsg.style.display = "flex";
+                statusMsg.removeClass("u-display-none");
+                statusMsg.addClass("u-display-flex");
                 new Notice(t('form.notice_error', { error: result.error || "" }));
 
             }
         } catch (e) {
+            const err = e as Error;
             statusMsg.empty();
             statusMsg.className = "mysql-error-inline mysql-msg-compact error";
 
             const iconWrapper = statusMsg.createDiv({ cls: "mysql-error-icon" });
             setIcon(iconWrapper, "alert-circle");
 
-            statusMsg.createSpan({ text: t('form.msg_unexpected', { error: e.message }) });
-            statusMsg.style.display = "flex";
+            statusMsg.createSpan({ text: t('form.msg_unexpected', { error: err.message }) });
+            statusMsg.removeClass("u-display-none");
+            statusMsg.addClass("u-display-flex");
 
         } finally {
             btn.disabled = false;
-            btn.innerHTML = "";
+            btn.empty();
             setIcon(btn, "save");
             btn.createSpan({ text: t('form.btn_save') });
         }

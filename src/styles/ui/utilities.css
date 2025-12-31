@@ -1,0 +1,97 @@
+/* Global Utility Classes */
+
+.u-flex-1 {
+    flex: 1 !important;
+}
+
+.u-cursor-pointer {
+    cursor: pointer !important;
+}
+
+.u-cursor-default {
+    cursor: default !important;
+}
+
+.u-margin-left-auto {
+    margin-left: auto !important;
+}
+
+.u-margin-bottom-md {
+    margin-bottom: 20px !important;
+}
+
+.u-margin-bottom-sm {
+    margin-bottom: 10px !important;
+}
+
+.u-margin-top-md {
+    margin-top: 20px !important;
+}
+
+.u-width-full {
+    width: 100% !important;
+}
+
+.u-opacity-50 {
+    opacity: 0.5 !important;
+}
+
+.u-text-muted {
+    color: var(--text-muted) !important;
+}
+
+.u-no-margin {
+    margin: 0 !important;
+}
+
+.u-display-flex {
+    display: flex !important;
+}
+
+.u-align-center {
+    align-items: center !important;
+}
+
+.u-gap-sm {
+    gap: 8px !important;
+}
+
+.u-gap-md {
+    gap: 12px !important;
+}
+
+.u-display-none {
+    display: none !important;
+}
+
+.u-flex-column {
+    flex-direction: column !important;
+}
+
+.u-justify-center {
+    justify-content: center !important;
+}
+
+.u-text-center {
+    text-align: center !important;
+}
+
+.u-text-small {
+    font-size: 0.75em !important;
+}
+
+.u-text-underline {
+    text-decoration: underline !important;
+}
+
+.u-font-bold {
+    font-weight: bold !important;
+}
+
+.u-margin-top-xs {
+    margin-top: 4px !important;
+}
+
+.u-margin-bottom-none {
+    margin-bottom: 0 !important;
+}

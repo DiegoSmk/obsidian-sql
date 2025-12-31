@@ -9,6 +9,7 @@ export class WorkbenchFooter {
     private dbEl: HTMLElement;
     private rightEl: HTMLElement;
     private app: App;
+    private statusSpan: HTMLElement;
 
     constructor(parent: HTMLElement, app: App) {
         this.app = app;
@@ -18,7 +19,7 @@ export class WorkbenchFooter {
         const left = this.footerEl.createDiv({ cls: "mysql-footer-left" });
         const logo = left.createDiv({ cls: "mysql-footer-logo" });
         setIcon(logo, "circle");
-        left.createSpan({ text: "SQL Notebook", cls: "mysql-app-name" });
+        left.createSpan({ text: t('common.app_name') || "SQL Notebook", cls: "mysql-app-name" });
 
         // Right side container
         this.rightEl = this.footerEl.createDiv({ cls: "mysql-footer-right" });
@@ -42,15 +43,15 @@ export class WorkbenchFooter {
 
         // Status (Ready, Time)
         this.statusEl = this.rightEl.createDiv({ cls: "mysql-footer-status-container" });
+        this.statusSpan = this.statusEl.createSpan({ cls: "mysql-footer-status" });
         this.setStatus(t('footer.status_ready'));
     }
 
-    public setStatus(text: string, isRunning: boolean = false) {
-        this.statusEl.empty();
-        const status = this.statusEl.createSpan({
-            text: text,
-            cls: isRunning ? "mysql-footer-status-running" : "mysql-footer-status"
-        });
+    public setStatus(status: string, spinning: boolean = false) {
+        if (!this.statusSpan) return;
+        this.statusSpan.setText(status);
+        if (spinning) this.statusSpan.addClass('is-spinning');
+        else this.statusSpan.removeClass('is-spinning');
     }
 
     public updateTime(ms: number) {
@@ -59,6 +60,9 @@ export class WorkbenchFooter {
         setIcon(timeWrapper, "timer");
         const timeVal = timeWrapper.createSpan({ cls: "mysql-footer-time-val" });
         timeVal.setText(`${ms}ms`);
+        // Re-create statusSpan if it was emptied? 
+        // Better: don't empty EVERYTHING or re-initialize.
+        this.statusSpan = this.statusEl.createSpan({ cls: "mysql-footer-status" });
     }
 
     public setActiveDatabase(dbName: string) {
@@ -73,6 +77,7 @@ export class WorkbenchFooter {
         const indicator = this.statusEl.createDiv({ cls: "mysql-live-indicator" });
         indicator.createDiv({ cls: "mysql-pulse-dot" });
         indicator.createSpan({ text: t('footer.status_live') });
+        this.statusSpan = this.statusEl.createSpan({ cls: "mysql-footer-status" });
     }
 
     public setError() {

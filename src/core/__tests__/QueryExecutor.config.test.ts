@@ -11,17 +11,19 @@ describe('QueryExecutor Configuration & Logging', () => {
         // Reset AlaSQL safely
         try {
             alasql('DROP DATABASE IF EXISTS test_config');
-        } catch (e) { }
+        } catch {
+            // Ignore if database doesn't exist
+        }
         alasql('CREATE DATABASE test_config');
         alasql('USE test_config');
         alasql('CREATE TABLE IF NOT EXISTS test (a INT)');
 
         // Spy on console
         consoleSpy = {
-            log: vi.spyOn(console, 'log').mockImplementation(() => { }),
+            debug: vi.spyOn(console, 'debug').mockImplementation(() => { }),
             warn: vi.spyOn(console, 'warn').mockImplementation(() => { }),
             error: vi.spyOn(console, 'error').mockImplementation(() => { })
-        };
+        } as { debug: any, warn: any, error: any };
     });
 
     afterEach(() => {
@@ -33,8 +35,8 @@ describe('QueryExecutor Configuration & Logging', () => {
 
         await QueryExecutor.execute('SELECT * FROM test', [], { activeDatabase: 'test_config' });
 
-        // Logger.info calls console.log
-        expect(consoleSpy.log).not.toHaveBeenCalled();
+        // Logger.info calls console.debug
+        expect(consoleSpy.debug).not.toHaveBeenCalled();
     });
 
     it('should log INFO messages when Logger is enabled (Debug On)', async () => {
@@ -42,9 +44,9 @@ describe('QueryExecutor Configuration & Logging', () => {
 
         await QueryExecutor.execute('SELECT * FROM test', [], { activeDatabase: 'test_config' });
 
-        expect(consoleSpy.log).toHaveBeenCalledWith(
+        expect(consoleSpy.debug).toHaveBeenCalledWith(
             expect.stringContaining('[MySQL Plugin] Query executed'),
-            expect.objectContaining({ executionTime: expect.any(Number) })
+            expect.objectContaining({ executionTime: expect.any(Number) as number })
         );
     });
 

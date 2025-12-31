@@ -1,4 +1,4 @@
-import { App, Modal, setIcon, ButtonComponent } from 'obsidian';
+import { App, Modal, setIcon, ButtonComponent, Setting } from 'obsidian';
 
 export class ConfirmationModal extends Modal {
     private onSubmit: (result: boolean) => void;
@@ -33,7 +33,7 @@ export class ConfirmationModal extends Modal {
         const header = contentEl.createDiv({ cls: "mysql-modal-header" });
         const iconContainer = header.createDiv({ cls: "mysql-modal-icon" });
         setIcon(iconContainer, "alert-triangle");
-        header.createEl("h2", { text: this.titleText, cls: "mysql-modal-title" });
+        new Setting(header).setName(this.titleText).setHeading();
 
         // Body
         contentEl.createEl("p", { text: this.message, cls: "mysql-modal-body" });

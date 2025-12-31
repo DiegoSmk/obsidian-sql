@@ -33,41 +33,23 @@ export class MySQLSettingTab extends PluginSettingTab {
         const themeColor = this.plugin.settings.themeColor || '#9d7cd8';
         const color = this.plugin.settings.useObsidianAccent ? 'var(--interactive-accent)' : themeColor;
 
-        containerEl.style.setProperty('--mysql-accent', color);
-        containerEl.style.setProperty('--mysql-accent-purple', color);
+        (containerEl as any).style.setProperty('--mysql-accent', color);
+        (containerEl as any).style.setProperty('--mysql-accent-purple', color);
 
+        containerEl.addClass('u-padding-top-0');
         // --- Header (Title + Import/Create) ---
         const header = containerEl.createDiv({ cls: 'mysql-settings-header' });
 
         const titleGroup = header.createDiv({ cls: 'mysql-settings-title-group' });
-        titleGroup.style.display = 'flex';
-        titleGroup.style.alignItems = 'center';
-        titleGroup.style.gap = '10px';
 
         // Logo
         const logo = titleGroup.createDiv({ cls: 'mysql-logo' });
-        // New SVG with currentColor applied
-        logo.innerHTML = `<svg width="40" height="40" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M128 136C163.346 136 192 127.046 192 116C192 104.954 163.346 96 128 96C92.6538 96 64 104.954 64 116C64 127.046 92.6538 136 128 136Z" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M64 116V188C64 199 93 208 128 208C163 208 192 199 192 188V112" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M64 152C64 163 93 172 128 172C163 172 192 163 192 152" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M64 188C64 199 93 208 128 208C163 208 192 199 192 188" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-<mask id="mask0_101_3" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="-5" y="-5" width="266" height="266">
-<path d="M256 0H0V256H256V0Z" fill="white" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-</mask>
-<g mask="url(#mask0_101_3)">
-<path d="M128 76C163.346 76 192 67.0457 192 56C192 44.9543 163.346 36 128 36C92.6538 36 64 44.9543 64 56C64 67.0457 92.6538 76 128 76Z" fill="currentColor"/>
-<path d="M64 56V92C64 103 93 112 128 112C163 112 192 103 192 92V56" fill="currentColor"/>
-<path d="M128 112C163.346 112 192 103.046 192 92C192 80.9543 163.346 72 128 72C92.6538 72 64 80.9543 64 92C64 103.046 92.6538 112 128 112Z" fill="currentColor"/>
-<path d="M135 91.5C135 77.5 135 63.5 135 59.5C135 53.5 141 53.5 145 59.5C151 67.5 157 79.5 165 85.5C171 91.5 177 91.5 177 85.5C177 77.5 177 65.5 177 59.5" stroke="var(--background-primary)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-</g>
-</svg>`;
-        logo.style.color = 'var(--mysql-accent, var(--interactive-accent))';
+        this.renderLogo(logo, 40);
 
         // Title & Welcome
         const titleText = titleGroup.createDiv({ cls: 'mysql-title-text' });
-        titleText.createEl('h2', { text: t('settings.title'), attr: { style: 'margin: 0; line-height: 1.2;' } });
-        titleText.createEl('span', { text: t('settings.subtitle'), attr: { style: 'font-size: 13px; color: var(--text-muted);' } });
+        new Setting(titleText).setName("").setHeading();
+        titleText.createEl('span', { text: t('settings.subtitle') });
 
         // Welcome Section (Full width below header or integrated?)
         // User asked for a "Welcome Section" in settings screen.
@@ -81,11 +63,11 @@ export class MySQLSettingTab extends PluginSettingTab {
             type: 'file',
             attr: { accept: '.sql' }
         });
-        importInput.style.display = 'none';
-        importInput.onchange = async (e: any) => {
-            const file = e.target.files[0];
+        importInput.addClass('u-display-none');
+        importInput.onchange = (e: Event) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
             if (file) {
-                await this.importDatabaseSQL(file);
+                void this.importDatabaseSQL(file);
                 importInput.value = '';
             }
         };
@@ -115,14 +97,9 @@ export class MySQLSettingTab extends PluginSettingTab {
 
         // --- Welcome Section ---
         const welcomeSection = containerEl.createDiv({ cls: 'mysql-welcome-section' });
-        welcomeSection.style.marginBottom = '20px';
-        welcomeSection.style.padding = '15px';
-        welcomeSection.style.background = 'color-mix(in srgb, var(--mysql-accent), transparent 90%)';
-        welcomeSection.style.borderRadius = '8px';
-        welcomeSection.style.border = '1px solid color-mix(in srgb, var(--mysql-accent), transparent 70%)';
 
-        welcomeSection.createEl('h3', { text: t('settings.welcome_title'), attr: { style: 'margin: 0 0 5px 0; color: var(--mysql-accent);' } });
-        welcomeSection.createEl('p', { text: t('settings.welcome_desc'), attr: { style: 'margin: 0; font-size: 14px; color: var(--text-normal);' } });
+        new Setting(welcomeSection).setName("").setHeading();
+        welcomeSection.createEl('p', { text: t('settings.welcome_desc') });
 
 
         // --- Search Section ---
@@ -130,24 +107,14 @@ export class MySQLSettingTab extends PluginSettingTab {
 
         // Wrapper for icon + input styling
         const searchWrapper = searchSection.createDiv({ cls: 'mysql-search-wrapper' });
-        searchWrapper.style.display = 'flex';
-        searchWrapper.style.alignItems = 'center';
-        searchWrapper.style.background = 'var(--background-secondary)';
-        searchWrapper.style.border = '1px solid var(--background-modifier-border)';
-        searchWrapper.style.borderRadius = '6px';
-        searchWrapper.style.padding = '0 8px';
 
         const searchIcon = searchWrapper.createDiv({ cls: 'mysql-search-icon' });
         setIcon(searchIcon, 'search');
-        searchIcon.style.opacity = '0.5';
-        searchIcon.style.display = 'flex';
-        searchIcon.style.marginRight = '8px';
 
         const searchInput = searchWrapper.createEl('input', {
             type: 'text',
             cls: 'mysql-search-box',
-            placeholder: t('settings.search_placeholder'),
-            attr: { style: 'border: none; box-shadow: none; background: transparent; width: 100%; padding: 8px; outline: none;' }
+            placeholder: t('settings.search_placeholder')
         });
 
         // --- Grid Container ---
@@ -164,73 +131,47 @@ export class MySQLSettingTab extends PluginSettingTab {
 
         // --- Info Section ---
         const infoSection = containerEl.createDiv({ cls: 'mysql-info-board' });
-        infoSection.style.background = 'var(--background-secondary)';
-        infoSection.style.padding = '15px';
-        infoSection.style.borderRadius = '6px';
-        infoSection.style.marginTop = '20px';
-        infoSection.style.border = '1px solid var(--background-modifier-border)';
 
-        infoSection.createEl('h4', { text: t('settings.info_title'), attr: { style: 'margin-top: 0; margin-bottom: 10px; color: var(--mysql-accent, var(--interactive-accent));' } });
-        const list = infoSection.createEl('ul', { attr: { style: 'margin: 0; padding-left: 20px; color: var(--text-muted); font-size: 13px;' } });
+        new Setting(infoSection).setName("").setHeading();
+        const list = infoSection.createEl('ul');
 
+        const liText1 = t('settings.info_li_1');
         const li1 = list.createEl('li');
-        li1.innerHTML = t('settings.info_li_1');
+        this.renderFormattedText(li1, liText1);
 
+        const liText2 = t('settings.info_li_2');
         const li2 = list.createEl('li');
-        li2.innerHTML = t('settings.info_li_2');
+        this.renderFormattedText(li2, liText2);
 
+        const liText3 = t('settings.info_li_3');
         const li3 = list.createEl('li');
-        li3.innerHTML = t('settings.info_li_3');
+        this.renderFormattedText(li3, liText3);
 
 
-        containerEl.createEl('hr', { attr: { style: 'margin: 40px 0; border: none; border-top: 1px solid var(--background-modifier-border);' } });
+        containerEl.createEl('hr', { cls: 'mysql-settings-divider' });
+        containerEl.addClass('u-padding-top-0');
 
         this.createSectionHeader(containerEl, t('settings.section_general'), 'settings');
         this.renderGeneralSettings(containerEl);
 
         // --- Footer ---
         const footer = containerEl.createDiv({ cls: 'mysql-settings-footer' });
-        footer.style.display = 'flex';
-        footer.style.flexDirection = 'column';
-        footer.style.alignItems = 'center';
-        footer.style.justifyContent = 'center';
-        footer.style.marginTop = '40px';
-        footer.style.paddingTop = '20px';
-        footer.style.borderTop = '1px solid var(--background-modifier-border)';
-        footer.style.opacity = '0.7';
 
         const footerLogo = footer.createDiv({ cls: 'mysql-logo-footer' });
-        footerLogo.innerHTML = `<svg width="40" height="40" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M128 136C163.346 136 192 127.046 192 116C192 104.954 163.346 96 128 96C92.6538 96 64 104.954 64 116C64 127.046 92.6538 136 128 136Z" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M64 116V188C64 199 93 208 128 208C163 208 192 199 192 188V112" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M64 152C64 163 93 172 128 172C163 172 192 163 192 152" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M64 188C64 199 93 208 128 208C163 208 192 199 192 188" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-<mask id="mask0_101_3_footer" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="-5" y="-5" width="266" height="266">
-<path d="M256 0H0V256H256V0Z" fill="white" stroke="currentColor" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-</mask>
-<g mask="url(#mask0_101_3_footer)">
-<path d="M128 76C163.346 76 192 67.0457 192 56C192 44.9543 163.346 36 128 36C92.6538 36 64 44.9543 64 56C64 67.0457 92.6538 76 128 76Z" fill="currentColor"/>
-<path d="M64 56V92C64 103 93 112 128 112C163 112 192 103 192 92V56" fill="currentColor"/>
-<path d="M128 112C163.346 112 192 103.046 192 92C192 80.9543 163.346 72 128 72C92.6538 72 64 80.9543 64 92C64 103.046 92.6538 112 128 112Z" fill="currentColor"/>
-<path d="M135 91.5C135 77.5 135 63.5 135 59.5C135 53.5 141 53.5 145 59.5C151 67.5 157 79.5 165 85.5C171 91.5 177 91.5 177 85.5C177 77.5 177 65.5 177 59.5" stroke="var(--background-primary)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-</g>
-</svg>`;
-        footerLogo.style.color = 'var(--mysql-accent, var(--interactive-accent))';
-        footerLogo.style.marginBottom = '10px';
-
-        footer.createEl('h3', { text: t('settings.title'), attr: { style: 'margin: 0; font-size: 16px; color: var(--text-normal);' } });
-        footer.createEl('span', { text: t('settings.footer_by'), attr: { style: 'font-size: 12px; color: var(--text-muted);' } });
+        this.renderLogo(footerLogo, 40);
+        new Setting(footer).setName("").setHeading();
+        footer.createEl('span', { text: t('settings.footer_by'), cls: 'mysql-footer-by' });
     }
 
     private renderDatabaseGrid(container: HTMLElement, searchTerm: string, page: number = 1): void {
         container.empty();
+        container.addClass('u-display-block');
 
         // Remove grid class from parent if it exists, to allow stacking of grid + pagination
         container.removeClass('mysql-databases-grid');
 
         // Get all databases
-        // @ts-ignore
-        const allDbs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
+        const allDbs = Object.keys((alasql as { databases: Record<string, unknown> }).databases).filter(d => d !== 'alasql');
         const filteredDbs = allDbs.filter(d => d.toLowerCase().includes(searchTerm.toLowerCase()));
 
         // Start with Active DB at top if it matches search
@@ -268,24 +209,12 @@ export class MySQLSettingTab extends PluginSettingTab {
         // Pagination Controls
         if (totalPages > 1) {
             const paginationContainer = container.createDiv({ cls: 'mysql-pagination' });
-            paginationContainer.style.display = 'flex';
-            paginationContainer.style.justifyContent = 'center';
-            paginationContainer.style.gap = '8px';
-            paginationContainer.style.marginTop = '20px';
 
             for (let i = 1; i <= totalPages; i++) {
                 const btn = paginationContainer.createEl('button', {
                     text: String(i),
-                    cls: 'mysql-page-btn'
+                    cls: `mysql-page-btn ${i === page ? 'is-active' : ''}`
                 });
-
-                // Styling
-                btn.style.padding = '4px 10px';
-                btn.style.borderRadius = '4px';
-                btn.style.border = '1px solid var(--background-modifier-border)';
-                btn.style.background = i === page ? 'var(--mysql-accent, var(--interactive-accent))' : 'var(--background-secondary)';
-                btn.style.color = i === page ? 'var(--text-on-accent)' : 'var(--text-normal)';
-                btn.style.cursor = 'pointer';
 
                 if (i !== page) {
                     btn.onclick = () => {
@@ -293,7 +222,6 @@ export class MySQLSettingTab extends PluginSettingTab {
                     };
                 } else {
                     btn.disabled = true;
-                    btn.style.opacity = '1';
                 }
             }
         }
@@ -302,7 +230,7 @@ export class MySQLSettingTab extends PluginSettingTab {
     private renderDatabaseCard(container: HTMLElement, dbName: string): void {
         const isActive = dbName === this.plugin.activeDatabase;
         const isSystem = dbName === 'dbo';
-        const dbManager = (this.plugin as any).dbManager;
+        const dbManager = this.plugin.dbManager;
         const stats = dbManager.getDatabaseStats(dbName);
 
         const card = container.createDiv({ cls: `mysql-db-card ${isActive ? 'active' : ''}` });
@@ -391,9 +319,9 @@ export class MySQLSettingTab extends PluginSettingTab {
             .setName(t('settings.lang_name'))
             .setDesc(t('settings.lang_desc'))
             .addDropdown(dropdown => dropdown
-                .addOption('auto', 'Automatic (Obsidian Preference)')
+                .addOption('auto', 'Automatic (Obsidian preference)')
                 .addOption('en', 'English')
-                .addOption('pt-BR', 'Português (Brasil)')
+                .addOption('pt-BR', 'Português (brasil)')
                 .addOption('es', 'Español')
                 .addOption('de', 'Deutsch')
                 .addOption('fr', 'Français')
@@ -433,33 +361,21 @@ export class MySQLSettingTab extends PluginSettingTab {
         const colorSetting = new Setting(containerEl)
             .setName(t('settings.theme_accent'))
             .setDesc(t('settings.theme_accent_desc'))
-            .addText(text => text.inputEl.style.display = 'none');
+            .addText(text => text.inputEl.addClass('u-display-none'));
 
         if (this.plugin.settings.useObsidianAccent) {
-            colorSetting.settingEl.style.opacity = '0.5';
-            colorSetting.settingEl.style.pointerEvents = 'none';
+            colorSetting.settingEl.addClass('is-disabled-explicit');
             colorSetting.setDesc(t('settings.accent_obsidian_desc'));
         }
 
         colorSetting.then((setting) => {
             const colorContainer = setting.controlEl.createDiv({ cls: 'mysql-color-picker' });
-            colorContainer.style.display = 'flex';
-            colorContainer.style.gap = '10px';
             colors.forEach(c => {
-                const circle = colorContainer.createDiv({ cls: 'mysql-color-circle' });
-                circle.style.backgroundColor = c.value;
-                circle.style.width = '24px';
-                circle.style.height = '24px';
-                circle.style.borderRadius = '50%';
-                circle.style.cursor = 'pointer';
-                circle.style.transition = 'all 0.2s';
-
-                if (this.plugin.settings.themeColor === c.value) {
-                    circle.style.border = '2px solid var(--text-normal)';
-                    circle.style.transform = 'scale(1.1)';
-                } else {
-                    circle.style.border = '2px solid transparent';
-                }
+                const isSelected = this.plugin.settings.themeColor === c.value;
+                const circle = colorContainer.createDiv({
+                    cls: `mysql-color-circle ${isSelected ? 'is-selected' : ''}`
+                });
+                (circle as any).style.setProperty('background-color', c.value);
 
                 circle.onClickEvent(async () => {
                     this.plugin.settings.themeColor = c.value;
@@ -497,7 +413,7 @@ export class MySQLSettingTab extends PluginSettingTab {
             .setName(t('settings.export_folder'))
             .setDesc(t('settings.export_folder_desc'))
             .addText(text => text
-                .setPlaceholder('sql-exports')
+                .setPlaceholder('Sql-exports')
                 .setValue(this.plugin.settings.exportFolderName)
                 .onChange(async (value) => {
                     this.plugin.settings.exportFolderName = value || 'sql-exports';
@@ -569,7 +485,7 @@ export class MySQLSettingTab extends PluginSettingTab {
 
     private async switchDatabase(dbName: string) {
         // Reuse logic from SwitcherModal
-        const dbManager = (this.plugin as any).dbManager;
+        const dbManager = this.plugin.dbManager;
         // QueryExecutor manages context, but for "Active" UI state we update plugin prop
         // We do NOT call alasql USE explicitly if we want to follow new pattern, 
         // OR we do if we want global sync. 
@@ -586,17 +502,16 @@ export class MySQLSettingTab extends PluginSettingTab {
     private createSectionHeader(container: HTMLElement, text: string, icon: string) {
         const header = container.createDiv({ cls: 'mysql-settings-section-header' });
         setIcon(header.createDiv({ cls: 'mysql-section-icon' }), icon);
-        header.createEl('h3', { text });
+        new Setting(header).setName("").setHeading();
     }
 
     private renderActiveDatabaseCard(containerEl: HTMLElement): void {
         const activeDB = this.plugin.activeDatabase;
-        const dbManager = (this.plugin as any).dbManager;
+        const dbManager = this.plugin.dbManager;
         const stats = dbManager.getDatabaseStats(activeDB);
 
         // Calculate total databases (excluding alasql system DB)
-        // @ts-ignore
-        const totalDBs = Object.keys(alasql.databases).filter(d => d !== 'alasql').length;
+        const totalDBs = Object.keys((alasql as { databases: Record<string, unknown> }).databases).filter(d => d !== 'alasql').length;
 
         const card = containerEl.createDiv({ cls: 'mysql-db-card' });
 
@@ -623,7 +538,7 @@ export class MySQLSettingTab extends PluginSettingTab {
         this.addStat(statsGrid, "Rows", stats.rows.toLocaleString(), "list");
         this.addStat(statsGrid, "Size", this.formatBytes(stats.sizeBytes), "hard-drive");
 
-        const lastMod = containerEl.createDiv({
+        containerEl.createDiv({
             text: `Last updated: ${this.timeAgo(stats.lastUpdated)}`,
             cls: 'mysql-db-card-last-updated'
         });
@@ -672,9 +587,9 @@ export class MySQLSettingTab extends PluginSettingTab {
             type: 'file',
             attr: { accept: '.sql' }
         });
-        importInput.style.display = 'none';
-        importInput.onchange = async (e: any) => {
-            const file = e.target.files[0];
+        importInput.addClass('u-display-none');
+        importInput.onchange = async (e: Event) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
             if (file) {
                 await this.importDatabaseSQL(file);
                 // Reset input
@@ -691,7 +606,7 @@ export class MySQLSettingTab extends PluginSettingTab {
             });
 
         // Secondary / Destructive
-        const separator = actions.createDiv({ cls: 'mysql-action-separator' }); // CSS to push items to right if flex-grow
+        actions.createDiv({ cls: 'mysql-action-separator' });
 
         new ButtonComponent(actions)
             .setButtonText("Clear")
@@ -755,12 +670,14 @@ export class MySQLSettingTab extends PluginSettingTab {
             this.app,
             t('modals.confirm_clear_title'),
             t('modals.confirm_clear_msg', { dbName: activeDB }),
-            async (confirmed) => {
-                if (confirmed) {
-                    await (this.plugin as any).dbManager.clearDatabase(activeDB);
-                    new Notice(`${t('modals.confirm_clear_title')}: ${activeDB}`);
-                    this.display();
-                }
+            (confirmed) => {
+                void (async () => {
+                    if (confirmed) {
+                        await this.plugin.dbManager.clearDatabase(activeDB);
+                        new Notice(`${t('modals.confirm_clear_title')}: ${activeDB}`);
+                        this.display();
+                    }
+                })();
             },
             t('modals.btn_clear'),
             t('modals.btn_cancel')
@@ -772,17 +689,19 @@ export class MySQLSettingTab extends PluginSettingTab {
             this.app,
             t('modals.confirm_delete_title'),
             t('modals.confirm_delete_msg', { dbName }),
-            async (confirmed) => {
-                if (confirmed) {
-                    try {
-                        const dbManager = (this.plugin as any).dbManager;
-                        await dbManager.deleteDatabase(dbName);
-                        new Notice(`${t('modals.confirm_delete_title')}: ${dbName}`);
-                        this.display();
-                    } catch (e) {
-                        new Notice(t('common.error', { error: e.message }));
+            (confirmed) => {
+                void (async () => {
+                    if (confirmed) {
+                        try {
+                            const dbManager = this.plugin.dbManager;
+                            await dbManager.deleteDatabase(dbName);
+                            new Notice(`${t('modals.confirm_delete_title')}: ${dbName}`);
+                            this.display();
+                        } catch (e) {
+                            new Notice(t('common.error', { error: (e as Error).message }));
+                        }
                     }
-                }
+                })();
             },
             t('modals.btn_delete'),
             t('modals.btn_cancel')
@@ -791,7 +710,7 @@ export class MySQLSettingTab extends PluginSettingTab {
 
     private async exportDatabaseSQL(dbName: string): Promise<void> {
         try {
-            const dbManager = (this.plugin as any).dbManager;
+            const dbManager = this.plugin.dbManager;
             const sql = await dbManager.exportDatabase(dbName);
 
             const exportFolder = this.plugin.settings.exportFolderName || 'sql-exports';
@@ -803,27 +722,138 @@ export class MySQLSettingTab extends PluginSettingTab {
             await this.plugin.app.vault.create(fileName, sql);
             new Notice(t('common.notice_export_success', { name: fileName }));
         } catch (e) {
-            new Notice(t('common.error', { error: e.message }));
-            console.error(e);
+            new Notice(t('common.error', { error: (e as Error).message }));
+            console.debug(e);
         }
+    }
+
+    private renderLogo(container: HTMLElement, size: number): void {
+        const svg = container.createSvg('svg', {
+            attr: {
+                width: size.toString(),
+                height: size.toString(),
+                viewBox: '0 0 256 256',
+                fill: 'none'
+            }
+        });
+
+        // Top cylinder (active/system)
+        svg.createSvg('path', {
+            attr: {
+                d: 'M128 136C163.346 136 192 127.046 192 116C192 104.954 163.346 96 128 96C92.6538 96 64 104.954 64 116C64 127.046 92.6538 136 128 136Z',
+                stroke: 'currentColor',
+                'stroke-width': '10',
+                'stroke-linecap': 'round',
+                'stroke-linejoin': 'round'
+            }
+        });
+
+        svg.createSvg('path', {
+            attr: {
+                d: 'M64 116V188C64 199 93 208 128 208C163 208 192 199 192 188V112',
+                stroke: 'currentColor',
+                'stroke-width': '10',
+                'stroke-linecap': 'round',
+                'stroke-linejoin': 'round'
+            }
+        });
+
+        svg.createSvg('path', {
+            attr: {
+                d: 'M64 152C64 163 93 172 128 172C163 172 192 163 192 152',
+                stroke: 'currentColor',
+                'stroke-width': '10',
+                'stroke-linecap': 'round',
+                'stroke-linejoin': 'round'
+            }
+        });
+
+        const maskId = `mask_${Math.random().toString(36).slice(2, 11)}`;
+        const mask = svg.createSvg('mask', {
+            attr: {
+                id: maskId,
+                maskUnits: 'userSpaceOnUse',
+                x: '-5',
+                y: '-5',
+                width: '266',
+                height: '266'
+            }
+        });
+
+        mask.createSvg('path', {
+            attr: {
+                d: 'M256 0H0V256H256V0Z',
+                fill: 'white',
+                stroke: 'currentColor',
+                'stroke-width': '10'
+            }
+        });
+
+        const g = svg.createSvg('g', {
+            attr: { mask: `url(#${maskId})` }
+        });
+
+        g.createSvg('path', {
+            attr: {
+                d: 'M128 76C163.346 76 192 67.0457 192 56C192 44.9543 163.346 36 128 36C92.6538 36 64 44.9543 64 56C64 67.0457 92.6538 76 128 76Z',
+                fill: 'currentColor'
+            }
+        });
+
+        g.createSvg('path', {
+            attr: {
+                d: 'M64 56V92C64 103 93 112 128 112C163 112 192 103 192 92V56',
+                fill: 'currentColor'
+            }
+        });
+
+        g.createSvg('path', {
+            attr: {
+                d: 'M128 112C163.346 112 192 103.046 192 92C192 80.9543 163.346 72 128 72C92.6538 72 64 80.9543 64 92C64 103.046 92.6538 112 128 112Z',
+                fill: 'currentColor'
+            }
+        });
+
+        g.createSvg('path', {
+            attr: {
+                d: 'M135 91.5C135 77.5 135 63.5 135 59.5C135 53.5 141 53.5 145 59.5C151 67.5 157 79.5 165 85.5C171 91.5 177 91.5 177 85.5C177 77.5 177 65.5 177 59.5',
+                stroke: 'var(--background-primary)',
+                'stroke-width': '10',
+                'stroke-linecap': 'round',
+                'stroke-linejoin': 'round'
+            }
+        });
+    }
+
+    private renderFormattedText(container: HTMLElement, text: string): void {
+        const parts = text.split(/(<b>.*?<\/b>)/g);
+        parts.forEach(part => {
+            if (part.startsWith('<b>') && part.endsWith('</b>')) {
+                container.createEl('b', { text: part.substring(3, part.length - 4) });
+            } else {
+                container.appendText(part);
+            }
+        });
     }
 
     private async importDatabaseSQL(file: File): Promise<void> {
         const reader = new FileReader();
-        reader.onload = async (e) => {
-            const sql = e.target?.result;
-            if (typeof sql === 'string') {
-                try {
-                    new Notice(t('common.notice_import_loading'));
-                    const dbManager = (this.plugin as any).dbManager;
-                    await dbManager.importDatabase(sql);
-                    new Notice(t('common.notice_import_success'));
-                    this.display();
-                } catch (err) {
-                    new Notice(t('common.error', { error: err.message }));
-                    console.error(err);
+        reader.onload = (e: ProgressEvent<FileReader>) => {
+            void (async () => {
+                const sql = e.target?.result;
+                if (typeof sql === 'string') {
+                    try {
+                        new Notice(t('common.notice_import_loading'));
+                        const dbManager = this.plugin.dbManager;
+                        await dbManager.importDatabase(sql);
+                        new Notice(t('common.notice_import_success'));
+                        this.display();
+                    } catch (err) {
+                        new Notice(t('common.error', { error: (err as Error).message }));
+                        console.error(err);
+                    }
                 }
-            }
+            })();
         };
         reader.readAsText(file);
     }

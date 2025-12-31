@@ -24,8 +24,13 @@ export interface AlaSQLColumn {
 }
 
 export interface AlaSQLTable {
-    data: any[];
+    data: unknown[];
     columns?: AlaSQLColumn[];
+}
+
+export interface AlaSQLDatabase {
+    tables: Record<string, AlaSQLTable>;
+    lastUpdated?: number;
 }
 
 export interface DatabaseSnapshot {
@@ -36,7 +41,7 @@ export interface DatabaseSnapshot {
 }
 
 export interface DatabaseContent {
-    tables: Record<string, any[]>;
+    tables: Record<string, unknown[]>;
     schema: Record<string, string>;
     lastUpdated?: number;
 }
@@ -48,11 +53,11 @@ export interface DatabaseStats {
     lastUpdated: number;
 }
 
-export type Row = Record<string, any>;
+export type Row = Record<string, unknown>;
 
 export interface ResultSet {
     type: 'table' | 'scalar' | 'message' | 'error' | 'form';
-    data: Row[] | any;
+    data: unknown;
     columns?: string[];
     message?: string;
     rowCount?: number;
@@ -67,10 +72,48 @@ export interface QueryResult {
     activeDatabase?: string;
 }
 
+export interface IDatabaseManager {
+    getDatabaseStats(dbName: string): DatabaseStats | null;
+    save(): Promise<void>;
+    deleteDatabase(dbName: string): Promise<void>;
+    renameDatabase(oldName: string, newName: string): Promise<void>;
+    createDatabase(dbName: string): Promise<void>;
+    duplicateDatabase(dbName: string, newName: string): Promise<void>;
+    clearDatabase(dbName: string): Promise<void>;
+    exportDatabase(dbName: string): Promise<string>;
+    importDatabase(sql: string): Promise<void>;
+    load(): Promise<void>;
+    reset(): Promise<void>;
+}
+
+export interface IQueryExecutor {
+    execute(
+        query: string,
+        params?: unknown[],
+        options?: {
+            safeMode?: boolean;
+            signal?: AbortSignal;
+            activeDatabase?: string;
+            originId?: string;
+            isLive?: boolean;
+        }
+    ): Promise<QueryResult>;
+}
+
+export interface AlaSQLInstance {
+    (sql: string, params?: unknown): unknown;
+    promise: <T = unknown>(sql: string, params?: unknown) => Promise<T>;
+    databases: Record<string, AlaSQLDatabase>;
+    useid: string;
+    parse: (sql: string) => unknown;
+}
+
 import { Plugin } from 'obsidian';
 
 export interface IMySQLPlugin extends Plugin {
     settings: MySQLSettings;
     activeDatabase: string;
+    dbManager: IDatabaseManager;
+    queryExecutor: IQueryExecutor;
     saveSettings(): Promise<void>;
 }

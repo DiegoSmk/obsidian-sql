@@ -1,5 +1,5 @@
-import { App, Modal, ButtonComponent, TextComponent, Notice, setIcon } from 'obsidian';
-import { IMySQLPlugin } from '../types';
+import { App, Modal, ButtonComponent, TextComponent, Notice, setIcon, Setting } from 'obsidian';
+import { IMySQLPlugin, QueryResult } from '../types';
 import { ConfirmationModal } from './ConfirmationModal';
 import { QueryExecutor } from '../core/QueryExecutor';
 import { t } from '../utils/i18n';
@@ -15,9 +15,9 @@ export class DatabaseSwitcherModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('mysql-switcher-modal');
-        contentEl.createEl('h2', { text: t('modals.switch_title') });
+        new Setting(contentEl).setName(t('modals.switch_title')).setHeading();
 
-        const dbs = Object.keys(alasql.databases).filter(db => db !== 'alasql');
+        const dbs = Object.keys((alasql as { databases: Record<string, unknown> }).databases).filter(db => db !== 'alasql');
         const list = contentEl.createDiv({ cls: 'mysql-db-list' });
 
         if (dbs.length === 0) {
@@ -26,17 +26,16 @@ export class DatabaseSwitcherModal extends Modal {
         }
 
         dbs.forEach(dbName => {
-            const dbManager = (this.plugin as any).dbManager;
-            const stats = dbManager.getDatabaseStats(dbName);
+            const stats = this.plugin.dbManager.getDatabaseStats(dbName) || { tables: 0, rows: 0, sizeBytes: 0, lastUpdated: 0 };
             const isActive = dbName === this.plugin.activeDatabase;
             const isProtected = isActive || dbName === 'dbo';
 
             const item = list.createDiv({ cls: `mysql-db-list-item ${isActive ? 'is-active' : ''}` });
 
             // Info Area (Click to Switch)
-            const infoArea = item.createDiv({ cls: 'mysql-db-list-content' });
-            infoArea.style.flex = '1';
-            infoArea.style.cursor = isActive ? 'default' : 'pointer';
+            const infoArea = item.createDiv({
+                cls: `mysql-db-list-content u-flex-1 ${isActive ? 'u-cursor-default' : 'u-cursor-pointer'}`
+            });
 
             const info = infoArea.createDiv({ cls: 'mysql-db-list-info' });
             info.createDiv({ text: dbName, cls: 'mysql-db-list-name' });
@@ -46,34 +45,30 @@ export class DatabaseSwitcherModal extends Modal {
             });
 
             if (isActive) {
-                const activeBadge = item.createDiv({ text: t('modals.badge_ativo'), cls: 'mysql-db-list-badge' });
-                activeBadge.style.marginLeft = 'auto'; // Right align
+                const activeBadge = item.createDiv({
+                    text: t('modals.badge_ativo'),
+                    cls: 'mysql-db-list-badge u-margin-left-auto'
+                });
                 activeBadge.setAttribute('aria-label', t('modals.tip_protected_db'));
             } else {
-                // Not active, is it protected?
                 if (isProtected) {
-                    // Check if it's dbo
                     if (dbName === 'dbo') {
-                        const dboBadge = item.createDiv({ cls: 'mysql-db-list-actions' });
-                        dboBadge.style.marginLeft = 'auto';
-                        const lockIcon = dboBadge.createDiv({ cls: 'mysql-table-icon' });
+                        const dboBadge = item.createDiv({ cls: 'mysql-db-list-actions u-margin-left-auto' });
+                        const lockIcon = dboBadge.createDiv({ cls: 'mysql-table-icon u-opacity-50' });
                         setIcon(lockIcon, 'lock');
                         lockIcon.setAttribute('aria-label', t('modals.tip_system_db'));
-                        lockIcon.style.opacity = '0.5';
                     }
                 }
 
                 // Always allow switching if not active!
-                infoArea.onclick = async () => {
-                    this.switchDatabase(dbName);
+                infoArea.onclick = () => {
+                    void this.switchDatabase(dbName);
                 };
             }
 
             // Actions Area (Only for non-protected items)
             if (!isProtected) {
-                const actions = item.createDiv({ cls: 'mysql-db-list-actions' });
-                // If not active, ensure actions are pushed to right
-                actions.style.marginLeft = 'auto';
+                const actions = item.createDiv({ cls: 'mysql-db-list-actions u-margin-left-auto' });
 
                 const deleteBtn = actions.createEl('button', {
                     cls: 'mysql-db-list-delete-btn',
@@ -90,10 +85,9 @@ export class DatabaseSwitcherModal extends Modal {
     }
 
     private async switchDatabase(dbName: string) {
-        const dbManager = (this.plugin as any).dbManager;
-        await alasql.promise(`USE ${dbName}`);
+        await (alasql as { promise: (s: string) => Promise<unknown> }).promise(`USE ${dbName}`);
         this.plugin.activeDatabase = dbName;
-        await dbManager.save();
+        await this.plugin.dbManager.save();
         new Notice(t('modals.notice_switch_success', { name: dbName }));
         this.onSelect();
         this.close();
@@ -104,18 +98,18 @@ export class DatabaseSwitcherModal extends Modal {
             this.app,
             t('modals.confirm_delete_title'),
             t('modals.confirm_delete_msg', { dbName }),
-            async (confirmed) => {
-                if (confirmed) {
-                    try {
-                        const dbManager = (this.plugin as any).dbManager;
-                        await dbManager.deleteDatabase(dbName);
-                        new Notice(t('modals.notice_delete_success', { name: dbName }));
-                        // Refresh the list
-                        this.onOpen();
-                    } catch (e) {
-                        new Notice(t('common.error', { error: e.message }));
+            (confirmed) => {
+                void (async () => {
+                    if (confirmed) {
+                        try {
+                            await this.plugin.dbManager.deleteDatabase(dbName);
+                            new Notice(t('modals.notice_delete_success', { name: dbName }));
+                            this.onOpen();
+                        } catch (e) {
+                            new Notice(t('common.error', { error: (e as Error).message }));
+                        }
                     }
-                }
+                })();
             },
             t('modals.btn_delete'),
             t('modals.btn_cancel')
@@ -136,15 +130,13 @@ export class RenameDatabaseModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('mysql-rename-modal');
-        contentEl.createEl('h2', { text: t('modals.rename_title', { name: this.oldName }) });
+        new Setting(contentEl).setName(t('modals.rename_title', { name: this.oldName })).setHeading();
 
         const input = new TextComponent(contentEl)
             .setPlaceholder(t('modals.rename_placeholder'))
             .setValue(this.oldName);
 
-        input.inputEl.addClass('mysql-rename-input');
-        input.inputEl.style.width = '100%';
-        input.inputEl.style.marginBottom = '20px';
+        input.inputEl.addClasses(['mysql-rename-input', 'u-width-full', 'u-margin-bottom-md']);
 
         const buttons = contentEl.createDiv({ cls: 'mysql-modal-footer' });
 
@@ -152,7 +144,7 @@ export class RenameDatabaseModal extends Modal {
             .setButtonText(t('modals.btn_cancel'))
             .onClick(() => this.close());
 
-        const confirmBtn = new ButtonComponent(buttons)
+        new ButtonComponent(buttons)
             .setButtonText(t('modals.btn_renomear'))
             .setCta()
             .onClick(async () => {
@@ -163,13 +155,12 @@ export class RenameDatabaseModal extends Modal {
                 }
 
                 try {
-                    const dbManager = (this.plugin as any).dbManager;
-                    await dbManager.renameDatabase(this.oldName, newName);
+                    await this.plugin.dbManager.renameDatabase(this.oldName, newName);
                     new Notice(t('modals.notice_rename_success', { name: newName }));
                     this.onSuccess();
                     this.close();
                 } catch (e) {
-                    new Notice(t('common.error', { error: e.message }));
+                    new Notice(t('common.error', { error: (e as Error).message }));
                 }
             });
     }
@@ -188,14 +179,13 @@ export class CreateDatabaseModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('mysql-create-db-modal'); // Reusing or adding class
-        contentEl.createEl('h2', { text: t('modals.create_title') });
+        new Setting(contentEl).setName(t('modals.create_title')).setHeading();
 
         const input = new TextComponent(contentEl)
             .setPlaceholder(t('modals.create_placeholder'))
             .setValue("");
 
-        input.inputEl.style.width = '100%';
-        input.inputEl.style.marginBottom = '20px';
+        input.inputEl.addClasses(['u-width-full', 'u-margin-bottom-md']);
 
         const buttons = contentEl.createDiv({ cls: 'mysql-modal-footer' });
 
@@ -203,7 +193,7 @@ export class CreateDatabaseModal extends Modal {
             .setButtonText(t('modals.btn_cancel'))
             .onClick(() => this.close());
 
-        const confirmBtn = new ButtonComponent(buttons)
+        new ButtonComponent(buttons)
             .setButtonText(t('modals.btn_confirm'))
             .setCta()
             .onClick(async () => {
@@ -214,20 +204,19 @@ export class CreateDatabaseModal extends Modal {
                 }
 
                 try {
-                    const dbManager = (this.plugin as any).dbManager;
-                    await dbManager.createDatabase(dbName);
+                    await this.plugin.dbManager.createDatabase(dbName);
                     new Notice(t('modals.notice_create_success', { name: dbName }));
 
                     // Automatically switch to it?
                     // Usually yes, user creates DB to use it.
                     this.plugin.activeDatabase = dbName;
-                    await dbManager.save();
+                    await this.plugin.dbManager.save();
                     new Notice(t('modals.notice_switch_success', { name: dbName }));
 
                     this.onSuccess();
                     this.close();
                 } catch (e) {
-                    new Notice(t('common.error', { error: e.message }));
+                    new Notice(t('common.error', { error: (e as Error).message }));
                 }
             });
 
@@ -249,14 +238,13 @@ export class DuplicateDatabaseModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('mysql-duplicate-modal');
-        contentEl.createEl('h2', { text: t('modals.duplicate_title', { name: this.oldName }) });
+        new Setting(contentEl).setName(t('modals.duplicate_title', { name: this.oldName })).setHeading();
 
         const input = new TextComponent(contentEl)
             .setPlaceholder(t('modals.rename_placeholder'))
             .setValue(`${this.oldName}_copy`);
 
-        input.inputEl.style.width = '100%';
-        input.inputEl.style.marginBottom = '20px';
+        input.inputEl.addClasses(['u-width-full', 'u-margin-bottom-md']);
 
         const buttons = contentEl.createDiv({ cls: 'mysql-modal-footer' });
 
@@ -264,7 +252,7 @@ export class DuplicateDatabaseModal extends Modal {
             .setButtonText(t('modals.btn_cancel'))
             .onClick(() => this.close());
 
-        const confirmBtn = new ButtonComponent(buttons)
+        new ButtonComponent(buttons)
             .setButtonText(t('modals.btn_duplicar'))
             .setCta()
             .onClick(async () => {
@@ -279,13 +267,12 @@ export class DuplicateDatabaseModal extends Modal {
                 }
 
                 try {
-                    const dbManager = (this.plugin as any).dbManager;
-                    await dbManager.duplicateDatabase(this.oldName, newName);
+                    await this.plugin.dbManager.duplicateDatabase(this.oldName, newName);
                     new Notice(t('modals.notice_duplicate_success', { name: newName }));
                     this.onSuccess();
                     this.close();
                 } catch (e) {
-                    new Notice(t('common.error', { error: e.message }));
+                    new Notice(t('common.error', { error: (e as Error).message }));
                 }
             });
 
@@ -312,9 +299,9 @@ export class DatabaseTablesModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
         contentEl.addClass('mysql-tables-modal');
-        contentEl.createEl('h2', { text: t('modals.tables_title', { name: this.dbName }) });
+        new Setting(contentEl).setName(t('modals.tables_title', { name: this.dbName })).setHeading();
 
-        const db = alasql.databases[this.dbName];
+        const db = (alasql as { databases: Record<string, { tables: Record<string, { data: unknown[] }> }> }).databases[this.dbName];
         if (!db || !db.tables || Object.keys(db.tables).length === 0) {
             contentEl.createDiv({ text: t('renderer.msg_no_tables'), cls: "mysql-empty-state" });
             return;
@@ -328,8 +315,9 @@ export class DatabaseTablesModal extends Modal {
             const rowCount = tableData.length;
             const sizeEstimate = JSON.stringify(tableData).length;
 
-            const item = list.createDiv({ cls: 'mysql-table-list-item' });
-            item.style.cursor = 'pointer';
+            const item = list.createDiv({
+                cls: 'mysql-table-list-item u-cursor-pointer'
+            });
 
             // Icon
             const iconDiv = item.createDiv({ cls: 'mysql-table-icon' });
@@ -344,7 +332,9 @@ export class DatabaseTablesModal extends Modal {
             });
 
             // Drill-down on click
-            item.onclick = () => this.showTableData(tableName);
+            item.onclick = () => {
+                void this.showTableData(tableName);
+            };
         });
     }
 
@@ -355,21 +345,17 @@ export class DatabaseTablesModal extends Modal {
         // Header with improved button layout
         const header = contentEl.createDiv({ cls: 'mysql-table-detail-header' });
 
-        const left = header.createDiv({ cls: 'mysql-table-detail-title' });
-        left.style.display = 'flex';
-        left.style.alignItems = 'center';
-        left.style.gap = '8px';
+        const left = header.createDiv({ cls: 'mysql-table-detail-title u-display-flex u-align-center u-gap-sm' });
 
         new ButtonComponent(left)
             .setIcon('arrow-left')
             .setTooltip(t('renderer.tip_back'))
             .onClick(() => this.renderList());
 
-        const title = left.createEl('h3', { text: tableName });
-        title.style.margin = '0';
+        new Setting(left).setName(tableName).setHeading();
 
         // Actions on the right with better spacing
-        const actions = header.createDiv({ cls: 'mysql-table-detail-actions' });
+        const actions = header.createDiv({ cls: 'mysql-table-detail-actions u-display-flex u-gap-sm' });
 
         // Copy button
         new ButtonComponent(actions)
@@ -381,12 +367,12 @@ export class DatabaseTablesModal extends Modal {
                     const result = await QueryExecutor.execute(query);
 
                     if (result.success && result.data && result.data[0] && result.data[0].data) {
-                        await this.copyToClipboard(result.data[0].data);
+                        await this.copyToClipboard(result.data[0].data as unknown[]);
                     } else {
                         new Notice(t('renderer.notice_copy_failed', { error: t('renderer.msg_no_data') }));
                     }
                 } catch (e) {
-                    new Notice(t('modals.notice_copy_failed', { error: e.message }));
+                    new Notice(t('modals.notice_copy_failed', { error: (e as Error).message }));
                 }
             });
 
@@ -403,7 +389,7 @@ export class DatabaseTablesModal extends Modal {
                         new Notice(t('renderer.notice_screenshot_failed', { error: 'No table element' }));
                     }
                 } catch (e) {
-                    new Notice(t('renderer.notice_screenshot_failed', { error: e.message }));
+                    new Notice(t('renderer.notice_screenshot_failed', { error: (e as Error).message }));
                 }
             });
 
@@ -417,12 +403,12 @@ export class DatabaseTablesModal extends Modal {
                     const result = await QueryExecutor.execute(query);
 
                     if (result.success && result.data && result.data[0] && result.data[0].data) {
-                        await this.insertIntoNote(result.data[0].data);
+                        await this.insertIntoNote(result.data[0].data as unknown[]);
                     } else {
                         new Notice(t('renderer.notice_insert_failed', { error: t('renderer.msg_no_data') }));
                     }
                 } catch (e) {
-                    new Notice(t('renderer.notice_insert_failed', { error: e.message }));
+                    new Notice(t('renderer.notice_insert_failed', { error: (e as Error).message }));
                 }
             });
 
@@ -437,12 +423,12 @@ export class DatabaseTablesModal extends Modal {
                     const result = await QueryExecutor.execute(query);
 
                     if (result.success && result.data && result.data[0] && result.data[0].data) {
-                        await this.exportTableData(tableName, result.data[0].data);
+                        await this.exportTableData(tableName, result.data[0].data as unknown[]);
                     } else {
                         new Notice(t('renderer.msg_no_data'));
                     }
                 } catch (e) {
-                    new Notice(t('common.error', { error: e.message }));
+                    new Notice(t('common.error', { error: (e as Error).message }));
                 }
             });
 
@@ -453,12 +439,14 @@ export class DatabaseTablesModal extends Modal {
             .onClick(() => this.close());
 
         // Separator line
-        const separator = contentEl.createDiv({ cls: 'mysql-table-detail-separator' });
+        contentEl.createDiv({ cls: 'mysql-table-detail-separator' });
 
         // Data Container without extra margins
         const dataContainer = contentEl.createDiv({ cls: 'mysql-table-detail-content' });
-        const loadingMsg = dataContainer.createEl('p', { text: t('renderer.msg_loading') });
-        loadingMsg.style.color = 'var(--text-muted)';
+        dataContainer.createEl('p', {
+            text: t('renderer.msg_loading'),
+            cls: 'u-text-muted'
+        });
 
         try {
             const query = `SELECT * FROM ${this.dbName}.${tableName} LIMIT 100`;
@@ -469,8 +457,8 @@ export class DatabaseTablesModal extends Modal {
                 // Render directly without the result wrapper that adds borders
                 this.renderTableDataDirect(result, dataContainer, tableName);
 
-                if (result.data && result.data[0] && result.data[0].rowCount >= 100) {
-                    const note = dataContainer.createDiv({
+                if (result.data && result.data[0] && (result.data[0].rowCount ?? 0) >= 100) {
+                    dataContainer.createDiv({
                         text: t('renderer.msg_showing_limit', { count: '100' }),
                         cls: 'mysql-table-limit-note'
                     });
@@ -480,22 +468,23 @@ export class DatabaseTablesModal extends Modal {
             }
         } catch (e) {
             dataContainer.empty();
-            dataContainer.createDiv({ text: `Error loading data: ${e.message}`, cls: 'mysql-error-text' });
+            dataContainer.createDiv({ text: `Error loading data: ${(e as Error).message}`, cls: 'mysql-error-text' });
         }
     }
 
-    private renderTableDataDirect(result: any, container: HTMLElement, tableName: string) {
+    private renderTableDataDirect(result: QueryResult, container: HTMLElement, tableName: string) {
         if (!result.success || !result.data || result.data.length === 0) {
             container.createEl("p", { text: t('renderer.msg_no_data'), cls: "mysql-empty-state" });
             return;
         }
 
         const data = result.data[0];
-        if (data.type === 'table' && data.data && data.data.length > 0) {
+        if (data.type === 'table' && Array.isArray(data.data) && data.data.length > 0) {
+            const rows = data.data as unknown[];
             // Create table directly without the result wrapper styling
             const tableWrapper = container.createDiv({ cls: 'mysql-direct-table-wrapper' });
 
-            const keys = Object.keys(data.data[0]);
+            const keys = Object.keys(rows[0] as Record<string, unknown>);
             const table = tableWrapper.createEl("table", { cls: "mysql-table mysql-direct-table" });
 
             const thead = table.createEl("thead");
@@ -506,27 +495,29 @@ export class DatabaseTablesModal extends Modal {
             const batchSize = 100;
             let currentCount = 0;
 
-            const renderBatch = (batch: any[]) => {
+            const renderBatch = (batch: unknown[]) => {
                 batch.forEach(row => {
+                    const rowData = row as Record<string, unknown>;
                     const tr = tbody.createEl("tr");
                     keys.forEach(key => {
-                        const val = row[key];
+                        const val = rowData[key];
+                        const stringVal = (val !== null && typeof val === 'object') ? JSON.stringify(val) : String(val as string | number | boolean);
                         tr.createEl("td", {
-                            text: val === null || val === undefined ? t('modals.null_value') : String(val)
+                            text: val === null || val === undefined ? t('modals.null_value') : stringVal
                         });
                     });
                 });
             };
 
-            const initialBatch = data.data.slice(0, batchSize);
+            const initialBatch = rows.slice(0, batchSize);
             renderBatch(initialBatch);
             currentCount += initialBatch.length;
 
-            if (data.data.length > batchSize) {
+            if (rows.length > batchSize) {
                 const controls = tableWrapper.createEl("div", { cls: "mysql-direct-pagination" });
 
                 const statusSpan = controls.createEl("span", {
-                    text: `Showing ${currentCount} of ${data.data.length} rows`,
+                    text: `Showing ${currentCount} of ${rows.length} rows`,
                     cls: "mysql-pagination-status"
                 });
 
@@ -536,10 +527,10 @@ export class DatabaseTablesModal extends Modal {
                 });
 
                 showAllBtn.onclick = () => {
-                    const remaining = data.data.slice(currentCount);
+                    const remaining = rows.slice(currentCount);
                     renderBatch(remaining);
                     showAllBtn.remove();
-                    statusSpan.setText(t('renderer.msg_showing_all', { count: String(data.data.length) }));
+                    statusSpan.setText(t('renderer.msg_showing_all', { count: String(rows.length) }));
                 };
             }
         } else {
@@ -547,7 +538,7 @@ export class DatabaseTablesModal extends Modal {
         }
     }
 
-    private async copyToClipboard(data: any[]): Promise<void> {
+    private async copyToClipboard(data: unknown[]): Promise<void> {
         try {
             if (!data || data.length === 0) {
                 new Notice(t('renderer.msg_no_data'));
@@ -559,8 +550,10 @@ export class DatabaseTablesModal extends Modal {
 
             data.forEach(row => {
                 const values = keys.map(k => {
-                    const val = row[k];
-                    return val === null || val === undefined ? '' : String(val);
+                    const val = (row as Record<string, unknown>)[k];
+                    if (val === null || val === undefined) return '';
+                    if (typeof val === 'object') return JSON.stringify(val);
+                    return String(val as string | number | boolean);
                 });
                 textToCopy += values.join('\t') + '\n';
             });
@@ -568,7 +561,7 @@ export class DatabaseTablesModal extends Modal {
             await navigator.clipboard.writeText(textToCopy);
             new Notice(t('modals.notice_table_data_copied'));
         } catch (error) {
-            new Notice(t('modals.notice_copy_failed', { error: error.message }));
+            new Notice(t('modals.notice_copy_failed', { error: (error as Error).message }));
         }
     }
 
@@ -583,34 +576,36 @@ export class DatabaseTablesModal extends Modal {
                 logging: false
             });
 
-            canvas.toBlob(async (blob: Blob | null) => {
-                if (!blob) {
-                    new Notice(t('modals.notice_screenshot_failed', { error: 'Blob creation failed' }));
-                    return;
-                }
+            canvas.toBlob((blob: Blob | null) => {
+                void (async () => {
+                    if (!blob) {
+                        new Notice(t('modals.notice_screenshot_failed', { error: 'Blob creation failed' }));
+                        return;
+                    }
 
-                try {
-                    await navigator.clipboard.write([
-                        new ClipboardItem({ 'image/png': blob })
-                    ]);
-                    new Notice(t('renderer.notice_screenshot_copied'));
-                } catch (clipboardError) {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `table-screenshot-${Date.now()}.png`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    new Notice(t('renderer.notice_screenshot_downloaded'));
-                }
+                    try {
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ 'image/png': blob })
+                        ]);
+                        new Notice(t('renderer.notice_screenshot_copied'));
+                    } catch {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `table-screenshot-${Date.now()}.png`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        new Notice(t('renderer.notice_screenshot_downloaded'));
+                    }
+                })();
             });
         } catch (error) {
-            new Notice(t('renderer.notice_screenshot_failed', { error: error.message }));
+            new Notice(t('renderer.notice_screenshot_failed', { error: (error as Error).message }));
             console.error('Screenshot error:', error);
         }
     }
 
-    private async insertIntoNote(data: any[]): Promise<void> {
+    private async insertIntoNote(data: unknown[]): Promise<void> {
         try {
             const { MarkdownView } = await import('obsidian');
             const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
@@ -631,11 +626,11 @@ export class DatabaseTablesModal extends Modal {
 
             new Notice(t('modals.notice_table_inserted'));
         } catch (error) {
-            new Notice(t('modals.notice_insert_failed', { error: error.message }));
+            new Notice(t('modals.notice_insert_failed', { error: (error as Error).message }));
         }
     }
 
-    private async exportTableData(tableName: string, data: any[]): Promise<void> {
+    private async exportTableData(tableName: string, data: unknown[]): Promise<void> {
         try {
             if (!data || data.length === 0) {
                 new Notice(t('renderer.msg_no_data'));
@@ -657,41 +652,44 @@ export class DatabaseTablesModal extends Modal {
             new Notice(t('common.notice_export_success', { name: fileName }));
         } catch (error) {
             console.error("CSV Export Error:", error);
-            new Notice(t('common.error', { error: error.message }));
+            new Notice(t('common.error', { error: (error as Error).message }));
         }
     }
 
-    private jsonToCSV(data: any[]): string {
+    private jsonToCSV(data: unknown[]): string {
         if (data.length === 0) return '';
-        const keys = Object.keys(data[0]);
+        const keys = Object.keys(data[0] as Record<string, unknown>);
         const header = keys.join(',') + '\n';
-        const rows = data.map(row =>
-            keys.map(k => {
-                const val = row[k];
+        const rows = data.map(row => {
+            const rowData = row as Record<string, unknown>;
+            return keys.map(k => {
+                const val = rowData[k];
                 if (val === null || val === undefined) return '';
-                const str = String(val);
+                const str = (typeof val === 'object') ? JSON.stringify(val) : String(val as string | number | boolean);
                 // Quote if contains comma, quote or newline
                 if (str.match(/[,"]/)) {
                     return `"${str.replace(/"/g, '""')}"`;
                 }
                 return str;
-            }).join(',')
-        );
+            }).join(',');
+        });
         return header + rows.join('\n');
     }
 
-    private dataToMarkdownTable(rows: any[]): string {
+    private dataToMarkdownTable(rows: unknown[]): string {
         if (!rows || rows.length === 0) return '_No data_';
 
-        const keys = Object.keys(rows[0]);
+        const keys = Object.keys(rows[0] as Record<string, unknown>);
         let md = '| ' + keys.join(' | ') + ' |\n';
         md += '| ' + keys.map(() => '---').join(' | ') + ' |\n';
 
         rows.forEach(row => {
+            const rowData = row as Record<string, unknown>;
             const values = keys.map(k => {
-                const val = row[k];
+                const val = rowData[k];
                 if (val === null || val === undefined) return '';
-                return String(val).replace(/\|/g, '\\|');
+                const stringVal = (typeof val === 'object') ? JSON.stringify(val) : String(val as string | number | boolean);
+                return stringVal.replace(/\|/g, '\\|');
             });
             md += '| ' + values.join(' | ') + ' |\n';
         });

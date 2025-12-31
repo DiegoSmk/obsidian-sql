@@ -21,27 +21,27 @@ export class SQLTransformer {
 
         // CREATE TABLE [IF NOT EXISTS] table
         result = result.replace(/CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
-            (m, i, t) => `CREATE TABLE ${i || ''}[${database}].[${t}]`);
+            (m: string, i: string, t: string) => `CREATE TABLE ${i || ''}[${database}].[${t}]`);
 
         // INSERT INTO table
         result = result.replace(/INSERT\s+INTO\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
-            (m, t) => `INSERT INTO [${database}].[${t}]`);
+            (m: string, t: string) => `INSERT INTO [${database}].[${t}]`);
 
         // UPDATE table SET
         result = result.replace(/UPDATE\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b(\s+SET)/gi,
-            (m, t, set) => `UPDATE [${database}].[${t}]${set}`);
+            (m: string, t: string, set: string) => `UPDATE [${database}].[${t}]${set}`);
 
         // DELETE FROM table
         result = result.replace(/DELETE\s+FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
-            (m, t) => `DELETE FROM [${database}].[${t}]`);
+            (m: string, t: string) => `DELETE FROM [${database}].[${t}]`);
 
         // FROM table
-        result = result.replace(/FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s]*\(?)/gi, (m, t, after) => {
+        result = result.replace(/FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s]*\(?)/gi, (m: string, t: string, after: string) => {
             return tableFnCheck(m, t, after);
         });
 
         // JOIN table
-        result = result.replace(/JOIN\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s]*\(?)/gi, (m, t, after) => {
+        result = result.replace(/JOIN\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s]*\(?)/gi, (m: string, t: string, after: string) => {
             return tableFnCheck(m, t, after);
         });
 

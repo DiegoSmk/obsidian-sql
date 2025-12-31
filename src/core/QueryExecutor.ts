@@ -1,21 +1,20 @@
 // @ts-ignore
 import alasql from 'alasql';
-import { BLOCKED_COMMANDS } from '../utils/constants';
 import { SQLSanitizer } from '../utils/SQLSanitizer';
 import { PerformanceMonitor } from '../utils/PerformanceMonitor';
 import { Logger } from '../utils/Logger';
 import { DatabaseEventBus } from './DatabaseEventBus';
-import { QueryResult, ResultSet } from '../types';
+import { QueryResult, ResultSet, AlaSQLInstance, AlaSQLTable, AlaSQLColumn } from '../types';
 import { SQLTransformer } from '../utils/SQLTransformer';
 
 
 export class QueryExecutor {
     private static async executeWithTimeout(
         query: string,
-        params?: any[],
+        params?: unknown[],
         timeout: number = 30000,
         signal?: AbortSignal
-    ): Promise<any> {
+    ): Promise<unknown> {
         return new Promise((resolve, reject) => {
             const timeoutId = setTimeout(() => reject(new Error('Query timeout')), timeout);
 
@@ -26,19 +25,27 @@ export class QueryExecutor {
                 });
             }
 
-            const promise = params ? alasql.promise(query, params) : alasql.promise(query);
+            const promise = params ? (alasql as unknown as AlaSQLInstance).promise(query, params) : (alasql as unknown as AlaSQLInstance).promise(query);
 
-            promise.then((res: any) => {
+            promise.then((res: unknown) => {
                 clearTimeout(timeoutId);
                 resolve(res);
-            }).catch((err: any) => {
+            }).catch((err: unknown) => {
                 clearTimeout(timeoutId);
-                reject(err);
+                let errorMessage = '';
+                if (err instanceof Error) {
+                    errorMessage = err.message;
+                } else if (typeof err === 'object' && err !== null) {
+                    errorMessage = JSON.stringify(err);
+                } else {
+                    errorMessage = String(err as string | number | boolean);
+                }
+                reject(new Error(errorMessage));
             });
         });
     }
 
-    static async execute(query: string, params?: any[], options: { safeMode?: boolean, signal?: AbortSignal, activeDatabase?: string, originId?: string, isLive?: boolean } = {}): Promise<QueryResult> {
+    static async execute(query: string, params?: unknown[], options: { safeMode?: boolean, signal?: AbortSignal, activeDatabase?: string, originId?: string, isLive?: boolean } = {}): Promise<QueryResult> {
         const monitor = new PerformanceMonitor();
         monitor.start();
 
@@ -71,7 +78,7 @@ export class QueryExecutor {
 
             // If multiple statements, execute sequentially with OUR context management
             if (statements.length > 1) {
-                const results: any[] = [];
+                const results: unknown[] = [];
 
                 for (let i = 0; i < statements.length; i++) {
                     let stmt = statements[i];
@@ -99,7 +106,7 @@ export class QueryExecutor {
                     const useMatch = stmt.match(/^\s*USE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$/i);
                     if (useMatch) {
                         const newDB = useMatch[1];
-                        if (!alasql.databases[newDB]) throw new Error(`Database '${newDB}' does not exist`);
+                        if (!(alasql as unknown as AlaSQLInstance).databases[newDB]) throw new Error(`Database '${newDB}' does not exist`);
                         currentDB = newDB;
                         results.push(1);
                         continue;
@@ -108,7 +115,7 @@ export class QueryExecutor {
                     // Intercept FORM inside batch
                     if (upperStmt.startsWith('FORM')) {
                         const formResult = await this.handleFormCommand(stmt, currentDB, monitor);
-                        results.push(formResult.data![0]); // Push the whole ResultSet
+                        results.push(formResult.data[0]); // Push the whole ResultSet
                         continue;
                     }
 
@@ -137,7 +144,7 @@ export class QueryExecutor {
             const useMatch = trimmed.match(/^\s*USE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$/i);
             if (useMatch) {
                 const newDB = useMatch[1];
-                if (!alasql.databases[newDB]) throw new Error(`Database '${newDB}' does not exist`);
+                if (!(alasql as unknown as AlaSQLInstance).databases[newDB]) throw new Error(`Database '${newDB}' does not exist`);
                 return { success: true, data: [{ type: 'message', data: null, message: `Database changed to '${newDB}'` }], executionTime: monitor.end(), activeDatabase: newDB };
             }
 
@@ -174,7 +181,7 @@ export class QueryExecutor {
 
         } catch (error) {
             Logger.error("Query execution failed", error);
-            const originalMessage = error.message || String(error);
+            const originalMessage = (error as Error).message || String(error);
             const beautifiedMessage = this.beautifyError(originalMessage);
             return { success: false, error: beautifiedMessage, executionTime: monitor.end() };
         }
@@ -198,7 +205,7 @@ export class QueryExecutor {
         return message;
     }
 
-    private static normalizeResult(raw: any): ResultSet[] {
+    private static normalizeResult(raw: unknown): ResultSet[] {
         if (raw === undefined || raw === null) return [];
         if (Array.isArray(raw) && raw.some(r => Array.isArray(r) || typeof r === 'number' || (typeof r === 'object' && r !== null && 'type' in r))) {
             return raw.map(res => this.createResultSet(res));
@@ -206,7 +213,7 @@ export class QueryExecutor {
         return [this.createResultSet(raw)];
     }
 
-    private static createResultSet(res: any): ResultSet {
+    private static createResultSet(res: unknown): ResultSet {
         if (res === undefined || res === null) return { type: 'message', data: null, message: 'Command executed successfully' };
 
         // If it's already a ResultSet (e.g. from FORM interception)
@@ -216,12 +223,19 @@ export class QueryExecutor {
         if (Array.isArray(res)) {
             if (res.length === 0) return { type: 'message', data: [], message: '0 rows returned', rowCount: 0 };
             if (typeof res[0] === 'object' && res[0] !== null) {
-                return { type: 'table', data: res, columns: Object.keys(res[0]), rowCount: res.length };
+                const firstRow = res[0] as Record<string, unknown>;
+                return { type: 'table', data: res, columns: Object.keys(firstRow), rowCount: res.length };
             }
             return { type: 'scalar', data: res, rowCount: res.length };
         }
         if (typeof res === 'number') return { type: 'message', data: res, message: `${res} row(s) affected` };
-        return { type: 'message', data: res, message: String(res) };
+        let message = '';
+        if (typeof res === 'object' && res !== null) {
+            message = JSON.stringify(res);
+        } else {
+            message = String(res as string | number | boolean);
+        }
+        return { type: 'message', data: res, message };
     }
 
     private static async handleFormCommand(query: string, database: string, monitor: PerformanceMonitor): Promise<QueryResult> {
@@ -240,26 +254,26 @@ export class QueryExecutor {
 
         const tableName = tablePart;
 
-        let columns: any[] = [];
-        let tableObj: any = null;
+        let columns: AlaSQLColumn[] = [];
+        let tableObj: AlaSQLTable | null = null;
         try {
             // AlaSQL internal: Try to get the rich table object first
-            tableObj = (alasql.databases[database] as any)?.tables[tableName];
+            tableObj = (alasql as unknown as AlaSQLInstance).databases[database]?.tables[tableName];
             if (tableObj && tableObj.columns) {
                 columns = tableObj.columns;
             } else {
                 // Fallback to SHOW COLUMNS if internal read fails
-                columns = await alasql.promise(`SHOW COLUMNS FROM [${database}].[${tableName}]`);
+                columns = await (alasql as unknown as AlaSQLInstance).promise<AlaSQLColumn[]>(`SHOW COLUMNS FROM [${database}].[${tableName}]`);
             }
 
             if (!columns || columns.length === 0) {
                 throw new Error(`Table '${tableName}' found but has no columns.`);
             }
-        } catch (e) {
+        } catch {
             throw new Error(`Table '${fullTableName}' not found. Certifique-se de que você executou o setup (01_setup.md) ou criou a tabela.`);
         }
 
-        const customFields: Record<string, { label?: string, type?: string, options?: string[], hidden?: boolean, defaultValue?: any }> = {};
+        const customFields: Record<string, { label?: string, type?: string, options?: string[], hidden?: boolean, defaultValue?: unknown }> = {};
         for (let i = 1; i < lines.length; i++) {
             const line = lines[i];
             if (line.toUpperCase().includes(' HIDDEN')) {
@@ -270,7 +284,7 @@ export class QueryExecutor {
             // Match: field_name TYPE "Label" (option1, option2) DEFAULT "val"
             const fieldMatch = line.match(/^([a-zA-Z_][a-zA-Z0-9_]*)\s+([a-zA-Z]+)?\s*(?:"([^"]+)")?\s*(?:\(([^)]+)\))?\s*(?:DEFAULT\s+([^ ]+))?/i);
             if (fieldMatch) {
-                const [_, fieldName, type, label, optionsStr, dflt] = fieldMatch;
+                const [, fieldName, type, label, optionsStr, dflt] = fieldMatch;
                 const lowerName = fieldName.toLowerCase();
                 customFields[lowerName] = {
                     ...customFields[lowerName],
@@ -292,14 +306,15 @@ export class QueryExecutor {
 
                 // Detect auto-increment or identity fields
                 const isAuto = !!(col.autoincrement || col.auto_increment || col.identity);
-                const isPK = col.pk === 1 || (tableObj?.pk?.columns && tableObj.pk.columns.includes(col.columnid));
+                const pkInfo = (tableObj as unknown as Record<string, unknown>)?.pk as { columns: string[] } | undefined;
+                const isPK = col.primarykey === true || (pkInfo?.columns && pkInfo.columns.includes(col.columnid));
 
                 return {
                     name: col.columnid,
                     type: custom.type || this.mapSqlTypeToInput(col.dbtypeid),
                     label: custom.label || col.columnid,
-                    required: col.notnull === 1,
-                    defaultValue: custom.defaultValue !== undefined ? custom.defaultValue : col.dflt_value,
+                    required: (col as unknown as Record<string, unknown>).notnull === 1,
+                    defaultValue: custom.defaultValue !== undefined ? custom.defaultValue : (col as unknown as Record<string, unknown>).dflt_value,
                     options: custom.options,
                     isPrimaryKey: isPK,
                     isAutoIncrement: isAuto || custom.hidden || (name === 'id' && isPK)
@@ -333,40 +348,42 @@ export class QueryExecutor {
             const upperSql = sql.trim().toUpperCase();
             if (writeKeywords.some(kw => upperSql.startsWith(kw))) {
                 try {
-                    const ast = (alasql as any).parse(sql);
-                    const extractTables = (node: any) => {
-                        if (!node) return;
-                        if (node.into && node.into.tableid) {
-                            const tid = node.into.tableid.toLowerCase();
-                            modifiedTables.add(tid.includes('.') ? tid.split('.').pop()! : tid);
+                    const ast = (alasql as unknown as AlaSQLInstance).parse(sql);
+                    const extractTables = (node: unknown) => {
+                        if (!node || typeof node !== 'object') return;
+                        const n = node as Record<string, unknown>;
+                        if (n.into && (n.into as Record<string, string>).tableid) {
+                            const tid = (n.into as Record<string, string>).tableid.toLowerCase();
+                            modifiedTables.add(tid.includes('.') ? (tid.split('.').pop() || '') : tid);
                         }
-                        if (node.tableid) {
-                            const tid = node.tableid.toLowerCase();
-                            modifiedTables.add(tid.includes('.') ? tid.split('.').pop()! : tid);
+                        if (n.tableid) {
+                            const tid = (n as Record<string, string>).tableid.toLowerCase();
+                            modifiedTables.add(tid.includes('.') ? (tid.split('.').pop() || '') : tid);
                         }
-                        if (node.from && Array.isArray(node.from)) {
-                            node.from.forEach((f: any) => {
-                                if (f.tableid) {
-                                    const tid = f.tableid.toLowerCase();
-                                    modifiedTables.add(tid.includes('.') ? tid.split('.').pop()! : tid);
+                        if (n.from && Array.isArray(n.from)) {
+                            (n.from as unknown[]).forEach((f: unknown) => {
+                                if (f && typeof f === 'object' && (f as Record<string, string>).tableid) {
+                                    const tid = (f as Record<string, string>).tableid.toLowerCase();
+                                    modifiedTables.add(tid.includes('.') ? (tid.split('.').pop() || '') : tid);
                                 }
                             });
                         }
-                        if (node.table && node.table.tableid) {
-                            const tid = node.table.tableid.toLowerCase();
-                            modifiedTables.add(tid.includes('.') ? tid.split('.').pop()! : tid);
+                        if (n.table && (n.table as Record<string, string>).tableid) {
+                            const tid = (n.table as Record<string, string>).tableid.toLowerCase();
+                            modifiedTables.add(tid.includes('.') ? (tid.split('.').pop() || '') : tid);
                         }
-                        if (Array.isArray(node)) node.forEach(extractTables);
-                        else if (typeof node === 'object') Object.values(node).forEach(v => typeof v === 'object' && extractTables(v));
+                        if (Array.isArray(n)) (n as unknown[]).forEach(extractTables);
+                        else Object.values(n).forEach(v => typeof v === 'object' && extractTables(v));
                     };
                     extractTables(ast);
                     if (upperSql.startsWith('CREATE') || upperSql.startsWith('DROP') || upperSql.startsWith('ALTER')) isStructuralChange = true;
-                } catch (e) {
+                } catch {
                     const writeRegex = /(?:INSERT INTO|UPDATE|DELETE FROM|CREATE TABLE|DROP TABLE|ALTER TABLE|TRUNCATE TABLE)\s+([a-zA-Z_][a-zA-Z0-9_.]*)/gi;
                     let match;
                     while ((match = writeRegex.exec(sql)) !== null) {
                         const fullTableName = match[1];
-                        modifiedTables.add(fullTableName.split('.').pop()!.toLowerCase());
+                        const lastPart = fullTableName.split('.').pop();
+                        if (lastPart) modifiedTables.add(lastPart.toLowerCase());
                     }
                 }
             }

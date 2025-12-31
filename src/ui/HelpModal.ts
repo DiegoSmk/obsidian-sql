@@ -1,4 +1,4 @@
-import { Modal, App, setIcon } from "obsidian";
+import { Modal, App, setIcon, Setting } from "obsidian";
 import { t } from "../utils/i18n";
 
 interface Feature {
@@ -17,7 +17,7 @@ export class HelpModal extends Modal {
         const { contentEl } = this;
         contentEl.addClass("mysql-help-modal");
 
-        contentEl.createEl("h2", { text: t('help.title') });
+        new Setting(contentEl).setName(t('help.title')).setHeading();
 
         const features: Feature[] = [
             {
@@ -65,7 +65,7 @@ export class HelpModal extends Modal {
             setIcon(iconContainer, feature.icon);
 
             const content = item.createDiv({ cls: "mysql-help-content" });
-            content.createEl("h3", { text: feature.title });
+            new Setting(content).setName(feature.title).setHeading();
             content.createDiv({ cls: "mysql-help-desc", text: feature.description });
 
             if (feature.example) {

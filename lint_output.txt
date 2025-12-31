@@ -1,0 +1,390 @@
+
+> sql-notebook@0.5.1 lint
+> eslint .
+
+
+/home/diego/Documentos/projects/obsidian-sql/package.json
+  31:5  error  "builtin-modules" should be replaced with an alternative package. Read more here: https://github.com/es-tooling/module-replacements/blob/main/docs/modules/builtin-modules.md  depend/ban-dependencies
+
+/home/diego/Documentos/projects/obsidian-sql/src/__mocks__/obsidian.ts
+  15:39  error  The `Function` type accepts any function-like value.
+Prefer explicitly defining any function parameters and return type  @typescript-eslint/no-unsafe-function-type
+  17:32  error  The `Function` type accepts any function-like value.
+Prefer explicitly defining any function parameters and return type  @typescript-eslint/no-unsafe-function-type
+  22:33  error  The `Function` type accepts any function-like value.
+Prefer explicitly defining any function parameters and return type  @typescript-eslint/no-unsafe-function-type
+  29:48  error  Unsafe return of a value of type `any`                                                                                   @typescript-eslint/no-unsafe-return
+  29:48  error  Unsafe call of a(n) `Function` typed value                                                                               @typescript-eslint/no-unsafe-call
+  34:30  error  The `Function` type accepts any function-like value.
+Prefer explicitly defining any function parameters and return type  @typescript-eslint/no-unsafe-function-type
+  35:36  error  Unsafe return of a value of type `any`                                                                                   @typescript-eslint/no-unsafe-return
+  35:36  error  Unsafe call of a(n) `Function` typed value                                                                               @typescript-eslint/no-unsafe-call
+
+/home/diego/Documentos/projects/obsidian-sql/src/core/CSVManager.ts
+   40:19  warning  'totalBatches' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   48:23  error    Unsafe assignment of an error typed value          @typescript-eslint/no-unsafe-assignment
+   48:36  error    Unsafe call of a(n) `error` type typed value       @typescript-eslint/no-unsafe-call
+   63:48  error    Unsafe member access .message on an `any` value    @typescript-eslint/no-unsafe-member-access
+   91:48  error    Unsafe member access .message on an `any` value    @typescript-eslint/no-unsafe-member-access
+  101:23  error    Unsafe assignment of an error typed value          @typescript-eslint/no-unsafe-assignment
+
+/home/diego/Documentos/projects/obsidian-sql/src/core/DatabaseManager.ts
+    3:42   warning  'DatabaseContent' is defined but never used                                                                                                                         @typescript-eslint/no-unused-vars
+   25:19   error    Unsafe assignment of an `any` value                                                                                                                                 @typescript-eslint/no-unsafe-assignment
+   27:30   error    Unsafe member access .databases on an `any` value                                                                                                                   @typescript-eslint/no-unsafe-member-access
+   28:23   error    Unsafe assignment of an `any` value                                                                                                                                 @typescript-eslint/no-unsafe-assignment
+   29:35   error    Unsafe member access .backup on an `any` value                                                                                                                      @typescript-eslint/no-unsafe-member-access
+   31:30   error    Unsafe member access .backup on an `any` value                                                                                                                      @typescript-eslint/no-unsafe-member-access
+   32:21   error    Unsafe assignment of an `any` value                                                                                                                                 @typescript-eslint/no-unsafe-assignment
+   32:43   error    Unsafe member access .databases on an `any` value                                                                                                                   @typescript-eslint/no-unsafe-member-access
+   33:21   error    Unsafe assignment of an `any` value                                                                                                                                 @typescript-eslint/no-unsafe-assignment
+   33:48   error    Unsafe member access .activeDatabase on an `any` value                                                                                                              @typescript-eslint/no-unsafe-member-access
+   33:77   error    Unsafe member access .currentDB on an `any` value                                                                                                                   @typescript-eslint/no-unsafe-member-access
+   34:21   error    Unsafe assignment of an `any` value                                                                                                                                 @typescript-eslint/no-unsafe-assignment
+   34:41   error    Unsafe member access .version on an `any` value                                                                                                                     @typescript-eslint/no-unsafe-member-access
+   35:21   error    Unsafe assignment of an `any` value                                                                                                                                 @typescript-eslint/no-unsafe-assignment
+   35:43   error    Unsafe member access .createdAt on an `any` value                                                                                                                   @typescript-eslint/no-unsafe-member-access
+   39:19   error    Unsafe assignment of an `any` value                                                                                                                                 @typescript-eslint/no-unsafe-assignment
+   42:19   error    Unsafe assignment of an `any` value                                                                                                                                 @typescript-eslint/no-unsafe-assignment
+   43:30   error    Unsafe member access ._temp on an `any` value                                                                                                                       @typescript-eslint/no-unsafe-member-access
+   54:17   error    Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator  @typescript-eslint/no-floating-promises
+   98:33   error    Unsafe assignment of an error typed value                                                                                                                           @typescript-eslint/no-unsafe-assignment
+   98:68   error    Unsafe member access ["Create Table"] on an `error` typed value                                                                                                     @typescript-eslint/no-unsafe-member-access
+   98:100  error    Unsafe member access ["CreateTable"] on an `error` typed value                                                                                                      @typescript-eslint/no-unsafe-member-access
+  114:43   error    Unsafe assignment of an error typed value                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  154:15   error    Unsafe assignment of an `any` value                                                                                                                                 @typescript-eslint/no-unsafe-assignment
+  156:20   error    Unsafe member access .databases on an `any` value                                                                                                                   @typescript-eslint/no-unsafe-member-access
+  161:19   error    Unsafe assignment of an `any` value                                                                                                                                 @typescript-eslint/no-unsafe-assignment
+  161:35   error    Unsafe member access .activeDatabase on an `any` value                                                                                                              @typescript-eslint/no-unsafe-member-access
+  161:58   error    Unsafe member access .currentDB on an `any` value                                                                                                                   @typescript-eslint/no-unsafe-member-access
+  164:60   error    Unsafe argument of type `any` assigned to a parameter of type `{ [s: string]: unknown; } | ArrayLike<unknown>`                                                      @typescript-eslint/no-unsafe-argument
+  164:65   error    Unsafe member access .databases on an `any` value                                                                                                                   @typescript-eslint/no-unsafe-member-access
+  179:67   error    Unsafe argument of type error typed assigned to a parameter of type `{ [s: string]: unknown; } | ArrayLike<unknown>`                                                @typescript-eslint/no-unsafe-argument
+  183:52   error    'sql' will use Object's default stringification format ('[object Object]') when stringified                                                                         @typescript-eslint/no-base-to-string
+  187:112  error    Unnecessary escape character: \[                                                                                                                                    no-useless-escape
+  192:29   warning  'restoredTablesCount' is assigned a value but never used                                                                                                            @typescript-eslint/no-unused-vars
+  200:68   error    Unsafe argument of type error typed assigned to a parameter of type `{ [s: string]: unknown; } | ArrayLike<unknown>`                                                @typescript-eslint/no-unsafe-argument
+  208:43   error    Unsafe assignment of an error typed value                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  208:78   error    Unsafe member access [tableName] on an `error` typed value                                                                                                          @typescript-eslint/no-unsafe-member-access
+  227:13   error    Unsafe assignment of an `any` value                                                                                                                                 @typescript-eslint/no-unsafe-assignment
+  253:18   warning  'e' is defined but never used                                                                                                                                       @typescript-eslint/no-unused-vars
+  321:60   error    Unsafe member access .tableid on an `any` value                                                                                                                     @typescript-eslint/no-unsafe-member-access
+  340:23   error    Unsafe assignment of an `any` value                                                                                                                                 @typescript-eslint/no-unsafe-assignment
+  340:37   error    Unsafe member access .tableid on an `any` value                                                                                                                     @typescript-eslint/no-unsafe-member-access
+  391:22   warning  'e' is defined but never used                                                                                                                                       @typescript-eslint/no-unused-vars
+  391:25   error    Empty block statement                                                                                                                                               no-empty
+  403:19   error    Unsafe assignment of an `any` value                                                                                                                                 @typescript-eslint/no-unsafe-assignment
+  403:33   error    Unsafe member access .tableid on an `any` value                                                                                                                     @typescript-eslint/no-unsafe-member-access
+  465:19   error    Unsafe assignment of an `any` value                                                                                                                                 @typescript-eslint/no-unsafe-assignment
+  465:33   error    Unsafe member access .tableid on an `any` value                                                                                                                     @typescript-eslint/no-unsafe-member-access
+  470:21   error    Unsafe assignment of an error typed value                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  470:46   error    Unsafe member access ["Create Table"] on an `error` typed value                                                                                                     @typescript-eslint/no-unsafe-member-access
+  470:78   error    Unsafe member access ["CreateTable"] on an `error` typed value                                                                                                      @typescript-eslint/no-unsafe-member-access
+  484:27   error    Unsafe assignment of an error typed value                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  484:35   error    Unsafe call of a(n) `error` type typed value                                                                                                                        @typescript-eslint/no-unsafe-call
+  486:27   error    Unsafe assignment of an error typed value                                                                                                                           @typescript-eslint/no-unsafe-assignment
+  486:36   error    Unsafe call of a(n) `error` type typed value                                                                                                                        @typescript-eslint/no-unsafe-call
+  486:36   error    Unsafe call of a(n) `error` type typed value                                                                                                                        @typescript-eslint/no-unsafe-call
+  486:42   error    Unsafe member access .map on an `error` typed value                                                                                                                 @typescript-eslint/no-unsafe-member-access
+  487:52   error    Unsafe argument of type `any` assigned to a parameter of type `ArrayLike<unknown> | { [s: string]: unknown; }`                                                      @typescript-eslint/no-unsafe-argument
+  493:36   error    Using `join()` for vals will use Object's default stringification format ('[object Object]') when stringified                                                       @typescript-eslint/no-base-to-string
+  494:24   error    Unsafe member access .join on an `error` typed value                                                                                                                @typescript-eslint/no-unsafe-member-access
+  565:63   error    Unsafe member access .message on an `any` value                                                                                                                     @typescript-eslint/no-unsafe-member-access
+
+/home/diego/Documentos/projects/obsidian-sql/src/core/QueryExecutor.ts
+    3:10  warning  'BLOCKED_COMMANDS' is defined but never used                                                 @typescript-eslint/no-unused-vars
+   36:17  error    Expected the Promise rejection reason to be an Error                                         @typescript-eslint/prefer-promise-reject-errors
+  177:19  error    Unsafe assignment of an `any` value                                                          @typescript-eslint/no-unsafe-assignment
+  177:43  error    Unsafe member access .message on an `any` value                                              @typescript-eslint/no-unsafe-member-access
+  178:58  error    Unsafe argument of type `any` assigned to a parameter of type `string`                       @typescript-eslint/no-unsafe-argument
+  219:73  error    Unsafe argument of type `any` assigned to a parameter of type `{}`                           @typescript-eslint/no-unsafe-argument
+  224:62  error    'res' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+  247:72  error    Unsafe member access [tableName] on an `error` typed value                                   @typescript-eslint/no-unsafe-member-access
+  249:17  error    Unsafe assignment of an error typed value                                                    @typescript-eslint/no-unsafe-assignment
+  258:18  warning  'e' is defined but never used                                                                @typescript-eslint/no-unused-vars
+  273:24  warning  '_' is assigned a value but never used                                                       @typescript-eslint/no-unused-vars
+  290:23  error    Unsafe assignment of an error typed value                                                    @typescript-eslint/no-unsafe-assignment
+  290:30  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  290:43  error    Unsafe member access .toLowerCase on an `error` typed value                                  @typescript-eslint/no-unsafe-member-access
+  291:45  error    Computed name [name] resolves to an `error` typed value                                      @typescript-eslint/no-unsafe-member-access
+  295:23  error    Unsafe assignment of an error typed value                                                    @typescript-eslint/no-unsafe-assignment
+  295:61  error    Unsafe member access .columns on an `error` typed value                                      @typescript-eslint/no-unsafe-member-access
+  295:72  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  295:84  error    Unsafe member access .columns on an `error` typed value                                      @typescript-eslint/no-unsafe-member-access
+  298:21  error    Unsafe assignment of an error typed value                                                    @typescript-eslint/no-unsafe-assignment
+  299:65  error    Unsafe argument of type error typed assigned to a parameter of type `string`                 @typescript-eslint/no-unsafe-argument
+  300:21  error    Unsafe assignment of an error typed value                                                    @typescript-eslint/no-unsafe-assignment
+  302:21  error    Unsafe assignment of an error typed value                                                    @typescript-eslint/no-unsafe-assignment
+  304:21  error    Unsafe assignment of an error typed value                                                    @typescript-eslint/no-unsafe-assignment
+  305:21  error    Unsafe assignment of an error typed value                                                    @typescript-eslint/no-unsafe-assignment
+  336:27  error    Unsafe assignment of an error typed value                                                    @typescript-eslint/no-unsafe-assignment
+  336:33  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  339:52  error    Unsafe member access .tableid on an `error` typed value                                      @typescript-eslint/no-unsafe-member-access
+  340:35  error    Unsafe assignment of an error typed value                                                    @typescript-eslint/no-unsafe-assignment
+  340:41  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  340:51  error    Unsafe member access .tableid on an `error` typed value                                      @typescript-eslint/no-unsafe-member-access
+  341:48  error    Unsafe argument of type error typed assigned to a parameter of type `string`                 @typescript-eslint/no-unsafe-argument
+  341:48  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  341:52  error    Unsafe member access .includes on an `error` typed value                                     @typescript-eslint/no-unsafe-member-access
+  341:68  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  341:68  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  341:72  error    Unsafe member access .split on an `error` typed value                                        @typescript-eslint/no-unsafe-member-access
+  341:83  error    Unsafe member access .pop on an `error` typed value                                          @typescript-eslint/no-unsafe-member-access
+  344:35  error    Unsafe assignment of an error typed value                                                    @typescript-eslint/no-unsafe-assignment
+  344:41  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  344:54  error    Unsafe member access .toLowerCase on an `error` typed value                                  @typescript-eslint/no-unsafe-member-access
+  345:48  error    Unsafe argument of type error typed assigned to a parameter of type `string`                 @typescript-eslint/no-unsafe-argument
+  345:48  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  345:52  error    Unsafe member access .includes on an `error` typed value                                     @typescript-eslint/no-unsafe-member-access
+  345:68  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  345:68  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  345:72  error    Unsafe member access .split on an `error` typed value                                        @typescript-eslint/no-unsafe-member-access
+  345:83  error    Unsafe member access .pop on an `error` typed value                                          @typescript-eslint/no-unsafe-member-access
+  348:29  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  348:39  error    Unsafe member access .forEach on an `error` typed value                                      @typescript-eslint/no-unsafe-member-access
+  350:43  error    Unsafe assignment of an error typed value                                                    @typescript-eslint/no-unsafe-assignment
+  350:49  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  350:59  error    Unsafe member access .toLowerCase on an `error` typed value                                  @typescript-eslint/no-unsafe-member-access
+  351:56  error    Unsafe argument of type error typed assigned to a parameter of type `string`                 @typescript-eslint/no-unsafe-argument
+  351:56  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  351:60  error    Unsafe member access .includes on an `error` typed value                                     @typescript-eslint/no-unsafe-member-access
+  351:76  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  351:76  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  351:80  error    Unsafe member access .split on an `error` typed value                                        @typescript-eslint/no-unsafe-member-access
+  351:91  error    Unsafe member access .pop on an `error` typed value                                          @typescript-eslint/no-unsafe-member-access
+  355:54  error    Unsafe member access .tableid on an `error` typed value                                      @typescript-eslint/no-unsafe-member-access
+  356:35  error    Unsafe assignment of an error typed value                                                    @typescript-eslint/no-unsafe-assignment
+  356:41  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  356:52  error    Unsafe member access .tableid on an `error` typed value                                      @typescript-eslint/no-unsafe-member-access
+  357:48  error    Unsafe argument of type error typed assigned to a parameter of type `string`                 @typescript-eslint/no-unsafe-argument
+  357:48  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  357:52  error    Unsafe member access .includes on an `error` typed value                                     @typescript-eslint/no-unsafe-member-access
+  357:68  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  357:68  error    Unsafe call of a(n) `error` type typed value                                                 @typescript-eslint/no-unsafe-call
+  357:72  error    Unsafe member access .split on an `error` typed value                                        @typescript-eslint/no-unsafe-member-access
+  357:83  error    Unsafe member access .pop on an `error` typed value                                          @typescript-eslint/no-unsafe-member-access
+  364:26  warning  'e' is defined but never used                                                                @typescript-eslint/no-unused-vars
+
+/home/diego/Documentos/projects/obsidian-sql/src/core/__tests__/DatabaseEventBus.test.ts
+  1:36  warning  'beforeEach' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/diego/Documentos/projects/obsidian-sql/src/core/__tests__/DatabaseManager.extra.test.ts
+    1:48  warning  'afterEach' is defined but never used                              @typescript-eslint/no-unused-vars
+   40:13  error    Unsafe call of a(n) `error` type typed value                       @typescript-eslint/no-unsafe-call
+   40:33  error    Unsafe member access .mockResolvedValue on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   45:55  error    Unsafe member access .mock on an `error` typed value               @typescript-eslint/no-unsafe-member-access
+   46:43  error    Unsafe member access .dbo on an `error` typed value                @typescript-eslint/no-unsafe-member-access
+   47:43  error    Unsafe member access .dbo on an `error` typed value                @typescript-eslint/no-unsafe-member-access
+   66:13  error    Unsafe call of a(n) `error` type typed value                       @typescript-eslint/no-unsafe-call
+   66:33  error    Unsafe member access .mockResolvedValue on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+   73:27  error    Unsafe member access .name on an `error` typed value               @typescript-eslint/no-unsafe-member-access
+   90:13  error    Unsafe call of a(n) `error` type typed value                       @typescript-eslint/no-unsafe-call
+   90:33  error    Unsafe member access .mockResolvedValue on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  109:20  error    Unsafe call of a(n) `error` type typed value                       @typescript-eslint/no-unsafe-call
+
+/home/diego/Documentos/projects/obsidian-sql/src/core/__tests__/DatabaseManager.test.ts
+    5:10  warning  'IMySQLPlugin' is defined but never used                          @typescript-eslint/no-unused-vars
+   18:18  warning  'e' is defined but never used                                     @typescript-eslint/no-unused-vars
+   55:29  error    Unsafe member access .snapshotRowLimit on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  101:23  error    Unsafe member access .v on an `error` typed value                 @typescript-eslint/no-unsafe-member-access
+  115:23  error    Unsafe member access .v on an `error` typed value                 @typescript-eslint/no-unsafe-member-access
+
+/home/diego/Documentos/projects/obsidian-sql/src/core/__tests__/QueryExecutor.config.test.ts
+  14:18  warning  'e' is defined but never used        @typescript-eslint/no-unused-vars
+  14:21  error    Empty block statement                no-empty
+  47:39  error    Unsafe assignment of an `any` value  @typescript-eslint/no-unsafe-assignment
+
+/home/diego/Documentos/projects/obsidian-sql/src/core/__tests__/QueryExecutor.test.ts
+    1:44  warning  'vi' is defined but never used                                   @typescript-eslint/no-unused-vars
+   16:18  warning  'e' is defined but never used                                    @typescript-eslint/no-unused-vars
+   80:52  error    Unsafe member access .v on an `error` typed value                @typescript-eslint/no-unsafe-member-access
+   81:52  error    Unsafe member access .v on an `error` typed value                @typescript-eslint/no-unsafe-member-access
+   99:15  error    Unsafe assignment of an error typed value                        @typescript-eslint/no-unsafe-assignment
+   99:27  error    Unsafe call of a(n) `error` type typed value                     @typescript-eslint/no-unsafe-call
+   99:43  error    Unsafe member access .find on an `error` typed value             @typescript-eslint/no-unsafe-member-access
+  100:26  error    Unsafe member access .label on an `error` typed value            @typescript-eslint/no-unsafe-member-access
+  101:26  error    Unsafe member access .type on an `error` typed value             @typescript-eslint/no-unsafe-member-access
+  103:15  error    Unsafe assignment of an error typed value                        @typescript-eslint/no-unsafe-assignment
+  103:25  error    Unsafe call of a(n) `error` type typed value                     @typescript-eslint/no-unsafe-call
+  103:41  error    Unsafe member access .find on an `error` typed value             @typescript-eslint/no-unsafe-member-access
+  104:24  error    Unsafe member access .isAutoIncrement on an `error` typed value  @typescript-eslint/no-unsafe-member-access
+  145:23  error    Unsafe member access .cnt on an `error` typed value              @typescript-eslint/no-unsafe-member-access
+
+/home/diego/Documentos/projects/obsidian-sql/src/main.ts
+  107:5   error    Promise-returning method provided where a void return was expected by extended/implemented type 'Plugin'        @typescript-eslint/no-misused-promises
+  107:5   error    Promise-returning method provided where a void return was expected by extended/implemented type 'IMySQLPlugin'  @typescript-eslint/no-misused-promises
+  114:9   error    Unsafe assignment of an `any` value                                                                             @typescript-eslint/no-unsafe-assignment
+  218:65  error    This assertion is unnecessary since it does not change the type of the expression                               @typescript-eslint/no-unnecessary-type-assertion
+  228:29  error    Unsafe call of a(n) `any` typed value                                                                           @typescript-eslint/no-unsafe-call
+  228:40  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  228:45  error    Unsafe member access .parse on an `any` value                                                                   @typescript-eslint/no-unsafe-member-access
+  315:35  warning  Use sentence case for UI text                                                                                   obsidianmd/ui/sentence-case
+  366:15  error    Unsafe assignment of an `any` value                                                                             @typescript-eslint/no-unsafe-assignment
+  471:39  warning  Use sentence case for UI text                                                                                   obsidianmd/ui/sentence-case
+  477:37  error    This assertion is unnecessary since it does not change the type of the expression                               @typescript-eslint/no-unnecessary-type-assertion
+  496:37  error    This assertion is unnecessary since it does not change the type of the expression                               @typescript-eslint/no-unnecessary-type-assertion
+  549:31  error    'params[key] ?? ""' will use Object's default stringification format ('[object Object]') when stringified       @typescript-eslint/no-base-to-string
+  644:28  error    This assertion is unnecessary since it does not change the type of the expression                               @typescript-eslint/no-unnecessary-type-assertion
+  644:70  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  666:27  error    Unsafe assignment of an `any` value                                                                             @typescript-eslint/no-unsafe-assignment
+  666:53  error    Unexpected any. Specify a different type                                                                        @typescript-eslint/no-explicit-any
+  667:36  error    Unsafe member access .setting on an `any` value                                                                 @typescript-eslint/no-unsafe-member-access
+  667:51  error    Unsafe call of a(n) `any` typed value                                                                           @typescript-eslint/no-unsafe-call
+  667:62  error    Unsafe member access .setting on an `any` value                                                                 @typescript-eslint/no-unsafe-member-access
+  668:36  error    Unsafe member access .setting on an `any` value                                                                 @typescript-eslint/no-unsafe-member-access
+  668:58  error    Unsafe call of a(n) `any` typed value                                                                           @typescript-eslint/no-unsafe-call
+  668:69  error    Unsafe member access .setting on an `any` value                                                                 @typescript-eslint/no-unsafe-member-access
+
+/home/diego/Documentos/projects/obsidian-sql/src/settings.ts
+   65:9   error    Avoid setting styles directly via `element.style.display`. Use CSS classes for better theming and maintainability. Use the `setCssProps` function to change CSS properties  obsidianmd/no-static-styles-assignment
+  231:15  error    Unsafe assignment of an `any` value                                                                                                                                         @typescript-eslint/no-unsafe-assignment
+  232:15  error    Unsafe assignment of an `any` value                                                                                                                                         @typescript-eslint/no-unsafe-assignment
+  232:23  error    Unsafe call of a(n) `any` typed value                                                                                                                                       @typescript-eslint/no-unsafe-call
+  232:33  error    Unsafe member access .getDatabaseStats on an `any` value                                                                                                                    @typescript-eslint/no-unsafe-member-access
+  249:58  error    Unsafe argument of type `any` assigned to a parameter of type `string`                                                                                                      @typescript-eslint/no-unsafe-argument
+  249:58  error    Unsafe call of a(n) `any` typed value                                                                                                                                       @typescript-eslint/no-unsafe-call
+  249:64  error    Unsafe member access .tables on an `any` value                                                                                                                              @typescript-eslint/no-unsafe-member-access
+  250:56  error    Unsafe argument of type `any` assigned to a parameter of type `string`                                                                                                      @typescript-eslint/no-unsafe-argument
+  250:56  error    Unsafe call of a(n) `any` typed value                                                                                                                                       @typescript-eslint/no-unsafe-call
+  250:62  error    Unsafe member access .rows on an `any` value                                                                                                                                @typescript-eslint/no-unsafe-member-access
+  251:73  error    Unsafe argument of type `any` assigned to a parameter of type `number`                                                                                                      @typescript-eslint/no-unsafe-argument
+  251:79  error    Unsafe member access .sizeBytes on an `any` value                                                                                                                           @typescript-eslint/no-unsafe-member-access
+  252:72  error    Unsafe argument of type `any` assigned to a parameter of type `number`                                                                                                      @typescript-eslint/no-unsafe-argument
+  252:78  error    Unsafe member access .lastUpdated on an `any` value                                                                                                                         @typescript-eslint/no-unsafe-member-access
+  320:36  warning  Use sentence case for UI text                                                                                                                                               obsidianmd/ui/sentence-case
+  322:37  warning  Use sentence case for UI text                                                                                                                                               obsidianmd/ui/sentence-case
+  362:30  error    Avoid setting styles directly via `element.style.display`. Use CSS classes for better theming and maintainability. Use the `setCssProps` function to change CSS properties  obsidianmd/no-static-styles-assignment
+  414:33  warning  Use sentence case for UI text                                                                                                                                               obsidianmd/ui/sentence-case
+  486:15  error    Unsafe assignment of an error typed value                                                                                                                                   @typescript-eslint/no-unsafe-assignment
+  492:15  error    Unsafe call of a(n) `error` type typed value                                                                                                                                @typescript-eslint/no-unsafe-call
+  492:25  error    Unsafe member access .save on an `error` typed value                                                                                                                        @typescript-eslint/no-unsafe-member-access
+  508:15  error    Unsafe assignment of an `any` value                                                                                                                                         @typescript-eslint/no-unsafe-assignment
+  509:15  error    Unsafe assignment of an `any` value                                                                                                                                         @typescript-eslint/no-unsafe-assignment
+  509:23  error    Unsafe call of a(n) `any` typed value                                                                                                                                       @typescript-eslint/no-unsafe-call
+  509:33  error    Unsafe member access .getDatabaseStats on an `any` value                                                                                                                    @typescript-eslint/no-unsafe-member-access
+  536:43  error    Unsafe argument of type `any` assigned to a parameter of type `string`                                                                                                      @typescript-eslint/no-unsafe-argument
+  536:43  error    Unsafe call of a(n) `any` typed value                                                                                                                                       @typescript-eslint/no-unsafe-call
+  536:49  error    Unsafe member access .tables on an `any` value                                                                                                                              @typescript-eslint/no-unsafe-member-access
+  537:41  error    Unsafe argument of type `any` assigned to a parameter of type `string`                                                                                                      @typescript-eslint/no-unsafe-argument
+  537:41  error    Unsafe call of a(n) `any` typed value                                                                                                                                       @typescript-eslint/no-unsafe-call
+  537:47  error    Unsafe member access .rows on an `any` value                                                                                                                                @typescript-eslint/no-unsafe-member-access
+  538:58  error    Unsafe argument of type `any` assigned to a parameter of type `number`                                                                                                      @typescript-eslint/no-unsafe-argument
+  538:64  error    Unsafe member access .sizeBytes on an `any` value                                                                                                                           @typescript-eslint/no-unsafe-member-access
+  540:15  warning  'lastMod' is assigned a value but never used                                                                                                                                @typescript-eslint/no-unused-vars
+  541:49  error    Unsafe argument of type `any` assigned to a parameter of type `number`                                                                                                      @typescript-eslint/no-unsafe-argument
+  541:55  error    Unsafe member access .lastUpdated on an `any` value                                                                                                                         @typescript-eslint/no-unsafe-member-access
+  589:9   error    Avoid setting styles directly via `element.style.display`. Use CSS classes for better theming and maintainability. Use the `setCssProps` function to change CSS properties  obsidianmd/no-static-styles-assignment
+  591:19  error    Unsafe assignment of an error typed value                                                                                                                                   @typescript-eslint/no-unsafe-assignment
+  591:35  error    Unsafe member access .files on an `error` typed value                                                                                                                       @typescript-eslint/no-unsafe-member-access
+  593:46  error    Unsafe argument of type error typed assigned to a parameter of type `File`                                                                                                  @typescript-eslint/no-unsafe-argument
+  675:31  error    Unsafe call of a(n) `any` typed value                                                                                                                                       @typescript-eslint/no-unsafe-call
+  675:53  error    Unsafe member access .clearDatabase on an `any` value                                                                                                                       @typescript-eslint/no-unsafe-member-access
+  695:35  error    Unsafe assignment of an `any` value                                                                                                                                         @typescript-eslint/no-unsafe-assignment
+  696:35  error    Unsafe call of a(n) `any` typed value                                                                                                                                       @typescript-eslint/no-unsafe-call
+  696:45  error    Unsafe member access .deleteDatabase on an `any` value                                                                                                                      @typescript-eslint/no-unsafe-member-access
+  712:19  error    Unsafe assignment of an error typed value                                                                                                                                   @typescript-eslint/no-unsafe-assignment
+  713:19  error    Unsafe assignment of an error typed value                                                                                                                                   @typescript-eslint/no-unsafe-assignment
+  713:31  error    Unsafe call of a(n) `error` type typed value                                                                                                                                @typescript-eslint/no-unsafe-call
+  713:41  error    Unsafe member access .exportDatabase on an `error` typed value                                                                                                              @typescript-eslint/no-unsafe-member-access
+  721:58  error    Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                @typescript-eslint/no-unsafe-argument
+  770:59  error    `substr` is deprecated. A legacy feature for browser compatibility                                                                                                          @typescript-eslint/no-deprecated
+  846:31  error    Unsafe assignment of an `any` value                                                                                                                                         @typescript-eslint/no-unsafe-assignment
+  847:31  error    Unsafe call of a(n) `any` typed value                                                                                                                                       @typescript-eslint/no-unsafe-call
+  847:41  error    Unsafe member access .importDatabase on an `any` value                                                                                                                      @typescript-eslint/no-unsafe-member-access
+
+/home/diego/Documentos/projects/obsidian-sql/src/types/index.ts
+  55:19  error  'unknown' overrides all other types in this union type  @typescript-eslint/no-redundant-type-constituents
+  75:16  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+  76:20  error  Unexpected any. Specify a different type                @typescript-eslint/no-explicit-any
+
+/home/diego/Documentos/projects/obsidian-sql/src/ui/DatabaseModals.ts
+   29:19   error    Unsafe assignment of an `any` value                                                          @typescript-eslint/no-unsafe-assignment
+   29:27   error    Unsafe call of a(n) `any` typed value                                                        @typescript-eslint/no-unsafe-call
+   29:49   error    Unsafe member access .getDatabaseStats on an `any` value                                     @typescript-eslint/no-unsafe-member-access
+   43:32   error    Unsafe member access .tables on an `any` value                                               @typescript-eslint/no-unsafe-member-access
+   43:85   error    Unsafe call of a(n) `any` typed value                                                        @typescript-eslint/no-unsafe-call
+   43:91   error    Unsafe member access .rows on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+   90:15   error    Unsafe call of a(n) `any` typed value                                                        @typescript-eslint/no-unsafe-call
+   90:37   error    Unsafe member access .save on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  105:35   error    Unsafe call of a(n) `any` typed value                                                        @typescript-eslint/no-unsafe-call
+  105:57   error    Unsafe member access .deleteDatabase on an `any` value                                       @typescript-eslint/no-unsafe-member-access
+  147:15   warning  'confirmBtn' is assigned a value but never used                                              @typescript-eslint/no-unused-vars
+  158:27   error    Unsafe call of a(n) `any` typed value                                                        @typescript-eslint/no-unsafe-call
+  158:49   error    Unsafe member access .renameDatabase on an `any` value                                       @typescript-eslint/no-unsafe-member-access
+  196:15   warning  'confirmBtn' is assigned a value but never used                                              @typescript-eslint/no-unused-vars
+  207:27   error    Unsafe call of a(n) `any` typed value                                                        @typescript-eslint/no-unsafe-call
+  207:49   error    Unsafe member access .createDatabase on an `any` value                                       @typescript-eslint/no-unsafe-member-access
+  213:27   error    Unsafe call of a(n) `any` typed value                                                        @typescript-eslint/no-unsafe-call
+  213:49   error    Unsafe member access .save on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  255:15   warning  'confirmBtn' is assigned a value but never used                                              @typescript-eslint/no-unused-vars
+  270:27   error    Unsafe call of a(n) `any` typed value                                                        @typescript-eslint/no-unsafe-call
+  270:49   error    Unsafe member access .duplicateDatabase on an `any` value                                    @typescript-eslint/no-unsafe-member-access
+  304:15   error    Unsafe assignment of an `any` value                                                          @typescript-eslint/no-unsafe-assignment
+  304:31   error    Unexpected any. Specify a different type                                                     @typescript-eslint/no-explicit-any
+  304:36   error    Unsafe member access .databases on an `any` value                                            @typescript-eslint/no-unsafe-member-access
+  305:24   error    Unsafe member access .tables on an `any` value                                               @typescript-eslint/no-unsafe-member-access
+  305:49   error    Unsafe member access .tables on an `any` value                                               @typescript-eslint/no-unsafe-member-access
+  311:39   error    Unsafe member access .tables on an `any` value                                               @typescript-eslint/no-unsafe-member-access
+  314:19   error    Unsafe assignment of an `any` value                                                          @typescript-eslint/no-unsafe-assignment
+  314:32   error    This assertion is unnecessary since it does not change the type of the expression            @typescript-eslint/no-unnecessary-type-assertion
+  314:35   error    Unsafe member access .tables on an `any` value                                               @typescript-eslint/no-unsafe-member-access
+  314:56   error    Unexpected any. Specify a different type                                                     @typescript-eslint/no-explicit-any
+  314:61   error    Unsafe member access .data on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  315:19   error    Unsafe assignment of an `any` value                                                          @typescript-eslint/no-unsafe-assignment
+  315:40   error    Unsafe member access .length on an `any` value                                               @typescript-eslint/no-unsafe-member-access
+  355:15   warning  'title' is assigned a value but never used                                                   @typescript-eslint/no-unused-vars
+  442:15   warning  'separator' is assigned a value but never used                                               @typescript-eslint/no-unused-vars
+  446:15   warning  'loadingMsg' is assigned a value but never used                                              @typescript-eslint/no-unused-vars
+  461:27   warning  'note' is assigned a value but never used                                                    @typescript-eslint/no-unused-vars
+  475:43   error    Unexpected any. Specify a different type                                                     @typescript-eslint/no-explicit-any
+  476:21   error    Unsafe member access .success on an `any` value                                              @typescript-eslint/no-unsafe-member-access
+  476:40   error    Unsafe member access .data on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  476:55   error    Unsafe member access .data on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  481:15   error    Unsafe assignment of an `any` value                                                          @typescript-eslint/no-unsafe-assignment
+  481:22   error    This assertion is unnecessary since it does not change the type of the expression            @typescript-eslint/no-unnecessary-type-assertion
+  481:29   error    Unsafe member access .data on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  481:40   error    Unexpected any. Specify a different type                                                     @typescript-eslint/no-explicit-any
+  482:18   error    Unsafe member access .type on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  482:43   error    Unsafe member access .data on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  482:56   error    Unsafe member access .data on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  486:38   error    Unsafe argument of type `any` assigned to a parameter of type `{}`                           @typescript-eslint/no-unsafe-argument
+  486:43   error    Unsafe member access .data on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  504:103  error    'val' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+  510:19   error    Unsafe assignment of an `any` value                                                          @typescript-eslint/no-unsafe-assignment
+  510:34   error    Unsafe call of a(n) `any` typed value                                                        @typescript-eslint/no-unsafe-call
+  510:39   error    Unsafe member access .data on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  511:25   error    Unsafe argument of type `any` assigned to a parameter of type `unknown[]`                    @typescript-eslint/no-unsafe-argument
+  512:42   error    Unsafe member access .length on an `any` value                                               @typescript-eslint/no-unsafe-member-access
+  514:22   error    Unsafe member access .data on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  518:62   error    Unsafe member access .data on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  528:27   error    Unsafe assignment of an `any` value                                                          @typescript-eslint/no-unsafe-assignment
+  528:39   error    Unsafe call of a(n) `any` typed value                                                        @typescript-eslint/no-unsafe-call
+  528:44   error    Unsafe member access .data on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  529:33   error    Unsafe argument of type `any` assigned to a parameter of type `unknown[]`                    @typescript-eslint/no-unsafe-argument
+  531:91   error    Unsafe member access .data on an `any` value                                                 @typescript-eslint/no-unsafe-member-access
+  552:76   error    'val' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+  587:30   warning  'clipboardError' is defined but never used                                                   @typescript-eslint/no-unused-vars
+  664:36   error    'val' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+  687:31   error    'val' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+
+/home/diego/Documentos/projects/obsidian-sql/src/ui/FormRenderer.ts
+   64:123  error  'field.defaultValue' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+  112:50   error  This assertion is unnecessary since it does not change the type of the expression                           @typescript-eslint/no-unnecessary-type-assertion
+
+/home/diego/Documentos/projects/obsidian-sql/src/ui/ResultRenderer.ts
+   70:42  error    Unsafe argument of type `any` assigned to a parameter of type `{}`                           @typescript-eslint/no-unsafe-argument
+   76:80  error    'val' will use Object's default stringification format ('[object Object]') when stringified  @typescript-eslint/no-base-to-string
+  113:30  warning  'e' is defined but never used                                                                @typescript-eslint/no-unused-vars
+  170:51  error    Unexpected any. Specify a different type                                                     @typescript-eslint/no-explicit-any
+  172:23  error    Unsafe assignment of an `any` value                                                          @typescript-eslint/no-unsafe-assignment
+  258:45  error    Unsafe argument of type `any` assigned to a parameter of type `FormData`                     @typescript-eslint/no-unsafe-argument
+  258:56  error    Unexpected any. Specify a different type                                                     @typescript-eslint/no-explicit-any
+  292:55  error    Unexpected any. Specify a different type                                                     @typescript-eslint/no-explicit-any
+  295:27  error    Unsafe assignment of an `any` value                                                          @typescript-eslint/no-unsafe-assignment
+
+/home/diego/Documentos/projects/obsidian-sql/src/utils/SQLSanitizer.ts
+  25:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 344 problems (313 errors, 31 warnings)
+  20 errors and 0 warnings potentially fixable with the `--fix` option.
+

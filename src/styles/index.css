@@ -12,6 +12,7 @@
 @import "./ui/modals.css";
 @import "./ui/responsive.css";
 @import "./ui/footer.css";
+@import "./ui/utilities.css";
 
 /* Components */
 @import "./components/workbench.css";
@@ -20,3 +21,4 @@
 @import "./components/table.css";
 @import "./components/database.css";
 @import "./components/form.css";
+@import "./components/settings.css";

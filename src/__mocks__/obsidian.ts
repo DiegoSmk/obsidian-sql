@@ -12,34 +12,37 @@ export class Notice {
 }
 
 export class Events {
-    private listeners: Record<string, Function[]> = {};
+    private listeners: Record<string, ((...args: unknown[]) => unknown)[]> = {};
 
-    on(name: string, callback: Function) {
+    on(name: string, callback: (...args: unknown[]) => unknown) {
         if (!this.listeners[name]) this.listeners[name] = [];
         this.listeners[name].push(callback);
     }
 
-    off(name: string, callback: Function) {
+    off(name: string, callback: (...args: unknown[]) => unknown) {
         if (!this.listeners[name]) return;
         this.listeners[name] = this.listeners[name].filter(cb => cb !== callback);
     }
 
-    trigger(name: string, ...args: any[]) {
+    trigger(name: string, ...args: unknown[]) {
         if (this.listeners[name]) {
-            this.listeners[name].forEach(cb => cb(...args));
+            this.listeners[name].forEach(cb => {
+                const fn = cb as (...args: unknown[]) => unknown;
+                fn(...args);
+            });
         }
     }
 }
 
-export const debounce = (fn: Function, wait: number) => {
-    return (...args: any[]) => fn(...args);
+export const debounce = (fn: (...args: unknown[]) => unknown, _wait: number) => {
+    return (...args: unknown[]) => fn(...args);
 };
 
 export const setIcon = vi.fn();
 
 export class Menu {
-    items: any[] = [];
-    addItem(cb: (item: any) => void) {
+    items: unknown[] = [];
+    addItem(cb: (item: unknown) => void) {
         const itemMock = {
             setTitle: vi.fn().mockReturnThis(),
             setIcon: vi.fn().mockReturnThis(),
@@ -63,7 +66,7 @@ export class Component {
 
 export class Modal {
     contentEl: HTMLElement;
-    constructor(app: any) {
+    constructor(app: unknown) {
         this.contentEl = document.createElement('div');
     }
     open() { }

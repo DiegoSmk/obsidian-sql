@@ -42,8 +42,8 @@ export class ProPracticeModal extends Modal {
             text: t('pro.msg_quote')
         });
         const codeBlock = quote.createDiv({ cls: "mysql-pro-code-examples" });
-        codeBlock.createEl("code", { text: "USE staging;" });
-        codeBlock.createEl("code", { text: "USE production;" });
+        codeBlock.createEl("code", { text: "Use staging;" });
+        codeBlock.createEl("code", { text: "Use production;" });
 
         body.createEl("p", {
             text: t('pro.msg_2')

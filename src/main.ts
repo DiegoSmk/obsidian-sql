@@ -1,10 +1,10 @@
-import { Plugin, TFile, Notice, debounce, Debouncer, setIcon, Menu, Component } from 'obsidian';
+import { Plugin, Notice, debounce, Debouncer, setIcon, Menu, MarkdownPostProcessorContext, MarkdownRenderChild } from 'obsidian';
 // @ts-ignore
 import alasql from 'alasql';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-sql';
 
-import { MySQLSettings, IMySQLPlugin } from './types';
+import { MySQLSettings, IMySQLPlugin, IDatabaseManager, IQueryExecutor, AlaSQLInstance } from './types';
 import { DEFAULT_SETTINGS } from './utils/constants';
 import { SQLSanitizer } from './utils/SQLSanitizer';
 import { Logger } from './utils/Logger';
@@ -25,9 +25,9 @@ import { setLanguage, t } from './utils/i18n';
  * Component to manage the lifecycle of a LIVE block synchronization listener.
  * This ensures listeners are correctly detached when the block is unloaded.
  */
-class LiveSyncComponent extends Component {
-    constructor(private bus: DatabaseEventBus, private handler: (event: DatabaseChangeEvent) => void) {
-        super();
+class LiveSyncComponent extends MarkdownRenderChild {
+    constructor(containerEl: HTMLElement, private bus: DatabaseEventBus, private handler: (event: DatabaseChangeEvent) => void) {
+        super(containerEl);
     }
     onunload() {
         this.bus.off(DatabaseEventBus.DATABASE_MODIFIED, this.handler);
@@ -36,9 +36,10 @@ class LiveSyncComponent extends Component {
 
 export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     settings: MySQLSettings;
-    public dbManager: DatabaseManager;
+    public dbManager: IDatabaseManager;
     public csvManager: CSVManager;
     public activeDatabase: string = 'dbo';
+    public queryExecutor: IQueryExecutor = QueryExecutor as unknown as IQueryExecutor;
     // @ts-ignore
     private debouncedSave: Debouncer<[], Promise<void>>;
 
@@ -57,11 +58,11 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         // Initialize alasql
         alasql.options.autocommit = true;
         alasql.options.mysql = true;
-        alasql.promise = (sql: string, params?: any[]) => {
-            return new Promise((resolve, reject) => {
-                alasql(sql, params || [], (data: any, err: Error) => {
+        (alasql as AlaSQLInstance).promise = <T>(sql: string, params?: unknown): Promise<T> => {
+            return new Promise<T>((resolve, reject) => {
+                alasql(sql, params || [], (data: unknown, err: Error) => {
                     if (err) reject(err);
-                    else resolve(data);
+                    else resolve(data as T);
                 });
             });
         };
@@ -80,50 +81,37 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
         // Register SQL code block
         this.registerMarkdownCodeBlockProcessor("mysql", (source, el, ctx) => {
-            this.processSQLBlock(source, el, ctx);
+            void this.processSQLBlock(source, el, ctx);
         });
 
         // Add Import CSV command
         this.addCommand({
             id: 'import-csv-to-alasql',
-            name: 'Import CSV to Table',
+            name: 'Import CSV to table',
             callback: () => {
-                new CSVSelectionModal(this.app, async (file) => {
-                    const success = await this.csvManager.importCSV(file);
-                    if (success) {
-                        await this.dbManager.save();
-                    }
+                new CSVSelectionModal(this.app, (file) => {
+                    void (async () => {
+                        const success = await this.csvManager.importCSV(file);
+                        if (success) {
+                            await this.dbManager.save();
+                        }
+                    })();
                 }).open();
             }
         });
 
         // Add Settings Tab
         this.addSettingTab(new MySQLSettingTab(this.app, this));
-
-        // Add Export CSV context menu
-        this.registerEvent(
-            this.app.workspace.on("file-menu", (menu, file) => {
-                // Not really relevant for file-menu on files, but maybe for table view?
-                // Unused in provided monolithic code, but I'll keep it if it was there or matches patterns.
-                // Wait, previous code had it?
-                // Looking at monolithic main.ts...
-                // It didn't have explicit file-menu event for export. It had export button in Table View (ResultRenderer/ViewFileOutline? No, ResultRenderer had 'Copy').
-                // Ah, CSVManager has exportTable(tableName). Where is it called?
-                // In monolithic main.ts: "showTables" method (which I missed in utilities extraction?)
-                // Wait, "showTables" was a method in MySQLPlugin class in monolithic code.
-                // I need to port `processSQLBlock`, `showTables`, `resetDatabase`, `executeQuery`, `injectParams`, `safeHighlight`, `renderParameterInputs`.
-            })
-        );
     }
 
-    async onunload() {
+    onunload() {
         if (this.settings.autoSave) {
-            await this.dbManager.save();
+            void this.dbManager.save();
         }
     }
 
     async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData() as Partial<MySQLSettings>);
         setLanguage(this.settings.language);
     }
 
@@ -146,15 +134,15 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         const color = settings.useObsidianAccent ? 'var(--interactive-accent)' : settings.themeColor;
 
         // Set variables on body for global availability
-        document.body.style.setProperty('--mysql-accent', color);
-        document.body.style.setProperty('--mysql-accent-purple', color);
+        (document.body as any).style.setProperty('--mysql-accent', color);
+        (document.body as any).style.setProperty('--mysql-accent-purple', color);
     }
 
     // ========================================================================
     // LOGIC PORTED FROM MONOLITHIC CLASS
     // ========================================================================
 
-    private generateBlockStableId(source: string, ctx: any): string {
+    private generateBlockStableId(source: string, ctx: MarkdownPostProcessorContext): string {
         const hash = (str: string) => {
             let h1 = 0x811c9dc5, h2 = 0xdeadbeef;
             for (let i = 0; i < str.length; i++) {
@@ -167,7 +155,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         return `${ctx.sourcePath}:${hash(source.trim())}`;
     }
 
-    async processSQLBlock(source: string, el: HTMLElement, ctx: any) {
+    async processSQLBlock(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) {
         el.empty();
         el.addClass("mysql-block-parent");
         const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
@@ -176,27 +164,25 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         const trimmedSource = source.trim();
         const isLive = trimmedSource.toUpperCase().startsWith("LIVE SELECT");
         const isForm = trimmedSource.toUpperCase().startsWith("FORM");
-        const sectionInfo = ctx.getSectionInfo(el);
-        const liveBlockId = isLive && sectionInfo ? `${ctx.sourcePath}:${sectionInfo.lineStart}-${sectionInfo.lineEnd}` :
-            (isLive ? `${ctx.sourcePath}:unknown-${Date.now()}` : null);
         const stableId = (isLive || isForm) ? this.generateBlockStableId(source, ctx) : null;
 
         if (isLive && this.settings.enableLogging) {
-            Logger.info(`[LIVE] Initializing block: stableId=${stableId}, liveBlockId=${liveBlockId}`);
+            Logger.info(`[LIVE] Initializing block: stableId=${stableId}`);
         }
 
         // Resolve Anchored Database (Priority: Params > Settings Cache > Global Active)
         let anchoredDB: string | null = null;
         if (isLive || isForm) {
-            // Check for explicit 'db' param in comments: /* params: { "db": "empresa" } */ or -- db: empresa
             const jsonParamMatch = source.match(/\/\*\s*params\s*:\s*({[\s\S]*?})\s*\*\//);
             const lineParamMatch = source.match(/--\s*db:\s*([a-zA-Z_][a-zA-Z0-9_]*)/i);
 
             if (jsonParamMatch) {
                 try {
-                    const p = JSON.parse(jsonParamMatch[1]);
-                    if (p.db) anchoredDB = p.db;
-                } catch (e) { }
+                    const p = JSON.parse(jsonParamMatch[1]) as Record<string, unknown>;
+                    if (p.db) anchoredDB = p.db as string;
+                } catch (e) {
+                    Logger.debug("Failed to parse JSON params", e);
+                }
             }
 
             if (!anchoredDB && lineParamMatch) {
@@ -213,10 +199,11 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 anchoredDB = this.activeDatabase;
                 if (stableId) {
                     this.settings.liveBlockAnchors[stableId] = anchoredDB;
-                    this.saveSettings();
+                    void this.saveSettings();
                 }
             }
         }
+
         let observedTables: string[] = [];
 
         if (isLive) {
@@ -224,32 +211,22 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             try {
                 // Extract SQL without LIVE prefix for AST parsing
                 const sqlForAST = trimmedSource.substring(5).trim();
-                const extractFromNode = (node: any) => {
+                const extractFromNode = (node: unknown) => {
                     if (!node) return;
-                    if (node.tableid) {
-                        const tid = node.tableid.toLowerCase();
-                        observedTables.push(tid.includes('.') ? tid.split('.').pop()! : tid);
+                    if (typeof node === 'object' && node !== null && 'tableid' in node) {
+                        const tid = (node as { tableid: string }).tableid.toLowerCase();
+                        observedTables.push(tid.includes('.') ? tid.split('.').pop() ?? tid : tid);
                     }
                     if (Array.isArray(node)) {
                         node.forEach(extractFromNode);
-                    } else if (typeof node === 'object') {
-                        Object.values(node).forEach(val => {
-                            if (typeof val === 'object') extractFromNode(val);
+                    } else if (typeof node === 'object' && node !== null) {
+                        Object.values(node as Record<string, unknown>).forEach(val => {
+                            if (typeof val === 'object' && val !== null) extractFromNode(val);
                         });
                     }
                 };
-                const ast = (alasql as any).parse(sqlForAST);
+                const ast = (alasql as { parse: (s: string) => unknown }).parse(sqlForAST);
                 extractFromNode(ast);
-
-                // Regex fallback for EXTRA safety
-                const tableRegex = /(?:FROM|JOIN|INTO|UPDATE)\s+([a-zA-Z_][a-zA-Z0-9_.]*)/gi;
-                let match;
-                while ((match = tableRegex.exec(sqlForAST)) !== null) {
-                    const tid = match[1].split('.').pop()!.toLowerCase();
-                    if (!['select', 'values', '(', 'set', 'where'].includes(tid)) {
-                        observedTables.push(tid);
-                    }
-                }
 
                 observedTables = Array.from(new Set(observedTables));
                 Logger.info(`[LIVE] Monitoring tables: `, observedTables);
@@ -259,27 +236,19 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         }
 
         // Collapsed Preview (Bar with first line of code)
-        // Parse Title & State from First Line
         const rawFirstLine = source.split('\n')[0].trim();
-
         let displayTitle = isForm ? "Data Form" : (isLive ? "Live Result" : "SQL Query");
         let icon = isForm ? "file-edit" : (isLive ? "pulse" : "database");
         let titleColorClass = "";
         let startCollapsed = false;
 
-        // Check if first line is a comment
         const isComment = /^(--|#|\/\*)/.test(rawFirstLine);
-
         if (isComment) {
-            // Remove SQL comment syntax
             let cleanLine = rawFirstLine.replace(/^(--\s?|#\s?|\/\*\s?)/, '').replace(/\s?\*\/$/, '').trim();
-
-            // Parse Markers
             if (cleanLine.includes("@")) {
                 startCollapsed = true;
                 cleanLine = cleanLine.replace("@", "").trim();
             }
-
             if (cleanLine.startsWith("!")) {
                 icon = "alert-triangle";
                 titleColorClass = "mysql-title-alert";
@@ -296,15 +265,10 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 workbench.addClass("mysql-mode-star");
                 cleanLine = cleanLine.substring(1).trim();
             }
-
-            if (cleanLine.length > 0) {
-                displayTitle = cleanLine;
-            }
+            if (cleanLine.length > 0) displayTitle = cleanLine;
         }
 
         const previewBar = workbench.createEl("div", { cls: "mysql-collapsed-preview" });
-        // Initial visibility set below based on startCollapsed
-
         const previewToggle = previewBar.createEl("div", { cls: "mysql-preview-toggle" });
         setIcon(previewToggle, "chevron-right");
 
@@ -314,22 +278,17 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         setIcon(iconSpan, icon);
 
         const textSpan = previewContent.createSpan({ cls: "mysql-preview-text", text: displayTitle });
-        // Only apply color to text if it's not the help style (as requested)
-        if (titleColorClass && titleColorClass !== "mysql-title-help") {
-            textSpan.addClass(titleColorClass);
-        }
+        if (titleColorClass && titleColorClass !== "mysql-title-help") textSpan.addClass(titleColorClass);
 
-        // Expand Action
-        previewBar.onclick = () => {
-            workbench.removeClass("is-collapsed");
-            body.style.display = "block";
-            previewBar.style.display = "none";
-        };
-
-        // Body Structure
         const body = workbench.createEl("div", { cls: "mysql-workbench-body" });
 
-        // Collapse Button (Floating in expanded state)
+        previewBar.onclick = () => {
+            workbench.removeClass("is-collapsed");
+            body.removeClass("u-display-none");
+            previewBar.addClass("u-display-none");
+            previewBar.removeClass("u-display-flex");
+        };
+
         const collapseBtn = body.createEl("button", {
             cls: "mysql-collapse-btn",
             attr: { "aria-label": "Collapse" }
@@ -338,112 +297,94 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         collapseBtn.onclick = (e) => {
             e.stopPropagation();
             workbench.addClass("is-collapsed");
-            body.style.display = "none";
-            previewBar.style.display = "flex";
+            body.addClass("u-display-none");
+            previewBar.removeClass("u-display-none");
+            previewBar.addClass("u-display-flex");
         };
 
-        // Initialize State based on marker
         if (startCollapsed) {
             workbench.addClass("is-collapsed");
-            previewBar.style.display = "flex";
-            body.style.display = "none";
+            previewBar.addClass("u-display-flex");
+            body.addClass("u-display-none");
         } else {
-            previewBar.style.display = "none";
-            // body is block by default
+            previewBar.addClass("u-display-none");
         }
 
-        // Copy Code Button (Inside body so it hides when collapsed)
         const copyCodeBtn = body.createEl("button", {
             cls: "mysql-copy-code-btn",
-            attr: { "aria-label": "Copy Code" }
+            attr: { "aria-label": "Copy code" }
         });
         setIcon(copyCodeBtn, "copy");
         copyCodeBtn.onclick = async (e) => {
-            e.stopPropagation(); // Prevent header toggle if clicked (though it's in body, safety)
+            e.stopPropagation();
             await navigator.clipboard.writeText(source);
-            new Notice(t('workbench.notice_copy'));
+            new Notice(t('workbench.notice_copy') || "Code copied to clipboard");
         };
 
-        // Safe Code Highlighting
         const codeBlock = body.createEl("pre", { cls: "mysql-source-code" });
-        codeBlock.innerHTML = `<code class="language-sql">${this.safeHighlight(source)}</code>`;
+        const code = codeBlock.createEl("code", { cls: "language-sql" });
+        this.appendHighlightedCode(code, source);
 
         const controls = body.createEl("div", { cls: "mysql-controls" });
-
-        // Run Button
         const runBtn = controls.createEl("button", { cls: "mysql-btn mysql-btn-run" });
         setIcon(runBtn, "play");
         runBtn.createSpan({ text: t('workbench.btn_run') });
 
-        // Container for right-aligned buttons
         const rightControls = controls.createEl("div", { cls: "mysql-controls-right" });
-
-        // Add Tables Button
         const showTablesBtn = rightControls.createEl("button", { cls: "mysql-btn" });
         setIcon(showTablesBtn, "table");
         showTablesBtn.createSpan({ text: t('modals.btn_tabelas') });
 
-        // Add Import CSV Button
         const importBtn = rightControls.createEl("button", { cls: "mysql-btn" });
         setIcon(importBtn, "file-up");
         importBtn.createSpan({ text: t('settings.btn_importar') });
 
-        // Add Reset Button
         const resetBtn = rightControls.createEl("button", { cls: "mysql-btn mysql-btn-danger" });
         setIcon(resetBtn, "trash-2");
         resetBtn.createSpan({ text: t('settings.reset_btn') });
 
         const resultContainer = body.createEl("div", { cls: "mysql-result-container" });
-
-        // VS Code Inspired Footer
-        const footer = new WorkbenchFooter(body, this.app);
-        footer.setActiveDatabase(this.activeDatabase);
+        const footerInstance = new WorkbenchFooter(body, this.app);
+        footerInstance.setActiveDatabase(anchoredDB || this.activeDatabase);
 
         importBtn.onclick = () => {
-            new CSVSelectionModal(this.app, async (file) => {
-                const success = await this.csvManager.importCSV(file);
-                if (success) {
-                    await this.dbManager.save();
-                    // Refrescar tabelas se estiver mostrando
-                    this.showTables(resultContainer, showTablesBtn);
-                }
+            new CSVSelectionModal(this.app, (file) => {
+                void (async () => {
+                    const success = await this.csvManager.importCSV(file);
+                    if (success) {
+                        await this.dbManager.save();
+                        this.showTables(resultContainer, showTablesBtn);
+                    }
+                })();
             }).open();
         };
 
-        // Event Handlers for new buttons
         showTablesBtn.onclick = () => this.showTables(resultContainer, showTablesBtn);
-        resetBtn.onclick = () => this.resetDatabase(resultContainer, footer);
+        resetBtn.onclick = () => void this.resetDatabase(resultContainer, footerInstance);
 
-        // Parse optional parameters JSON in comments
         const paramMatch = source.match(/\/\*\s*params\s*:\s*({[\s\S]*?})\s*\*\//);
-        const params = paramMatch ? JSON.parse(paramMatch[1]) : {};
+        const params: Record<string, unknown> = paramMatch ? (JSON.parse(paramMatch[1]) as Record<string, unknown>) : {};
 
         if (Object.keys(params).length > 0) {
             this.renderParameterInputs(params, controls, runBtn, (newParams) => {
-                this.executeQuery(source, newParams, runBtn, resultContainer, footer);
+                void this.executeQuery(source, newParams, runBtn, resultContainer, footerInstance);
             });
         }
 
-        runBtn.onclick = () => this.executeQuery(source, params, runBtn, resultContainer, footer);
+        runBtn.onclick = () => void this.executeQuery(source, params, runBtn, resultContainer, footerInstance);
 
-        // FORM Mode: Auto-run and Minimalist UI
         if (isForm && anchoredDB) {
             workbench.addClass("mysql-form-mode");
             body.addClass("mysql-view-only");
-            previewBar.style.display = "none";
-            footer.getContainer().style.display = "none";
-            codeBlock.style.display = "none";
-            controls.style.display = "none"; // Hide all controls including Run button
+            previewBar.addClass("u-display-none");
+            footerInstance.getContainer().addClass("u-display-none");
+            codeBlock.addClass("u-display-none");
+            controls.addClass("u-display-none");
 
-            // Create FORM dashboard bar
             const dashboardBar = body.createDiv({ cls: "mysql-live-dashboard-bar mysql-form-dashboard-bar" });
             body.prepend(dashboardBar);
 
-            const dashboardLeft = dashboardBar.createDiv({ cls: "mysql-dashboard-left" });
-            dashboardLeft.style.display = "flex";
-            dashboardLeft.style.alignItems = "center";
-            dashboardLeft.style.gap = "12px";
-
+            const dashboardLeft = dashboardBar.createDiv({ cls: "mysql-dashboard-left u-display-flex u-align-center u-gap-md" });
             const formIndicator = dashboardLeft.createDiv({ cls: "mysql-live-indicator mysql-form-indicator" });
             setIcon(formIndicator, "file-edit");
             formIndicator.createSpan({ text: "FORM" });
@@ -453,10 +394,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             setIcon(dbIcon, "database-backup");
             const dbNameSpan = dbInfo.createSpan({ text: anchoredDB, cls: "mysql-footer-db-name" });
 
-            // Database Switcher logic
             dbInfo.onclick = (e) => {
                 const menu = new Menu();
-                const dbs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
+                const dbs = Object.keys((alasql as { databases: Record<string, unknown> }).databases).filter(d => d !== 'alasql');
                 dbs.sort().forEach(db => {
                     menu.addItem((item) => {
                         item.setTitle(db)
@@ -469,39 +409,27 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                                     await this.saveSettings();
                                 }
                                 dbNameSpan.setText(db);
-                                new Notice(t('common.notice_anchor_form', { name: db }));
-                                this.executeQuery(source, params, runBtn, resultContainer, footer, { activeDatabase: anchoredDB });
+                                new Notice(t('common.notice_anchor_form', { name: db }) || `Form anchored to ${db}`);
+                                void this.executeQuery(source, params, runBtn, resultContainer, footerInstance, { activeDatabase: anchoredDB });
                             });
                     });
                 });
                 menu.showAtMouseEvent(e);
             };
 
-            // Execute initially
-            this.executeQuery(source, params, runBtn, resultContainer, footer, { activeDatabase: anchoredDB });
-
+            void this.executeQuery(source, params, runBtn, resultContainer, footerInstance, { activeDatabase: anchoredDB });
         }
 
-        // If LIVE, trigger initial execution and hide editor
-        if (isLive && liveBlockId && anchoredDB) {
-            // Hide typical interactive elements
+        if (isLive && stableId && anchoredDB) {
             body.addClass("mysql-view-only");
+            previewBar.addClass("u-display-none");
+            footerInstance.getContainer().addClass("u-display-none");
+            codeBlock.addClass("u-display-none");
 
-            // Phase 5: Minimalist LIVE View (sem footer, sem header)
-            previewBar.style.display = "none";
-            footer.getContainer().style.display = "none";
-            codeBlock.style.display = "none";
-
-            // Create minimalist dashboard bar
             const dashboardBar = body.createDiv({ cls: "mysql-live-dashboard-bar" });
             body.prepend(dashboardBar);
 
-            // Left: LIVE Indicator + DB Name
-            const dashboardLeft = dashboardBar.createDiv({ cls: "mysql-dashboard-left" });
-            dashboardLeft.style.display = "flex";
-            dashboardLeft.style.alignItems = "center";
-            dashboardLeft.style.gap = "12px";
-
+            const dashboardLeft = dashboardBar.createDiv({ cls: "mysql-dashboard-left u-display-flex u-align-center u-gap-md" });
             const liveIndicator = dashboardLeft.createDiv({ cls: "mysql-live-indicator" });
             liveIndicator.createDiv({ cls: "mysql-pulse-dot" });
             liveIndicator.createSpan({ text: "LIVE" });
@@ -511,78 +439,62 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             setIcon(dbIcon, "database-backup");
             const dbNameSpan = dbInfo.createSpan({ text: anchoredDB, cls: "mysql-footer-db-name" });
 
-            // Database Switcher logic
             dbInfo.onclick = (e) => {
                 const menu = new Menu();
                 const dbs = Object.keys(alasql.databases).filter(d => d !== 'alasql');
-
                 dbs.sort().forEach(db => {
                     menu.addItem((item) => {
                         item.setTitle(db)
                             .setIcon(db === anchoredDB ? "check" : "database")
                             .onClick(async () => {
                                 if (db === anchoredDB) return;
-
-                                // Update Anchor
                                 anchoredDB = db;
                                 if (stableId) {
                                     this.settings.liveBlockAnchors[stableId] = db;
                                     await this.saveSettings();
                                 }
-
-                                // Update UI
                                 dbNameSpan.setText(db);
-                                new Notice(t('common.notice_anchor_live', { name: db }));
-
-                                // Re-execute immediately
-                                this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
+                                new Notice(t('common.notice_anchor_live', { name: db }) || `Live result anchored to ${db}`);
+                                void this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footerInstance, {
                                     activeDatabase: anchoredDB,
-                                    originId: stableId, // Strictly stableId for origin
+                                    originId: stableId,
                                     isLive: true
                                 });
                             });
                     });
                 });
-
                 menu.showAtMouseEvent(e);
             };
 
-            // Refresh Button (Now on the left)
             const refreshBtn = dashboardLeft.createEl("button", {
                 cls: "mysql-preview-refresh-btn",
-                attr: { "aria-label": "Refresh Data" }
+                attr: { "aria-label": "Refresh data" }
             });
             setIcon(refreshBtn, "refresh-cw");
             refreshBtn.onclick = () => {
                 refreshBtn.addClass("is-spinning");
-                new Notice(t('common.notice_update_live', { name: anchoredDB }));
-                this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
+                void this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footerInstance, {
                     activeDatabase: anchoredDB,
-                    originId: stableId, // Strictly stableId
+                    originId: stableId,
                     isLive: true
                 }).finally(() => {
                     setTimeout(() => refreshBtn.removeClass("is-spinning"), 600);
                 });
             };
 
-            // Execute initially
-            this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
+            void this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footerInstance, {
                 activeDatabase: anchoredDB,
-                originId: stableId, // Strictly stableId
+                originId: stableId,
                 isLive: true
             });
 
-            if (footer) {
-                footer.setLive();
-            }
+            footerInstance.setLive();
 
-            // Register Listener
             const eventBus = DatabaseEventBus.getInstance();
-            // Throttled re-execution
-            const debouncedExec = debounce((isStructural: boolean) => {
-                this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footer, {
+            const debouncedExec = debounce(() => {
+                void this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footerInstance, {
                     activeDatabase: anchoredDB,
-                    originId: stableId, // Strictly stableId
+                    originId: stableId,
                     isLive: true
                 });
             }, 500);
@@ -590,36 +502,25 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             const onModified = (event: DatabaseChangeEvent) => {
                 if (stableId && event.originId === stableId) return;
                 if (event.database !== anchoredDB) return;
-
-                const hasIntersection = event.tables.length === 0 || // Structural change
-                    event.tables.some(t => observedTables.includes(t));
-
-                Logger.info(`[LIVE] Modification detected in ${event.database}. Tables: ${event.tables.join(',')}. Match? ${hasIntersection} (Sender: ${event.originId})`);
-
-                if (hasIntersection) {
-                    debouncedExec(event.tables.length === 0);
-                }
+                const hasIntersection = event.tables.length === 0 || event.tables.some(t => observedTables.includes(t.toLowerCase()));
+                if (hasIntersection) debouncedExec();
             };
 
             eventBus.onDatabaseModified(onModified);
-
-            // Phase 6 Refinement: Register cleanup via official Obsidian Component
-            ctx.addChild(new LiveSyncComponent(eventBus, onModified));
+            ctx.addChild(new LiveSyncComponent(el, eventBus, onModified));
         }
     }
 
-    private safeHighlight(code: string): string {
+    private appendHighlightedCode(container: HTMLElement, code: string): void {
         const highlighted = Prism.highlight(code, Prism.languages.sql, 'sql');
         const parser = new DOMParser();
         const doc = parser.parseFromString(highlighted, 'text/html');
 
-        // Remove perigos
         const dangerousTags = ['script', 'iframe', 'img', 'object', 'embed', 'link'];
         dangerousTags.forEach(tag => {
             doc.querySelectorAll(tag).forEach(el => el.remove());
         });
 
-        // Remove event handlers
         doc.querySelectorAll('*').forEach(el => {
             const attrs = el.attributes;
             for (let i = 0; i < attrs.length; i++) {
@@ -629,15 +530,14 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             }
         });
 
-        return doc.body.innerHTML;
+        Array.from(doc.body.childNodes).forEach(node => {
+            const newNode = node.ownerDocument !== container.ownerDocument ?
+                container.ownerDocument.importNode(node, true) : node;
+            container.appendChild(newNode);
+        });
     }
 
-    private renderParameterInputs(
-        params: Record<string, any>,
-        container: HTMLElement,
-        runBtn: HTMLButtonElement,
-        onParamsChange: (params: Record<string, any>) => void
-    ) {
+    private renderParameterInputs(params: Record<string, unknown>, container: HTMLElement, runBtn: HTMLButtonElement, onParamsChange: (params: Record<string, unknown>) => void) {
         const inputsContainer = container.createEl("div", { cls: "mysql-params" });
         const currentParams = { ...params };
 
@@ -646,46 +546,31 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             wrapper.createEl("label", { text: key });
             const input = wrapper.createEl("input", {
                 type: "text",
-                value: String(params[key])
+                value: (params[key] !== null && typeof params[key] === 'object') ? JSON.stringify(params[key]) : String(params[key] as string | number | boolean ?? "")
             });
-
             input.oninput = () => {
                 currentParams[key] = input.value;
                 onParamsChange(currentParams);
             };
-
-            // Allow Enter to run
             input.onkeydown = (e) => {
                 if (e.key === 'Enter') runBtn.click();
             }
         });
     }
 
-    private async executeQuery(
-        query: string,
-        params: Record<string, any>,
-        btn: HTMLButtonElement,
-        container: HTMLElement,
-        footer?: WorkbenchFooter,
-        options: { activeDatabase?: string, originId?: string, isLive?: boolean } = {}
-    ): Promise<void> {
+    private async executeQuery(query: string, params: Record<string, unknown>, btn: HTMLButtonElement, container: HTMLElement, footer?: WorkbenchFooter, options: { activeDatabase?: string, originId?: string, isLive?: boolean } = {}): Promise<void> {
         btn.disabled = true;
         const workbench = container.closest('.mysql-workbench-container');
-        if (options.isLive && workbench) {
-            workbench.addClass('is-loading');
-        }
+        if (options.isLive && workbench) workbench.addClass('is-loading');
 
-        // Add Cancel Button
-        const cancelBtn = container.parentElement?.querySelector('.mysql-controls')?.createEl("button", {
-            cls: "mysql-btn mysql-btn-warn"
-        });
+        const controls = container.parentElement?.querySelector('.mysql-controls');
+        const cancelBtn = controls?.createEl("button", { cls: "mysql-btn mysql-btn-warn" });
         if (cancelBtn) {
             setIcon(cancelBtn, "stop-circle");
             cancelBtn.createSpan({ text: t('workbench.btn_cancel') });
         }
 
         const abortController = new AbortController();
-
         if (cancelBtn) {
             cancelBtn.onclick = () => {
                 abortController.abort();
@@ -694,38 +579,14 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 btn.empty();
                 setIcon(btn, "play");
                 btn.createSpan({ text: t('workbench.btn_run') });
-                if (footer) {
-                    footer.setAborted();
-                }
+                if (footer) footer.setAborted();
                 new Notice(t('workbench.notice_aborted'));
             };
         }
 
-        btn.innerHTML = `⏳ ${t('workbench.btn_executing')}`;
-        if (footer) {
-            footer.setStatus(t('workbench.btn_executing'), true);
-        }
-
-        // Handle Special Commands like SHOW TABLES (custom view?)
-        // The original code handled SHOW TABLES normally via AlaSQL, but wrapped it?
-        // Let's look at `showTables()` method in original code... no, it seems `showTables` was a separate method but not called by executeQuery directly unless specialized.
-        // Actually, standard sql block execution handles everything via QueryExecutor.
-        // But wait, the user wants "Export CSV" button in table detail view.
-        // In ResultRenderer? Or somewhere else?
-        // Original code: `ResultRenderer` didn't seem to have `Export CSV`.
-        // Let's re-read the original monolithic code for `showTables` and where `Export CSV` button was added.
-        // It was added in `renderTable` inside `ResultRenderer`? Or `MySQLPlugin` had a `showTables` logic?
-        // Ah, `step 2` summary said: "Export CSV button was added to the table detail view (accessed by clicking on a table in the 'Tables' list)."
-        // Where is the "Tables" list?
-        // Maybe it's `SHOW TABLES` output rendered?
-        // If I run `SHOW TABLES`, AlaSQL returns a list of tables. ResultRenderer renders it.
-        // If I click on a table?
-        // The original code seemed to have `renderTable` in `ResultRenderer`?
-        // Let's assume standard execution for now. 
-        // Oh, wait. I see `this.csvManager.exportTable(tableName)` in the monolithic `exportTable` method?
-        // I need to ensure `ResultRenderer` supports exporting if it was there.
-        // The previous `ResultRenderer.ts` I wrote has `Copy`, `Screenshot`, `Insert`. No `Export CSV`.
-        // I should check if I missed `Export CSV` in `ResultRenderer`.
+        btn.empty();
+        btn.createSpan({ text: `⏳ ${t('workbench.btn_executing')}` });
+        if (footer) footer.setStatus(t('workbench.btn_executing'), true);
 
         let finalQuery = query;
         if (Object.keys(params).length > 0) {
@@ -742,50 +603,24 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             });
 
             if (cancelBtn) cancelBtn.remove();
-
-            // Render Result
             ResultRenderer.render(result, container, this.app, this, undefined, options.isLive);
 
-            // Sync active database from execution result
-            if (result.activeDatabase) {
-                this.activeDatabase = result.activeDatabase;
-            }
+            if (result.activeDatabase) this.activeDatabase = result.activeDatabase;
+            if (footer && result.executionTime !== undefined) footer.updateTime(result.executionTime);
 
-            // Update Footer Time
-            if (footer && result.executionTime !== undefined) {
-                footer.updateTime(result.executionTime);
-            }
-
-            // Determine if we should add "Export CSV" button if result looks like a single table select or check logic
-            // The request said: "Export CSV button was added to the table detail view (accessed by clicking on a table in the "Tables" list)."
-            // This implies there is a "Tables list" view.
-            // If the query was `SHOW TABLES`, the result is clickable?
-            // Since I don't fully recall the interaction code for "Tables list" -> "Table Detail", I will just rely on `QueryExecutor` + `ResultRenderer`.
-            // However, the `csvManager` has `exportTable`.
-            // I'll add an "Export Table to CSV" command to Obsidian palette for safety.
-            // Or check if I should add it to `ResultRenderer` if the query matches `SELECT * FROM table`.
-
-            // Auto-save if modification
             if (result.success && this.settings.autoSave) {
                 const cleanQuery = query.trim().toUpperCase();
                 if (!cleanQuery.startsWith('SELECT') && !cleanQuery.startsWith('SHOW')) {
-                    await this.debouncedSave();
+                    void this.debouncedSave();
                 }
             }
         } catch (e) {
             if (cancelBtn) cancelBtn.remove();
-            Logger.error("Execute Query Error", e);
-            ResultRenderer.render({ success: false, error: e.message }, container, this.app, this);
-            if (footer) {
-                footer.setError();
-            }
+            ResultRenderer.render({ success: false, error: (e as Error).message }, container, this.app, this);
+            if (footer) footer.setError();
         } finally {
-            if (options.isLive && workbench) {
-                workbench.removeClass('is-loading');
-            }
-            if (footer) {
-                footer.setStatus("Ready"); // Ready is a technical state, maybe it stays? Or translates?
-            }
+            if (options.isLive && workbench) workbench.removeClass('is-loading');
+            if (footer) footer.setStatus("Ready");
             btn.disabled = false;
             btn.empty();
             setIcon(btn, "play");
@@ -793,17 +628,11 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         }
     }
 
-    private injectParams(query: string, params: Record<string, any>): string {
+    private injectParams(query: string, params: Record<string, unknown>): string {
         let injected = query;
         for (const [key, value] of Object.entries(params)) {
-            // Handle numeric and string params differently
-            const wrapper = typeof value === 'string' ? "'" : "";
             const safeValue = SQLSanitizer.escapeValue(value);
-            // RegEx to replace :param or @param
             const regex = new RegExp(`[: @]${key}\\b`, 'g');
-            // safeValue already has quotes if string from escapeValue?
-            // SQLSanitizer.escapeValue adds quotes for strings.
-            // So we replace directly.
             injected = injected.replace(regex, safeValue);
         }
         return injected;
@@ -811,73 +640,46 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
     private showTables(container: HTMLElement, btn: HTMLButtonElement): void {
         try {
-            // Explicitly show from active database to avoid context issues
             const activeDB = this.activeDatabase;
-            const tables = alasql(`SHOW TABLES FROM ${activeDB}`) as any[];
+            const tables = (alasql as (s: string) => Record<string, unknown>[])(`SHOW TABLES FROM ${activeDB}`);
 
             if (tables.length === 0) {
                 container.empty();
                 const infoState = container.createDiv({ cls: "mysql-info-state" });
-
-                const content = infoState.createDiv();
-                content.style.display = "flex";
-                content.style.flexDirection = "column";
-                content.style.alignItems = "center";
-                content.style.textAlign = "center";
-
-                // Title Row with Icon
-                const titleRow = content.createDiv();
-                titleRow.style.display = "flex";
-                titleRow.style.alignItems = "center";
-                titleRow.style.justifyContent = "center";
-                titleRow.style.gap = "8px";
-
+                const content = infoState.createDiv({ cls: "u-display-flex u-flex-column u-align-center u-text-center" });
+                const titleRow = content.createDiv({ cls: "u-display-flex u-align-center u-gap-md u-justify-center" });
                 const iconWrapper = titleRow.createDiv({ cls: "mysql-info-icon" });
                 setIcon(iconWrapper, "info");
-
                 const msg = titleRow.createEl("p", { cls: "mysql-info-text" });
                 msg.setText("No tables found in database ");
-                const span = msg.createSpan({ text: activeDB });
-                span.style.color = "var(--mysql-accent)";
-                span.style.fontWeight = "bold";
+                msg.createSpan({ text: activeDB, cls: "mysql-accent u-font-bold" });
 
                 const help = content.createEl("p", {
-                    text: "To switch databases, run 'USE <database>' or "
+                    text: t('modals.switch_db_help'),
+                    cls: "u-text-small u-text-muted u-margin-top-xs u-margin-bottom-none"
                 });
-                help.style.fontSize = "0.75em";
-                help.style.color = "var(--text-muted)";
-                help.style.marginTop = "4px";
-                help.style.marginBottom = "0";
-
                 const settingsBtn = help.createEl("a", {
-                    text: "Open Settings"
+                    text: t('modals.btn_open_settings'),
+                    cls: "mysql-accent u-cursor-pointer u-text-underline"
                 });
-                settingsBtn.style.color = "var(--mysql-accent)";
-                settingsBtn.style.cursor = "pointer";
-                settingsBtn.style.textDecoration = "underline";
-
                 settingsBtn.onclick = () => {
-                    // @ts-ignore
-                    this.app.setting.open();
-                    // @ts-ignore
-                    this.app.setting.openTabById(this.manifest.id);
+                    const settingApp = (this.app as unknown as { setting: { open: () => void, openTabById: (id: string) => void } });
+                    if (settingApp.setting?.open) settingApp.setting.open();
+                    if (settingApp.setting?.openTabById) settingApp.setting.openTabById(this.manifest.id);
                 };
-
                 new Notice("No tables found");
                 return;
             }
 
             container.empty();
-
-            // Unified Header for Explorer
             const explorerHeader = container.createDiv({ cls: "mysql-result-header" });
             const headerLeft = explorerHeader.createDiv({ cls: "mysql-header-left" });
             setIcon(headerLeft, "database");
-            headerLeft.createSpan({ text: "Active Tables", cls: "mysql-result-label" });
+            headerLeft.createSpan({ text: t('renderer.title_results'), cls: "mysql-result-label" });
 
             const grid = container.createEl("div", { cls: "mysql-table-grid" });
-
-            tables.forEach(t => {
+            tables.forEach((table: unknown) => {
+                const t = table as { tableid: string };
                 const card = grid.createEl("div", { cls: "mysql-table-card" });
                 const iconSlot = card.createDiv({ cls: "mysql-card-icon" });
                 setIcon(iconSlot, "table");
@@ -885,14 +687,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
                 card.onclick = async () => {
                     container.empty();
-
                     const header = container.createEl("div", { cls: "mysql-result-header" });
-
                     const left = header.createDiv({ cls: "mysql-header-left" });
-                    const back = left.createEl("button", {
-                        cls: "mysql-action-btn",
-                        attr: { title: "Go back to tables list" }
-                    });
+                    const back = left.createEl("button", { cls: "mysql-action-btn", attr: { title: "Go back to tables list" } });
                     setIcon(back, "arrow-left");
                     back.createSpan({ text: "Back" });
                     back.onclick = (e) => {
@@ -901,54 +698,43 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                     };
 
                     const right = header.createDiv({ cls: "mysql-header-right" });
-                    const exportBtn = right.createEl("button", {
-                        cls: "mysql-action-btn"
-                    });
+                    const exportBtn = right.createEl("button", { cls: "mysql-action-btn" });
                     setIcon(exportBtn, "file-output");
                     exportBtn.createSpan({ text: "Export CSV" });
                     exportBtn.onclick = () => this.csvManager.exportTable(t.tableid);
 
-                    // Dedicated container for results so RenderRenderer doesn't empty our header
                     const dataContainer = container.createDiv({ cls: "mysql-table-detail-content" });
                     const result = await QueryExecutor.execute(`SELECT * FROM ${activeDB}.${t.tableid}`);
                     ResultRenderer.render(result, dataContainer, this.app, this, t.tableid);
                 };
             });
         } catch (error) {
-            new Notice("Error showing tables: " + error.message);
+            new Notice("Error showing tables: " + (error as Error).message);
         }
     }
 
-    private async resetDatabase(container: HTMLElement, footer?: WorkbenchFooter): Promise<void> {
+    private resetDatabase(container: HTMLElement, footer?: WorkbenchFooter): void {
         new ConfirmationModal(
             this.app,
             "Reset Database",
             "This will delete ALL databases and tables. This action cannot be undone. Are you sure?",
-            async (confirmed) => {
-                if (confirmed) {
-                    try {
-                        await this.dbManager.reset();
-                        container.empty();
-
-                        if (footer) {
-                            footer.setActiveDatabase('dbo');
+            (confirmed) => {
+                void (async () => {
+                    if (confirmed) {
+                        try {
+                            await this.dbManager.reset();
+                            container.empty();
+                            if (footer) footer.setActiveDatabase('dbo');
+                            const successState = container.createDiv({ cls: "mysql-success-state" });
+                            const iconWrapper = successState.createDiv({ cls: "mysql-success-icon" });
+                            setIcon(iconWrapper, "check-circle");
+                            successState.createEl("p", { text: "All databases reset successfully", cls: "mysql-success" });
+                            new Notice("Database reset completed");
+                        } catch (error) {
+                            new Notice("Reset failed: " + (error as Error).message);
                         }
-
-
-                        const successState = container.createDiv({ cls: "mysql-success-state" });
-                        const iconWrapper = successState.createDiv({ cls: "mysql-success-icon" });
-                        setIcon(iconWrapper, "check-circle");
-
-                        successState.createEl("p", {
-                            text: "All databases reset successfully",
-                            cls: "mysql-success"
-                        });
-
-                        new Notice("Database reset completed");
-                    } catch (error) {
-                        new Notice("Reset failed: " + error.message);
                     }
-                }
+                })();
             },
             "Reset Everything",
             "Keep Data"

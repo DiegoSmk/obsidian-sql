@@ -11,7 +11,7 @@ describe('Logger', () => {
 
         // Mock console
         consoleSpy = {
-            log: vi.spyOn(console, 'log').mockImplementation(() => { }),
+            debug: vi.spyOn(console, 'debug').mockImplementation(() => { }),
             warn: vi.spyOn(console, 'warn').mockImplementation(() => { }),
             error: vi.spyOn(console, 'error').mockImplementation(() => { })
         };
@@ -25,11 +25,11 @@ describe('Logger', () => {
 
     it('should log INFO messages only if enabled', () => {
         Logger.info('test info');
-        expect(consoleSpy.log).not.toHaveBeenCalled();
+        expect(consoleSpy.debug).not.toHaveBeenCalled();
 
         Logger.setEnabled(true);
         Logger.info('test info 2');
-        expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining('[MySQL Plugin] test info 2'));
+        expect(consoleSpy.debug).toHaveBeenCalledWith(expect.stringContaining('[MySQL Plugin] test info 2'), undefined);
     });
 
     it('should log WARN messages regardless of enabled state', () => {
@@ -56,9 +56,9 @@ describe('Logger', () => {
     it('should handle data object in logs', () => {
         Logger.setEnabled(true);
         Logger.info('msg with data', { foo: 'bar' });
-        expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining('msg with data'), { foo: 'bar' });
+        expect(consoleSpy.debug).toHaveBeenCalledWith(expect.stringContaining('msg with data'), { foo: 'bar' });
 
         Logger.info('msg without data');
-        expect(consoleSpy.log).toHaveBeenCalledWith(expect.stringContaining('msg without data'));
+        expect(consoleSpy.debug).toHaveBeenCalledWith(expect.stringContaining('msg without data'), undefined);
     });
 });

@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 // @ts-ignore
 import alasql from 'alasql';
 import { DatabaseManager } from '../DatabaseManager';
-import { IMySQLPlugin } from '../../types';
 
 describe('DatabaseManager', () => {
     let mockPlugin: any;
@@ -15,8 +14,8 @@ describe('DatabaseManager', () => {
             for (const db of dbs) {
                 alasql(`DROP DATABASE IF EXISTS \`${db}\``);
             }
-        } catch (e) {
-            // If it fails, we might need a more aggressive reset but let's try this first
+        } catch {
+            // Ignore if reset fails
         }
 
         mockPlugin = {
@@ -26,7 +25,7 @@ describe('DatabaseManager', () => {
             activeDatabase: 'dbo'
         };
 
-        dbManager = new DatabaseManager(mockPlugin as any);
+        dbManager = new DatabaseManager(mockPlugin);
 
         // Ensure dbo exists and is active
         if (!alasql.databases.dbo) {
@@ -97,7 +96,7 @@ describe('DatabaseManager', () => {
         await dbManager.duplicateDatabase('dbo', 'dbo_copy');
 
         expect(alasql.databases.dbo_copy).toBeDefined();
-        const res = alasql('SELECT * FROM [dbo_copy].[source]') as any;
+        const res = alasql('SELECT * FROM [dbo_copy].[source]') as any[];
         expect(res[0].v).toBe(42);
     });
 
@@ -111,7 +110,7 @@ describe('DatabaseManager', () => {
 
         expect(alasql.databases.old_name).toBeUndefined();
         expect(alasql.databases.new_name).toBeDefined();
-        const res = alasql('SELECT * FROM [new_name].[t1]') as any;
+        const res = alasql('SELECT * FROM [new_name].[t1]') as any[];
         expect(res[0].v).toBe(10);
     });
 

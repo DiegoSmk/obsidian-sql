@@ -19,12 +19,14 @@ export class SQLSanitizer {
         // Strict whitelist: alpha-numeric and underscore only.
         // No length greater than 64.
         // Reject empty strings.
+        if (!name) return false;
         return /^[a-zA-Z0-9_]{1,64}$/.test(name);
     }
 
-    static escapeValue(value: any): string {
+    static escapeValue(value: unknown): string {
         if (value === null || value === undefined) return 'NULL';
         if (typeof value === 'number') return String(value);
-        return `'${String(value).replace(/'/g, "''")}'`;
+        if (typeof value === 'object') return `'${JSON.stringify(value).replace(/'/g, "''")}'`;
+        return `'${String(value as string | boolean).replace(/'/g, "''")}'`;
     }
 }

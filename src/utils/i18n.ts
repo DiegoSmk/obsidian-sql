@@ -8,7 +8,7 @@ import ja from '../locales/ja';
 import ko from '../locales/ko';
 import { Language } from '../types';
 
-const locales: Record<string, any> = {
+const locales: Record<string, unknown> = {
     'en': en,
     'pt-BR': ptBR,
     'zh': zh,
@@ -22,7 +22,7 @@ const locales: Record<string, any> = {
 let currentLanguage: Language = 'en';
 
 export function resolveLanguage(lang: Language): 'en' | 'pt-BR' | 'zh' | 'es' | 'de' | 'fr' | 'ja' | 'ko' {
-    if (lang !== 'auto') return lang as any;
+    if (lang !== 'auto') return lang as unknown;
 
     const obsidianLang = (window.localStorage.getItem('language') || 'en').toLowerCase();
 

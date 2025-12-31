@@ -1,8 +1,15 @@
 import { App, MarkdownView, Notice, setIcon } from 'obsidian';
 import html2canvas from 'html2canvas';
 import { IMySQLPlugin, QueryResult } from '../types';
-import { FormRenderer } from './FormRenderer';
+import { FormRenderer, FormData } from './FormRenderer';
 import { t } from '../utils/i18n';
+
+interface ResultSet {
+    type: 'table' | 'scalar' | 'message' | 'error' | 'form';
+    data?: unknown;
+    message?: string;
+    rowCount?: number;
+}
 
 export class ResultRenderer {
     static render(result: QueryResult, container: HTMLElement, app: App, plugin: IMySQLPlugin, tableName?: string, isLive: boolean = false): void {
@@ -21,7 +28,7 @@ export class ResultRenderer {
 
     private static addActionButtons(
         container: HTMLElement,
-        data: any,
+        data: unknown[],
         resultWrapper: HTMLElement,
         app: App,
         plugin: IMySQLPlugin,
@@ -55,31 +62,33 @@ export class ResultRenderer {
         insertBtn.onclick = () => this.insertIntoNote(data, app);
     }
 
-    private static async copyToClipboard(data: any): Promise<void> {
+    private static async copyToClipboard(data: unknown): Promise<void> {
         try {
             let textToCopy = '';
 
-            if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object') {
-                const keys = Object.keys(data[0]);
+            if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object' && data[0] !== null) {
+                const keys = Object.keys(data[0] as Record<string, unknown>);
                 textToCopy = keys.join('\t') + '\n';
 
-                data.forEach(row => {
+                (data as Record<string, unknown>[]).forEach(row => {
                     const values = keys.map(k => {
                         const val = row[k];
-                        return val === null || val === undefined ? '' : String(val);
+                        if (val === null || val === undefined) return '';
+                        if (typeof val === 'object') return JSON.stringify(val);
+                        return String(val as string | number | boolean);
                     });
                     textToCopy += values.join('\t') + '\n';
                 });
             } else if (typeof data !== 'object' || data === null) {
-                textToCopy = String(data);
+                textToCopy = String(data as string | number | boolean);
             } else {
                 textToCopy = JSON.stringify(data, null, 2);
             }
 
             await navigator.clipboard.writeText(textToCopy);
             new Notice(t('renderer.notice_copied'));
-        } catch (error) {
-            new Notice(t('renderer.notice_copy_failed', { error: error.message }));
+        } catch (e) {
+            new Notice(t('renderer.notice_copy_failed', { error: (e as Error).message }));
         }
     }
 
@@ -91,34 +100,36 @@ export class ResultRenderer {
                 logging: false
             });
 
-            canvas.toBlob(async (blob: Blob | null) => {
-                if (!blob) {
-                    new Notice(t('renderer.notice_screenshot_failed', { error: 'Canvas blob failed' }));
-                    return;
-                }
+            canvas.toBlob((blob: Blob | null) => {
+                void (async () => {
+                    if (!blob) {
+                        new Notice(t('renderer.notice_screenshot_failed', { error: 'Canvas blob failed' }));
+                        return;
+                    }
 
-                try {
-                    await navigator.clipboard.write([
-                        new ClipboardItem({ 'image/png': blob })
-                    ]);
-                    new Notice(t('renderer.notice_screenshot_copied'));
-                } catch (clipboardError) {
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `mysql-result-${Date.now()}.png`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    new Notice(t('renderer.notice_screenshot_downloaded'));
-                }
+                    try {
+                        await navigator.clipboard.write([
+                            new ClipboardItem({ 'image/png': blob })
+                        ]);
+                        new Notice(t('renderer.notice_screenshot_copied'));
+                    } catch {
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `mysql-result-${Date.now()}.png`;
+                        a.click();
+                        URL.revokeObjectURL(url);
+                        new Notice(t('renderer.notice_screenshot_downloaded'));
+                    }
+                })();
             });
-        } catch (error) {
-            new Notice(t('renderer.notice_screenshot_failed', { error: error.message }));
-            console.error('Screenshot error:', error);
+        } catch (e: unknown) {
+            new Notice(t('renderer.notice_screenshot_failed', { error: (e as Error).message }));
+            console.error('Screenshot error:', e);
         }
     }
 
-    private static async insertIntoNote(data: any, app: App): Promise<void> {
+    private static async insertIntoNote(data: unknown, app: App): Promise<void> {
         try {
             const activeView = app.workspace.getActiveViewOfType(MarkdownView);
 
@@ -133,7 +144,7 @@ export class ResultRenderer {
             if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object') {
                 textToInsert = this.dataToMarkdownTable(data);
             } else if (typeof data === 'number') {
-                textToInsert = `**Result:** ${data} row(s) affected`;
+                textToInsert = `**Result:** ${String(data)} row(s) affected`;
             } else {
                 textToInsert = '```json\n' + JSON.stringify(data, null, 2) + '\n```';
             }
@@ -145,23 +156,25 @@ export class ResultRenderer {
             editor.setCursor({ line: cursor.line + lines + 1, ch: 0 });
 
             new Notice(t('renderer.notice_insert_success'));
-        } catch (error) {
-            new Notice(t('renderer.notice_insert_failed', { error: error.message }));
+        } catch (e: unknown) {
+            new Notice(t('renderer.notice_insert_failed', { error: (e as Error).message }));
         }
     }
 
-    private static dataToMarkdownTable(rows: any[]): string {
+    private static dataToMarkdownTable(rows: unknown[]): string {
         if (rows.length === 0) return '_No data_';
 
-        const keys = Object.keys(rows[0]);
+        const keys = Object.keys(rows[0] as Record<string, unknown>);
         let md = '| ' + keys.join(' | ') + ' |\n';
         md += '| ' + keys.map(() => '---').join(' | ') + ' |\n';
 
         rows.forEach(row => {
+            const rowData = row as Record<string, unknown>;
             const values = keys.map(k => {
-                const val = row[k];
+                const val = rowData[k];
                 if (val === null || val === undefined) return '';
-                return String(val).replace(/\|/g, '\\|');
+                const stringVal = typeof val === 'object' ? JSON.stringify(val) : String(val as string | number | boolean);
+                return stringVal.replace(/\|/g, '\\|');
             });
             md += '| ' + values.join(' | ') + ' |\n';
         });
@@ -169,7 +182,7 @@ export class ResultRenderer {
         return md;
     }
 
-    private static renderData(results: any[], container: HTMLElement, app: App, plugin: IMySQLPlugin, tableName?: string, isLive: boolean = false): void {
+    private static renderData(results: ResultSet[], container: HTMLElement, app: App, plugin: IMySQLPlugin, tableName?: string, isLive: boolean = false): void {
         if (!Array.isArray(results) || results.length === 0) {
             container.createEl("p", {
                 text: t('renderer.msg_no_result'),
@@ -182,8 +195,9 @@ export class ResultRenderer {
             const rsWrapper = container.createEl("div", { cls: "mysql-result-set" });
 
             // Unified Result Header
-            const header = rsWrapper.createDiv({ cls: "mysql-result-header" });
-            if (isLive) header.style.display = "none";
+            const header = rsWrapper.createDiv({
+                cls: `mysql-result-header ${isLive ? 'u-display-none' : ''}`
+            });
 
             // Content Wrapper (This is what will be screenshotted)
             const contentWrapper = rsWrapper.createDiv({ cls: "mysql-result-content" });
@@ -200,12 +214,12 @@ export class ResultRenderer {
             if (rs.type === 'table' || rs.type === 'scalar') {
                 const actions = right.createDiv({ cls: "mysql-result-actions" });
                 // We'll pass the content wrapper to capture ONLY the data
-                this.addActionButtons(actions, rs.data, contentWrapper, app, plugin, rs.type === 'table' ? tableName : undefined);
+                this.addActionButtons(actions, rs.data as unknown[], contentWrapper, app, plugin, rs.type === 'table' ? tableName : undefined);
             }
 
             switch (rs.type) {
                 case 'table':
-                    this.renderTable(rs.data, contentWrapper);
+                    this.renderTable(rs.data as unknown[], contentWrapper);
                     break;
                 case 'scalar':
                     if (typeof rs.data === 'number') {
@@ -221,7 +235,7 @@ export class ResultRenderer {
                     }
                     break;
                 case 'message':
-                case 'error':
+                case 'error': {
                     const isDML = rs.type === 'message' && rs.message && rs.message.includes('affected');
                     const msgWrapper = contentWrapper.createDiv({
                         cls: rs.type === 'error' ? 'mysql-error-inline' : (isDML ? 'mysql-success-state mysql-msg-compact' : 'mysql-info-state mysql-msg-compact')
@@ -241,14 +255,19 @@ export class ResultRenderer {
                     }
 
                     break;
-                case 'form':
-                    FormRenderer.render(rs.data, contentWrapper, app, plugin);
+                }
+                case 'form': {
+                    if (rs.data) {
+                        FormRenderer.render(rs.data as FormData, contentWrapper, app, plugin);
+                    }
                     break;
+                }
             }
 
             if (rs.rowCount !== undefined && rs.type === 'table') {
-                const rowInfo = contentWrapper.createDiv({ cls: "mysql-row-count-wrapper" });
-                if (isLive) rowInfo.style.display = "none";
+                const rowInfo = contentWrapper.createDiv({
+                    cls: `mysql-row-count-wrapper ${isLive ? 'u-display-none' : ''}`
+                });
                 const countIcon = rowInfo.createDiv({ cls: "mysql-count-icon" });
                 setIcon(countIcon, "list-ordered");
                 rowInfo.createSpan({ text: t('renderer.msg_rows_found', { count: String(rs.rowCount) }), cls: "mysql-row-count-text" });
@@ -256,7 +275,7 @@ export class ResultRenderer {
         });
     }
 
-    private static renderTable(rows: any[], container: HTMLElement, batchSize: number = 100): void {
+    private static renderTable(rows: unknown[], container: HTMLElement, batchSize: number = 100): void {
         if (!rows || rows.length === 0) {
             container.createEl("p", { text: t('renderer.msg_no_data'), cls: "mysql-empty-state" });
             return;
@@ -272,13 +291,15 @@ export class ResultRenderer {
         const tbody = table.createEl("tbody");
         let currentCount = 0;
 
-        const renderBatch = (batch: any[]) => {
+        const renderBatch = (batch: unknown[]) => {
             batch.forEach(row => {
+                const rowData = row as Record<string, unknown>;
                 const tr = tbody.createEl("tr");
                 keys.forEach(key => {
-                    const val = row[key];
+                    const val = rowData[key];
+                    const stringVal = (val !== null && typeof val === 'object') ? JSON.stringify(val) : String(val as string | number | boolean);
                     tr.createEl("td", {
-                        text: val === null || val === undefined ? t('modals.null_value') : String(val)
+                        text: val === null || val === undefined ? t('modals.null_value') : stringVal
                     });
                 });
             });
