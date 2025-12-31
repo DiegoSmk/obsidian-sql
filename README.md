@@ -1,60 +1,117 @@
-# MySQL Runner (Obsidian Plugin)
 
-Execute SQL queries directly from your notes using an in-memory database powered by AlaSQL. Manage multiple databases, import/export CSVs, and enjoy persistent schemas!
+# 🗄️ SQL Notebook for Obsidian
 
-![MySQL Runner Demo](https://raw.githubusercontent.com/DiegoSmk/obsidian-sql/master/screenshot.png)
+**Transform your Obsidian Vault into a powerful local SQL Database Manager.**
 
-## 🚀 Features
+![SQL Notebook Banner](https://raw.githubusercontent.com/DiegoSmk/obsidian-sql/master/docs/banner.png)
 
-- **In-Memory SQL**: Powered by AlaSQL with MySQL-like syntax.
-- **SQL Forms (New)**: Generate dynamic HTML forms from table schemas for instant data entry.
-- **Multi-Database Support**: Create and switch between isolated database environments (e.g., `work`, `learning`, `dbo`).
-- **Persistent Schema**: Your `CREATE TABLE` definitions are preserved across reloads.
-- **Parameterized Queries**: Support for `:variable` syntax with dynamic UI input fields.
-- **CSV Support**: Import data from CSV files in your Vault and export tables back to CSV.
-- **Lazy Loading**: High-performance rendering for large result sets (paginated by 50 rows).
-- **Syntax Highlighting**: Beautiful SQL highlighting in both live preview and reading mode.
+> "The missing link between knowledge management and structured data. Execute queries, manage local databases, and visualize results without leaving you notes."
 
-## 🛠️ Usage
+[![Release](https://img.shields.io/github/v/release/DiegoSmk/obsidian-sql?style=flat-square)](https://github.com/DiegoSmk/obsidian-sql/releases)
+[![Downloads](https://img.shields.io/github/downloads/DiegoSmk/obsidian-sql/total?style=flat-square)](https://github.com/DiegoSmk/obsidian-sql/releases)
 
-### Basic Query
-Create a code block with the `mysql` language:
+---
 
-```mysql
-CREATE TABLE users (id INT, name TEXT);
-INSERT INTO users VALUES (1, 'Alice'), (2, 'Bob');
-SELECT * FROM users;
+## 🌟 Why simple notes aren't enough?
+
+Sometimes you need more than just text. You need structure.
+- **Learning SQL?** Practice directly in your study notes.
+- **Managing Project Data?** Create light databases for tasks, inventories, or logs.
+- **Data Analysis?** Import CSVs, query them with SQL, and export the results.
+
+**SQL Notebook** brings a fully functional, serverless SQL engine (AlaSQL) right inside Obsidian. No Docker, no external servers, just pure local privacy.
+
+## ✨ Key Features
+
+### 1. 🚀 Native SQL Execution
+Write standard SQL code blocks (` ```sql `) and execute them instantly.
+- **In-Memory Speed**: Powered by AlaSQL.
+- **Live & Form Modes**: Anchor query blocks for persistent dashboards or input forms.
+- **Syntax Highlighting**: Beautiful rendering in Live Preview and Reading Mode.
+
+### 2. 🌍 Internationalization (i18n) - *New in v0.5.0*
+Fully translated and localized for a global audience.
+- 🇺🇸 English
+- 🇧🇷 Português (Brasil)
+- 🇪🇸 Español
+- 🇩🇪 Deutsch
+- 🇫🇷 Français
+- 🇯🇵 日本語
+- 🇰🇷 한국어
+- 🇨🇳 简体中文
+
+### 3. 🛡️ Multi-Database Workbench
+Don't clutter your global namespace. Create and switch between isolated environments using the **Workbench**.
+- **Context Switching**: Work on `project_alpha` while keeping `personal_finance` safe.
+- **Visual Management**: See tables, row counts, and schema details in the Settings UI.
+- **Privacy First**: All data lives locally in your Obsidian storage.
+
+### 4. 📝 Dynamic Forms & Parameters
+Turn static queries into interactive apps.
+- **Parameters**: Use `:variable` syntax to auto-generate input fields.
+- **SQL Forms**: Use the special `FORM` syntax to create data entry interfaces.
+
+### 5. 🔌 CSV Import/Export
+- **Import**: Drag & drop CSV files to query them as tables.
+- **Export**: Save your query results back to CSV or Markdown tables.
+- **Snapshots**: Capture query results including charts or tables as images to paste into your notes.
+
+---
+
+## 🚀 Quick Start Guide
+
+### 1. Installation
+1. Search for **"SQL Notebook"** in Obsidian Community Plugins.
+2. Click **Install** and **Enable**.
+
+### 2. Your First Query
+Create a code block in any note:
+
+```sql
+-- Create a table
+CREATE TABLE tasks (id INT, title STRING, status STRING);
+
+-- Insert some data
+INSERT INTO tasks VALUES (1, 'Install Plugin', 'Done'), (2, 'Write SQL', 'Doing');
+
+-- Query it
+SELECT * FROM tasks WHERE status = 'Doing';
 ```
 
-Click **Run** to see the results.
+Click the **▶ Run** button. That's it!
 
-### Parameterized Queries
-```mysql
-SELECT * FROM users WHERE id = :userId;
+### 3. Using Parameters
+Make your queries reuseable:
+
+```sql
+SELECT * FROM tasks WHERE status = :currentStatus;
 ```
-An input box for `userId` will automatically appear.
+A text box will appear for you to type `Done` or `Doing`.
 
-## ⚙️ Settings
+---
 
-Management controls are located in the **Plugin Settings**:
-- **Switch Database**: Change the active SQL context.
-- **New Database**: Create a new isolated database.
-- **CSV Import/Export**: Manage your data files.
-- **Data Maintenance**: View all tables or reset the current database.
+## 💡 Pro Tips
 
-## 📥 Installation
+- **Collapsible Workbench**: Preface comments with `@` (e.g., `-- @ query`) to auto-collapse the workbench for a cleaner look.
+- **Safe Mode**: Enable "Safe Mode" in settings to prevent accidental `DROP` or `DELETE` commands.
+- **Result Actions**: Use the copy/paste buttons on result tables to quickly move data into your permanent notes.
 
-### From Community Plugins (Pending)
-1. Open Obsidian Settings > Community Plugins.
-2. Search for "MySQL Runner".
-3. Click Install and Enable.
+---
 
-### Manual Installation
-1. Download `main.js`, `manifest.json`, and `styles.css` from the latest release.
-2. Create folder `.obsidian/plugins/obsidian-mysql-runner`.
-3. Move the downloaded files into that folder.
-4. Reload Obsidian and enable the plugin.
+## 🤝 Contributing
+
+We welcome contributions! Whether it's a new translation language or a core feature:
+1. Fork the project.
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes.
+4. Open a Pull Request.
+
+**Developers:** Check out our [Development Guidelines](DEVELOPMENT_GUIDELINES.md).
 
 ## 📄 License
+MIT License. Free and Open Source forever.
 
-MIT License. See `LICENSE` for details.
+---
+<div align="center">
+  <i>Made with ❤️ by Diego Pena</i>
+</div>
