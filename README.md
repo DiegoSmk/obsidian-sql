@@ -5,7 +5,7 @@
 
 ![SQL Notebook Banner](https://raw.githubusercontent.com/DiegoSmk/obsidian-sql/master/docs/banner.png)
 
-> "The missing link between knowledge management and structured data. Execute queries, manage local databases, and visualize results without leaving you notes."
+> "The missing link between knowledge management and structured data. Execute queries, manage local databases, and visualize results without leaving your notes."
 
 [![Release](https://img.shields.io/github/v/release/DiegoSmk/obsidian-sql?style=flat-square)](https://github.com/DiegoSmk/obsidian-sql/releases)
 [![Downloads](https://img.shields.io/github/downloads/DiegoSmk/obsidian-sql/total?style=flat-square)](https://github.com/DiegoSmk/obsidian-sql/releases)
@@ -24,9 +24,9 @@ Sometimes you need more than just text. You need structure.
 ## ✨ Key Features
 
 ### 1. 🚀 Native SQL Execution
-Write standard SQL code blocks (` ```sql `) and execute them instantly.
+Write standard SQL code blocks (` ```mysql `) and execute them instantly.
 - **In-Memory Speed**: Powered by AlaSQL.
-- **Live & Form Modes**: Anchor query blocks for persistent dashboards or input forms.
+- **Dynamic Workbench**: Every code block becomes an interactive mini-app.
 - **Syntax Highlighting**: Beautiful rendering in Live Preview and Reading Mode.
 
 ### 2. 🌍 Internationalization (i18n) - *New in v0.5.0*
@@ -65,36 +65,64 @@ Turn static queries into interactive apps.
 2. Click **Install** and **Enable**.
 
 ### 2. Your First Query
-Create a code block in any note:
+Create a code block in any note using the language `mysql`:
 
-```sql
+````markdown
+```mysql
 -- Create a table
 CREATE TABLE tasks (id INT, title STRING, status STRING);
 
 -- Insert some data
-INSERT INTO tasks VALUES (1, 'Install Plugin', 'Done'), (2, 'Write SQL', 'Doing');
+INSERT INTO tasks VALUES (1, 'Install Plugin', 'Done'), (2, 'Try Forms', 'Doing');
 
 -- Query it
 SELECT * FROM tasks WHERE status = 'Doing';
 ```
+````
 
-Click the **▶ Run** button. That's it!
+Click the **▶ Run** button. A beautiful table will render below your code.
 
-### 3. Using Parameters
-Make your queries reuseable:
+### 3. Interactive Features
 
-```sql
+#### ⚡ Live Mode
+Want a dashboard that updates automatically? Just add `LIVE` before your SELECT statement.
+The results will refresh whenever the database changes.
+
+````markdown
+```mysql
+LIVE SELECT status, COUNT(*) as count FROM tasks GROUP BY status;
+```
+````
+
+#### 📝 SQL Forms
+Need a quick way to insert data without writing INSERT queries manually?
+Use the `FORM` keyword to generate an automatic input UI based on your table schema.
+
+````markdown
+```mysql
+FORM tasks;
+```
+````
+This renders a clean form with fields for `id`, `title`, and `status`. Fill it out and click "Save" to insert a row instantly!
+
+#### � Parameterized Queries
+Make your queries reuseable by adding variables with `:name`. 
+A text box will appear for you to type values dynamically.
+
+````markdown
+```mysql
+-- @ Filter by Status
 SELECT * FROM tasks WHERE status = :currentStatus;
 ```
-A text box will appear for you to type `Done` or `Doing`.
+````
+*(Pro Tip: The `-- @` comment automatically collapses the code block, showing only the UI!)*
 
----
-
-## 💡 Pro Tips
-
-- **Collapsible Workbench**: Preface comments with `@` (e.g., `-- @ query`) to auto-collapse the workbench for a cleaner look.
-- **Safe Mode**: Enable "Safe Mode" in settings to prevent accidental `DROP` or `DELETE` commands.
-- **Result Actions**: Use the copy/paste buttons on result tables to quickly move data into your permanent notes.
+### 4. Comment Markers
+Organize your notebook with special comment syntax:
+- `!` : **Alert** (Red highlight) -> `-- ! Critical Update`
+- `?` : **Question** (Yellow/Blue highlight) -> `-- ? Needs Review`
+- `*` : **Favorite** (Star highlight) -> `-- * Most Used Query`
+- `@` : **Auto-Collapse** -> `-- @ Collapsed View`
 
 ---
 
