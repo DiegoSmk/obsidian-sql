@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.3] - 2025-12-31 (Hotfix)
+- **Fix**: Resolved remaining hardcoded English strings in Settings, Table View, and Workbench buttons.
+- **Fix**: Corrected "Reset" functionality messages to respect the active language.
+- **Fix**: Prevents shadowing of translation function in table render loops.
+
+## [0.5.2] - 2025-12-31
+- **Compliance**: Full code audit for Obsidian Plugin submission guidelines.
+- **Refactor**: Replaced unsafe style manipulations with CSS classes.
+- **Refactor**: Standardized heading creation using Obsidian's `Setting.setHeading()`.
+- **Polish**: Removed all console logs and fixed floating promises.
+- **Tests**: Achieved 100% pass rate in unit tests (60/60 tests).
+
 ## [0.5.1] - 2024-12-31
 - **Meta**: Updated plugin description to meet Obsidian Community guidelines.
 
