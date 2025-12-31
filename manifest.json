@@ -1,9 +1,9 @@
 {
     "id": "sql-notebook",
     "name": "SQL Notebook",
-    "version": "0.5.0",
+    "version": "0.5.1",
     "minAppVersion": "0.15.0",
-    "description": "Execute MySQL queries directly from your notes.",
+    "description": "Execute MySQL queries directly from your notes using an in-memory database powered by AlaSQL. Features include multi-database management, CSV import/export, and SQL forms.",
     "author": "Diego Pena",
     "authorUrl": "https://github.com/DiegoSmk",
     "isDesktopOnly": true

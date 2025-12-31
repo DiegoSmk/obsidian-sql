@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.5.1] - 2024-12-31
+- **Meta**: Updated plugin description to meet Obsidian Community guidelines.
+
 ## [0.5.0] - 2024-12-30
 
 ### 🌍 Added
