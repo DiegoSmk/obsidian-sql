@@ -37,6 +37,7 @@ export default {
         "batch_size_desc": "Linhas a exibir por página nos resultados.",
         "reset_all": "Resetar todos os dados",
         "reset_btn": "Resetar tudo",
+        "reset_all_confirm_msg": "Isso excluirá TODOS os bancos de dados e tabelas. Esta ação não pode ser desfeita. Tem certeza?",
         "footer_by": "Diego Pena"
     },
     "help": {
@@ -139,7 +140,8 @@ export default {
         "msg_loading": "Carregando dados...",
         "msg_showing_limit": "Mostrando apenas as primeiras {count} linhas.",
         "msg_no_tables": "Nenhuma tabela encontrada neste banco de dados.",
-        "tip_back": "Voltar para lista de tabelas"
+        "tip_back": "Voltar para lista de tabelas",
+        "btn_back": "Voltar"
     },
     "form": {
         "title_insert": "Inserir em {name}",
@@ -185,6 +187,7 @@ export default {
         "notice_import_success": "Banco de dados importado com sucesso!",
         "notice_anchor_form": "FORM ancorado a {name}",
         "notice_anchor_live": "Bloco LIVE ancorado a {name}",
-        "notice_update_live": "Atualizando dados LIVE de {name}..."
+        "notice_update_live": "Atualizando dados LIVE de {name}...",
+        "notice_reset_success": "Reinicialização completa com sucesso!"
     }
 }

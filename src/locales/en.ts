@@ -37,6 +37,7 @@ export default {
         "batch_size_desc": "Rows to display per page in results.",
         "reset_all": "Reset all data",
         "reset_btn": "Reset everything",
+        "reset_all_confirm_msg": "This will delete ALL databases and tables. This action cannot be undone. Are you sure?",
         "footer_by": "Diego Pena"
     },
     "help": {
@@ -139,7 +140,8 @@ export default {
         "msg_loading": "Loading data...",
         "msg_showing_limit": "Showing first {count} rows only.",
         "msg_no_tables": "No tables found in this database.",
-        "tip_back": "Back to tables list"
+        "tip_back": "Back to tables list",
+        "btn_back": "Back"
     },
     "form": {
         "title_insert": "Insert into {name}",
@@ -185,6 +187,7 @@ export default {
         "notice_import_success": "Database imported successfully!",
         "notice_anchor_form": "FORM anchored to {name}",
         "notice_anchor_live": "LIVE block anchored to {name}",
-        "notice_update_live": "Updating LIVE data from {name}..."
+        "notice_update_live": "Updating LIVE data from {name}...",
+        "notice_reset_success": "Reset completed successfully!"
     }
 }

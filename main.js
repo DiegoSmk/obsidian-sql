@@ -64924,6 +64924,7 @@ var en_default = {
     "batch_size_desc": "Rows to display per page in results.",
     "reset_all": "Reset all data",
     "reset_btn": "Reset everything",
+    "reset_all_confirm_msg": "This will delete ALL databases and tables. This action cannot be undone. Are you sure?",
     "footer_by": "Diego Pena"
   },
   "help": {
@@ -65026,7 +65027,8 @@ var en_default = {
     "msg_loading": "Loading data...",
     "msg_showing_limit": "Showing first {count} rows only.",
     "msg_no_tables": "No tables found in this database.",
-    "tip_back": "Back to tables list"
+    "tip_back": "Back to tables list",
+    "btn_back": "Back"
   },
   "form": {
     "title_insert": "Insert into {name}",
@@ -65072,7 +65074,8 @@ var en_default = {
     "notice_import_success": "Database imported successfully!",
     "notice_anchor_form": "FORM anchored to {name}",
     "notice_anchor_live": "LIVE block anchored to {name}",
-    "notice_update_live": "Updating LIVE data from {name}..."
+    "notice_update_live": "Updating LIVE data from {name}...",
+    "notice_reset_success": "Reset completed successfully!"
   }
 };
 
@@ -65116,6 +65119,7 @@ var pt_BR_default = {
     "batch_size_desc": "Linhas a exibir por p\xE1gina nos resultados.",
     "reset_all": "Resetar todos os dados",
     "reset_btn": "Resetar tudo",
+    "reset_all_confirm_msg": "Isso excluir\xE1 TODOS os bancos de dados e tabelas. Esta a\xE7\xE3o n\xE3o pode ser desfeita. Tem certeza?",
     "footer_by": "Diego Pena"
   },
   "help": {
@@ -65218,7 +65222,8 @@ var pt_BR_default = {
     "msg_loading": "Carregando dados...",
     "msg_showing_limit": "Mostrando apenas as primeiras {count} linhas.",
     "msg_no_tables": "Nenhuma tabela encontrada neste banco de dados.",
-    "tip_back": "Voltar para lista de tabelas"
+    "tip_back": "Voltar para lista de tabelas",
+    "btn_back": "Voltar"
   },
   "form": {
     "title_insert": "Inserir em {name}",
@@ -65264,7 +65269,8 @@ var pt_BR_default = {
     "notice_import_success": "Banco de dados importado com sucesso!",
     "notice_anchor_form": "FORM ancorado a {name}",
     "notice_anchor_live": "Bloco LIVE ancorado a {name}",
-    "notice_update_live": "Atualizando dados LIVE de {name}..."
+    "notice_update_live": "Atualizando dados LIVE de {name}...",
+    "notice_reset_success": "Reinicializa\xE7\xE3o completa com sucesso!"
   }
 };
 
@@ -67317,7 +67323,7 @@ var DatabaseTablesModal = class extends import_obsidian7.Modal {
       if (rows.length > batchSize) {
         const controls = tableWrapper.createEl("div", { cls: "mysql-direct-pagination" });
         const statusSpan = controls.createEl("span", {
-          text: `Showing ${currentCount} of ${rows.length} rows`,
+          text: t("renderer.msg_showing_rows", { count: String(currentCount), total: String(rows.length) }),
           cls: "mysql-pagination-status"
         });
         const showAllBtn = controls.createEl("button", {
@@ -67777,16 +67783,16 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
       cls: "mysql-db-card-last-updated"
     });
     const actions = card.createDiv({ cls: "mysql-db-card-actions" });
-    new import_obsidian8.ButtonComponent(actions).setButtonText("Switch").onClick(() => this.openSwitcherModal());
-    new import_obsidian8.ButtonComponent(actions).setButtonText("Create").setIcon("plus").onClick(() => this.openCreateModal());
-    const renameBtn = new import_obsidian8.ButtonComponent(actions).setButtonText("Rename").onClick(() => this.openRenameModal());
+    new import_obsidian8.ButtonComponent(actions).setButtonText(t("modals.btn_ativar")).onClick(() => this.openSwitcherModal());
+    new import_obsidian8.ButtonComponent(actions).setButtonText(t("modals.btn_confirm")).setButtonText(t("settings.btn_novo_db")).setIcon("plus").onClick(() => this.openCreateModal());
+    const renameBtn = new import_obsidian8.ButtonComponent(actions).setButtonText(t("modals.btn_renomear")).onClick(() => this.openRenameModal());
     if (activeDB === "dbo") {
       renameBtn.setDisabled(true);
-      renameBtn.setTooltip("Default database cannot be renamed");
+      renameBtn.setTooltip(t("modals.tip_system_db"));
       renameBtn.buttonEl.classList.add("is-disabled-explicit");
     }
-    new import_obsidian8.ButtonComponent(actions).setButtonText("Tables").setIcon("table").onClick(() => this.openTablesModal());
-    new import_obsidian8.ButtonComponent(actions).setButtonText("Export").setIcon("download").setTooltip("Export database structure and data to SQL file").onClick(async () => {
+    new import_obsidian8.ButtonComponent(actions).setButtonText(t("modals.btn_tabelas")).setIcon("table").onClick(() => this.openTablesModal());
+    new import_obsidian8.ButtonComponent(actions).setButtonText(t("modals.btn_exportar")).setIcon("download").setTooltip("Export database structure and data to SQL file").onClick(async () => {
       await this.exportDatabaseSQL(activeDB);
     });
     const importBtnContainer = actions.createDiv({ cls: "mysql-import-wrapper" });
@@ -67803,11 +67809,11 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
         importInput.value = "";
       }
     };
-    new import_obsidian8.ButtonComponent(importBtnContainer).setButtonText("Import").setIcon("upload").setTooltip("Import database from SQL file").onClick(() => {
+    new import_obsidian8.ButtonComponent(importBtnContainer).setButtonText(t("settings.btn_importar")).setIcon("upload").setTooltip("Import database from SQL file").onClick(() => {
       importInput.click();
     });
     actions.createDiv({ cls: "mysql-action-separator" });
-    new import_obsidian8.ButtonComponent(actions).setButtonText("Clear").setWarning().onClick(() => this.openClearConfirm());
+    new import_obsidian8.ButtonComponent(actions).setButtonText(t("form.btn_clear")).setWarning().onClick(() => this.openClearConfirm());
   }
   addStat(parent, label, value, iconName) {
     const item = parent.createDiv({ cls: "mysql-db-stat-item" });
@@ -68766,18 +68772,18 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
       headerLeft.createSpan({ text: t("renderer.title_results"), cls: "mysql-result-label" });
       const grid = container.createEl("div", { cls: "mysql-table-grid" });
       tables.forEach((table) => {
-        const t2 = table;
+        const tableObj = table;
         const card = grid.createEl("div", { cls: "mysql-table-card" });
         const iconSlot = card.createDiv({ cls: "mysql-card-icon" });
         (0, import_obsidian12.setIcon)(iconSlot, "table");
-        card.createEl("strong", { text: t2.tableid });
+        card.createEl("strong", { text: tableObj.tableid });
         card.onclick = async () => {
           container.empty();
           const header = container.createEl("div", { cls: "mysql-result-header" });
           const left = header.createDiv({ cls: "mysql-header-left" });
           const back = left.createEl("button", { cls: "mysql-action-btn", attr: { title: "Go back to tables list" } });
           (0, import_obsidian12.setIcon)(back, "arrow-left");
-          back.createSpan({ text: "Back" });
+          back.createSpan({ text: t("renderer.btn_back") });
           back.onclick = (e) => {
             e.stopPropagation();
             btn.click();
@@ -68785,11 +68791,11 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
           const right = header.createDiv({ cls: "mysql-header-right" });
           const exportBtn = right.createEl("button", { cls: "mysql-action-btn" });
           (0, import_obsidian12.setIcon)(exportBtn, "file-output");
-          exportBtn.createSpan({ text: "Export CSV" });
-          exportBtn.onclick = () => this.csvManager.exportTable(t2.tableid);
+          exportBtn.createSpan({ text: t("modals.btn_exportar") + " CSV" });
+          exportBtn.onclick = () => this.csvManager.exportTable(tableObj.tableid);
           const dataContainer = container.createDiv({ cls: "mysql-table-detail-content" });
-          const result = await QueryExecutor.execute(`SELECT * FROM ${activeDB}.${t2.tableid}`);
-          ResultRenderer.render(result, dataContainer, this.app, this, t2.tableid);
+          const result = await QueryExecutor.execute(`SELECT * FROM ${activeDB}.${tableObj.tableid}`);
+          ResultRenderer.render(result, dataContainer, this.app, this, tableObj.tableid);
         };
       });
     } catch (error) {
@@ -68799,8 +68805,14 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
   resetDatabase(container, footer) {
     new ConfirmationModal(
       this.app,
-      "Reset Database",
-      "This will delete ALL databases and tables. This action cannot be undone. Are you sure?",
+      t("modals.confirm_clear_title").replace("{dbName}", "ALL DATABASES"),
+      t("settings.reset_all_confirm_msg"),
+      // We need to add this key or reuse a similar one. Let's assume we add it or use a generic one for now.
+      // Actually, looking at the locales, we don't have a specific "Reset All" message.
+      // Let's use custom strings for now or add to locale.
+      // Better to add to locale. But since I can't edit locales in this step effectively (async tool calls), I will use existing or direct strings if needed, but the user asked for fix.
+      // Let's try to find best fit or add new keys. 
+      // Existing: "confirm_clear_msg": "Are you sure you want to clear all tables in \"{dbName}\"? This keeps the database but deletes all data.",
       (confirmed) => {
         void (async () => {
           if (confirmed) {
@@ -68811,16 +68823,16 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
               const successState = container.createDiv({ cls: "mysql-success-state" });
               const iconWrapper = successState.createDiv({ cls: "mysql-success-icon" });
               (0, import_obsidian12.setIcon)(iconWrapper, "check-circle");
-              successState.createEl("p", { text: "All databases reset successfully", cls: "mysql-success" });
-              new import_obsidian12.Notice("Database reset completed");
+              successState.createEl("p", { text: t("common.notice_reset_success") || "Reset completed", cls: "mysql-success" });
+              new import_obsidian12.Notice(t("common.notice_reset_success") || "Database reset completed");
             } catch (error) {
-              new import_obsidian12.Notice("Reset failed: " + error.message);
+              new import_obsidian12.Notice(t("common.error", { error: error.message }));
             }
           }
         })();
       },
-      "Reset Everything",
-      "Keep Data"
+      t("settings.reset_btn"),
+      t("modals.btn_cancel")
     ).open();
   }
 };

@@ -517,7 +517,7 @@ export class DatabaseTablesModal extends Modal {
                 const controls = tableWrapper.createEl("div", { cls: "mysql-direct-pagination" });
 
                 const statusSpan = controls.createEl("span", {
-                    text: `Showing ${currentCount} of ${rows.length} rows`,
+                    text: t('renderer.msg_showing_rows', { count: String(currentCount), total: String(rows.length) }),
                     cls: "mysql-pagination-status"
                 });
 

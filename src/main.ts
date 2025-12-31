@@ -679,11 +679,11 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
             const grid = container.createEl("div", { cls: "mysql-table-grid" });
             tables.forEach((table: unknown) => {
-                const t = table as { tableid: string };
+                const tableObj = table as { tableid: string };
                 const card = grid.createEl("div", { cls: "mysql-table-card" });
                 const iconSlot = card.createDiv({ cls: "mysql-card-icon" });
                 setIcon(iconSlot, "table");
-                card.createEl("strong", { text: t.tableid });
+                card.createEl("strong", { text: tableObj.tableid });
 
                 card.onclick = async () => {
                     container.empty();
@@ -691,7 +691,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                     const left = header.createDiv({ cls: "mysql-header-left" });
                     const back = left.createEl("button", { cls: "mysql-action-btn", attr: { title: "Go back to tables list" } });
                     setIcon(back, "arrow-left");
-                    back.createSpan({ text: "Back" });
+                    back.createSpan({ text: t('renderer.btn_back') });
                     back.onclick = (e) => {
                         e.stopPropagation();
                         btn.click();
@@ -700,12 +700,12 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                     const right = header.createDiv({ cls: "mysql-header-right" });
                     const exportBtn = right.createEl("button", { cls: "mysql-action-btn" });
                     setIcon(exportBtn, "file-output");
-                    exportBtn.createSpan({ text: "Export CSV" });
-                    exportBtn.onclick = () => this.csvManager.exportTable(t.tableid);
+                    exportBtn.createSpan({ text: t('modals.btn_exportar') + " CSV" });
+                    exportBtn.onclick = () => this.csvManager.exportTable(tableObj.tableid);
 
                     const dataContainer = container.createDiv({ cls: "mysql-table-detail-content" });
-                    const result = await QueryExecutor.execute(`SELECT * FROM ${activeDB}.${t.tableid}`);
-                    ResultRenderer.render(result, dataContainer, this.app, this, t.tableid);
+                    const result = await QueryExecutor.execute(`SELECT * FROM ${activeDB}.${tableObj.tableid}`);
+                    ResultRenderer.render(result, dataContainer, this.app, this, tableObj.tableid);
                 };
             });
         } catch (error) {
@@ -716,8 +716,13 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     private resetDatabase(container: HTMLElement, footer?: WorkbenchFooter): void {
         new ConfirmationModal(
             this.app,
-            "Reset Database",
-            "This will delete ALL databases and tables. This action cannot be undone. Are you sure?",
+            t('modals.confirm_clear_title').replace('{dbName}', 'ALL DATABASES'),
+            t('settings.reset_all_confirm_msg'), // We need to add this key or reuse a similar one. Let's assume we add it or use a generic one for now.
+            // Actually, looking at the locales, we don't have a specific "Reset All" message.
+            // Let's use custom strings for now or add to locale.
+            // Better to add to locale. But since I can't edit locales in this step effectively (async tool calls), I will use existing or direct strings if needed, but the user asked for fix.
+            // Let's try to find best fit or add new keys. 
+            // Existing: "confirm_clear_msg": "Are you sure you want to clear all tables in \"{dbName}\"? This keeps the database but deletes all data.",
             (confirmed) => {
                 void (async () => {
                     if (confirmed) {
@@ -728,16 +733,16 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                             const successState = container.createDiv({ cls: "mysql-success-state" });
                             const iconWrapper = successState.createDiv({ cls: "mysql-success-icon" });
                             setIcon(iconWrapper, "check-circle");
-                            successState.createEl("p", { text: "All databases reset successfully", cls: "mysql-success" });
-                            new Notice("Database reset completed");
+                            successState.createEl("p", { text: t('common.notice_reset_success') || "Reset completed", cls: "mysql-success" });
+                            new Notice(t('common.notice_reset_success') || "Database reset completed");
                         } catch (error) {
-                            new Notice("Reset failed: " + (error as Error).message);
+                            new Notice(t('common.error', { error: (error as Error).message }));
                         }
                     }
                 })();
             },
-            "Reset Everything",
-            "Keep Data"
+            t('settings.reset_btn'),
+            t('modals.btn_cancel')
         ).open();
     }
 }

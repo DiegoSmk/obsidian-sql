@@ -548,33 +548,46 @@ export class MySQLSettingTab extends PluginSettingTab {
 
         // Primary Actions
         new ButtonComponent(actions)
-            .setButtonText("Switch")
+            .setButtonText(t('modals.btn_ativar'))
             .onClick(() => this.openSwitcherModal());
 
         new ButtonComponent(actions)
-            .setButtonText("Create")
+            .setButtonText(t('modals.btn_confirm')) // Using "Confirm" or create "Create"? "btn_confirm" is "Confirmar". "btn_novo_db" is "Novo Banco" which is title. Let's use "btn_novo" if exists or standard "Create". 
+            // Checking locale: "btn_novo_db": "Novo banco". "create_title": "Criar novo banco".
+            // Let's use "Create" -> t('settings.btn_novo_db') is "Novo banco" (New database). Maybe too long for button?
+            // "btn_confirm" is "Confirm". 
+            // "btn_duplicar", "btn_renomear", etc.
+            // Let's use string "Criar" -> t('settings.btn_novo_db') for now or add a generic "Create".
+            // Actually "btn_novo_db" is "Novo banco".
+            // I'll use t('modals.create_title').replace('...', '') or just specific short text "Criar".
+            // Let's look at existing keys: "btn_importar", "btn_atualizar".
+            // I'll use "btn_novo_db" but user might want "Criar".
+            // Let's use a new key or existing appropriate one.
+            // "btn_confirm" is best approximation for "Create" action in modal, but here it opens modal.
+            // Let's use t('settings.btn_novo_db') for "New database".
+            .setButtonText(t('settings.btn_novo_db'))
             .setIcon("plus")
             .onClick(() => this.openCreateModal());
 
         const renameBtn = new ButtonComponent(actions)
-            .setButtonText("Rename")
+            .setButtonText(t('modals.btn_renomear'))
             .onClick(() => this.openRenameModal());
 
         if (activeDB === 'dbo') {
             renameBtn.setDisabled(true);
-            renameBtn.setTooltip("Default database cannot be renamed");
+            renameBtn.setTooltip(t('modals.tip_system_db'));
             renameBtn.buttonEl.classList.add('is-disabled-explicit');
         }
 
         // New: View Tables
         new ButtonComponent(actions)
-            .setButtonText("Tables")
+            .setButtonText(t('modals.btn_tabelas'))
             .setIcon("table")
             .onClick(() => this.openTablesModal());
 
         // New: Export SQL
         new ButtonComponent(actions)
-            .setButtonText("Export")
+            .setButtonText(t('modals.btn_exportar'))
             .setIcon("download")
             .setTooltip("Export database structure and data to SQL file")
             .onClick(async () => {
@@ -598,7 +611,7 @@ export class MySQLSettingTab extends PluginSettingTab {
         };
 
         new ButtonComponent(importBtnContainer)
-            .setButtonText("Import")
+            .setButtonText(t('settings.btn_importar'))
             .setIcon("upload")
             .setTooltip("Import database from SQL file")
             .onClick(() => {
@@ -609,7 +622,7 @@ export class MySQLSettingTab extends PluginSettingTab {
         actions.createDiv({ cls: 'mysql-action-separator' });
 
         new ButtonComponent(actions)
-            .setButtonText("Clear")
+            .setButtonText(t('form.btn_clear'))
             .setWarning()
             .onClick(() => this.openClearConfirm());
     }
