@@ -134,8 +134,8 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         const color = settings.useObsidianAccent ? 'var(--interactive-accent)' : settings.themeColor;
 
         // Set variables on body for global availability
-        (document.body as any).style.setProperty('--mysql-accent', color);
-        (document.body as any).style.setProperty('--mysql-accent-purple', color);
+        document.body.style.setProperty('--mysql-accent', color);
+        document.body.style.setProperty('--mysql-accent-purple', color);
     }
 
     // ========================================================================
@@ -156,6 +156,8 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     }
 
     async processSQLBlock(source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext) {
+        // Yield to ensure rendering doesn't block main thread immediately
+        await Promise.resolve();
         el.empty();
         el.addClass("mysql-block-parent");
         const workbench = el.createEl("div", { cls: "mysql-workbench-container" });

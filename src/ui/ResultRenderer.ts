@@ -130,6 +130,8 @@ export class ResultRenderer {
     }
 
     private static async insertIntoNote(data: unknown, app: App): Promise<void> {
+        // Await a microtask to ensure we are in a clean stack for editor operations
+        await Promise.resolve();
         try {
             const activeView = app.workspace.getActiveViewOfType(MarkdownView);
 

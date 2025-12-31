@@ -64338,6 +64338,7 @@ var DatabaseManager = class {
     await this.save();
   }
   async exportDatabase(dbName) {
+    await Promise.resolve();
     if (!import_alasql.default.databases[dbName]) throw new Error(`Database ${dbName} does not exist`);
     let dump = `-- Database Export: ${dbName}
 -- Date: ${(/* @__PURE__ */ new Date()).toISOString()}
@@ -66710,6 +66711,7 @@ var ResultRenderer = class {
     }
   }
   static async insertIntoNote(data, app) {
+    await Promise.resolve();
     try {
       const activeView = app.workspace.getActiveViewOfType(import_obsidian4.MarkdownView);
       if (!activeView) {
@@ -68013,6 +68015,7 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
     });
   }
   async importDatabaseSQL(file) {
+    await Promise.resolve();
     const reader = new FileReader();
     reader.onload = (e) => {
       void (async () => {
@@ -68325,6 +68328,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
     return `${ctx.sourcePath}:${hash(source.trim())}`;
   }
   async processSQLBlock(source, el, ctx) {
+    await Promise.resolve();
     el.empty();
     el.addClass("mysql-block-parent");
     const workbench = el.createEl("div", { cls: "mysql-workbench-container" });

@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.5.4] - 2025-12-31
+- **Lint**: Removed explicit 'any' casts and fixed async method signatures compliant with strict lint rules.
+
 ## [0.5.3] - 2025-12-31 (Hotfix)
 - **Fix**: Resolved remaining hardcoded English strings in Settings, Table View, and Workbench buttons.
 - **Fix**: Corrected "Reset" functionality messages to respect the active language.

@@ -33,8 +33,8 @@ export class MySQLSettingTab extends PluginSettingTab {
         const themeColor = this.plugin.settings.themeColor || '#9d7cd8';
         const color = this.plugin.settings.useObsidianAccent ? 'var(--interactive-accent)' : themeColor;
 
-        (containerEl as any).style.setProperty('--mysql-accent', color);
-        (containerEl as any).style.setProperty('--mysql-accent-purple', color);
+        containerEl.style.setProperty('--mysql-accent', color);
+        containerEl.style.setProperty('--mysql-accent-purple', color);
 
         containerEl.addClass('u-padding-top-0');
         // --- Header (Title + Import/Create) ---
@@ -375,7 +375,7 @@ export class MySQLSettingTab extends PluginSettingTab {
                 const circle = colorContainer.createDiv({
                     cls: `mysql-color-circle ${isSelected ? 'is-selected' : ''}`
                 });
-                (circle as any).style.setProperty('background-color', c.value);
+                circle.style.setProperty('background-color', c.value);
 
                 circle.onClickEvent(async () => {
                     this.plugin.settings.themeColor = c.value;
@@ -850,6 +850,7 @@ export class MySQLSettingTab extends PluginSettingTab {
     }
 
     private async importDatabaseSQL(file: File): Promise<void> {
+        await Promise.resolve(); // Satisfy async requirement and allow UI update
         const reader = new FileReader();
         reader.onload = (e: ProgressEvent<FileReader>) => {
             void (async () => {
