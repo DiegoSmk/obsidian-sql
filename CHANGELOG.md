@@ -1,5 +1,8 @@
 # Changelog
 
+## [0.5.5] - 2025-12-31
+- **Polish**: Updated English locale messages to use sentence case and removed excessive punctuation (Obsidian Guidelines).
+
 ## [0.5.4] - 2025-12-31
 - **Lint**: Removed explicit 'any' casts and fixed async method signatures compliant with strict lint rules.
 

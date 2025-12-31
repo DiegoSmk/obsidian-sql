@@ -64893,7 +64893,7 @@ var en_default = {
     "btn_atualizar": "Update",
     "btn_importar": "Import",
     "btn_novo_db": "New database",
-    "welcome_title": "Welcome to SQL Notebook!",
+    "welcome_title": "Welcome to SQL Notebook",
     "welcome_desc": "Manage your local databases, execute queries, and visualize results directly in Obsidian.",
     "search_placeholder": "Search databases...",
     "info_title": "Important information:",
@@ -64986,18 +64986,18 @@ var en_default = {
     "null_value": "NULL",
     "status_error": "Error",
     "status_done": "Done",
-    "notice_table_data_copied": "Table data copied to clipboard!",
+    "notice_table_data_copied": "Table data copied to clipboard",
     "notice_copy_failed": "Failed to copy: {error}",
     "notice_screenshot_failed": "Failed to create screenshot: {error}",
     "notice_no_active_note": "No active note found",
-    "notice_table_inserted": "Table inserted into note!",
+    "notice_table_inserted": "Table inserted into note",
     "notice_insert_failed": "Failed to insert: {error}"
   },
   "workbench": {
     "btn_run": "Run",
     "btn_executing": "Executing...",
     "btn_cancel": "Cancel",
-    "notice_copy": "SQL code copied!",
+    "notice_copy": "SQL code copied",
     "notice_aborted": "Query aborted by user"
   },
   "renderer": {
@@ -65007,14 +65007,14 @@ var en_default = {
     "tip_copy": "Copy result to clipboard",
     "tip_screenshot": "Take screenshot of result",
     "tip_add_note": "Insert result into note",
-    "notice_copied": "\u2713 Copied to clipboard!",
-    "notice_copy_failed": "\u274C Failed to copy: {error}",
-    "notice_screenshot_failed": "\u274C Failed to create screenshot: {error}",
-    "notice_screenshot_copied": "\u2713 Screenshot copied to clipboard!",
-    "notice_screenshot_downloaded": "\u2713 Screenshot downloaded!",
-    "notice_insert_no_note": "\u274C No active note found",
-    "notice_insert_success": "\u2713 Result inserted into note!",
-    "notice_insert_failed": "\u274C Failed to insert: {error}",
+    "notice_copied": "Copied to clipboard",
+    "notice_copy_failed": "Failed to copy: {error}",
+    "notice_screenshot_failed": "Failed to create screenshot: {error}",
+    "notice_screenshot_copied": "Screenshot copied to clipboard",
+    "notice_screenshot_downloaded": "Screenshot downloaded",
+    "notice_insert_no_note": "No active note found",
+    "notice_insert_success": "Result inserted into note",
+    "notice_insert_failed": "Failed to insert: {error}",
     "msg_no_result": "Query executed successfully (no result set)",
     "msg_rows_found": "{count} rows found",
     "msg_no_data": "No data found",
@@ -65072,11 +65072,11 @@ var en_default = {
     "invalid_name": "New name must be different from the old name.",
     "notice_export_success": "Exported to {name}",
     "notice_import_loading": "Importing database...",
-    "notice_import_success": "Database imported successfully!",
+    "notice_import_success": "Database imported successfully",
     "notice_anchor_form": "FORM anchored to {name}",
     "notice_anchor_live": "LIVE block anchored to {name}",
     "notice_update_live": "Updating LIVE data from {name}...",
-    "notice_reset_success": "Reset completed successfully!"
+    "notice_reset_success": "Reset completed successfully"
   }
 };
 
