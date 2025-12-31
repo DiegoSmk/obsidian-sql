@@ -67,7 +67,8 @@ Turn static queries into interactive apps.
 ### 2. Your First Query
 Create a code block in any note using the language `mysql`:
 
-````markdown
+![Workbench Demo](docs/screenshots/workbench.png)
+
 ```mysql
 -- Create a table
 CREATE TABLE tasks (id INT, title STRING, status STRING);
@@ -78,7 +79,6 @@ INSERT INTO tasks VALUES (1, 'Install Plugin', 'Done'), (2, 'Try Forms', 'Doing'
 -- Query it
 SELECT * FROM tasks WHERE status = 'Doing';
 ```
-````
 
 Click the **▶ Run** button. A beautiful table will render below your code.
 
@@ -87,6 +87,8 @@ Click the **▶ Run** button. A beautiful table will render below your code.
 #### ⚡ Live Mode
 Want a dashboard that updates automatically? Just add `LIVE` before your SELECT statement.
 The results will refresh whenever the database changes.
+
+![Live Mode Demo](docs/screenshots/live_preview.png)
 
 ````markdown
 ```mysql
@@ -97,6 +99,8 @@ LIVE SELECT status, COUNT(*) as count FROM tasks GROUP BY status;
 #### 📝 SQL Forms
 Need a quick way to insert data without writing INSERT queries manually?
 Use the `FORM` keyword to generate an automatic input UI based on your table schema.
+
+![SQL Form Demo](docs/screenshots/form_ui.png)
 
 ````markdown
 ```mysql
