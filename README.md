@@ -3,7 +3,7 @@
 
 **Transform your Obsidian Vault into a powerful local SQL Database Manager.**
 
-![SQL Notebook Banner](https://raw.githubusercontent.com/DiegoSmk/obsidian-sql/master/docs/banner.png)
+![SQL Notebook Banner](https://raw.githubusercontent.com/DiegoSmk/obsidian-sql/master/assets/banner.png)
 
 > "The missing link between knowledge management and structured data. Execute queries, manage local databases, and visualize results without leaving your notes."
 
@@ -67,7 +67,7 @@ Turn static queries into interactive apps.
 ### 2. Your First Query
 Create a code block in any note using the language `mysql`:
 
-![Workbench Demo](docs/screenshots/workbench.png)
+![Workbench Demo](assets/screenshots/workbench.png)
 
 ```mysql
 -- Create a table
@@ -88,7 +88,7 @@ Click the **▶ Run** button. A beautiful table will render below your code.
 Want a dashboard that updates automatically? Just add `LIVE` before your SELECT statement.
 The results will refresh whenever the database changes.
 
-![Live Mode Demo](docs/screenshots/live_preview.png)
+![Live Mode Demo](assets/screenshots/live_preview.png)
 
 ````markdown
 ```mysql
@@ -100,7 +100,7 @@ LIVE SELECT status, COUNT(*) as count FROM tasks GROUP BY status;
 Need a quick way to insert data without writing INSERT queries manually?
 Use the `FORM` keyword to generate an automatic input UI based on your table schema.
 
-![SQL Form Demo](docs/screenshots/form_ui.png)
+![SQL Form Demo](assets/screenshots/form_ui.png)
 
 ````markdown
 ```mysql

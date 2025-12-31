@@ -18,7 +18,7 @@ set -e
 GITHUB_REMOTE="github"
 PUBLIC_BRANCH="public"
 TARGET_BRANCH="master"
-INTERNAL_FOLDERS=".gitea improvements scripts tests_live tools"
+INTERNAL_FOLDERS=".gitea improvements scripts tests_live tools docs"
 
 echo "🚀 Iniciando processo de publicação pública..."
 
