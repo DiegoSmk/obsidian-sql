@@ -63969,10 +63969,13 @@ var SQL_CLEANUP_PATTERNS = [
 var SQLSanitizer = class {
   static clean(sql) {
     let cleaned = sql;
-    for (const { pattern } of SQL_CLEANUP_PATTERNS) {
+    cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, "");
+    cleaned = cleaned.replace(/--.*$|#.*$/gm, "");
+    for (const { pattern, name } of SQL_CLEANUP_PATTERNS) {
+      if (name === "block-comments" || name === "line-comments") continue;
       cleaned = cleaned.replace(pattern, "");
     }
-    return cleaned.replace(/^\s*[\r\n]/gm, "").trim();
+    return cleaned.trim();
   }
   static sanitizeIdentifier(name) {
     return name.replace(/[^a-zA-Z0-9_]/g, "_").substring(0, 64);
@@ -64816,7 +64819,7 @@ var pt_BR_default = {
     "auto_collapse_desc": "Inicie um coment\xE1rio com '@' (ex: '-- @ Minha Query') para recolher automaticamente ao abrir a nota.",
     "alert_title": "Marcador de alerta (!)",
     "alert_desc": "Adicione '!' ao in\xEDcio do coment\xE1rio para destac\xE1-lo como um alerta ou aviso.",
-    "question_title": "Marcador de d\xFAvida (?)",
+    "question_title": "Marcador de interroga\xE7\xE3o (?)",
     "question_desc": "Adicione '?' para indicar uma consulta que precisa de revis\xE3o ou \xE9 experimental.",
     "favorite_title": "Marcador de favorito (*)",
     "favorite_desc": "Adicione '*' para destacar consultas importantes ou frequentes.",
@@ -64913,7 +64916,7 @@ var pt_BR_default = {
     "msg_no_tables_in": "Nenhuma tabela encontrada no banco de dados ",
     "tip_back": "Voltar para lista de tabelas",
     "btn_back": "Voltar",
-    "title_results": "Resultados da Consulta",
+    "title_results": "Resultados da consulta",
     "rows_affected": "{count} linha(s) afetada(s)",
     "no_data_md": "_Sem dados_",
     "result_dml": "**Resultado:** {count} linha(s) afetada(s)"

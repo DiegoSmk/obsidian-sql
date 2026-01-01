@@ -48,7 +48,7 @@ export default {
         "auto_collapse_desc": "Inicie um comentário com '@' (ex: '-- @ Minha Query') para recolher automaticamente ao abrir a nota.",
         "alert_title": "Marcador de alerta (!)",
         "alert_desc": "Adicione '!' ao início do comentário para destacá-lo como um alerta ou aviso.",
-        "question_title": "Marcador de dúvida (?)",
+        "question_title": "Marcador de interrogação (?)",
         "question_desc": "Adicione '?' para indicar uma consulta que precisa de revisão ou é experimental.",
         "favorite_title": "Marcador de favorito (*)",
         "favorite_desc": "Adicione '*' para destacar consultas importantes ou frequentes.",
@@ -145,7 +145,7 @@ export default {
         "msg_no_tables_in": "Nenhuma tabela encontrada no banco de dados ",
         "tip_back": "Voltar para lista de tabelas",
         "btn_back": "Voltar",
-        "title_results": "Resultados da Consulta",
+        "title_results": "Resultados da consulta",
         "rows_affected": "{count} linha(s) afetada(s)",
         "no_data_md": "_Sem dados_",
         "result_dml": "**Resultado:** {count} linha(s) afetada(s)"

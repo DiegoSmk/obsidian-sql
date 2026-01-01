@@ -4,11 +4,19 @@ export class SQLSanitizer {
     static clean(sql: string): string {
         let cleaned = sql;
 
-        for (const { pattern } of SQL_CLEANUP_PATTERNS) {
+        // Remove block comments
+        cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
+
+        // Remove line comments but preserve the newline character to avoid merging lines
+        cleaned = cleaned.replace(/--.*$|#.*$/gm, '');
+
+        // Apply other cleanup patterns
+        for (const { pattern, name } of SQL_CLEANUP_PATTERNS) {
+            if (name === 'block-comments' || name === 'line-comments') continue;
             cleaned = cleaned.replace(pattern, '');
         }
 
-        return cleaned.replace(/^\s*[\r\n]/gm, '').trim();
+        return cleaned.trim();
     }
 
     static sanitizeIdentifier(name: string): string {
