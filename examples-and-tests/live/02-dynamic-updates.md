@@ -6,11 +6,11 @@ Live blocks also support dynamic parameters, allowing you to create interactive 
 
 Change the `min_price` in the input below and see the results update.
 
-```sql-live
+```mysql
 /* params: {
   "min_price": 100
 } */
-USE playground;
+LIVE USE playground;
 SELECT * FROM inventory WHERE price >= :min_price;
 ```
 
@@ -18,11 +18,11 @@ SELECT * FROM inventory WHERE price >= :min_price;
 
 You can have multiple live blocks on the same page reflecting different views of the same data.
 
-```sql-live
+```mysql
+LIVE USE playground;
 -- Summary view
-USE playground;
 SELECT 
-    COUNT(*) as total_items, 
+    COUNT(*) as qty_items, 
     SUM(price) as total_value 
 FROM inventory;
 ```

@@ -2,9 +2,9 @@
 
 `sql-live` blocks are the magic of this plugin. They update automatically whenever the underlying data changes, without needing to click "Run".
 
-## ⚡ Reactivity in Action
+### ⚡ Reactivity in Action
 
-1.  **Run this setup block first** (standard `mysql` block):
+1.  **Run this setup block first**:
 
 ```mysql
 USE playground;
@@ -15,9 +15,10 @@ INSERT INTO live_tasks (task, done) VALUES ('Build Plugin', false);
 ```
 
 2.  **Observe this LIVE block**:
+To make a block live, simply start your query with the `LIVE` keyword inside a standard `mysql` block.
 
-```sql-live
-USE playground;
+```mysql
+LIVE USE playground;
 SELECT * FROM live_tasks;
 ```
 

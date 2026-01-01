@@ -52,11 +52,11 @@ DROP TABLE members;
 
 ## 🚫 Read-only (LIVE)
 
-`sql-live` blocks are strictly read-only. They cannot contain `INSERT`, `UPDATE`, or `DELETE`.
+`LIVE` blocks are strictly read-only. They cannot contain `INSERT`, `UPDATE`, or `DELETE`.
 
-```sql-live
+```mysql
 -- This will fail because it's a mutation in a LIVE block
-INSERT INTO members (name) VALUES ('Hacker');
+LIVE INSERT INTO members (name) VALUES ('Hacker');
 ```
 
 ---

@@ -23,7 +23,7 @@ USE playground;
 FORM members
     id HIDDEN
     name TEXT "Member Name"
-    role SELECT "Project Role" ["Developer", "Designer", "Manager", "Other"]
+    role SELECT "Project Role" ("Developer", "Designer", "Manager", "Other")
     joined_at DATE "Date Joined";
 ```
 

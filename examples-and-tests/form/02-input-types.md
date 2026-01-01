@@ -22,9 +22,9 @@ FORM contact_form
     id HIDDEN
     name TEXT "Full Name"
     email TEXT "Work Email"
-    category SELECT "Department" ["Sales", "Support", "Engineering"]
-    priority SELECT "Urgency" [1, 2, 3]
-    newsletter SELECT "Newsletter?" [true, false]
+    category SELECT "Department" ("Sales", "Support", "Engineering")
+    priority SELECT "Urgency" (1, 2, 3)
+    newsletter SELECT "Newsletter?" (true, false)
     notes TEXT "Additional Comments";
 ```
 
