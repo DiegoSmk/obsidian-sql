@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0] - 2026-01-01
+- **Performance**: Implemented cooperative multitasking (yielding) in database load/save processes to prevent UI freezing on startup.
+- **Optimization**: Eliminated redundant disk writes and unified database snapshot process.
+- **Lint**: Fixed all remaining strict ESLint errors across the codebase and test suite.
+- **Fix**: Corrected execution time display logic in the footer.
+- **Refactor**: Renamed internal database variables for better clarity and security.
+
 ## [0.5.5] - 2025-12-31
 - **Polish**: Updated English locale messages to use sentence case and removed excessive punctuation (Obsidian Guidelines).
 
