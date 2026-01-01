@@ -164,7 +164,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
         // Phase 2: LIVE Mode Detection & Identity
         const trimmedSource = source.trim();
-        const isLive = trimmedSource.toUpperCase().startsWith("LIVE SELECT");
+        const isLive = /^LIVE\s/i.test(trimmedSource);
         const isForm = trimmedSource.toUpperCase().startsWith("FORM");
         const stableId = (isLive || isForm) ? this.generateBlockStableId(source, ctx) : null;
 
@@ -211,8 +211,8 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         if (isLive) {
             workbench.addClass("mysql-live-mode");
             try {
-                // Extract SQL without LIVE prefix for AST parsing
-                const sqlForAST = trimmedSource.substring(5).trim();
+                // Extract SQL without LIVE prefix correctly
+                const sqlForAST = trimmedSource.replace(/^LIVE\s+/i, "");
                 const extractFromNode = (node: unknown) => {
                     if (!node) return;
                     if (typeof node === 'object' && node !== null && 'tableid' in node) {
@@ -457,7 +457,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                                 }
                                 dbNameSpan.setText(db);
                                 new Notice(t('common.notice_anchor_live', { name: db }) || `Live result anchored to ${db}`);
-                                void this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footerInstance, {
+                                void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
                                     activeDatabase: anchoredDB,
                                     originId: stableId,
                                     isLive: true
@@ -475,7 +475,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             setIcon(refreshBtn, "refresh-cw");
             refreshBtn.onclick = () => {
                 refreshBtn.addClass("is-spinning");
-                void this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footerInstance, {
+                void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
                     activeDatabase: anchoredDB,
                     originId: stableId,
                     isLive: true
@@ -484,7 +484,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 });
             };
 
-            void this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footerInstance, {
+            void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
                 activeDatabase: anchoredDB,
                 originId: stableId,
                 isLive: true
@@ -494,7 +494,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
             const eventBus = DatabaseEventBus.getInstance();
             const debouncedExec = debounce(() => {
-                void this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footerInstance, {
+                void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
                     activeDatabase: anchoredDB,
                     originId: stableId,
                     isLive: true

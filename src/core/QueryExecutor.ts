@@ -66,7 +66,7 @@ export class QueryExecutor {
 
             // 2. Defense in Depth: Brute-force block write operations in LIVE mode
             if (options.isLive) {
-                const isSelect = upperSql.startsWith('SELECT') || upperSql.startsWith('SHOW') || upperSql.startsWith('WITH');
+                const isSelect = upperSql.startsWith('SELECT') || upperSql.startsWith('SHOW') || upperSql.startsWith('WITH') || upperSql.startsWith('USE');
                 if (!isSelect || upperSql.includes('INSERT ') || upperSql.includes('UPDATE ') || upperSql.includes('DELETE ') || upperSql.includes('DROP ')) {
                     throw new Error("Security Block: LIVE blocks are strictly read-only and must be SELECT/SHOW queries.");
                 }
