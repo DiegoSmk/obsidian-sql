@@ -6,6 +6,8 @@ import { Logger } from '../utils/Logger';
 import { DatabaseEventBus } from './DatabaseEventBus';
 import { QueryResult, ResultSet, AlaSQLInstance, AlaSQLTable, AlaSQLColumn } from '../types';
 import { SQLTransformer } from '../utils/SQLTransformer';
+import { t } from '../utils/i18n';
+
 
 
 export class QueryExecutor {
@@ -121,7 +123,7 @@ export class QueryExecutor {
 
                     // Warning check for Fragile INSERT
                     if (SQLTransformer.hasFragileInsertSelect(stmt)) {
-                        warnings.push(`⚠️ Detectado 'INSERT INTO ... (colunas) SELECT'. O AlaSQL pode falhar com erro '$01'. Se ocorrer, remova a lista de colunas, mas garanta que a ordem do SELECT corresponda exatamente às colunas da tabela.`);
+                        warnings.push(t('executor.warn_fragile_insert'));
                     }
 
                     stmt = SQLTransformer.prefixTablesWithDatabase(stmt, currentDB);
@@ -145,7 +147,7 @@ export class QueryExecutor {
             if (useMatch) {
                 const newDB = useMatch[1];
                 if (!(alasql as unknown as AlaSQLInstance).databases[newDB]) throw new Error(`Database '${newDB}' does not exist`);
-                return { success: true, data: [{ type: 'message', data: null, message: `Database changed to '${newDB}'` }], executionTime: monitor.end(), activeDatabase: newDB };
+                return { success: true, data: [{ type: 'message', data: null, message: t('modals.notice_switch_success', { name: newDB }) }], executionTime: monitor.end(), activeDatabase: newDB };
             }
 
             // Security Check (Always ON)
@@ -164,7 +166,7 @@ export class QueryExecutor {
 
             // Warning check for Fragile INSERT
             if (SQLTransformer.hasFragileInsertSelect(trimmed)) {
-                warnings.push(`⚠️ Detectado 'INSERT INTO ... (colunas) SELECT'. O AlaSQL pode falhar com erro '$01'. Se ocorrer, remova e garanta a ordem exata das colunas.`);
+                warnings.push(t('executor.warn_fragile_insert'));
             }
 
             const looksLikeSingleSelect = trimmedUpper.startsWith('SELECT') && !trimmed.includes(';') && !trimmedUpper.includes('LIMIT');
@@ -193,14 +195,14 @@ export class QueryExecutor {
             const word = match[1].toUpperCase();
             const reserved = ['TOTAL', 'VALUE', 'SUM', 'COUNT', 'MIN', 'MAX', 'AVG', 'KEY', 'ORDER', 'GROUP', 'DATE', 'DESC', 'ASC'];
             if (reserved.includes(word)) {
-                return `${message}\n\n💡 Dica: '${word}' é uma palavra reservada do banco de dados. Tente usar aspas (ex: "${word.toLowerCase()}") ou mude o nome (ex: "${word.toLowerCase()}_total").`;
+                return t('executor.err_reserved_word', { message, word, lower: word.toLowerCase() });
             }
         }
         if (message.includes("$01 is not defined")) {
-            return `${message}\n\n⚠️ Erro Conhecido do AlaSQL: O uso de lista de colunas explícita em 'INSERT INTO ... SELECT' causou falha.\n\nSolução: Remova a lista de colunas (ex: 'INSERT INTO T SELECT ...') e certifique-se de que a ordem dos campos no SELECT corresponda EXATAMENTE à ordem das colunas na tabela de destino.`;
+            return t('executor.err_alasql_bug_01', { message });
         }
         if (message.includes("Parse error")) {
-            return `${message}\n\n💡 Verifique se você esqueceu algum ponto e vírgula, se há parênteses/aspas não fechadas ou erros de digitação nos nomes das tabelas.`;
+            return t('executor.err_parse', { message });
         }
         return message;
     }
@@ -214,7 +216,7 @@ export class QueryExecutor {
     }
 
     private static createResultSet(res: unknown): ResultSet {
-        if (res === undefined || res === null) return { type: 'message', data: null, message: 'Command executed successfully' };
+        if (res === undefined || res === null) return { type: 'message', data: null, message: t('modals.status_done') };
 
         // If it's already a ResultSet (e.g. from FORM interception)
         if (typeof res === 'object' && res !== null && 'type' in res && 'data' in res) {
@@ -228,7 +230,7 @@ export class QueryExecutor {
             }
             return { type: 'scalar', data: res, rowCount: res.length };
         }
-        if (typeof res === 'number') return { type: 'message', data: res, message: `${res} row(s) affected` };
+        if (typeof res === 'number') return { type: 'message', data: res, message: t('renderer.rows_affected', { count: String(res) }) };
         let message = '';
         if (typeof res === 'object' && res !== null) {
             message = JSON.stringify(res);
@@ -270,7 +272,7 @@ export class QueryExecutor {
                 throw new Error(`Table '${tableName}' found but has no columns.`);
             }
         } catch {
-            throw new Error(`Table '${fullTableName}' not found. Certifique-se de que você executou o setup (01_setup.md) ou criou a tabela.`);
+            throw new Error(`Table '${fullTableName}' not found.`);
         }
 
         const customFields: Record<string, { label?: string, type?: string, options?: string[], hidden?: boolean, defaultValue?: unknown }> = {};

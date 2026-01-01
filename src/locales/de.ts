@@ -37,6 +37,7 @@ export default {
         "batch_size_desc": "Zeilen, die pro Seite in den Ergebnissen angezeigt werden sollen.",
         "reset_all": "Alle Daten zurücksetzen",
         "reset_btn": "Alles zurücksetzen",
+        "reset_all_confirm_msg": "Dies löscht ALLE Datenbanken und Tabellen. Diese Aktion kann nicht rückgängig gemacht werden. Sind Sie sicher?",
         "footer_by": "Diego Pena"
     },
     "help": {
@@ -97,6 +98,8 @@ export default {
         "null_value": "NULL",
         "status_error": "Fehler",
         "status_done": "Fertig",
+        "switch_db_help": "Wechseln Sie zu einer Datenbank mit Tabellen oder ",
+        "btn_open_settings": "öffnen Sie die Einstellungen",
         "notice_table_data_copied": "Tabellendaten in die Zwischenablage kopiert!",
         "notice_copy_failed": "Kopieren fehlgeschlagen: {error}",
         "notice_screenshot_failed": "Screenshot-Erstellung fehlgeschlagen: {error}",
@@ -139,7 +142,13 @@ export default {
         "msg_loading": "Lade Daten...",
         "msg_showing_limit": "Zeige nur die ersten {count} Zeilen.",
         "msg_no_tables": "Keine Tabellen in dieser Datenbank gefunden.",
-        "tip_back": "Zurück zur Tabellenliste"
+        "msg_no_tables_in": "Keine Tabellen in der Datenbank gefunden ",
+        "tip_back": "Zurück zur Tabellenliste",
+        "btn_back": "Zurück",
+        "title_results": "Abfrage-Ergebnisse",
+        "rows_affected": "{count} Zeile(n) betroffen",
+        "no_data_md": "_Keine Daten_",
+        "result_dml": "**Ergebnis:** {count} Zeile(n) betroffen"
     },
     "form": {
         "title_insert": "Einfügen in {name}",
@@ -185,6 +194,14 @@ export default {
         "notice_import_success": "Datenbank erfolgreich importiert!",
         "notice_anchor_form": "FORM an {name} verankert",
         "notice_anchor_live": "LIVE-Block an {name} verankert",
-        "notice_update_live": "Aktualisiere LIVE-Daten von {name}..."
+        "notice_update_live": "Aktualisiere LIVE-Daten von {name}...",
+        "notice_reset_success": "Zurücksetzen erfolgreich abgeschlossen",
+        "app_name": "SQL Notebook"
+    },
+    "executor": {
+        "err_reserved_word": "{message}\n\n💡 Tipp: '{word}' ist ein reserviertes Wort. Versuchen Sie, Anführungszeichen zu verwenden (z. B. \"{lower}\") oder ändern Sie den Namen.",
+        "err_alasql_bug_01": "{message}\n\n⚠️ Bekannter AlaSQL-Fehler: Die Verwendung einer expliziten Spaltenliste in 'INSERT INTO ... SELECT' hat zu einem Fehler geführt.\n\nLösung: Entfernen Sie die Spaltenliste und stellen Sie sicher, dass die Reihenfolge genau übereinstimmt.",
+        "err_parse": "{message}\n\n💡 Überprüfen Sie, ob Sie ein Semikolon vergessen haben, ob Klammern/Anführungszeichen nicht geschlossen sind oder ob Tippfehler vorliegen.",
+        "warn_fragile_insert": "⚠️ 'INSERT INTO ... (Spalten) SELECT' erkannt. AlaSQL kann mit dem Fehler '$01' fehlschlagen. Falls dies passiert, entfernen Sie die Spaltenliste."
     }
 }

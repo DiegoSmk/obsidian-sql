@@ -75,38 +75,55 @@
 
 /* Help Button */
 .mysql-footer-help-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
     color: var(--text-muted);
-    padding: 2px 8px;
-    background: rgba(128, 128, 128, 0.05);
-    border-radius: 4px;
-    height: 20px;
-    transition: all var(--mysql-transition-fast);
-}
-
-.mysql-footer-help-btn:hover {
-    color: var(--text-normal);
 }
 
 .mysql-footer-help-btn svg {
     width: 14px;
     height: 14px;
     stroke-width: 1.5px;
-    /* Thinner lines */
 }
 
-/* Interactive DB Container */
-.mysql-footer-db-interactive {
+/* Footer Database Info */
+.mysql-footer-db-container {
+    gap: 6px;
+    color: var(--text-muted);
+    margin-right: 8px;
+}
+
+/* Common footer items (layout) */
+.mysql-footer-item {
+    padding: 2px 8px;
+    background: rgba(128, 128, 128, 0.05);
+    border-radius: 4px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Interactive items (pointer + hover) */
+.mysql-footer-interactive {
     cursor: pointer;
     transition: all var(--mysql-transition-fast);
-    padding: 2px 6px;
-    border-radius: 4px;
 }
 
-.mysql-footer-db-interactive:hover {
+.mysql-footer-interactive:hover {
     background: color-mix(in srgb, var(--mysql-accent), transparent 90%);
     color: var(--mysql-accent);
+}
+
+.mysql-footer-time-container {
+    opacity: 0.9;
+}
+
+.mysql-footer-help-btn {
+    color: var(--text-muted);
+}
+
+
+.mysql-footer-status-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }

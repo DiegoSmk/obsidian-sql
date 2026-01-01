@@ -5,7 +5,7 @@ import { Logger } from '../../utils/Logger';
 import alasql from 'alasql';
 
 describe('QueryExecutor Configuration & Logging', () => {
-    let consoleSpy: any;
+    let consoleSpy: unknown;
 
     beforeEach(() => {
         // Reset AlaSQL safely
@@ -23,7 +23,7 @@ describe('QueryExecutor Configuration & Logging', () => {
             debug: vi.spyOn(console, 'debug').mockImplementation(() => { }),
             warn: vi.spyOn(console, 'warn').mockImplementation(() => { }),
             error: vi.spyOn(console, 'error').mockImplementation(() => { })
-        } as { debug: any, warn: any, error: any };
+        } as { debug: unknown, warn: unknown, error: unknown };
     });
 
     afterEach(() => {

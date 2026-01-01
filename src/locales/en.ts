@@ -98,6 +98,8 @@ export default {
         "null_value": "NULL",
         "status_error": "Error",
         "status_done": "Done",
+        "switch_db_help": "Switch to a database with tables or ",
+        "btn_open_settings": "Open settings",
         "notice_table_data_copied": "Table data copied to clipboard",
         "notice_copy_failed": "Failed to copy: {error}",
         "notice_screenshot_failed": "Failed to create screenshot: {error}",
@@ -140,8 +142,13 @@ export default {
         "msg_loading": "Loading data...",
         "msg_showing_limit": "Showing first {count} rows only.",
         "msg_no_tables": "No tables found in this database.",
+        "msg_no_tables_in": "No tables found in database ",
         "tip_back": "Back to tables list",
-        "btn_back": "Back"
+        "btn_back": "Back",
+        "title_results": "Query Results",
+        "rows_affected": "{count} row(s) affected",
+        "no_data_md": "_No data_",
+        "result_dml": "**Result:** {count} row(s) affected"
     },
     "form": {
         "title_insert": "Insert into {name}",
@@ -188,6 +195,13 @@ export default {
         "notice_anchor_form": "FORM anchored to {name}",
         "notice_anchor_live": "LIVE block anchored to {name}",
         "notice_update_live": "Updating LIVE data from {name}...",
-        "notice_reset_success": "Reset completed successfully"
+        "notice_reset_success": "Reset completed successfully",
+        "app_name": "SQL Notebook"
+    },
+    "executor": {
+        "err_reserved_word": "{message}\n\n💡 Tip: '{word}' is a reserved word. Try using quotes (e.g. \"{lower}\") or change the name.",
+        "err_alasql_bug_01": "{message}\n\n⚠️ Known AlaSQL Bug: Using an explicit column list in 'INSERT INTO ... SELECT' caused a failure.\n\nSolution: Remove the column list and ensure the order matches exactly.",
+        "err_parse": "{message}\n\n💡 Check if you forgot a semicolon, have unclosed parentheses/quotes, or typos.",
+        "warn_fragile_insert": "⚠️ 'INSERT INTO ... (columns) SELECT' detected. AlaSQL may fail with error '$01'. If it happens, remove the column list."
     }
 }

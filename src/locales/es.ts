@@ -35,8 +35,9 @@ export default {
         "snapshot_limit_desc": "Máximo de filas por tabla para guardar (evita problemas de memoria).",
         "batch_size": "Tamaño de Lote",
         "batch_size_desc": "Filas a mostrar por página en los resultados.",
-        "reset_all": "Restablecer Todos los Datos",
-        "reset_btn": "Restablecer Todo",
+        "reset_all": "Restablecer todos los datos",
+        "reset_btn": "Restablecer todo",
+        "reset_all_confirm_msg": "Esto eliminará TODAS las bases de datos y tablas. Esta acción no se puede deshacer. ¿Estás seguro?",
         "footer_by": "Diego Pena"
     },
     "help": {
@@ -97,6 +98,8 @@ export default {
         "null_value": "NULO",
         "status_error": "Error",
         "status_done": "Hecho",
+        "switch_db_help": "Cambia a una base de datos con tablas o ",
+        "btn_open_settings": "abre la configuración",
         "notice_table_data_copied": "¡Datos de la tabla copiados al portapapeles!",
         "notice_copy_failed": "Error al copiar: {error}",
         "notice_screenshot_failed": "Error al crear la captura de pantalla: {error}",
@@ -139,7 +142,13 @@ export default {
         "msg_loading": "Cargando datos...",
         "msg_showing_limit": "Mostrando solo las primeras {count} filas.",
         "msg_no_tables": "No se encontraron tablas en esta base de datos.",
-        "tip_back": "Volver a la lista de tablas"
+        "msg_no_tables_in": "No se encontraron tablas en la base de datos ",
+        "tip_back": "Voltar a la lista de tablas",
+        "btn_back": "Volver",
+        "title_results": "Resultados de la Consulta",
+        "rows_affected": "{count} fila(s) afectada(s)",
+        "no_data_md": "_Sin datos_",
+        "result_dml": "**Resultado:** {count} fila(s) afectada(s)"
     },
     "form": {
         "title_insert": "Insertar en {name}",
@@ -185,6 +194,14 @@ export default {
         "notice_import_success": "¡Base de datos importada con éxito!",
         "notice_anchor_form": "FORM anclado a {name}",
         "notice_anchor_live": "Bloque LIVE anclado a {name}",
-        "notice_update_live": "Actualizando datos LIVE desde {name}..."
+        "notice_update_live": "Actualizando datos LIVE desde {name}...",
+        "notice_reset_success": "Restablecimiento completado con éxito",
+        "app_name": "SQL Notebook"
+    },
+    "executor": {
+        "err_reserved_word": "{message}\n\n💡 Sugerencia: '{word}' es una palabra reservada. Intente usar comillas (ej: \"{lower}\") o cambie el nombre.",
+        "err_alasql_bug_01": "{message}\n\n⚠️ Error Conocido de AlaSQL: El uso de una lista de columnas explícita en 'INSERT INTO ... SELECT' causó un fallo.\n\nSolución: Elimine la lista de columnas y asegúrese de que el orden coincida exactamente.",
+        "err_parse": "{message}\n\n💡 Verifique si olvidó algún punto y coma, paréntesis/comillas sin cerrar o errores tipográficos.",
+        "warn_fragile_insert": "⚠️ Detectado 'INSERT INTO ... (columnas) SELECT'. AlaSQL puede fallar con el error '$01'. Si ocurre, elimine la lista de columnas y asegúrese de que el orden sea exacto."
     }
 }

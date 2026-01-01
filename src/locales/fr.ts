@@ -37,6 +37,7 @@ export default {
         "batch_size_desc": "Lignes à afficher par page dans les résultats.",
         "reset_all": "Réinitialiser toutes les données",
         "reset_btn": "Tout réinitialiser",
+        "reset_all_confirm_msg": "Cela supprimera TOUTES les bases de données et tables. Cette action est irréversible. Êtes-vous sûr ?",
         "footer_by": "Diego Pena"
     },
     "help": {
@@ -97,6 +98,8 @@ export default {
         "null_value": "NULL",
         "status_error": "Erreur",
         "status_done": "Terminé",
+        "switch_db_help": "Passez à une base de données avec des tables ou ",
+        "btn_open_settings": "ouvrez les paramètres",
         "notice_table_data_copied": "Données de table copiées dans le presse-papiers !",
         "notice_copy_failed": "Échec de la copie : {error}",
         "notice_screenshot_failed": "Échec de la capture d'écran : {error}",
@@ -139,7 +142,13 @@ export default {
         "msg_loading": "Chargement des données...",
         "msg_showing_limit": "Affichage des {count} premières lignes uniquement.",
         "msg_no_tables": "Aucune table trouvée dans cette base de données.",
-        "tip_back": "Retour à la liste des tables"
+        "msg_no_tables_in": "Aucune table trouvée dans la base de données ",
+        "tip_back": "Retour à la liste des tables",
+        "btn_back": "Retour",
+        "title_results": "Résultats de la requête",
+        "rows_affected": "{count} ligne(s) affectée(s)",
+        "no_data_md": "_Aucune donnée_",
+        "result_dml": "**Résultat :** {count} ligne(s) affectée(s)"
     },
     "form": {
         "title_insert": "Insérer dans {name}",
@@ -185,6 +194,14 @@ export default {
         "notice_import_success": "Base de données importée avec succès !",
         "notice_anchor_form": "FORM ancré à {name}",
         "notice_anchor_live": "Bloc LIVE ancré à {name}",
-        "notice_update_live": "Mise à jour des données LIVE depuis {name}..."
+        "notice_update_live": "Mise à jour des données LIVE depuis {name}...",
+        "notice_reset_success": "Réinitialisation terminée avec succès",
+        "app_name": "SQL Notebook"
+    },
+    "executor": {
+        "err_reserved_word": "{message}\n\n💡 Conseil : '{word}' est un mot réservé. Essayez d'utiliser des guillemets (ex : \"{lower}\") ou modifiez le nom.",
+        "err_alasql_bug_01": "{message}\n\n⚠️ Erreur connue d'AlaSQL : L'utilisation d'une liste de colonnes explicite dans 'INSERT INTO ... SELECT' a provoqué un échec.\n\nSolution : Supprimez la liste de colonnes et assurez-vous que l'ordre correspond exactement.",
+        "err_parse": "{message}\n\n💡 Vérifiez si vous avez oublié un point-virgule, s'il y a des parenthèses/guillemets non fermés ou des fautes de frappe.",
+        "warn_fragile_insert": "⚠️ 'INSERT INTO ... (colonnes) SELECT' détecté. AlaSQL peut échouer avec l'erreur '$01'. Si cela se produit, supprimez la liste de colonnes."
     }
 }

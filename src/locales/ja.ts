@@ -37,6 +37,7 @@ export default {
         "batch_size_desc": "結果の 1 ページあたりに表示する行数。",
         "reset_all": "すべてのデータをリセット",
         "reset_btn": "すべてをリセット",
+        "reset_all_confirm_msg": "すべてのデータベースとテーブルが削除されます。この操作は取り消せません。よろしいですか？",
         "footer_by": "Diego Pena"
     },
     "help": {
@@ -97,6 +98,8 @@ export default {
         "null_value": "NULL",
         "status_error": "エラー",
         "status_done": "完了",
+        "switch_db_help": "テーブルのあるデータベースに切り替えるか、",
+        "btn_open_settings": "設定を開いてください",
         "notice_table_data_copied": "テーブルデータをクリップボードにコピーしました！",
         "notice_copy_failed": "コピーに失敗しました: {error}",
         "notice_screenshot_failed": "スクリーンショットの作成に失敗しました: {error}",
@@ -139,7 +142,13 @@ export default {
         "msg_loading": "データを読み込み中...",
         "msg_showing_limit": "最初の {count} 行のみ表示しています。",
         "msg_no_tables": "このデータベースにはテーブルが見つかりません。",
-        "tip_back": "テーブル一覧に戻る"
+        "msg_no_tables_in": "データベース内にテーブルが見つかりません ",
+        "tip_back": "テーブル一覧に戻る",
+        "btn_back": "戻る",
+        "title_results": "クエリ結果",
+        "rows_affected": "{count} 行が影響を受けました",
+        "no_data_md": "_データなし_",
+        "result_dml": "**結果:** {count} 行が影響を受けました"
     },
     "form": {
         "title_insert": "{name} に挿入",
@@ -185,6 +194,14 @@ export default {
         "notice_import_success": "データベースのインポートに成功しました！",
         "notice_anchor_form": "FORM を {name} に固定しました",
         "notice_anchor_live": "LIVE ブロックを {name} に固定しました",
-        "notice_update_live": "{name} から LIVE データを更新中..."
+        "notice_update_live": "{name} から LIVE データを更新中...",
+        "notice_reset_success": "リセットが正常に完了しました",
+        "app_name": "SQL Notebook"
+    },
+    "executor": {
+        "err_reserved_word": "{message}\n\n💡 ヒント: '{word}' は予約語です。引用符を使用するか (例: \"{lower}\")、名前を変更してください。",
+        "err_alasql_bug_01": "{message}\n\n⚠️ 既知の AlaSQL エラー: 'INSERT INTO ... SELECT' で明示的な列リストを使用したため失敗しました。\n\n解決策: 列リストを削除し、順序が正確に一致していることを確認してください。",
+        "err_parse": "{message}\n\n💡 セミコロンの忘れ、括弧/引用符の閉じ忘れ、またはタイポがないか確認してください。",
+        "warn_fragile_insert": "⚠️ 'INSERT INTO ... (列) SELECT' を検出しました。AlaSQL はエラー '$01' で失敗する可能性があります。発生した場合は列リストを削除してください。"
     }
 }

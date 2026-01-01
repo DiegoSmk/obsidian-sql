@@ -37,6 +37,7 @@ export default {
         "batch_size_desc": "结果中每页显示的行数。",
         "reset_all": "重置所有数据",
         "reset_btn": "重置一切",
+        "reset_all_confirm_msg": "这将删除所有数据库和表。此操作无法撤销。您确定吗？",
         "footer_by": "Diego Pena"
     },
     "help": {
@@ -97,6 +98,8 @@ export default {
         "null_value": "空",
         "status_error": "错误",
         "status_done": "完成",
+        "switch_db_help": "切换到包含表的数据库或 ",
+        "btn_open_settings": "打开设置",
         "notice_table_data_copied": "表数据已复制到剪贴板！",
         "notice_copy_failed": "复制失败: {error}",
         "notice_screenshot_failed": "创建截图失败: {error}",
@@ -139,7 +142,13 @@ export default {
         "msg_loading": "正在加载数据...",
         "msg_showing_limit": "仅显示前 {count} 行。",
         "msg_no_tables": "在此数据库中未找到表。",
-        "tip_back": "返回表列表"
+        "msg_no_tables_in": "数据库中未找到表 ",
+        "tip_back": "返回表列表",
+        "btn_back": "返回",
+        "title_results": "查询结果",
+        "rows_affected": "{count} 行受影响",
+        "no_data_md": "_没有数据_",
+        "result_dml": "**结果：** {count} 行受影响"
     },
     "form": {
         "title_insert": "插入到 {name}",
@@ -185,6 +194,14 @@ export default {
         "notice_import_success": "数据库导入成功！",
         "notice_anchor_form": "FORM 已锚定到 {name}",
         "notice_anchor_live": "LIVE 块已锚定到 {name}",
-        "notice_update_live": "正在从 {name} 更新 LIVE 数据..."
+        "notice_update_live": "正在从 {name} 更新 LIVE 数据...",
+        "notice_reset_success": "重置成功完成",
+        "app_name": "SQL Notebook"
+    },
+    "executor": {
+        "err_reserved_word": "{message}\n\n💡 提示：'{word}' 是保留字。请尝试使用引号（如 \"{lower}\"）或更改名称。",
+        "err_alasql_bug_01": "{message}\n\n⚠️ 已知 AlaSQL 错误：在 'INSERT INTO ... SELECT' 中使用显式列列表导致失败。\n\n解决方案：删除列列表并确保顺序完全对应。",
+        "err_parse": "{message}\n\n💡 请检查是否遗漏了分号、括号/引号是否未闭合或存在拼写错误。",
+        "warn_fragile_insert": "⚠️ 检测到 'INSERT INTO ... (列) SELECT'。AlaSQL 可能会因 '$01' 错误而失败。如果发生，请删除列列表。"
     }
 }

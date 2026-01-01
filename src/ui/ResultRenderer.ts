@@ -146,7 +146,7 @@ export class ResultRenderer {
             if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object') {
                 textToInsert = this.dataToMarkdownTable(data);
             } else if (typeof data === 'number') {
-                textToInsert = `**Result:** ${String(data)} row(s) affected`;
+                textToInsert = t('renderer.result_dml', { count: String(data) });
             } else {
                 textToInsert = '```json\n' + JSON.stringify(data, null, 2) + '\n```';
             }
@@ -164,7 +164,7 @@ export class ResultRenderer {
     }
 
     private static dataToMarkdownTable(rows: unknown[]): string {
-        if (rows.length === 0) return '_No data_';
+        if (rows.length === 0) return t('renderer.no_data_md');
 
         const keys = Object.keys(rows[0] as Record<string, unknown>);
         let md = '| ' + keys.join(' | ') + ' |\n';
@@ -238,7 +238,7 @@ export class ResultRenderer {
                     break;
                 case 'message':
                 case 'error': {
-                    const isDML = rs.type === 'message' && rs.message && rs.message.includes('affected');
+                    const isDML = rs.type === 'message' && typeof rs.data === 'number';
                     const msgWrapper = contentWrapper.createDiv({
                         cls: rs.type === 'error' ? 'mysql-error-inline' : (isDML ? 'mysql-success-state mysql-msg-compact' : 'mysql-info-state mysql-msg-compact')
                     });

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { Logger } from '../Logger';
 
 describe('Logger', () => {
-    let consoleSpy: any;
+    let consoleSpy: unknown;
 
     beforeEach(() => {
         // Reset internal state if possible or assume isolation. 

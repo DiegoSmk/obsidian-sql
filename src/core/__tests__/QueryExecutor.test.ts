@@ -3,6 +3,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import alasql from 'alasql';
 import { QueryExecutor } from '../QueryExecutor';
 import { SQLTransformer } from '../../utils/SQLTransformer';
+import { AlaSQLInstance } from '../../types';
 
 
 describe('QueryExecutor', () => {
@@ -33,7 +34,7 @@ describe('QueryExecutor', () => {
         expect(result.success).toBe(true);
         expect(result.data?.[0].type).toBe('table');
         expect(result.data?.[0].data).toHaveLength(1);
-        expect((result.data?.[0].data as any[])[0].name).toBe('Alice');
+        expect(((result.data?.[0].data as unknown[])[0]).name).toBe('Alice');
     });
 
     it('should intercept USE statements', async () => {
@@ -77,8 +78,8 @@ describe('QueryExecutor', () => {
 
         expect(result.success).toBe(true);
         expect(result.activeDatabase).toBe('db2');
-        expect((alasql('SELECT * FROM db1.t1') as any[])[0].v).toBe(1);
-        expect((alasql('SELECT * FROM db2.t2') as any[])[0].v).toBe(2);
+        expect(((alasql as AlaSQLInstance)('SELECT * FROM db1.t1') as unknown[])[0].v).toBe(1);
+        expect(((alasql as AlaSQLInstance)('SELECT * FROM db2.t2') as unknown[])[0].v).toBe(2);
     });
 
 
@@ -92,16 +93,17 @@ describe('QueryExecutor', () => {
         const result = await QueryExecutor.execute(sql);
 
         expect(result.success).toBe(true);
-        const formData = result.data?.[0].data as any;
+        const formData = result.data?.[0].data;
         expect(formData.tableName).toBe('dbo.clients');
         expect(formData.fields).toHaveLength(3);
 
-        const nameField = (formData.fields as any[]).find((f: any) => f.name === 'name');
+        const nameField = (formData.fields as unknown[]).find((f: unknown) => f.name === 'name');
         expect(nameField.label).toBe('Full Name');
         expect(nameField.type).toBe('TEXT');
 
-        const idField = (formData.fields as any[]).find((f: any) => f.name === 'id');
-        expect(idField.isAutoIncrement).toBe(true); // Since it is HIDDEN or id PK
+        const idField = (formData.fields as unknown[]).find((f: unknown) => f.name === 'id');
+        expect(idField.isAutoIncrement).toBe(true);
+        // Since it is HIDDEN or id PK
     });
 
     it('should handle complex INSERT SELECT with RANGE', async () => {
@@ -141,7 +143,7 @@ FROM RANGE(1, 10);`;
 
 
 
-        const res = alasql('SELECT COUNT(*) as cnt FROM estoque') as any[];
+        const res = (alasql as AlaSQLInstance)('SELECT COUNT(*) as cnt FROM estoque') as unknown[];
         expect(res[0].cnt).toBe(10);
     });
 

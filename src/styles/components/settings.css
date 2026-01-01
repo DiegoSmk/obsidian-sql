@@ -10,15 +10,44 @@
     color: var(--mysql-accent, var(--interactive-accent));
 }
 
-.mysql-settings-modal .mysql-title-text h2 {
+.mysql-settings-modal .mysql-title-text .setting-item-heading {
     margin: 0;
     line-height: 1.2;
+    border: none;
+    padding: 0;
 }
 
-.mysql-settings-modal .mysql-title-text span {
-    font-size: 13px;
-    color: var(--text-muted);
+.mysql-settings-modal .mysql-title-text .setting-item-name {
+    font-size: 24px;
+    font-weight: bold;
 }
+
+.mysql-settings-modal .mysql-settings-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 30px;
+    margin-bottom: 15px;
+}
+
+.mysql-settings-modal .mysql-section-header-item {
+    border: none !important;
+    padding: 0 !important;
+    flex: 1;
+}
+
+.mysql-settings-modal .mysql-section-header-item .setting-item-heading {
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+}
+
+.mysql-settings-modal .mysql-section-header-item .setting-item-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
 
 .mysql-settings-modal .mysql-welcome-section {
     margin-bottom: 20px;
@@ -26,6 +55,10 @@
     background: color-mix(in srgb, var(--mysql-accent), transparent 90%);
     border-radius: 8px;
     border: 1px solid color-mix(in srgb, var(--mysql-accent), transparent 70%);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 50px;
 }
 
 .mysql-settings-modal .mysql-welcome-section h3 {
@@ -37,6 +70,7 @@
     margin: 0;
     font-size: 14px;
     color: var(--text-normal);
+    line-height: 1.4;
 }
 
 .mysql-settings-modal .mysql-search-wrapper {
@@ -69,6 +103,9 @@
     border-radius: 6px;
     margin-top: 20px;
     border: 1px solid var(--background-modifier-border);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .mysql-settings-modal .mysql-info-board h4 {
@@ -82,6 +119,7 @@
     padding-left: 20px;
     color: var(--text-muted);
     font-size: 13px;
+    line-height: 1.5;
 }
 
 .mysql-settings-modal .mysql-settings-divider {
@@ -106,8 +144,14 @@
     margin-bottom: 10px;
 }
 
-.mysql-settings-modal .mysql-footer-title {
+.mysql-settings-modal .mysql-settings-footer .setting-item-heading {
     margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+}
+
+.mysql-settings-modal .mysql-footer-title .setting-item-name {
     font-size: 16px;
     color: var(--text-normal);
 }

@@ -22,7 +22,7 @@ const locales: Record<string, unknown> = {
 let currentLanguage: Language = 'en';
 
 export function resolveLanguage(lang: Language): 'en' | 'pt-BR' | 'zh' | 'es' | 'de' | 'fr' | 'ja' | 'ko' {
-    if (lang !== 'auto') return lang as unknown;
+    if (lang !== 'auto') return lang;
 
     const obsidianLang = (window.localStorage.getItem('language') || 'en').toLowerCase();
 
@@ -48,15 +48,23 @@ export function t(keyPath: string, vars?: Record<string, string>): string {
 
     for (const key of keys) {
         if (!value || typeof value !== 'object') {
-            // Fallback to English
-            value = locales['en'];
-            for (const fallbackKey of keys) {
-                if (!value) break;
-                value = value[fallbackKey];
-            }
+            value = undefined;
             break;
         }
-        value = value[key];
+        value = (value as Record<string, unknown>)[key];
+    }
+
+    // Fallback to English if not found or not a string
+    if (typeof value !== 'string' && resolvedLang !== 'en') {
+        let fallbackValue: unknown = locales['en'];
+        for (const key of keys) {
+            if (!fallbackValue || typeof fallbackValue !== 'object') {
+                fallbackValue = undefined;
+                break;
+            }
+            fallbackValue = (fallbackValue as Record<string, unknown>)[key];
+        }
+        value = fallbackValue;
     }
 
     if (typeof value !== 'string') {

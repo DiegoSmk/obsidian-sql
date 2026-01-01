@@ -98,6 +98,8 @@ export default {
         "null_value": "Nulo",
         "status_error": "Erro",
         "status_done": "Concluído",
+        "switch_db_help": "Mude para um banco com tabelas ou ",
+        "btn_open_settings": "abra as configurações",
         "notice_table_data_copied": "Dados da tabela copiados para a área de transferência!",
         "notice_copy_failed": "Falha ao copiar: {error}",
         "notice_screenshot_failed": "Falha ao criar captura de tela: {error}",
@@ -140,8 +142,13 @@ export default {
         "msg_loading": "Carregando dados...",
         "msg_showing_limit": "Mostrando apenas as primeiras {count} linhas.",
         "msg_no_tables": "Nenhuma tabela encontrada neste banco de dados.",
+        "msg_no_tables_in": "Nenhuma tabela encontrada no banco de dados ",
         "tip_back": "Voltar para lista de tabelas",
-        "btn_back": "Voltar"
+        "btn_back": "Voltar",
+        "title_results": "Resultados da Consulta",
+        "rows_affected": "{count} linha(s) afetada(s)",
+        "no_data_md": "_Sem dados_",
+        "result_dml": "**Resultado:** {count} linha(s) afetada(s)"
     },
     "form": {
         "title_insert": "Inserir em {name}",
@@ -188,6 +195,13 @@ export default {
         "notice_anchor_form": "FORM ancorado a {name}",
         "notice_anchor_live": "Bloco LIVE ancorado a {name}",
         "notice_update_live": "Atualizando dados LIVE de {name}...",
-        "notice_reset_success": "Reinicialização completa com sucesso!"
+        "notice_reset_success": "Reinicialização completa com sucesso!",
+        "app_name": "SQL Notebook"
+    },
+    "executor": {
+        "err_reserved_word": "{message}\n\n💡 Dica: '{word}' é uma palavra reservada. Tente usar aspas (ex: \"{lower}\") ou mude o nome.",
+        "err_alasql_bug_01": "{message}\n\n⚠️ Erro Conhecido do AlaSQL: O uso de lista de colunas explícita em 'INSERT INTO ... SELECT' causou falha.\n\nSolução: Remova a lista de colunas e garanta que a ordem corresponda exatamente.",
+        "err_parse": "{message}\n\n💡 Verifique se você esqueceu algum ponto e vírgula, se há parênteses/aspas não fechadas ou erros de digitação.",
+        "warn_fragile_insert": "⚠️ Detectado 'INSERT INTO ... (colunas) SELECT'. O AlaSQL pode falhar com erro '$01'. Se ocorrer, remova a lista de colunas."
     }
 }

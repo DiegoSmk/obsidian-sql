@@ -4,7 +4,7 @@ import alasql from 'alasql';
 import { DatabaseManager } from '../DatabaseManager';
 
 describe('DatabaseManager', () => {
-    let mockPlugin: any;
+    let mockPlugin: unknown;
     let dbManager: DatabaseManager;
 
     beforeEach(async () => {
@@ -46,12 +46,12 @@ describe('DatabaseManager', () => {
 
         expect(snapshot.databases.dbo).toBeDefined();
         expect(snapshot.databases.dbo.tables.test_table).toHaveLength(2);
-        expect(snapshot.databases.dbo.tables.test_table[0].name).toBe('Alice');
+        expect((snapshot.databases.dbo.tables.test_table[0]).name).toBe('Alice');
         expect(snapshot.databases.dbo.schema.test_table).toContain('CREATE TABLE `test_table`');
     });
 
     it('should respect snapshotRowLimit', async () => {
-        mockPlugin.settings.snapshotRowLimit = 1;
+        (mockPlugin as { settings: { snapshotRowLimit: number } }).settings.snapshotRowLimit = 1;
 
         alasql('CREATE TABLE test_limit (id INT)');
         alasql('INSERT INTO test_limit VALUES (1), (2), (3)');
@@ -96,8 +96,8 @@ describe('DatabaseManager', () => {
         await dbManager.duplicateDatabase('dbo', 'dbo_copy');
 
         expect(alasql.databases.dbo_copy).toBeDefined();
-        const res = alasql('SELECT * FROM [dbo_copy].[source]') as any[];
-        expect(res[0].v).toBe(42);
+        const res = (alasql('SELECT * FROM [dbo_copy].[source]'));
+        expect((res[0] as unknown).v).toBe(42);
     });
 
 
@@ -110,8 +110,8 @@ describe('DatabaseManager', () => {
 
         expect(alasql.databases.old_name).toBeUndefined();
         expect(alasql.databases.new_name).toBeDefined();
-        const res = alasql('SELECT * FROM [new_name].[t1]') as any[];
-        expect(res[0].v).toBe(10);
+        const res = (alasql('SELECT * FROM [new_name].[t1]'));
+        expect((res[0] as unknown).v).toBe(10);
     });
 
 

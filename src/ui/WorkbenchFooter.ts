@@ -10,6 +10,7 @@ export class WorkbenchFooter {
     private rightEl: HTMLElement;
     private app: App;
     private statusSpan: HTMLElement;
+    private timeEl: HTMLElement;
 
     constructor(parent: HTMLElement, app: App) {
         this.app = app;
@@ -24,16 +25,21 @@ export class WorkbenchFooter {
         // Right side container
         this.rightEl = this.footerEl.createDiv({ cls: "mysql-footer-right" });
 
+        // Timer Container (Positioned before DB)
+        this.timeEl = this.rightEl.createDiv({
+            cls: "mysql-footer-time-container mysql-footer-item u-display-none"
+        });
+
         // Phase 6: Active Database on the right
-        this.dbEl = this.rightEl.createDiv({ cls: "mysql-footer-db-container mysql-footer-db-interactive" });
+        this.dbEl = this.rightEl.createDiv({ cls: "mysql-footer-db-container mysql-footer-item mysql-footer-interactive" });
         this.dbEl.onclick = () => {
             new ProPracticeModal(this.app).open();
         };
         this.setActiveDatabase("dbo");
 
-        // Help Button (?)
+        // Help Button
         const helpBtn = this.rightEl.createDiv({
-            cls: "mysql-footer-help-btn",
+            cls: "mysql-footer-help-btn mysql-footer-item mysql-footer-interactive",
             attr: { "aria-label": t('footer.tip_help') }
         });
         setIcon(helpBtn, "help-circle");
@@ -50,19 +56,22 @@ export class WorkbenchFooter {
     public setStatus(status: string, spinning: boolean = false) {
         if (!this.statusSpan) return;
         this.statusSpan.setText(status);
-        if (spinning) this.statusSpan.addClass('is-spinning');
-        else this.statusSpan.removeClass('is-spinning');
+        if (spinning) {
+            this.statusSpan.addClass('is-spinning');
+            this.timeEl.addClass('u-display-none');
+        } else {
+            this.statusSpan.removeClass('is-spinning');
+        }
     }
 
     public updateTime(ms: number) {
-        this.statusEl.empty();
-        const timeWrapper = this.statusEl.createDiv({ cls: "mysql-footer-time-wrapper" });
+        this.timeEl.empty();
+        this.timeEl.removeClass('u-display-none');
+
+        const timeWrapper = this.timeEl.createDiv({ cls: "mysql-footer-time-wrapper" });
         setIcon(timeWrapper, "timer");
         const timeVal = timeWrapper.createSpan({ cls: "mysql-footer-time-val" });
         timeVal.setText(`${ms}ms`);
-        // Re-create statusSpan if it was emptied? 
-        // Better: don't empty EVERYTHING or re-initialize.
-        this.statusSpan = this.statusEl.createSpan({ cls: "mysql-footer-status" });
     }
 
     public setActiveDatabase(dbName: string) {
@@ -73,11 +82,17 @@ export class WorkbenchFooter {
     }
 
     public setLive() {
-        this.statusEl.empty();
+        this.timeEl.addClass('u-display-none');
+        const existingIndicator = this.statusEl.querySelector('.mysql-live-indicator');
+        if (existingIndicator) existingIndicator.remove();
+
         const indicator = this.statusEl.createDiv({ cls: "mysql-live-indicator" });
         indicator.createDiv({ cls: "mysql-pulse-dot" });
         indicator.createSpan({ text: t('footer.status_live') });
-        this.statusSpan = this.statusEl.createSpan({ cls: "mysql-footer-status" });
+
+        if (this.statusSpan) {
+            this.statusEl.appendChild(this.statusSpan);
+        }
     }
 
     public setError() {

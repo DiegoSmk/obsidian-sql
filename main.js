@@ -64044,26 +64044,12 @@ var DatabaseManager = class {
     this.isSaving = true;
     this.pendingSave = false;
     try {
-      const snapshot = this.createSnapshot();
-      const existingData = await this.plugin.loadData() || {};
-      if (existingData.databases) {
-        const backupData = { ...existingData };
-        delete backupData.backup;
-        existingData.backup = {
-          databases: backupData.databases,
-          activeDatabase: backupData.activeDatabase || backupData.currentDB,
-          version: backupData.version,
-          createdAt: backupData.createdAt
-        };
-      }
-      const tempData = { ...this.plugin.settings, ...existingData, ...snapshot, _temp: snapshot };
-      await this.plugin.saveData(tempData);
-      const finalData = { ...tempData };
-      delete finalData._temp;
+      const snapshot = await this.createSnapshot();
+      const finalData = { ...this.plugin.settings, ...snapshot };
       await this.plugin.saveData(finalData);
+      Logger.info("Database saved successfully.");
     } catch (error) {
       console.error("MySQL Plugin: Save failed", error);
-      throw error;
     } finally {
       this.isSaving = false;
       if (this.pendingSave) {
@@ -64071,7 +64057,7 @@ var DatabaseManager = class {
       }
     }
   }
-  createSnapshot() {
+  async createSnapshot() {
     const activeDatabase = this.plugin.activeDatabase || "dbo";
     const databases = Object.keys(import_alasql.default.databases).filter((d) => d !== "alasql");
     const snapshot = {
@@ -64087,6 +64073,7 @@ var DatabaseManager = class {
         const dbData = {};
         const dbSchema = {};
         if (dbInstance.tables) {
+          let tableCount = 0;
           for (const tableName of Object.keys(dbInstance.tables)) {
             const tableObj = dbInstance.tables[tableName];
             const rows = tableObj.data || [];
@@ -64123,10 +64110,13 @@ var DatabaseManager = class {
                 }).join(", ");
                 const createSQL = `CREATE TABLE \`${tableName}\` (${columns})`;
                 dbSchema[tableName] = createSQL;
-                Logger.warn(`[DATA INTEGRITY] Imperfect schema restoration for '${tableName}'. Table structure was inferred from data, meaning constraints like PRIMARY KEY or AUTO_INCREMENT are likely missing. Manual schema definition is recommended.`);
               }
             } catch (e) {
               console.debug(`MySQL Plugin: Failed to generate schema for '${tableName}':`, e);
+            }
+            tableCount++;
+            if (tableCount % 10 === 0) {
+              await new Promise((resolve) => setTimeout(resolve, 0));
             }
           }
         }
@@ -64148,14 +64138,16 @@ var DatabaseManager = class {
     }
     try {
       const activeDB = data.activeDatabase || data.currentDB || "dbo";
-      for (const [dbName, content] of Object.entries(data.databases)) {
+      const dbNames = Object.keys(data.databases);
+      Logger.info(`Starting database restoration for ${dbNames.length} databases...`);
+      for (const dbName of dbNames) {
         if (dbName === "alasql") continue;
-        const db = content;
+        const db = data.databases[dbName];
         if (!db.tables && !db.schema) continue;
         if (!import_alasql.default.databases[dbName]) {
           await import_alasql.default.promise(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
         }
-        await import_alasql.default.promise(`USE ${dbName}`);
+        await new Promise((resolve) => setTimeout(resolve, 0));
         if (db.schema) {
           for (const [tableName, sql] of Object.entries(db.schema)) {
             try {
@@ -64163,10 +64155,9 @@ var DatabaseManager = class {
               let createSQL = String(sql);
               if (createSQL.toUpperCase().includes("CREATE TABLE")) {
                 if (!createSQL.match(new RegExp(`CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?${dbName}\\.`, "i"))) {
-                  createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\\s+EXISTS\\s+)?([["`]?)([a-zA-Z0-9_]+)([\]"`]?)/i, `CREATE TABLE ${dbName}.$2`);
+                  createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([["`]?)([a-zA-Z0-9_]+)([\]"`]?)/i, `CREATE TABLE ${dbName}.$2`);
                 }
               }
-              Logger.info(`Restored table schema: ${dbName}.${tableName}`);
               await import_alasql.default.promise(createSQL);
             } catch (e) {
               console.error(`Error restoring schema for '${tableName}':`, e);
@@ -64174,6 +64165,7 @@ var DatabaseManager = class {
           }
         }
         if (db.tables) {
+          let tableCount = 0;
           for (const [tableName, rows] of Object.entries(db.tables)) {
             if (!rows || rows.length === 0) continue;
             try {
@@ -64187,17 +64179,23 @@ var DatabaseManager = class {
                     await import_alasql.default.promise(`SELECT * INTO ${dbName}.${tableName} FROM ?`, [rows]);
                   }
                 }
+                tableCount++;
               }
             } catch (e) {
               console.error(`Error loading data for '${tableName}':`, e);
             }
+            if (tableCount % 5 === 0) {
+              await new Promise((resolve) => setTimeout(resolve, 0));
+            }
           }
         }
+        Logger.info(`Restored database: ${dbName}`);
       }
       this.plugin.activeDatabase = activeDB;
       if (!import_alasql.default.databases["dbo"]) {
         await import_alasql.default.promise("CREATE DATABASE dbo");
       }
+      Logger.info("Database restoration complete.");
     } catch (error) {
       console.debug("MySQL Plugin: Load failed", error);
       throw error;
@@ -64555,6 +64553,1757 @@ var SQLTransformer = class {
   }
 };
 
+// src/locales/en.ts
+var en_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "Database manager",
+    "btn_atualizar": "Update",
+    "btn_importar": "Import",
+    "btn_novo_db": "New database",
+    "welcome_title": "Welcome to SQL Notebook",
+    "welcome_desc": "Manage your local databases, execute queries, and visualize results directly in Obsidian.",
+    "search_placeholder": "Search databases...",
+    "info_title": "Important information:",
+    "info_li_1": "To delete or rename an <b>active</b> database, switch to another first.",
+    "info_li_2": 'The system database <b>"dbo"</b> cannot be renamed or deleted.',
+    "info_li_3": "<b>Renaming</b> a database automatically updates internal references.",
+    "section_general": "General settings",
+    "section_appearance": "Appearance",
+    "section_data_security": "Data & security",
+    "lang_name": "Language",
+    "lang_desc": "Choose the interface language.",
+    "accent_obsidian": "Use Obsidian accent color",
+    "accent_obsidian_desc": "Use the global Obsidian accent color instead of a custom color.",
+    "theme_accent": "Theme accent",
+    "theme_accent_desc": "Choose the primary accent color.",
+    "auto_save": "Auto-save",
+    "auto_save_desc": "Automatically save database changes.",
+    "auto_save_delay": "Auto-save delay",
+    "auto_save_delay_desc": "Milliseconds to wait before auto-saving.",
+    "export_folder": "Export folder",
+    "export_folder_desc": "Default folder for CSV exports.",
+    "safe_mode": "Safe mode",
+    "safe_mode_desc": "Block dangerous commands (DROP, ALTER) and enforce limits.",
+    "enable_logging": "Enable debug logging",
+    "enable_logging_desc": "Show detailed logs in the developer console (Ctrl+Shift+I). Useful for debugging synchronization.",
+    "snapshot_limit": "Snapshot row limit",
+    "snapshot_limit_desc": "Max rows per table to save (prevents memory issues).",
+    "batch_size": "Batch size",
+    "batch_size_desc": "Rows to display per page in results.",
+    "reset_all": "Reset all data",
+    "reset_btn": "Reset everything",
+    "reset_all_confirm_msg": "This will delete ALL databases and tables. This action cannot be undone. Are you sure?",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "SQL Notebook features",
+    "collapsible_title": "Collapsible workbench",
+    "collapsible_desc": "Toggle the workbench view to save space. Click the header or the chevron icon.",
+    "auto_collapse_title": "Auto-collapse",
+    "auto_collapse_desc": "Start a comment with '@' (e.g., '-- @ My Query') to automatically collapse the workbench when the note opens.",
+    "alert_title": "Alert marker (!)",
+    "alert_desc": "Add '!' to your comment start to highlight it as an alert or warning.",
+    "question_title": "Question marker (?)",
+    "question_desc": "Add '?' to indicate a query that needs review or is experimental.",
+    "favorite_title": "Favorite marker (*)",
+    "favorite_desc": "Add '*' to highlight important or frequently used queries.",
+    "copy_edit_title": "Copy & edit",
+    "copy_edit_desc": "Hover over the workbench to access quick Copy Code and Edit Block buttons."
+  },
+  "modals": {
+    "confirm_delete_title": "Delete database",
+    "confirm_delete_msg": 'You are about to delete database "{dbName}". This action cannot be undone. All tables and data will be lost.',
+    "confirm_clear_title": "Clear database",
+    "confirm_clear_msg": 'Are you sure you want to clear all tables in "{dbName}"? This keeps the database but deletes all data.',
+    "btn_cancel": "Cancel",
+    "btn_confirm": "Confirm",
+    "btn_delete": "Delete database",
+    "btn_clear": "Clear all data",
+    "btn_ativar": "Activate",
+    "btn_duplicar": "Duplicate",
+    "btn_renomear": "Rename",
+    "btn_tabelas": "Tables",
+    "btn_exportar": "Export",
+    "btn_deletar": "Delete",
+    "badge_ativo": "Active",
+    "badge_system": "System",
+    "stat_tables": "Tables",
+    "stat_rows": "Rows",
+    "stat_size": "Size",
+    "stat_updated": "Updated",
+    "time_just_now": "Just now",
+    "time_ago": "{time} ago",
+    "time_never": "Never",
+    "switch_title": "Switch database",
+    "no_user_dbs": "No user databases found.",
+    "tip_system_db": "System default database. Cannot be deleted.",
+    "tip_protected_db": "Switch to another database to delete this one.",
+    "rename_title": "Rename database: {name}",
+    "rename_placeholder": "New database name...",
+    "create_title": "Create new database",
+    "create_placeholder": "Database name (e.g., my_project)",
+    "duplicate_title": "Duplicate database: {name}",
+    "notice_create_empty": "Database name cannot be empty.",
+    "notice_rename_success": 'Database renamed to "{name}"',
+    "notice_create_success": 'Database "{name}" created.',
+    "notice_duplicate_success": 'Database duplicated to "{name}"',
+    "notice_delete_success": 'Database "{name}" deleted.',
+    "notice_switch_success": 'Switched to "{name}"',
+    "tables_title": 'Tables in "{name}"',
+    "null_value": "NULL",
+    "status_error": "Error",
+    "status_done": "Done",
+    "switch_db_help": "Switch to a database with tables or ",
+    "btn_open_settings": "Open settings",
+    "notice_table_data_copied": "Table data copied to clipboard",
+    "notice_copy_failed": "Failed to copy: {error}",
+    "notice_screenshot_failed": "Failed to create screenshot: {error}",
+    "notice_no_active_note": "No active note found",
+    "notice_table_inserted": "Table inserted into note",
+    "notice_insert_failed": "Failed to insert: {error}"
+  },
+  "workbench": {
+    "btn_run": "Run",
+    "btn_executing": "Executing...",
+    "btn_cancel": "Cancel",
+    "notice_copy": "SQL code copied",
+    "notice_aborted": "Query aborted by user"
+  },
+  "renderer": {
+    "btn_copy": "Copy",
+    "btn_screenshot": "Screenshot",
+    "btn_add_note": "Add to note",
+    "tip_copy": "Copy result to clipboard",
+    "tip_screenshot": "Take screenshot of result",
+    "tip_add_note": "Insert result into note",
+    "notice_copied": "Copied to clipboard",
+    "notice_copy_failed": "Failed to copy: {error}",
+    "notice_screenshot_failed": "Failed to create screenshot: {error}",
+    "notice_screenshot_copied": "Screenshot copied to clipboard",
+    "notice_screenshot_downloaded": "Screenshot downloaded",
+    "notice_insert_no_note": "No active note found",
+    "notice_insert_success": "Result inserted into note",
+    "notice_insert_failed": "Failed to insert: {error}",
+    "msg_no_result": "Query executed successfully (no result set)",
+    "msg_rows_found": "{count} rows found",
+    "msg_no_data": "No data found",
+    "msg_showing_rows": "Showing {count} of {total} rows",
+    "msg_showing_all": "Showing all {count} rows",
+    "btn_show_all": "Show all rows",
+    "err_title": "Execution error",
+    "result_label": "Result #{idx}",
+    "table_label": "Table: {name}",
+    "query_result": "Query result",
+    "msg_loading": "Loading data...",
+    "msg_showing_limit": "Showing first {count} rows only.",
+    "msg_no_tables": "No tables found in this database.",
+    "msg_no_tables_in": "No tables found in database ",
+    "tip_back": "Back to tables list",
+    "btn_back": "Back",
+    "title_results": "Query Results",
+    "rows_affected": "{count} row(s) affected",
+    "no_data_md": "_No data_",
+    "result_dml": "**Result:** {count} row(s) affected"
+  },
+  "form": {
+    "title_insert": "Insert into {name}",
+    "btn_save": "Save record",
+    "btn_saving": "Saving...",
+    "btn_clear": "Clear",
+    "msg_success": "Saved successfully to {name}",
+    "msg_error": "Error: {error}",
+    "msg_unexpected": "Unexpected error: {error}",
+    "notice_success": "Record saved to {name}",
+    "notice_error": "Error saving record: {error}",
+    "err_invalid_table": "Invalid table name",
+    "err_invalid_col": "Invalid column name: {name}"
+  },
+  "pro": {
+    "label_from": "From:",
+    "label_to": "To:",
+    "label_subject": "Subject:",
+    "from_name": "SQL Notebook dev team <dev@obsidian-sql.internal>",
+    "to_name": "Valued developer",
+    "subject": "Pro practice alert: database context best practices",
+    "hello": "Hello,",
+    "msg_1": "We noticed you're switching databases via the UI. While this is great for quick navigation, we'd like to share a professional tip: using the explicit `USE` command in your scripts can make your workflow even more robust.",
+    "msg_quote": "Explicitly defining your context is a best practice that ensures your scripts are portable and unambiguous across different environments:",
+    "msg_2": "Defining the context within the code helps avoid confusion and makes your intent clear to anyone reviewing your work. You can always continue using the global switcher for convenience!",
+    "punchline": "Happy querying! \u{1F680}",
+    "signature_regards": "Best regards,",
+    "signature_team": "SQL Notebook development team",
+    "btn_read": "Mark as read"
+  },
+  "footer": {
+    "tip_help": "Help & features",
+    "status_ready": "Ready",
+    "status_error": "Error",
+    "status_aborted": "Aborted",
+    "status_live": "Live"
+  },
+  "common": {
+    "error": "Error: {error}",
+    "invalid_name": "New name must be different from the old name.",
+    "notice_export_success": "Exported to {name}",
+    "notice_import_loading": "Importing database...",
+    "notice_import_success": "Database imported successfully",
+    "notice_anchor_form": "FORM anchored to {name}",
+    "notice_anchor_live": "LIVE block anchored to {name}",
+    "notice_update_live": "Updating LIVE data from {name}...",
+    "notice_reset_success": "Reset completed successfully",
+    "app_name": "SQL Notebook"
+  },
+  "executor": {
+    "err_reserved_word": `{message}
+
+\u{1F4A1} Tip: '{word}' is a reserved word. Try using quotes (e.g. "{lower}") or change the name.`,
+    "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F Known AlaSQL Bug: Using an explicit column list in 'INSERT INTO ... SELECT' caused a failure.\n\nSolution: Remove the column list and ensure the order matches exactly.",
+    "err_parse": "{message}\n\n\u{1F4A1} Check if you forgot a semicolon, have unclosed parentheses/quotes, or typos.",
+    "warn_fragile_insert": "\u26A0\uFE0F 'INSERT INTO ... (columns) SELECT' detected. AlaSQL may fail with error '$01'. If it happens, remove the column list."
+  }
+};
+
+// src/locales/pt-BR.ts
+var pt_BR_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "Gestor de banco de dados",
+    "btn_atualizar": "Atualizar",
+    "btn_importar": "Importar",
+    "btn_novo_db": "Novo banco",
+    "welcome_title": "Bem-vindo ao SQL Notebook!",
+    "welcome_desc": "Gerencie seus bancos de dados locais, execute consultas e visualize resultados diretamente no Obsidian.",
+    "search_placeholder": "Buscar bancos de dados...",
+    "info_title": "Informa\xE7\xF5es importantes:",
+    "info_li_1": "Para excluir ou renomear um banco <b>ativo</b>, mude para outro primeiro.",
+    "info_li_2": 'O banco de sistema <b>"dbo"</b> n\xE3o pode ser renomeado ou exclu\xEDdo.',
+    "info_li_3": "<b>Renomear</b> um banco atualiza automaticamente as refer\xEAncias internas.",
+    "section_general": "Configura\xE7\xF5es gerais",
+    "section_appearance": "Apar\xEAncia",
+    "section_data_security": "Dados e seguran\xE7a",
+    "lang_name": "Idioma",
+    "lang_desc": "Escolha o idioma da interface.",
+    "accent_obsidian": "Usar cor de destaque do Obsidian",
+    "accent_obsidian_desc": "Usa a cor de destaque global do Obsidian em vez de uma cor personalizada.",
+    "theme_accent": "Cor de destaque",
+    "theme_accent_desc": "Escolha a cor de destaque principal.",
+    "auto_save": "Salvamento autom\xE1tico",
+    "auto_save_desc": "Salvar automaticamente as altera\xE7\xF5es no banco.",
+    "auto_save_delay": "Atraso de salvamento",
+    "auto_save_delay_desc": "Milissegundos a esperar antes de salvar automaticamente.",
+    "export_folder": "Pasta de exporta\xE7\xE3o",
+    "export_folder_desc": "Pasta padr\xE3o para exporta\xE7\xF5es CSV.",
+    "safe_mode": "Modo seguro",
+    "safe_mode_desc": "Bloquear comandos perigosos (DROP, ALTER) e impor limites.",
+    "enable_logging": "Habilitar logs de depura\xE7\xE3o",
+    "enable_logging_desc": "Mostrar logs detalhados no console (Ctrl+Shift+I). \xDAtil para depura\xE7\xE3o.",
+    "snapshot_limit": "Limite de linhas do snapshot",
+    "snapshot_limit_desc": "M\xE1ximo de linhas por tabela para salvar.",
+    "batch_size": "Tamanho do lote",
+    "batch_size_desc": "Linhas a exibir por p\xE1gina nos resultados.",
+    "reset_all": "Resetar todos os dados",
+    "reset_btn": "Resetar tudo",
+    "reset_all_confirm_msg": "Isso excluir\xE1 TODOS os bancos de dados e tabelas. Esta a\xE7\xE3o n\xE3o pode ser desfeita. Tem certeza?",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "Recursos do SQL Notebook",
+    "collapsible_title": "Bancada retr\xE1til",
+    "collapsible_desc": "Alterne a visualiza\xE7\xE3o da bancada para economizar espa\xE7o. Clique no cabe\xE7alho ou no \xEDcone.",
+    "auto_collapse_title": "Auto-recolhimento",
+    "auto_collapse_desc": "Inicie um coment\xE1rio com '@' (ex: '-- @ Minha Query') para recolher automaticamente ao abrir a nota.",
+    "alert_title": "Marcador de alerta (!)",
+    "alert_desc": "Adicione '!' ao in\xEDcio do coment\xE1rio para destac\xE1-lo como um alerta ou aviso.",
+    "question_title": "Marcador de d\xFAvida (?)",
+    "question_desc": "Adicione '?' para indicar uma consulta que precisa de revis\xE3o ou \xE9 experimental.",
+    "favorite_title": "Marcador de favorito (*)",
+    "favorite_desc": "Adicione '*' para destacar consultas importantes ou frequentes.",
+    "copy_edit_title": "Copiar e editar",
+    "copy_edit_desc": "Passe o mouse sobre a bancada para acessar bot\xF5es r\xE1pidos de Copiar C\xF3digo e Editar Bloco."
+  },
+  "modals": {
+    "confirm_delete_title": "Excluir banco de dados",
+    "confirm_delete_msg": 'Voc\xEA est\xE1 prestes a excluir o banco "{dbName}". Esta a\xE7\xE3o n\xE3o pode ser desfeita. Todas as tabelas e dados ser\xE3o perdidos.',
+    "confirm_clear_title": "Limpar banco de dados",
+    "confirm_clear_msg": 'Tem certeza que deseja limpar todas as tabelas em "{dbName}"? O banco ser\xE1 mantido, mas todos os dados ser\xE3o apagados.',
+    "btn_cancel": "Cancelar",
+    "btn_confirm": "Confirmar",
+    "btn_delete": "Excluir banco",
+    "btn_clear": "Limpar dados",
+    "btn_ativar": "Ativar",
+    "btn_duplicar": "Duplicar",
+    "btn_renomear": "Renomear",
+    "btn_tabelas": "Tabelas",
+    "btn_exportar": "Exportar",
+    "btn_deletar": "Deletar",
+    "badge_ativo": "Ativo",
+    "badge_system": "Sistema",
+    "stat_tables": "Tabelas",
+    "stat_rows": "Linhas",
+    "stat_size": "Tamanho",
+    "stat_updated": "Atualizado",
+    "time_just_now": "Agora mesmo",
+    "time_ago": "{time} atr\xE1s",
+    "time_never": "Nunca",
+    "switch_title": "Alternar banco",
+    "no_user_dbs": "Nenhum banco de usu\xE1rio encontrado.",
+    "tip_system_db": "Banco padr\xE3o do sistema. N\xE3o pode ser exclu\xEDdo.",
+    "tip_protected_db": "Mude para outro banco para excluir este.",
+    "rename_title": "Renomear banco: {name}",
+    "rename_placeholder": "Novo nome do banco...",
+    "create_title": "Criar novo banco",
+    "create_placeholder": "Nome do banco (ex: meu_projeto)",
+    "duplicate_title": "Duplicar banco: {name}",
+    "notice_create_empty": "Nome do banco n\xE3o pode ser vazio.",
+    "notice_rename_success": 'Banco renomeado para "{name}"',
+    "notice_create_success": 'Banco "{name}" criado.',
+    "notice_duplicate_success": 'Banco duplicado para "{name}"',
+    "notice_delete_success": 'Banco "{name}" exclu\xEDdo.',
+    "notice_switch_success": 'Alternado para "{name}"',
+    "tables_title": 'Tabelas em "{name}"',
+    "null_value": "Nulo",
+    "status_error": "Erro",
+    "status_done": "Conclu\xEDdo",
+    "switch_db_help": "Mude para um banco com tabelas ou ",
+    "btn_open_settings": "abra as configura\xE7\xF5es",
+    "notice_table_data_copied": "Dados da tabela copiados para a \xE1rea de transfer\xEAncia!",
+    "notice_copy_failed": "Falha ao copiar: {error}",
+    "notice_screenshot_failed": "Falha ao criar captura de tela: {error}",
+    "notice_no_active_note": "Nenhuma nota ativa encontrada",
+    "notice_table_inserted": "Tabela inserida na nota!",
+    "notice_insert_failed": "Falha ao inserir: {error}"
+  },
+  "workbench": {
+    "btn_run": "Executar",
+    "btn_executing": "Executando...",
+    "btn_cancel": "Cancelar",
+    "notice_copy": "C\xF3digo SQL copiado!",
+    "notice_aborted": "Consulta abortada pelo usu\xE1rio"
+  },
+  "renderer": {
+    "btn_copy": "Copiar",
+    "btn_screenshot": "Captura",
+    "btn_add_note": "Add na nota",
+    "tip_copy": "Copiar resultado",
+    "tip_screenshot": "Tirar foto do resultado",
+    "tip_add_note": "Inserir resultado na nota",
+    "notice_copied": "\u2713 Copiado!",
+    "notice_copy_failed": "\u274C Falha ao copiar: {error}",
+    "notice_screenshot_failed": "\u274C Falha ao criar captura de tela: {error}",
+    "notice_screenshot_copied": "\u2713 Captura de tela copiada!",
+    "notice_screenshot_downloaded": "\u2713 Captura de tela baixada!",
+    "notice_insert_no_note": "\u274C Nenhuma nota ativa encontrada",
+    "notice_insert_success": "\u2713 Resultado inserido na nota!",
+    "notice_insert_failed": "\u274C Falha ao inserir: {error}",
+    "msg_no_result": "Consulta executada com sucesso (sem retorno)",
+    "msg_rows_found": "{count} linhas encontradas",
+    "msg_no_data": "Nenhum dado encontrado",
+    "msg_showing_rows": "Mostrando {count} de {total} linhas",
+    "msg_showing_all": "Mostrando todas as {count} linhas",
+    "btn_show_all": "Mostrar todas",
+    "err_title": "Erro de execu\xE7\xE3o",
+    "result_label": "Resultado #{idx}",
+    "table_label": "Tabela: {name}",
+    "query_result": "Resultado da consulta",
+    "msg_loading": "Carregando dados...",
+    "msg_showing_limit": "Mostrando apenas as primeiras {count} linhas.",
+    "msg_no_tables": "Nenhuma tabela encontrada neste banco de dados.",
+    "msg_no_tables_in": "Nenhuma tabela encontrada no banco de dados ",
+    "tip_back": "Voltar para lista de tabelas",
+    "btn_back": "Voltar",
+    "title_results": "Resultados da Consulta",
+    "rows_affected": "{count} linha(s) afetada(s)",
+    "no_data_md": "_Sem dados_",
+    "result_dml": "**Resultado:** {count} linha(s) afetada(s)"
+  },
+  "form": {
+    "title_insert": "Inserir em {name}",
+    "btn_save": "Salvar registro",
+    "btn_saving": "Salvando...",
+    "btn_clear": "Limpar",
+    "msg_success": "Salvo com sucesso em {name}",
+    "msg_error": "Erro: {error}",
+    "msg_unexpected": "Erro inesperado: {error}",
+    "notice_success": "Registro salvo em {name}",
+    "notice_error": "Erro ao salvar registro: {error}",
+    "err_invalid_table": "Nome de tabela inv\xE1lido",
+    "err_invalid_col": "Nome de coluna inv\xE1lido: {name}"
+  },
+  "pro": {
+    "label_from": "De:",
+    "label_to": "Para:",
+    "label_subject": "Assunto:",
+    "from_name": "Time de dev do SQL Notebook <dev@obsidian-sql.internal>",
+    "to_name": "Desenvolvedor(a)",
+    "subject": "Alerta pro practice: boas pr\xE1ticas de contexto de banco",
+    "hello": "Ol\xE1,",
+    "msg_1": "Notamos que voc\xEA est\xE1 trocando de banco de dados via interface. Embora isso seja \xF3timo para navega\xE7\xE3o r\xE1pida, gostar\xEDamos de compartilhar uma dica profissional: usar o comando expl\xEDcito `USE` em seus scripts pode tornar seu fluxo de trabalho ainda mais robusto.",
+    "msg_quote": "Definir explicitamente o seu contexto \xE9 uma boa pr\xE1tica que garante que seus scripts sejam port\xE1teis e claros em diferentes ambientes:",
+    "msg_2": "Definir o contexto no c\xF3digo ajuda a evitar confus\xE3o e torna sua inten\xE7\xE3o clara para qualquer pessoa que revise seu trabalho. Voc\xEA sempre pode continuar usando o alternador global para conveni\xEAncia!",
+    "punchline": "Bons c\xF3digos! \u{1F680}",
+    "signature_regards": "Atenciosamente,",
+    "signature_team": "Time de desenvolvimento do SQL Notebook",
+    "btn_read": "Marcar como lido"
+  },
+  "footer": {
+    "tip_help": "Ajuda e recursos",
+    "status_ready": "Pronto",
+    "status_error": "Erro",
+    "status_aborted": "Abortado",
+    "status_live": "Live"
+  },
+  "common": {
+    "error": "Erro: {error}",
+    "invalid_name": "O novo nome deve ser diferente do antigo.",
+    "notice_export_success": "Exportado para {name}",
+    "notice_import_loading": "Importando banco de dados...",
+    "notice_import_success": "Banco de dados importado com sucesso!",
+    "notice_anchor_form": "FORM ancorado a {name}",
+    "notice_anchor_live": "Bloco LIVE ancorado a {name}",
+    "notice_update_live": "Atualizando dados LIVE de {name}...",
+    "notice_reset_success": "Reinicializa\xE7\xE3o completa com sucesso!",
+    "app_name": "SQL Notebook"
+  },
+  "executor": {
+    "err_reserved_word": `{message}
+
+\u{1F4A1} Dica: '{word}' \xE9 uma palavra reservada. Tente usar aspas (ex: "{lower}") ou mude o nome.`,
+    "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F Erro Conhecido do AlaSQL: O uso de lista de colunas expl\xEDcita em 'INSERT INTO ... SELECT' causou falha.\n\nSolu\xE7\xE3o: Remova a lista de colunas e garanta que a ordem corresponda exatamente.",
+    "err_parse": "{message}\n\n\u{1F4A1} Verifique se voc\xEA esqueceu algum ponto e v\xEDrgula, se h\xE1 par\xEAnteses/aspas n\xE3o fechadas ou erros de digita\xE7\xE3o.",
+    "warn_fragile_insert": "\u26A0\uFE0F Detectado 'INSERT INTO ... (colunas) SELECT'. O AlaSQL pode falhar com erro '$01'. Se ocorrer, remova a lista de colunas."
+  }
+};
+
+// src/locales/zh.ts
+var zh_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "\u6570\u636E\u5E93\u7BA1\u7406\u5668",
+    "btn_atualizar": "\u66F4\u65B0",
+    "btn_importar": "\u5BFC\u5165",
+    "btn_novo_db": "\u65B0\u5EFA\u6570\u636E\u5E93",
+    "welcome_title": "\u6B22\u8FCE\u4F7F\u7528 SQL Notebook!",
+    "welcome_desc": "\u5728 Obsidian \u4E2D\u76F4\u63A5\u7BA1\u7406\u672C\u5730\u6570\u636E\u5E93\u3001\u6267\u884C\u67E5\u8BE2\u5E76\u53EF\u89C6\u5316\u7ED3\u679C\u3002",
+    "search_placeholder": "\u641C\u7D22\u6570\u636E\u5E93...",
+    "info_title": "\u91CD\u8981\u4FE1\u606F\uFF1A",
+    "info_li_1": "\u82E5\u8981\u5220\u9664\u6216\u91CD\u547D\u540D<b>\u6D3B\u52A8</b>\u6570\u636E\u5E93\uFF0C\u8BF7\u5148\u5207\u6362\u5230\u53E6\u4E00\u4E2A\u6570\u636E\u5E93\u3002",
+    "info_li_2": '\u7CFB\u7EDF\u6570\u636E\u5E93 <b>"dbo"</b> \u4E0D\u80FD\u88AB\u91CD\u547D\u540D\u6216\u5220\u9664\u3002',
+    "info_li_3": "<b>\u91CD\u547D\u540D</b>\u6570\u636E\u5E93\u4F1A\u81EA\u52A8\u66F4\u65B0\u5185\u90E8\u5F15\u7528\u3002",
+    "section_general": "\u5E38\u89C4\u8BBE\u7F6E",
+    "section_appearance": "\u5916\u89C2",
+    "section_data_security": "\u6570\u636E\u4E0E\u5B89\u5168",
+    "lang_name": "\u8BED\u8A00",
+    "lang_desc": "\u9009\u62E9\u754C\u9762\u8BED\u8A00\u3002",
+    "accent_obsidian": "\u4F7F\u7528 Obsidian \u5F3A\u8C03\u8272",
+    "accent_obsidian_desc": "\u4F7F\u7528\u5168\u5C40 Obsidian \u5F3A\u8C03\u8272\u800C\u975E\u81EA\u5B9A\u4E49\u989C\u8272\u3002",
+    "theme_accent": "\u4E3B\u9898\u5F3A\u8C03\u8272",
+    "theme_accent_desc": "\u9009\u62E9\u4E3B\u5F3A\u8C03\u8272\u3002",
+    "auto_save": "\u81EA\u52A8\u4FDD\u5B58",
+    "auto_save_desc": "\u81EA\u52A8\u4FDD\u5B58\u6570\u636E\u5E93\u66F4\u6539\u3002",
+    "auto_save_delay": "\u81EA\u52A8\u4FDD\u5B58\u5EF6\u8FDF",
+    "auto_save_delay_desc": "\u81EA\u52A8\u4FDD\u5B58\u524D\u7684\u7B49\u5F85\u6BEB\u79D2\u6570\u3002",
+    "export_folder": "\u5BFC\u51FA\u6587\u4EF6\u5939",
+    "export_folder_desc": "CSV \u5BFC\u51FA\u7684\u9ED8\u8BA4\u6587\u4EF6\u5939\u3002",
+    "safe_mode": "\u5B89\u5168\u6A21\u5F0F",
+    "safe_mode_desc": "\u963B\u6B62\u5371\u9669\u547D\u4EE4 (DROP, ALTER) \u5E76\u5F3A\u5236\u6267\u884C\u9650\u5236\u3002",
+    "enable_logging": "\u542F\u7528\u8C03\u8BD5\u65E5\u5FD7",
+    "enable_logging_desc": "\u5728\u5F00\u53D1\u8005\u63A7\u5236\u53F0 (Ctrl+Shift+I) \u4E2D\u663E\u793A\u8BE6\u7EC6\u65E5\u5FD7\u3002\u5BF9\u4E8E\u8C03\u8BD5\u540C\u6B65\u5F88\u6709\u7528\u3002",
+    "snapshot_limit": "\u5FEB\u7167\u884C\u6570\u9650\u5236",
+    "snapshot_limit_desc": "\u6BCF\u5F20\u8868\u4FDD\u5B58\u7684\u6700\u5927\u884C\u6570\uFF08\u9632\u6B62\u5185\u5B58\u95EE\u9898\uFF09\u3002",
+    "batch_size": "\u6279\u5904\u7406\u5927\u5C0F",
+    "batch_size_desc": "\u7ED3\u679C\u4E2D\u6BCF\u9875\u663E\u793A\u7684\u884C\u6570\u3002",
+    "reset_all": "\u91CD\u7F6E\u6240\u6709\u6570\u636E",
+    "reset_btn": "\u91CD\u7F6E\u4E00\u5207",
+    "reset_all_confirm_msg": "\u8FD9\u5C06\u5220\u9664\u6240\u6709\u6570\u636E\u5E93\u548C\u8868\u3002\u6B64\u64CD\u4F5C\u65E0\u6CD5\u64A4\u9500\u3002\u60A8\u786E\u5B9A\u5417\uFF1F",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "SQL Notebook \u529F\u80FD",
+    "collapsible_title": "\u53EF\u6298\u53E0\u5DE5\u4F5C\u53F0",
+    "collapsible_desc": "\u5207\u6362\u5DE5\u4F5C\u53F0\u89C6\u56FE\u4EE5\u8282\u7701\u7A7A\u95F4\u3002\u70B9\u51FB\u9875\u7709\u6216\u6298\u53E0\u56FE\u6807\u3002",
+    "auto_collapse_title": "\u81EA\u52A8\u6298\u53E0",
+    "auto_collapse_desc": "\u4EE5 '@' \u5F00\u59CB\u6CE8\u91CA\uFF08\u4F8B\u5982 '-- @ My Query'\uFF09\uFF0C\u5728\u6253\u5F00\u7B14\u8BB0\u65F6\u81EA\u52A8\u6298\u53E0\u5DE5\u4F5C\u53F0\u3002",
+    "alert_title": "\u8B66\u62A5\u6807\u8BB0 (!)",
+    "alert_desc": "\u5728\u6CE8\u91CA\u5F00\u5934\u6DFB\u52A0 '!' \u4EE5\u5C06\u5176\u7A81\u51FA\u663E\u793A\u4E3A\u8B66\u62A5\u6216\u8B66\u544A\u3002",
+    "question_title": "\u7591\u95EE\u6807\u8BB0 (?)",
+    "question_desc": "\u6DFB\u52A0 '?' \u4EE5\u6307\u793A\u9700\u8981\u5BA1\u67E5\u6216\u5177\u6709\u5B9E\u9A8C\u6027\u7684\u67E5\u8BE2\u3002",
+    "favorite_title": "\u6536\u85CF\u6807\u8BB0 (*)",
+    "favorite_desc": "\u6DFB\u52A0 '*' \u4EE5\u7A81\u51FA\u663E\u793A\u91CD\u8981\u6216\u5E38\u7528\u7684\u67E5\u8BE2\u3002",
+    "copy_edit_title": "\u590D\u5236\u4E0E\u7F16\u8F91",
+    "copy_edit_desc": "\u5C06\u9F20\u6807\u60AC\u505C\u5728\u5DE5\u4F5C\u53F0\u4E0A\u4EE5\u8BBF\u95EE\u5FEB\u901F\u590D\u5236\u4EE3\u7801\u548C\u7F16\u8F91\u5757\u6309\u94AE\u3002"
+  },
+  "modals": {
+    "confirm_delete_title": "\u5220\u9664\u6570\u636E\u5E93",
+    "confirm_delete_msg": '\u60A8\u5373\u5C06\u5220\u9664\u6570\u636E\u5E93 "{dbName}"\u3002\u6B64\u64CD\u4F5C\u65E0\u6CD5\u64A4\u9500\u3002\u6240\u6709\u8868\u548C\u6570\u636E\u90FD\u5C06\u4E22\u5931\u3002',
+    "confirm_clear_title": "\u6E05\u7A7A\u6570\u636E\u5E93",
+    "confirm_clear_msg": '\u60A8\u786E\u5B9A\u8981\u6E05\u7A7A "{dbName}" \u4E2D\u7684\u6240\u6709\u8868\u5417\uFF1F\u8FD9\u5C06\u4FDD\u7559\u6570\u636E\u5E93\u4F46\u5220\u9664\u6240\u6709\u6570\u636E\u3002',
+    "btn_cancel": "\u53D6\u6D88",
+    "btn_confirm": "\u786E\u8BA4",
+    "btn_delete": "\u5220\u9664\u6570\u636E\u5E93",
+    "btn_clear": "\u6E05\u7A7A\u6240\u6709\u6570\u636E",
+    "btn_ativar": "\u6FC0\u6D3B",
+    "btn_duplicar": "\u590D\u5236",
+    "btn_renomear": "\u91CD\u547D\u540D",
+    "btn_tabelas": "\u8868",
+    "btn_exportar": "\u5BFC\u51FA",
+    "btn_deletar": "\u5220\u9664",
+    "badge_ativo": "\u6FC0\u6D3B",
+    "badge_system": "\u7CFB\u7EDF",
+    "stat_tables": "\u8868",
+    "stat_rows": "\u884C",
+    "stat_size": "\u5927\u5C0F",
+    "stat_updated": "\u5DF2\u66F4\u65B0",
+    "time_just_now": "\u521A\u521A",
+    "time_ago": "{time} \u524D",
+    "time_never": "\u4ECE\u4E0D",
+    "switch_title": "\u5207\u6362\u6570\u636E\u5E93",
+    "no_user_dbs": "\u672A\u627E\u5230\u7528\u6237\u6570\u636E\u5E93\u3002",
+    "tip_system_db": "\u7CFB\u7EDF\u9ED8\u8BA4\u6570\u636E\u5E93\u3002\u65E0\u6CD5\u5220\u9664\u3002",
+    "tip_protected_db": "\u5207\u6362\u5230\u53E6\u4E00\u4E2A\u6570\u636E\u5E93\u4EE5\u5220\u9664\u6B64\u6570\u636E\u5E93\u3002",
+    "rename_title": "\u91CD\u547D\u540D\u6570\u636E\u5E93\uFF1A{name}",
+    "rename_placeholder": "\u65B0\u6570\u636E\u5E93\u540D\u79F0...",
+    "create_title": "\u521B\u5EFA\u65B0\u6570\u636E\u5E93",
+    "create_placeholder": "\u6570\u636E\u5E93\u540D\u79F0 (\u4F8B\u5982\uFF1Amy_project)",
+    "duplicate_title": "\u590D\u5236\u6570\u636E\u5E93\uFF1A{name}",
+    "notice_create_empty": "\u6570\u636E\u5E93\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A\u3002",
+    "notice_rename_success": '\u6570\u636E\u5E93\u91CD\u547D\u540D\u4E3A "{name}"',
+    "notice_create_success": '\u6570\u636E\u5E93 "{name}" \u5DF2\u521B\u5EFA\u3002',
+    "notice_duplicate_success": '\u6570\u636E\u5E93\u5DF2\u590D\u5236\u5230 "{name}"',
+    "notice_delete_success": '\u6570\u636E\u5E93 "{name}" \u5DF2\u5220\u9664\u3002',
+    "notice_switch_success": '\u5DF2\u5207\u6362\u5230 "{name}"',
+    "tables_title": '"{name}" \u4E2D\u7684\u8868',
+    "null_value": "\u7A7A",
+    "status_error": "\u9519\u8BEF",
+    "status_done": "\u5B8C\u6210",
+    "switch_db_help": "\u5207\u6362\u5230\u5305\u542B\u8868\u7684\u6570\u636E\u5E93\u6216 ",
+    "btn_open_settings": "\u6253\u5F00\u8BBE\u7F6E",
+    "notice_table_data_copied": "\u8868\u6570\u636E\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01",
+    "notice_copy_failed": "\u590D\u5236\u5931\u8D25: {error}",
+    "notice_screenshot_failed": "\u521B\u5EFA\u622A\u56FE\u5931\u8D25: {error}",
+    "notice_no_active_note": "\u4E5F\u672A\u627E\u5230\u6D3B\u52A8\u7B14\u8BB0",
+    "notice_table_inserted": "\u8868\u683C\u5DF2\u63D2\u5165\u7B14\u8BB0\uFF01",
+    "notice_insert_failed": "\u63D2\u5165\u5931\u8D25: {error}"
+  },
+  "workbench": {
+    "btn_run": "\u8FD0\u884C",
+    "btn_executing": "\u6B63\u5728\u6267\u884C...",
+    "btn_cancel": "\u53D6\u6D88",
+    "notice_copy": "SQL \u4EE3\u7801\u5DF2\u590D\u5236\uFF01",
+    "notice_aborted": "\u67E5\u8BE2\u5DF2\u88AB\u7528\u6237\u4E2D\u6B62"
+  },
+  "renderer": {
+    "btn_copy": "\u590D\u5236",
+    "btn_screenshot": "\u622A\u56FE",
+    "btn_add_note": "\u6DFB\u52A0\u5230\u7B14\u8BB0",
+    "tip_copy": "\u5C06\u7ED3\u679C\u590D\u5236\u5230\u526A\u8D34\u677F",
+    "tip_screenshot": "\u83B7\u53D6\u7ED3\u679C\u622A\u56FE",
+    "tip_add_note": "\u5C06\u7ED3\u679C\u63D2\u5165\u7B14\u8BB0",
+    "notice_copied": "\u2713 \u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01",
+    "notice_copy_failed": "\u274C \u590D\u5236\u5931\u8D25: {error}",
+    "notice_screenshot_failed": "\u274C \u521B\u5EFA\u622A\u56FE\u5931\u8D25: {error}",
+    "notice_screenshot_copied": "\u2713 \u622A\u56FE\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01",
+    "notice_screenshot_downloaded": "\u2713 \u622A\u56FE\u5DF2\u4E0B\u8F7D\uFF01",
+    "notice_insert_no_note": "\u274C \u672A\u627E\u5230\u6D3B\u52A8\u7B14\u8BB0",
+    "notice_insert_success": "\u2713 \u7ED3\u679C\u5DF2\u63D2\u5165\u7B14\u8BB0\uFF01",
+    "notice_insert_failed": "\u274C \u63D2\u5165\u5931\u8D25: {error}",
+    "msg_no_result": "\u67E5\u8BE2\u6210\u529F\u6267\u884C\uFF08\u65E0\u7ED3\u679C\u96C6\uFF09",
+    "msg_rows_found": "\u627E\u5230 {count} \u884C",
+    "msg_no_data": "\u672A\u627E\u5230\u6570\u636E",
+    "msg_showing_rows": "\u6B63\u5728\u663E\u793A {count} / {total} \u884C",
+    "msg_showing_all": "\u6B63\u5728\u663E\u793A\u5168\u90E8 {count} \u884C",
+    "btn_show_all": "\u663E\u793A\u6240\u6709\u884C",
+    "err_title": "\u6267\u884C\u9519\u8BEF",
+    "result_label": "\u7ED3\u679C #{idx}",
+    "table_label": "\u8868\uFF1A{name}",
+    "query_result": "\u67E5\u8BE2\u7ED3\u679C",
+    "msg_loading": "\u6B63\u5728\u52A0\u8F7D\u6570\u636E...",
+    "msg_showing_limit": "\u4EC5\u663E\u793A\u524D {count} \u884C\u3002",
+    "msg_no_tables": "\u5728\u6B64\u6570\u636E\u5E93\u4E2D\u672A\u627E\u5230\u8868\u3002",
+    "msg_no_tables_in": "\u6570\u636E\u5E93\u4E2D\u672A\u627E\u5230\u8868 ",
+    "tip_back": "\u8FD4\u56DE\u8868\u5217\u8868",
+    "btn_back": "\u8FD4\u56DE",
+    "title_results": "\u67E5\u8BE2\u7ED3\u679C",
+    "rows_affected": "{count} \u884C\u53D7\u5F71\u54CD",
+    "no_data_md": "_\u6CA1\u6709\u6570\u636E_",
+    "result_dml": "**\u7ED3\u679C\uFF1A** {count} \u884C\u53D7\u5F71\u54CD"
+  },
+  "form": {
+    "title_insert": "\u63D2\u5165\u5230 {name}",
+    "btn_save": "\u4FDD\u5B58\u8BB0\u5F55",
+    "btn_saving": "\u6B63\u5728\u4FDD\u5B58...",
+    "btn_clear": "\u6E05\u7A7A",
+    "msg_success": "\u5DF2\u6210\u529F\u4FDD\u5B58\u5230 {name}",
+    "msg_error": "\u9519\u8BEF\uFF1A{error}",
+    "msg_unexpected": "\u610F\u5916\u9519\u8BEF\uFF1A{error}",
+    "notice_success": "\u8BB0\u5F55\u5DF2\u4FDD\u5B58\u5230 {name}",
+    "notice_error": "\u4FDD\u5B58\u8BB0\u5F55\u65F6\u51FA\u9519\uFF1A{error}",
+    "err_invalid_table": "\u65E0\u6548\u7684\u8868\u540D",
+    "err_invalid_col": "\u65E0\u6548\u7684\u5217\u540D\uFF1A{name}"
+  },
+  "pro": {
+    "label_from": "\u6765\u81EA\uFF1A",
+    "label_to": "\u53D1\u9001\u81F3\uFF1A",
+    "label_subject": "\u4E3B\u9898\uFF1A",
+    "from_name": "SQL Notebook \u5F00\u53D1\u56E2\u961F <dev@obsidian-sql.internal>",
+    "to_name": "\u4EB2\u7231\u7684\u5F00\u53D1\u8005",
+    "subject": "Pro Practice \u63D0\u9192\uFF1A\u6570\u636E\u5E93\u4E0A\u4E0B\u6587\u6700\u4F73\u5B9E\u8DF5",
+    "hello": "\u60A8\u597D\uFF0C",
+    "msg_1": "\u6211\u4EEC\u6CE8\u610F\u5230\u60A8\u6B63\u5728\u901A\u8FC7 UI \u5207\u6362\u6570\u636E\u5E93\u3002\u867D\u7136\u8FD9\u5BF9\u4E8E\u5FEB\u901F\u5BFC\u822A\u975E\u5E38\u68D2\uFF0C\u4F46\u6211\u4EEC\u60F3\u5206\u4EAB\u4E00\u4E2A\u4E13\u4E1A\u63D0\u793A\uFF1A\u5728\u811A\u672C\u4E2D\u4F7F\u7528\u663E\u5F0F\u7684 `USE` \u547D\u4EE4\u53EF\u4EE5\u4F7F\u60A8\u7684\u5DE5\u4F5C\u6D41\u7A0B\u66F4\u52A0\u5065\u58EE\u3002",
+    "msg_quote": "\u663E\u5F0F\u5B9A\u4E49\u4E0A\u4E0B\u6587\u662F\u4E00\u9879\u6700\u4F73\u5B9E\u8DF5\uFF0C\u53EF\u786E\u4FDD\u60A8\u7684\u811A\u672C\u5728\u4E0D\u540C\u73AF\u5883\u4E2D\u5177\u6709\u53EF\u79FB\u690D\u6027\u4E14\u660E\u786E\uFF1A",
+    "msg_2": "\u5728\u4EE3\u7801\u4E2D\u5B9A\u4E49\u4E0A\u4E0B\u6587\u6709\u52A9\u4E8E\u907F\u514D\u6DF7\u6DC6\uFF0C\u5E76\u4F7F\u4EFB\u4F55\u67E5\u770B\u60A8\u5DE5\u4F5C\u7684\u4EBA\u90FD\u80FD\u6E05\u695A\u60A8\u7684\u610F\u56FE\u3002\u4E3A\u4E86\u65B9\u4FBF\u8D77\u89C1\uFF0C\u60A8\u53EF\u4EE5\u59CB\u7EC8\u7EE7\u7EED\u4F7F\u7528\u5168\u5C40\u5207\u6362\u5668\uFF01",
+    "punchline": "\u795D\u67E5\u8BE2\u6109\u5FEB\uFF01 \u{1F680}",
+    "signature_regards": "\u6B64\u81F4\uFF0C",
+    "signature_team": "SQL Notebook \u5F00\u53D1\u56E2\u961F",
+    "btn_read": "\u6807\u8BB0\u4E3A\u5DF2\u8BFB"
+  },
+  "footer": {
+    "tip_help": "\u5E2E\u52A9\u4E0E\u529F\u80FD",
+    "status_ready": "\u5C31\u7EEA",
+    "status_error": "\u9519\u8BEF",
+    "status_aborted": "\u5DF2\u4E2D\u6B62",
+    "status_live": "\u5B9E\u65F6"
+  },
+  "common": {
+    "error": "\u9519\u8BEF\uFF1A{error}",
+    "invalid_name": "\u65B0\u540D\u79F0\u5FC5\u987B\u4E0E\u65E7\u540D\u79F0\u4E0D\u540C\u3002",
+    "notice_export_success": "\u5DF2\u5BFC\u51FA\u5230 {name}",
+    "notice_import_loading": "\u6B63\u5728\u5BFC\u5165\u6570\u636E\u5E93...",
+    "notice_import_success": "\u6570\u636E\u5E93\u5BFC\u5165\u6210\u529F\uFF01",
+    "notice_anchor_form": "FORM \u5DF2\u951A\u5B9A\u5230 {name}",
+    "notice_anchor_live": "LIVE \u5757\u5DF2\u951A\u5B9A\u5230 {name}",
+    "notice_update_live": "\u6B63\u5728\u4ECE {name} \u66F4\u65B0 LIVE \u6570\u636E...",
+    "notice_reset_success": "\u91CD\u7F6E\u6210\u529F\u5B8C\u6210",
+    "app_name": "SQL Notebook"
+  },
+  "executor": {
+    "err_reserved_word": `{message}
+
+\u{1F4A1} \u63D0\u793A\uFF1A'{word}' \u662F\u4FDD\u7559\u5B57\u3002\u8BF7\u5C1D\u8BD5\u4F7F\u7528\u5F15\u53F7\uFF08\u5982 "{lower}"\uFF09\u6216\u66F4\u6539\u540D\u79F0\u3002`,
+    "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F \u5DF2\u77E5 AlaSQL \u9519\u8BEF\uFF1A\u5728 'INSERT INTO ... SELECT' \u4E2D\u4F7F\u7528\u663E\u5F0F\u5217\u5217\u8868\u5BFC\u81F4\u5931\u8D25\u3002\n\n\u89E3\u51B3\u65B9\u6848\uFF1A\u5220\u9664\u5217\u5217\u8868\u5E76\u786E\u4FDD\u987A\u5E8F\u5B8C\u5168\u5BF9\u5E94\u3002",
+    "err_parse": "{message}\n\n\u{1F4A1} \u8BF7\u68C0\u67E5\u662F\u5426\u9057\u6F0F\u4E86\u5206\u53F7\u3001\u62EC\u53F7/\u5F15\u53F7\u662F\u5426\u672A\u95ED\u5408\u6216\u5B58\u5728\u62FC\u5199\u9519\u8BEF\u3002",
+    "warn_fragile_insert": "\u26A0\uFE0F \u68C0\u6D4B\u5230 'INSERT INTO ... (\u5217) SELECT'\u3002AlaSQL \u53EF\u80FD\u4F1A\u56E0 '$01' \u9519\u8BEF\u800C\u5931\u8D25\u3002\u5982\u679C\u53D1\u751F\uFF0C\u8BF7\u5220\u9664\u5217\u5217\u8868\u3002"
+  }
+};
+
+// src/locales/es.ts
+var es_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "Gestor de Base de Datos",
+    "btn_atualizar": "Actualizar",
+    "btn_importar": "Importar",
+    "btn_novo_db": "Nueva Base de Datos",
+    "welcome_title": "\xA1Bienvenido a SQL Notebook!",
+    "welcome_desc": "Administra tus bases de datos locales, ejecuta consultas y visualiza resultados directamente en Obsidian.",
+    "search_placeholder": "Buscar bases de datos...",
+    "info_title": "Informaci\xF3n Importante:",
+    "info_li_1": "Para eliminar o renombrar una base de datos <b>activa</b>, cambia primero a otra.",
+    "info_li_2": 'La base de datos del sistema <b>"dbo"</b> no puede ser renombrada ni eliminada.',
+    "info_li_3": "<b>Renombrar</b> una base de datos actualiza autom\xE1ticamente las referencias internas.",
+    "section_general": "Configuraci\xF3n General",
+    "section_appearance": "Apariencia",
+    "section_data_security": "Datos y Seguridad",
+    "lang_name": "Idioma",
+    "lang_desc": "Elige el idioma de la interfaz.",
+    "accent_obsidian": "Usar Color de Acento de Obsidian",
+    "accent_obsidian_desc": "Usa el color de acento global de Obsidian en lugar de uno personalizado.",
+    "theme_accent": "Acento del Tema",
+    "theme_accent_desc": "Elige el color de acento principal.",
+    "auto_save": "Guardado Autom\xE1tico",
+    "auto_save_desc": "Guardar autom\xE1ticamente los cambios de la base de datos.",
+    "auto_save_delay": "Retraso de Guardado Autom\xE1tico",
+    "auto_save_delay_desc": "Milisegundos a esperar antes de guardar autom\xE1ticamente.",
+    "export_folder": "Carpeta de Exportaci\xF3n",
+    "export_folder_desc": "Carpeta predeterminada para exportaciones CSV.",
+    "safe_mode": "Modo Seguro",
+    "safe_mode_desc": "Bloquear comandos peligrosos (DROP, ALTER) y aplicar l\xEDmites.",
+    "enable_logging": "Activar Registro de Depuraci\xF3n",
+    "enable_logging_desc": "Mostrar registros detallados en la consola de desarrollador (Ctrl+Shift+I). \xDAtil para depurar sincronizaci\xF3n.",
+    "snapshot_limit": "L\xEDmite de Filas de Instant\xE1nea",
+    "snapshot_limit_desc": "M\xE1ximo de filas por tabla para guardar (evita problemas de memoria).",
+    "batch_size": "Tama\xF1o de Lote",
+    "batch_size_desc": "Filas a mostrar por p\xE1gina en los resultados.",
+    "reset_all": "Restablecer todos los datos",
+    "reset_btn": "Restablecer todo",
+    "reset_all_confirm_msg": "Esto eliminar\xE1 TODAS las bases de datos y tablas. Esta acci\xF3n no se puede deshacer. \xBFEst\xE1s seguro?",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "Caracter\xEDsticas de SQL Notebook",
+    "collapsible_title": "Panel de Trabajo Plegable",
+    "collapsible_desc": "Alterna la vista del panel para ahorrar espacio. Haz clic en el encabezado o en el icono de flecha.",
+    "auto_collapse_title": "Plegado Autom\xE1tico",
+    "auto_collapse_desc": "Comienza un comentario con '@' (ej., '-- @ Mi Consulta') para plegar autom\xE1ticamente el panel al abrir la nota.",
+    "alert_title": "Marcador de Alerta (!)",
+    "alert_desc": "A\xF1ade '!' al inicio de tu comentario para resaltarlo como una alerta o advertencia.",
+    "question_title": "Marcador de Pregunta (?)",
+    "question_desc": "A\xF1ade '?' para indicar una consulta que necesita revisi\xF3n o es experimental.",
+    "favorite_title": "Marcador de Favorito (*)",
+    "favorite_desc": "A\xF1ade '*' para resaltar consultas importantes o frecuentes.",
+    "copy_edit_title": "Copiar y Editar",
+    "copy_edit_desc": "Pasa el rat\xF3n sobre el panel para acceder a los botones r\xE1pidos de Copiar C\xF3digo y Editar Bloque."
+  },
+  "modals": {
+    "confirm_delete_title": "Eliminar Base de Datos",
+    "confirm_delete_msg": 'Est\xE1s a punto de eliminar la base de datos "{dbName}". Esta acci\xF3n no se puede deshacer. Se perder\xE1n todas las tablas y datos.',
+    "confirm_clear_title": "Limpiar Base de Datos",
+    "confirm_clear_msg": '\xBFEst\xE1s seguro de que quieres limpiar todas las tablas en "{dbName}"? Esto mantiene la base de datos pero elimina todos los datos.',
+    "btn_cancel": "Cancelar",
+    "btn_confirm": "Confirmar",
+    "btn_delete": "Eliminar Base de Datos",
+    "btn_clear": "Limpiar todos los datos",
+    "btn_ativar": "Activar",
+    "btn_duplicar": "Duplicar",
+    "btn_renomear": "Renombrar",
+    "btn_tabelas": "Tablas",
+    "btn_exportar": "Exportar",
+    "btn_deletar": "Eliminar",
+    "badge_ativo": "ACTIVO",
+    "badge_system": "Sistema",
+    "stat_tables": "Tablas",
+    "stat_rows": "Filas",
+    "stat_size": "Tama\xF1o",
+    "stat_updated": "Actualizado",
+    "time_just_now": "Ahora mismo",
+    "time_ago": "hace {time}",
+    "time_never": "Nunca",
+    "switch_title": "Cambiar Base de Datos",
+    "no_user_dbs": "No se encontraron bases de datos de usuario.",
+    "tip_system_db": "Base de datos predeterminada del sistema. No se puede eliminar.",
+    "tip_protected_db": "Cambia a otra base de datos para eliminar esta.",
+    "rename_title": "Renombrar Base de Datos: {name}",
+    "rename_placeholder": "Nuevo nombre de la base de datos...",
+    "create_title": "Crear Nueva Base de Datos",
+    "create_placeholder": "Nombre de la base de datos (ej., mi_proyecto)",
+    "duplicate_title": "Duplicar Base de Datos: {name}",
+    "notice_create_empty": "El nombre de la base de datos no puede estar vac\xEDo.",
+    "notice_rename_success": 'Base de datos renombrada a "{name}"',
+    "notice_create_success": 'Base de datos "{name}" creada.',
+    "notice_duplicate_success": 'Base de datos duplicada a "{name}"',
+    "notice_delete_success": 'Base de datos "{name}" eliminada.',
+    "notice_switch_success": 'Cambiado a "{name}"',
+    "tables_title": 'Tablas en "{name}"',
+    "null_value": "NULO",
+    "status_error": "Error",
+    "status_done": "Hecho",
+    "switch_db_help": "Cambia a una base de datos con tablas o ",
+    "btn_open_settings": "abre la configuraci\xF3n",
+    "notice_table_data_copied": "\xA1Datos de la tabla copiados al portapapeles!",
+    "notice_copy_failed": "Error al copiar: {error}",
+    "notice_screenshot_failed": "Error al crear la captura de pantalla: {error}",
+    "notice_no_active_note": "No se encontr\xF3 ninguna nota activa",
+    "notice_table_inserted": "\xA1Tabla insertada en la nota!",
+    "notice_insert_failed": "Error al insertar: {error}"
+  },
+  "workbench": {
+    "btn_run": "Ejecutar",
+    "btn_executing": "Ejecutando...",
+    "btn_cancel": "Cancelar",
+    "notice_copy": "\xA1C\xF3digo SQL copiado!",
+    "notice_aborted": "Consulta abortada por el usuario"
+  },
+  "renderer": {
+    "btn_copy": "Copiar",
+    "btn_screenshot": "Captura",
+    "btn_add_note": "A\xF1adir a Nota",
+    "tip_copy": "Copiar resultado al portapapeles",
+    "tip_screenshot": "Tomar captura del resultado",
+    "tip_add_note": "Insertar resultado en la nota",
+    "notice_copied": "\u2713 \xA1Copiado al portapapeles!",
+    "notice_copy_failed": "\u274C Error al copiar: {error}",
+    "notice_screenshot_failed": "\u274C Error al crear captura: {error}",
+    "notice_screenshot_copied": "\u2713 \xA1Captura copiada al portapapeles!",
+    "notice_screenshot_downloaded": "\u2713 \xA1Captura descargada!",
+    "notice_insert_no_note": "\u274C No se encontr\xF3 nota activa",
+    "notice_insert_success": "\u2713 \xA1Resultado insertado en la nota!",
+    "notice_insert_failed": "\u274C Error al insertar: {error}",
+    "msg_no_result": "Consulta ejecutada con \xE9xito (sin resultados)",
+    "msg_rows_found": "{count} filas encontradas",
+    "msg_no_data": "No se encontraron datos",
+    "msg_showing_rows": "Mostrando {count} de {total} filas",
+    "msg_showing_all": "Mostrando las {count} filas",
+    "btn_show_all": "Mostrar todas las filas",
+    "err_title": "Error de Ejecuci\xF3n",
+    "result_label": "Resultado #{idx}",
+    "table_label": "Tabla: {name}",
+    "query_result": "Resultado de la Consulta",
+    "msg_loading": "Cargando datos...",
+    "msg_showing_limit": "Mostrando solo las primeras {count} filas.",
+    "msg_no_tables": "No se encontraron tablas en esta base de datos.",
+    "msg_no_tables_in": "No se encontraron tablas en la base de datos ",
+    "tip_back": "Voltar a la lista de tablas",
+    "btn_back": "Volver",
+    "title_results": "Resultados de la Consulta",
+    "rows_affected": "{count} fila(s) afectada(s)",
+    "no_data_md": "_Sin datos_",
+    "result_dml": "**Resultado:** {count} fila(s) afectada(s)"
+  },
+  "form": {
+    "title_insert": "Insertar en {name}",
+    "btn_save": "Guardar Registro",
+    "btn_saving": "Guardando...",
+    "btn_clear": "Limpiar",
+    "msg_success": "Guardado con \xE9xito en {name}",
+    "msg_error": "Error: {error}",
+    "msg_unexpected": "Error inesperado: {error}",
+    "notice_success": "Registro guardado en {name}",
+    "notice_error": "Error al guardar registro: {error}",
+    "err_invalid_table": "Nombre de tabla no v\xE1lido",
+    "err_invalid_col": "Nombre de columna no v\xE1lido: {name}"
+  },
+  "pro": {
+    "label_from": "De:",
+    "label_to": "Para:",
+    "label_subject": "Asunto:",
+    "from_name": "Equipo de Desarrollo de SQL Notebook <dev@obsidian-sql.internal>",
+    "to_name": "Estimado Desarrollador",
+    "subject": "Alerta Pro Practice: Mejores Pr\xE1cticas de Contexto de Base de Datos",
+    "hello": "Hola,",
+    "msg_1": "Notamos que est\xE1s cambiando de base de datos a trav\xE9s de la interfaz. Si bien esto es excelente para una navegaci\xF3n r\xE1pida, nos gustar\xEDa compartir un consejo profesional: el uso del comando expl\xEDcito `USE` en tus scripts puede hacer que tu flujo de trabajo sea a\xFAn m\xE1s s\xF3lido.",
+    "msg_quote": "Definir expl\xEDcitamente tu contexto es una mejor pr\xE1ctica que garantiza que tus scripts sean port\xE1tiles y claros en diferentes entornos:",
+    "msg_2": "Definir el contexto dentro del c\xF3digo ayuda a evitar confusiones y aclara tu intenci\xF3n a cualquiera que revise tu trabajo. \xA1Siempre puedes seguir usando el selector global por conveniencia!",
+    "punchline": "\xA1Felices consultas! \u{1F680}",
+    "signature_regards": "Saludos cordiales,",
+    "signature_team": "Equipo de Desarrollo de SQL Notebook",
+    "btn_read": "Marcar como le\xEDdo"
+  },
+  "footer": {
+    "tip_help": "Ayuda y Recursos",
+    "status_ready": "Listo",
+    "status_error": "Error",
+    "status_aborted": "Abortado",
+    "status_live": "EN VIVO"
+  },
+  "common": {
+    "error": "Error: {error}",
+    "invalid_name": "El nuevo nombre debe ser diferente del antiguo.",
+    "notice_export_success": "Exportado a {name}",
+    "notice_import_loading": "Importando base de datos...",
+    "notice_import_success": "\xA1Base de datos importada con \xE9xito!",
+    "notice_anchor_form": "FORM anclado a {name}",
+    "notice_anchor_live": "Bloque LIVE anclado a {name}",
+    "notice_update_live": "Actualizando datos LIVE desde {name}...",
+    "notice_reset_success": "Restablecimiento completado con \xE9xito",
+    "app_name": "SQL Notebook"
+  },
+  "executor": {
+    "err_reserved_word": `{message}
+
+\u{1F4A1} Sugerencia: '{word}' es una palabra reservada. Intente usar comillas (ej: "{lower}") o cambie el nombre.`,
+    "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F Error Conocido de AlaSQL: El uso de una lista de columnas expl\xEDcita en 'INSERT INTO ... SELECT' caus\xF3 un fallo.\n\nSoluci\xF3n: Elimine la lista de columnas y aseg\xFArese de que el orden coincida exactamente.",
+    "err_parse": "{message}\n\n\u{1F4A1} Verifique si olvid\xF3 alg\xFAn punto y coma, par\xE9ntesis/comillas sin cerrar o errores tipogr\xE1ficos.",
+    "warn_fragile_insert": "\u26A0\uFE0F Detectado 'INSERT INTO ... (columnas) SELECT'. AlaSQL puede fallar con el error '$01'. Si ocurre, elimine la lista de columnas y aseg\xFArese de que el orden sea exacto."
+  }
+};
+
+// src/locales/de.ts
+var de_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "Datenbank-Manager",
+    "btn_atualizar": "Aktualisieren",
+    "btn_importar": "Importieren",
+    "btn_novo_db": "Neue Datenbank",
+    "welcome_title": "Willkommen bei SQL Notebook!",
+    "welcome_desc": "Verwalten Sie Ihre lokalen Datenbanken, f\xFChren Sie Abfragen aus und visualisieren Sie Ergebnisse direkt in Obsidian.",
+    "search_placeholder": "Datenbanken suchen...",
+    "info_title": "Wichtige Informationen:",
+    "info_li_1": "Um eine <b>aktive</b> Datenbank zu l\xF6schen oder umzubenennen, wechseln Sie zuerst zu einer anderen.",
+    "info_li_2": 'Die Systemdatenbank <b>"dbo"</b> kann nicht umbenannt oder gel\xF6scht werden.',
+    "info_li_3": "Das <b>Umbenennen</b> einer Datenbank aktualisiert automatisch interne Referenzen.",
+    "section_general": "Allgemeine Einstellungen",
+    "section_appearance": "Erscheinungsbild",
+    "section_data_security": "Daten & Sicherheit",
+    "lang_name": "Sprache",
+    "lang_desc": "W\xE4hlen Sie die Oberfl\xE4chensprache.",
+    "accent_obsidian": "Obsidian-Akzentfarbe verwenden",
+    "accent_obsidian_desc": "Verwenden Sie die globale Obsidian-Akzentfarbe anstelle einer benutzerdefinierten Farbe.",
+    "theme_accent": "Themen-Akzent",
+    "theme_accent_desc": "W\xE4hlen Sie die prim\xE4re Akzentfarbe.",
+    "auto_save": "Automatisches Speichern",
+    "auto_save_desc": "Datenbank\xE4nderungen automatisch speichern.",
+    "auto_save_delay": "Verz\xF6gerung f\xFCr automatisches Speichern",
+    "auto_save_delay_desc": "Millisekunden, die vor dem automatischen Speichern gewartet werden soll.",
+    "export_folder": "Export-Ordner",
+    "export_folder_desc": "Standardordner f\xFCr CSV-Exporte.",
+    "safe_mode": "Sicherer Modus",
+    "safe_mode_desc": "Gef\xE4hrliche Befehle (DROP, ALTER) blockieren und Limits durchsetzen.",
+    "enable_logging": "Debug-Logging aktivieren",
+    "enable_logging_desc": "Schauen Sie sich detaillierte Protokolle in der Entwicklerkonsole (Strg+Umschalt+I) an. N\xFCtzlich f\xFCr das Debugging der Synchronisation.",
+    "snapshot_limit": "Snapshot-Zeilenlimit",
+    "snapshot_limit_desc": "Maximale Zeilen pro Tabelle zum Speichern (verhindert Speicherprobleme).",
+    "batch_size": "Batch-Gr\xF6\xDFe",
+    "batch_size_desc": "Zeilen, die pro Seite in den Ergebnissen angezeigt werden sollen.",
+    "reset_all": "Alle Daten zur\xFCcksetzen",
+    "reset_btn": "Alles zur\xFCcksetzen",
+    "reset_all_confirm_msg": "Dies l\xF6scht ALLE Datenbanken und Tabellen. Diese Aktion kann nicht r\xFCckg\xE4ngig gemacht werden. Sind Sie sicher?",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "SQL Notebook Funktionen",
+    "collapsible_title": "Einklappbare Workbench",
+    "collapsible_desc": "Schalten Sie die Workbench-Ansicht um, um Platz zu sparen. Klicken Sie auf den Header oder das Chevron-Symbol.",
+    "auto_collapse_title": "Automatisches Einklappen",
+    "auto_collapse_desc": "Beginnen Sie einen Kommentar mit '@' (z. B. '-- @ Meine Abfrage'), um die Workbench automatisch einzuklappen, wenn die Notiz ge\xF6ffnet wird.",
+    "alert_title": "Warnungs-Marker (!)",
+    "alert_desc": "F\xFCgen Sie '!' zum Anfang Ihres Kommentars hinzu, um ihn als Warnung hervorzuheben.",
+    "question_title": "Frage-Marker (?)",
+    "question_desc": "F\xFCgen Sie '?' hinzu, um eine Abfrage zu kennzeichnen, die \xFCberpr\xFCft werden muss oder experimentell ist.",
+    "favorite_title": "Favoriten-Marker (*)",
+    "favorite_desc": "F\xFCgen Sie '*' hinzu, um wichtige oder h\xE4ufig verwendete Abfragen hervorzuheben.",
+    "copy_edit_title": "Kopieren & Bearbeiten",
+    "copy_edit_desc": "Bewegen Sie den Mauszeiger \xFCber die Workbench, um auf die Schaltfl\xE4chen zum schnellen Kopieren von Code und Bearbeiten von Bl\xF6cken zuzugreifen."
+  },
+  "modals": {
+    "confirm_delete_title": "Datenbank l\xF6schen",
+    "confirm_delete_msg": 'Sie sind dabei, die Datenbank "{dbName}" zu l\xF6schen. Diese Aktion kann nicht r\xFCckg\xE4ngig gemacht werden. Alle Tabellen und Daten gehen verloren.',
+    "confirm_clear_title": "Datenbank leeren",
+    "confirm_clear_msg": 'Sind Sie sicher, dass Sie alle Tabellen in "{dbName}" leeren m\xF6chten? Die Datenbank bleibt erhalten, aber alle Daten werden gel\xF6scht.',
+    "btn_cancel": "Abbrechen",
+    "btn_confirm": "Best\xE4tigen",
+    "btn_delete": "Datenbank l\xF6schen",
+    "btn_clear": "Alle Daten leeren",
+    "btn_ativar": "Aktivieren",
+    "btn_duplicar": "Duplizieren",
+    "btn_renomear": "Umbenennen",
+    "btn_tabelas": "Tabellen",
+    "btn_exportar": "Exportieren",
+    "btn_deletar": "L\xF6schen",
+    "badge_ativo": "AKTIV",
+    "badge_system": "System",
+    "stat_tables": "Tabellen",
+    "stat_rows": "Zeilen",
+    "stat_size": "Gr\xF6\xDFe",
+    "stat_updated": "Aktualisiert",
+    "time_just_now": "Gerade eben",
+    "time_ago": "vor {time}",
+    "time_never": "Nie",
+    "switch_title": "Datenbank wechseln",
+    "no_user_dbs": "Keine Benutzerdatenbanken gefunden.",
+    "tip_system_db": "System-Standarddatenbank. Kann nicht gel\xF6scht werden.",
+    "tip_protected_db": "Wechseln Sie zu einer anderen Datenbank, um diese zu l\xF6schen.",
+    "rename_title": "Datenbank umbenennen: {name}",
+    "rename_placeholder": "Neuer Datenbankname...",
+    "create_title": "Neue Datenbank erstellen",
+    "create_placeholder": "Datenbankname (z. B. mein_projekt)",
+    "duplicate_title": "Datenbank duplizieren: {name}",
+    "notice_create_empty": "Datenbankname darf nicht leer sein.",
+    "notice_rename_success": 'Datenbank in "{name}" umbenannt',
+    "notice_create_success": 'Datenbank "{name}" erstellt.',
+    "notice_duplicate_success": 'Datenbank nach "{name}" dupliziert',
+    "notice_delete_success": 'Datenbank "{name}" gel\xF6scht.',
+    "notice_switch_success": 'Zu "{name}" gewechselt',
+    "tables_title": 'Tabellen in "{name}"',
+    "null_value": "NULL",
+    "status_error": "Fehler",
+    "status_done": "Fertig",
+    "switch_db_help": "Wechseln Sie zu einer Datenbank mit Tabellen oder ",
+    "btn_open_settings": "\xF6ffnen Sie die Einstellungen",
+    "notice_table_data_copied": "Tabellendaten in die Zwischenablage kopiert!",
+    "notice_copy_failed": "Kopieren fehlgeschlagen: {error}",
+    "notice_screenshot_failed": "Screenshot-Erstellung fehlgeschlagen: {error}",
+    "notice_no_active_note": "Keine aktive Notiz gefunden",
+    "notice_table_inserted": "Tabelle in Notiz eingef\xFCgt!",
+    "notice_insert_failed": "Einf\xFCgen fehlgeschlagen: {error}"
+  },
+  "workbench": {
+    "btn_run": "Ausf\xFChren",
+    "btn_executing": "Wird ausgef\xFChrt...",
+    "btn_cancel": "Abbrechen",
+    "notice_copy": "SQL-Code kopiert!",
+    "notice_aborted": "Abfrage vom Benutzer abgebrochen"
+  },
+  "renderer": {
+    "btn_copy": "Kopieren",
+    "btn_screenshot": "Screenshot",
+    "btn_add_note": "Zur Notiz hinzuf\xFCgen",
+    "tip_copy": "Ergebnis in die Zwischenablage kopieren",
+    "tip_screenshot": "Screenshot vom Ergebnis machen",
+    "tip_add_note": "Ergebnis in die Notiz einf\xFCgen",
+    "notice_copied": "\u2713 In die Zwischenablage kopiert!",
+    "notice_copy_failed": "\u274C Kopieren fehlgeschlagen: {error}",
+    "notice_screenshot_failed": "\u274C Screenshot-Erstellung fehlgeschlagen: {error}",
+    "notice_screenshot_copied": "\u2713 Screenshot in die Zwischenablage kopiert!",
+    "notice_screenshot_downloaded": "\u2713 Screenshot heruntergeladen!",
+    "notice_insert_no_note": "\u274C Keine aktive Notiz gefunden",
+    "notice_insert_success": "\u2713 Ergebnis in Notiz eingef\xFCgt!",
+    "notice_insert_failed": "\u274C Einf\xFCgen fehlgeschlagen: {error}",
+    "msg_no_result": "Abfrage erfolgreich ausgef\xFChrt (kein Ergebnissatz)",
+    "msg_rows_found": "{count} Zeilen gefunden",
+    "msg_no_data": "Keine Daten gefunden",
+    "msg_showing_rows": "Zeige {count} von {total} Zeilen",
+    "msg_showing_all": "Zeige alle {count} Zeilen",
+    "btn_show_all": "Alle Zeilen anzeigen",
+    "err_title": "Ausf\xFChrungsfehler",
+    "result_label": "Ergebnis #{idx}",
+    "table_label": "Tabelle: {name}",
+    "query_result": "Abfrageergebnis",
+    "msg_loading": "Lade Daten...",
+    "msg_showing_limit": "Zeige nur die ersten {count} Zeilen.",
+    "msg_no_tables": "Keine Tabellen in dieser Datenbank gefunden.",
+    "msg_no_tables_in": "Keine Tabellen in der Datenbank gefunden ",
+    "tip_back": "Zur\xFCck zur Tabellenliste",
+    "btn_back": "Zur\xFCck",
+    "title_results": "Abfrage-Ergebnisse",
+    "rows_affected": "{count} Zeile(n) betroffen",
+    "no_data_md": "_Keine Daten_",
+    "result_dml": "**Ergebnis:** {count} Zeile(n) betroffen"
+  },
+  "form": {
+    "title_insert": "Einf\xFCgen in {name}",
+    "btn_save": "Datensatz speichern",
+    "btn_saving": "Speichere...",
+    "btn_clear": "Leeren",
+    "msg_success": "Erfolgreich in {name} gespeichert",
+    "msg_error": "Fehler: {error}",
+    "msg_unexpected": "Unerwarteter Fehler: {error}",
+    "notice_success": "Datensatz in {name} gespeichert",
+    "notice_error": "Fehler beim Speichern des Datensatzes: {error}",
+    "err_invalid_table": "Ung\xFCltiger Tabellenname",
+    "err_invalid_col": "Ung\xFCltiger Spaltenname: {name}"
+  },
+  "pro": {
+    "label_from": "Von:",
+    "label_to": "An:",
+    "label_subject": "Betreff:",
+    "from_name": "SQL Notebook Entwicklerteam <dev@obsidian-sql.internal>",
+    "to_name": "Gesch\xE4tzter Entwickler",
+    "subject": "Pro Practice Hinweis: Best Practices f\xFCr den Datenbank-Kontext",
+    "hello": "Hallo,",
+    "msg_1": "Wir haben bemerkt, dass Sie die Datenbank \xFCber die Benutzeroberfl\xE4che wechseln. Dies ist zwar hervorragend f\xFCr die schnelle Navigation, aber wir m\xF6chten einen Profi-Tipp teilen: Die Verwendung des expliziten `USE`-Befehls in Ihren Skripten kann Ihren Workflow noch robuster machen.",
+    "msg_quote": "Die explizite Definition Ihres Kontextes ist eine Best Practice, die sicherstellt, dass Ihre Skripte \xFCber verschiedene Umgebungen hinweg portabel und eindeutig sind:",
+    "msg_2": "Die Definition des Kontextes innerhalb des Codes hilft, Verwirrung zu vermeiden und macht Ihre Absicht f\xFCr jeden klar, der Ihre Arbeit \xFCberpr\xFCft. F\xFCr maximale Bequemlichkeit k\xF6nnen Sie nat\xFCrlich weiterhin den globalen Umschalter verwenden!",
+    "punchline": "Viel Spa\xDF beim Abfragen! \u{1F680}",
+    "signature_regards": "Mit freundlichen Gr\xFC\xDFen,",
+    "signature_team": "SQL Notebook Entwicklerteam",
+    "btn_read": "Als gelesen markieren"
+  },
+  "footer": {
+    "tip_help": "Hilfe & Funktionen",
+    "status_ready": "Bereit",
+    "status_error": "Fehler",
+    "status_aborted": "Abgebrochen",
+    "status_live": "LIVE"
+  },
+  "common": {
+    "error": "Fehler: {error}",
+    "invalid_name": "Der neue Name muss sich vom alten unterscheiden.",
+    "notice_export_success": "Exportiert nach {name}",
+    "notice_import_loading": "Importiere Datenbank...",
+    "notice_import_success": "Datenbank erfolgreich importiert!",
+    "notice_anchor_form": "FORM an {name} verankert",
+    "notice_anchor_live": "LIVE-Block an {name} verankert",
+    "notice_update_live": "Aktualisiere LIVE-Daten von {name}...",
+    "notice_reset_success": "Zur\xFCcksetzen erfolgreich abgeschlossen",
+    "app_name": "SQL Notebook"
+  },
+  "executor": {
+    "err_reserved_word": `{message}
+
+\u{1F4A1} Tipp: '{word}' ist ein reserviertes Wort. Versuchen Sie, Anf\xFChrungszeichen zu verwenden (z. B. "{lower}") oder \xE4ndern Sie den Namen.`,
+    "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F Bekannter AlaSQL-Fehler: Die Verwendung einer expliziten Spaltenliste in 'INSERT INTO ... SELECT' hat zu einem Fehler gef\xFChrt.\n\nL\xF6sung: Entfernen Sie die Spaltenliste und stellen Sie sicher, dass die Reihenfolge genau \xFCbereinstimmt.",
+    "err_parse": "{message}\n\n\u{1F4A1} \xDCberpr\xFCfen Sie, ob Sie ein Semikolon vergessen haben, ob Klammern/Anf\xFChrungszeichen nicht geschlossen sind oder ob Tippfehler vorliegen.",
+    "warn_fragile_insert": "\u26A0\uFE0F 'INSERT INTO ... (Spalten) SELECT' erkannt. AlaSQL kann mit dem Fehler '$01' fehlschlagen. Falls dies passiert, entfernen Sie die Spaltenliste."
+  }
+};
+
+// src/locales/fr.ts
+var fr_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "Gestionnaire de base de donn\xE9es",
+    "btn_atualizar": "Mettre \xE0 jour",
+    "btn_importar": "Importer",
+    "btn_novo_db": "Nouvelle base de donn\xE9es",
+    "welcome_title": "Bienvenue sur SQL Notebook !",
+    "welcome_desc": "G\xE9rez vos bases de donn\xE9es locales, ex\xE9cutez des requ\xEAtes et visualisez les r\xE9sultats directement dans Obsidian.",
+    "search_placeholder": "Rechercher des bases de donn\xE9es...",
+    "info_title": "Informations importantes :",
+    "info_li_1": "Pour supprimer ou renommer une base de donn\xE9es <b>active</b>, passez d'abord \xE0 une autre.",
+    "info_li_2": 'La base de donn\xE9es syst\xE8me <b>"dbo"</b> ne peut pas \xEAtre renomm\xE9e ou supprim\xE9e.',
+    "info_li_3": "Le <b>renommage</b> d'une base de donn\xE9es met automatiquement \xE0 jour les r\xE9f\xE9rences internes.",
+    "section_general": "Param\xE8tres g\xE9n\xE9raux",
+    "section_appearance": "Apparence",
+    "section_data_security": "Donn\xE9es et s\xE9curit\xE9",
+    "lang_name": "Langue",
+    "lang_desc": "Choisissez la langue de l'interface.",
+    "accent_obsidian": "Utiliser la couleur d'accentuation d'Obsidian",
+    "accent_obsidian_desc": "Utilisez la couleur d'accentuation globale d'Obsidian au lieu d'une couleur personnalis\xE9e.",
+    "theme_accent": "Accentuation du th\xE8me",
+    "theme_accent_desc": "Choisissez la couleur d'accentuation principale.",
+    "auto_save": "Sauvegarde automatique",
+    "auto_save_desc": "Sauvegarder automatiquement les modifications de la base de donn\xE9es.",
+    "auto_save_delay": "D\xE9lai de sauvegarde automatique",
+    "auto_save_delay_desc": "Millisecondes \xE0 attendre avant la sauvegarde automatique.",
+    "export_folder": "Dossier d'exportation",
+    "export_folder_desc": "Dossier par d\xE9faut pour les exportations CSV.",
+    "safe_mode": "Mode s\xE9curis\xE9",
+    "safe_mode_desc": "Bloquer les commandes dangereuses (DROP, ALTER) et imposer des limites.",
+    "enable_logging": "Activer le journal de d\xE9bogage",
+    "enable_logging_desc": "Afficher les journaux d\xE9taill\xE9s dans la console d\xE9veloppeur (Ctrl+Shift+I). Utile pour d\xE9boguer la synchronisation.",
+    "snapshot_limit": "Limite de lignes d'instantan\xE9",
+    "snapshot_limit_desc": "Nombre maximal de lignes par tableau \xE0 sauvegarder (\xE9vite les probl\xE8mes de m\xE9moire).",
+    "batch_size": "Taille du lot",
+    "batch_size_desc": "Lignes \xE0 afficher par page dans les r\xE9sultats.",
+    "reset_all": "R\xE9initialiser toutes les donn\xE9es",
+    "reset_btn": "Tout r\xE9initialiser",
+    "reset_all_confirm_msg": "Cela supprimera TOUTES les bases de donn\xE9es et tables. Cette action est irr\xE9versible. \xCAtes-vous s\xFBr ?",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "Fonctionnalit\xE9s de SQL Notebook",
+    "collapsible_title": "Banc de travail pliable",
+    "collapsible_desc": "Basculez la vue du banc de travail pour gagner de l'espace. Cliquez sur l'en-t\xEAte ou l'ic\xF4ne chevron.",
+    "auto_collapse_title": "Pliage automatique",
+    "auto_collapse_desc": "Commencez un commentaire par '@' (ex: '-- @ Ma requ\xEAte') pour plier automatiquement le banc de travail \xE0 l'ouverture de la note.",
+    "alert_title": "Marqueur d'alerte (!)",
+    "alert_desc": "Ajoutez '!' au d\xE9but de votre commentaire pour le mettre en \xE9vidence comme une alerte ou un avertissement.",
+    "question_title": "Marqueur de question (?)",
+    "question_desc": "Ajoutez '?' pour indiquer une requ\xEAte n\xE9cessitant une r\xE9vision ou exp\xE9rimentale.",
+    "favorite_title": "Marqueur de favori (*)",
+    "favorite_desc": "Ajoutez '*' pour mettre en \xE9vidence les requ\xEAtes importantes ou fr\xE9quentes.",
+    "copy_edit_title": "Copier et modifier",
+    "copy_edit_desc": "Survolez le banc de travail pour acc\xE9der aux boutons rapides de copie de code et de modification de bloc."
+  },
+  "modals": {
+    "confirm_delete_title": "Supprimer la base de donn\xE9es",
+    "confirm_delete_msg": 'Vous \xEAtes sur le point de supprimer la base de donn\xE9es "{dbName}". Cette action est irr\xE9versible. Toutes les tables et donn\xE9es seront perdues.',
+    "confirm_clear_title": "Effacer la base de donn\xE9es",
+    "confirm_clear_msg": '\xCAtes-vous s\xFBr de vouloir effacer toutes les tables de "{dbName}" ? Cela conserve la base de donn\xE9es mais supprime toutes les donn\xE9es.',
+    "btn_cancel": "Annuler",
+    "btn_confirm": "Confirmer",
+    "btn_delete": "Supprimer la base de donn\xE9es",
+    "btn_clear": "Effacer toutes les donn\xE9es",
+    "btn_ativar": "Activer",
+    "btn_duplicar": "Dupliquer",
+    "btn_renomear": "Renommer",
+    "btn_tabelas": "Tables",
+    "btn_exportar": "Exporter",
+    "btn_deletar": "Supprimer",
+    "badge_ativo": "ACTIF",
+    "badge_system": "Syst\xE8me",
+    "stat_tables": "Tables",
+    "stat_rows": "Lignes",
+    "stat_size": "Taille",
+    "stat_updated": "Mis \xE0 jour",
+    "time_just_now": "\xC0 l'instant",
+    "time_ago": "Il y a {time}",
+    "time_never": "Jamais",
+    "switch_title": "Changer de base de donn\xE9es",
+    "no_user_dbs": "Aucune base de donn\xE9es utilisateur trouv\xE9e.",
+    "tip_system_db": "Base de donn\xE9es syst\xE8me par d\xE9faut. Impossible de la supprimer.",
+    "tip_protected_db": "Passez \xE0 une autre base de donn\xE9es pour supprimer celle-ci.",
+    "rename_title": "Renommer la base de donn\xE9es : {name}",
+    "rename_placeholder": "Nouveau nom de base de donn\xE9es...",
+    "create_title": "Cr\xE9er une nouvelle base de donn\xE9es",
+    "create_placeholder": "Nom de la base de donn\xE9es (ex: mon_projet)",
+    "duplicate_title": "Dupliquer la base de donn\xE9es : {name}",
+    "notice_create_empty": "Le nom de la base de donn\xE9es ne peut pas \xEAtre vide.",
+    "notice_rename_success": 'Base de donn\xE9es renomm\xE9e en "{name}"',
+    "notice_create_success": 'Base de donn\xE9es "{name}" cr\xE9\xE9e.',
+    "notice_duplicate_success": 'Base de donn\xE9es dupliqu\xE9e en "{name}"',
+    "notice_delete_success": 'Base de donn\xE9es "{name}" supprim\xE9e.',
+    "notice_switch_success": 'Pass\xE9 \xE0 "{name}"',
+    "tables_title": 'Tables dans "{name}"',
+    "null_value": "NULL",
+    "status_error": "Erreur",
+    "status_done": "Termin\xE9",
+    "switch_db_help": "Passez \xE0 une base de donn\xE9es avec des tables ou ",
+    "btn_open_settings": "ouvrez les param\xE8tres",
+    "notice_table_data_copied": "Donn\xE9es de table copi\xE9es dans le presse-papiers !",
+    "notice_copy_failed": "\xC9chec de la copie : {error}",
+    "notice_screenshot_failed": "\xC9chec de la capture d'\xE9cran : {error}",
+    "notice_no_active_note": "Aucune note active trouv\xE9e",
+    "notice_table_inserted": "Table ins\xE9r\xE9e dans la note !",
+    "notice_insert_failed": "\xC9chec de l'insertion : {error}"
+  },
+  "workbench": {
+    "btn_run": "Ex\xE9cuter",
+    "btn_executing": "Ex\xE9cution...",
+    "btn_cancel": "Annuler",
+    "notice_copy": "Code SQL copi\xE9 !",
+    "notice_aborted": "Requ\xEAte interrompue par l'utilisateur"
+  },
+  "renderer": {
+    "btn_copy": "Copier",
+    "btn_screenshot": "Capture",
+    "btn_add_note": "Ajouter \xE0 la note",
+    "tip_copy": "Copier le r\xE9sultat dans le presse-papiers",
+    "tip_screenshot": "Prendre une capture du r\xE9sultat",
+    "tip_add_note": "Ins\xE9rer le r\xE9sultat dans la note",
+    "notice_copied": "\u2713 Copi\xE9 dans le presse-papiers !",
+    "notice_copy_failed": "\u274C \xC9chec de la copie : {error}",
+    "notice_screenshot_failed": "\u274C \xC9chec de la capture d'\xE9cran : {error}",
+    "notice_screenshot_copied": "\u2713 Capture copi\xE9e dans le presse-papiers !",
+    "notice_screenshot_downloaded": "\u2713 Capture t\xE9l\xE9charg\xE9e !",
+    "notice_insert_no_note": "\u274C Aucune note active trouv\xE9e",
+    "notice_insert_success": "\u2713 R\xE9sultat ins\xE9r\xE9 dans la note !",
+    "notice_insert_failed": "\u274C \xC9chec de l'insertion : {error}",
+    "msg_no_result": "Requ\xEAte ex\xE9cut\xE9e avec succ\xE8s (aucun r\xE9sultat)",
+    "msg_rows_found": "{count} lignes trouv\xE9es",
+    "msg_no_data": "Aucune donn\xE9e trouv\xE9e",
+    "msg_showing_rows": "Affichage de {count} sur {total} lignes",
+    "msg_showing_all": "Affichage de toutes les {count} lignes",
+    "btn_show_all": "Afficher toutes les lignes",
+    "err_title": "Erreur d'ex\xE9cution",
+    "result_label": "R\xE9sultat #{idx}",
+    "table_label": "Table : {name}",
+    "query_result": "R\xE9sultat de la requ\xEAte",
+    "msg_loading": "Chargement des donn\xE9es...",
+    "msg_showing_limit": "Affichage des {count} premi\xE8res lignes uniquement.",
+    "msg_no_tables": "Aucune table trouv\xE9e dans cette base de donn\xE9es.",
+    "msg_no_tables_in": "Aucune table trouv\xE9e dans la base de donn\xE9es ",
+    "tip_back": "Retour \xE0 la liste des tables",
+    "btn_back": "Retour",
+    "title_results": "R\xE9sultats de la requ\xEAte",
+    "rows_affected": "{count} ligne(s) affect\xE9e(s)",
+    "no_data_md": "_Aucune donn\xE9e_",
+    "result_dml": "**R\xE9sultat :** {count} ligne(s) affect\xE9e(s)"
+  },
+  "form": {
+    "title_insert": "Ins\xE9rer dans {name}",
+    "btn_save": "Enregistrer l'enregistrement",
+    "btn_saving": "Enregistrement...",
+    "btn_clear": "Effacer",
+    "msg_success": "Enregistr\xE9 avec succ\xE8s dans {name}",
+    "msg_error": "Erreur : {error}",
+    "msg_unexpected": "Erreur inattendue : {error}",
+    "notice_success": "Enregistrement sauvegard\xE9 dans {name}",
+    "notice_error": "Erreur lors de l'enregistrement : {error}",
+    "err_invalid_table": "Nom de table non valide",
+    "err_invalid_col": "Nom de colonne non valide : {name}"
+  },
+  "pro": {
+    "label_from": "De :",
+    "label_to": "\xC0 :",
+    "label_subject": "Sujet :",
+    "from_name": "\xC9quipe de d\xE9veloppement SQL Notebook <dev@obsidian-sql.internal>",
+    "to_name": "Cher d\xE9veloppeur",
+    "subject": "Alerte Pro Practice : Bonnes pratiques dans le contexte de base de donn\xE9es",
+    "hello": "Bonjour,",
+    "msg_1": "Nous avons remarqu\xE9 que vous changez de base de donn\xE9es via l'interface. Bien que cela soit pratique pour une navigation rapide, nous aimerions partager un conseil : l'utilisation de la commande explicite `USE` dans vos scripts peut rendre votre flux de travail encore plus robuste.",
+    "msg_quote": "D\xE9finir explicitement votre contexte est une bonne pratique qui garantit que vos scripts sont portables et clairs dans diff\xE9rents environnements :",
+    "msg_2": "D\xE9finir le contexte dans le code aide \xE0 \xE9viter la confusion et rend votre intention claire pour quiconque examine votre travail. Vous pouvez toujours continuer \xE0 utiliser le s\xE9lecteur global pour plus de commodit\xE9 !",
+    "punchline": "Bonnes requ\xEAtes ! \u{1F680}",
+    "signature_regards": "Cordialement,",
+    "signature_team": "L'\xE9quipe de d\xE9veloppement SQL Notebook",
+    "btn_read": "Marquer comme lu"
+  },
+  "footer": {
+    "tip_help": "Aide et ressources",
+    "status_ready": "Pr\xEAt",
+    "status_error": "Erreur",
+    "status_aborted": "Interrompu",
+    "status_live": "EN DIRECT"
+  },
+  "common": {
+    "error": "Erreur : {error}",
+    "invalid_name": "Le nouveau nom doit \xEAtre diff\xE9rent de l'ancien.",
+    "notice_export_success": "Export\xE9 dans {name}",
+    "notice_import_loading": "Importation de la base de donn\xE9es...",
+    "notice_import_success": "Base de donn\xE9es import\xE9e avec succ\xE8s !",
+    "notice_anchor_form": "FORM ancr\xE9 \xE0 {name}",
+    "notice_anchor_live": "Bloc LIVE ancr\xE9 \xE0 {name}",
+    "notice_update_live": "Mise \xE0 jour des donn\xE9es LIVE depuis {name}...",
+    "notice_reset_success": "R\xE9initialisation termin\xE9e avec succ\xE8s",
+    "app_name": "SQL Notebook"
+  },
+  "executor": {
+    "err_reserved_word": `{message}
+
+\u{1F4A1} Conseil : '{word}' est un mot r\xE9serv\xE9. Essayez d'utiliser des guillemets (ex : "{lower}") ou modifiez le nom.`,
+    "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F Erreur connue d'AlaSQL : L'utilisation d'une liste de colonnes explicite dans 'INSERT INTO ... SELECT' a provoqu\xE9 un \xE9chec.\n\nSolution : Supprimez la liste de colonnes et assurez-vous que l'ordre correspond exactement.",
+    "err_parse": "{message}\n\n\u{1F4A1} V\xE9rifiez si vous avez oubli\xE9 un point-virgule, s'il y a des parenth\xE8ses/guillemets non ferm\xE9s ou des fautes de frappe.",
+    "warn_fragile_insert": "\u26A0\uFE0F 'INSERT INTO ... (colonnes) SELECT' d\xE9tect\xE9. AlaSQL peut \xE9chouer avec l'erreur '$01'. Si cela se produit, supprimez la liste de colonnes."
+  }
+};
+
+// src/locales/ja.ts
+var ja_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u30DE\u30CD\u30FC\u30B8\u30E3\u30FC",
+    "btn_atualizar": "\u66F4\u65B0",
+    "btn_importar": "\u30A4\u30F3\u30DD\u30FC\u30C8",
+    "btn_novo_db": "\u65B0\u898F\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9",
+    "welcome_title": "SQL Notebook \u3078\u3088\u3046\u3053\u305D\uFF01",
+    "welcome_desc": "Obsidian \u5185\u3067\u30ED\u30FC\u30AB\u30EB\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u7BA1\u7406\u3001\u30AF\u30A8\u30EA\u306E\u5B9F\u884C\u3001\u7D50\u679C\u306E\u8996\u899A\u5316\u3092\u76F4\u63A5\u884C\u3048\u307E\u3059\u3002",
+    "search_placeholder": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u691C\u7D22...",
+    "info_title": "\u91CD\u8981\u306A\u60C5\u5831:",
+    "info_li_1": "<b>\u30A2\u30AF\u30C6\u30A3\u30D6</b>\u306A\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u524A\u9664\u307E\u305F\u306F\u540D\u524D\u5909\u66F4\u3059\u308B\u306B\u306F\u3001\u307E\u305A\u5225\u306E\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306B\u5207\u308A\u66FF\u3048\u3066\u304F\u3060\u3055\u3044\u3002",
+    "info_li_2": '\u30B7\u30B9\u30C6\u30E0\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9 <b>"dbo"</b> \u306F\u540D\u524D\u306E\u5909\u66F4\u3084\u524A\u9664\u304C\u3067\u304D\u307E\u305B\u3093\u3002',
+    "info_li_3": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E<b>\u540D\u524D\u5909\u66F4</b>\u306F\u3001\u5185\u90E8\u306E\u53C2\u7167\u3092\u81EA\u52D5\u7684\u306B\u66F4\u65B0\u3057\u307E\u3059\u3002",
+    "section_general": "\u4E00\u822C\u8A2D\u5B9A",
+    "section_appearance": "\u5916\u89B3",
+    "section_data_security": "\u30C7\u30FC\u30BF\u3068\u30BB\u30AD\u30E5\u30EA\u30C6\u30A3",
+    "lang_name": "\u8A00\u8A9E",
+    "lang_desc": "\u30A4\u30F3\u30BF\u30FC\u30D5\u30A7\u30FC\u30B9\u306E\u8A00\u8A9E\u3092\u9078\u629E\u3057\u307E\u3059\u3002",
+    "accent_obsidian": "Obsidian \u306E\u30A2\u30AF\u30BB\u30F3\u30C8\u30AB\u30E9\u30FC\u3092\u4F7F\u7528",
+    "accent_obsidian_desc": "\u30AB\u30B9\u30BF\u30E0\u30AB\u30E9\u30FC\u306E\u4EE3\u308F\u308A\u306B Obsidian \u5168\u4F53\u306E\u30A2\u30AF\u30BB\u30F3\u30C8\u30AB\u30E9\u30FC\u3092\u4F7F\u7528\u3057\u307E\u3059\u3002",
+    "theme_accent": "\u30C6\u30FC\u30DE\u306E\u30A2\u30AF\u30BB\u30F3\u30C8\u30AB\u30E9\u30FC",
+    "theme_accent_desc": "\u30E1\u30A4\u30F3\u306E\u30A2\u30AF\u30BB\u30F3\u30C8\u30AB\u30E9\u30FC\u3092\u9078\u629E\u3057\u307E\u3059\u3002",
+    "auto_save": "\u81EA\u52D5\u4FDD\u5B58",
+    "auto_save_desc": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u5909\u66F4\u3092\u81EA\u52D5\u7684\u306B\u4FDD\u5B58\u3057\u307E\u3059\u3002",
+    "auto_save_delay": "\u81EA\u52D5\u4FDD\u5B58\u306E\u9045\u5EF6",
+    "auto_save_delay_desc": "\u81EA\u52D5\u4FDD\u5B58\u307E\u3067\u5F85\u6A5F\u3059\u308B\u30DF\u30EA\u79D2\u6570\u3002",
+    "export_folder": "\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8\u5148\u30D5\u30A9\u30EB\u30C0\u30FC",
+    "export_folder_desc": "CSV \u30A8\u30AF\u30B9\u30DD\u30FC\u30C8\u306E\u30C7\u30D5\u30A9\u30EB\u30C8\u30D5\u30A9\u30EB\u30C0\u30FC\u3002",
+    "safe_mode": "\u30BB\u30FC\u30D5\u30E2\u30FC\u30C9",
+    "safe_mode_desc": "\u5371\u967A\u306A\u30B3\u30DE\u30F3\u30C9 (DROP, ALTER) \u3092\u30D6\u30ED\u30C3\u30AF\u3057\u3001\u5236\u9650\u3092\u9069\u7528\u3057\u307E\u3059\u3002",
+    "enable_logging": "\u30C7\u30D0\u30C3\u30B0\u30ED\u30B0\u3092\u6709\u52B9\u5316",
+    "enable_logging_desc": "\u958B\u767A\u8005\u30B3\u30F3\u30BD\u30FC\u30EB (Ctrl+Shift+I) \u306B\u8A73\u7D30\u306A\u30ED\u30B0\u3092\u8868\u793A\u3057\u307E\u3059\u3002\u540C\u671F\u306E\u30C7\u30D0\u30C3\u30B0\u306B\u4FBF\u5229\u3067\u3059\u3002",
+    "snapshot_limit": "\u30B9\u30CA\u30C3\u30D7\u30B7\u30E7\u30C3\u30C8\u884C\u6570\u5236\u9650",
+    "snapshot_limit_desc": "\u4FDD\u5B58\u3059\u308B\u30C6\u30FC\u30D6\u30EB\u3054\u3068\u306E\u6700\u5927\u884C\u6570 (\u30E1\u30E2\u30EA\u306E\u554F\u984C\u3092\u9632\u6B62)\u3002",
+    "batch_size": "\u30D0\u30C3\u30C1\u30B5\u30A4\u30BA",
+    "batch_size_desc": "\u7D50\u679C\u306E 1 \u30DA\u30FC\u30B8\u3042\u305F\u308A\u306B\u8868\u793A\u3059\u308B\u884C\u6570\u3002",
+    "reset_all": "\u3059\u3079\u3066\u306E\u30C7\u30FC\u30BF\u3092\u30EA\u30BB\u30C3\u30C8",
+    "reset_btn": "\u3059\u3079\u3066\u3092\u30EA\u30BB\u30C3\u30C8",
+    "reset_all_confirm_msg": "\u3059\u3079\u3066\u306E\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3068\u30C6\u30FC\u30D6\u30EB\u304C\u524A\u9664\u3055\u308C\u307E\u3059\u3002\u3053\u306E\u64CD\u4F5C\u306F\u53D6\u308A\u6D88\u305B\u307E\u305B\u3093\u3002\u3088\u308D\u3057\u3044\u3067\u3059\u304B\uFF1F",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "SQL Notebook \u306E\u6A5F\u80FD",
+    "collapsible_title": "\u6298\u308A\u305F\u305F\u307F\u53EF\u80FD\u306A\u30EF\u30FC\u30AF\u30D9\u30F3\u30C1",
+    "collapsible_desc": "\u30EF\u30FC\u30AF\u30D9\u30F3\u30C1\u306E\u8868\u793A\u3092\u5207\u308A\u66FF\u3048\u3066\u30B9\u30DA\u30FC\u30B9\u3092\u7BC0\u7D04\u3057\u307E\u3059\u3002\u30D8\u30C3\u30C0\u30FC\u307E\u305F\u306F\u30B7\u30A7\u30D6\u30ED\u30F3\u30A2\u30A4\u30B3\u30F3\u3092\u30AF\u30EA\u30C3\u30AF\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
+    "auto_collapse_title": "\u81EA\u52D5\u6298\u308A\u305F\u305F\u307F",
+    "auto_collapse_desc": "\u30B3\u30E1\u30F3\u30C8\u3092 '@' \u3067\u59CB\u3081\u308B (\u4F8B: '-- @ My Query') \u3068\u3001\u30CE\u30FC\u30C8\u3092\u958B\u3044\u305F\u3068\u304D\u306B\u30EF\u30FC\u30AF\u30D9\u30F3\u30C1\u304C\u81EA\u52D5\u7684\u306B\u6298\u308A\u305F\u305F\u307E\u308C\u307E\u3059\u3002",
+    "alert_title": "\u30A2\u30E9\u30FC\u30C8\u30DE\u30FC\u30AB\u30FC (!)",
+    "alert_desc": "\u30B3\u30E1\u30F3\u30C8\u306E\u6700\u521D\u306B '!' \u3092\u8FFD\u52A0\u3059\u308B\u3068\u3001\u30A2\u30E9\u30FC\u30C8\u307E\u305F\u306F\u8B66\u544A\u3068\u3057\u3066\u5F37\u8ABF\u8868\u793A\u3055\u308C\u307E\u3059\u3002",
+    "question_title": "\u8CEA\u554F\u30DE\u30FC\u30AB\u30FC (?)",
+    "question_desc": "\u30EC\u30D3\u30E5\u30FC\u304C\u5FC5\u8981\u306A\u30AF\u30A8\u30EA\u3084\u5B9F\u9A13\u7684\u306A\u30AF\u30A8\u30EA\u3092\u793A\u3059\u306B\u306F '?' \u3092\u8FFD\u52A0\u3057\u307E\u3059\u3002",
+    "favorite_title": "\u304A\u6C17\u306B\u5165\u308A\u30DE\u30FC\u30AB\u30FC (*)",
+    "favorite_desc": "\u91CD\u8981\u307E\u305F\u306F\u983B\u7E41\u306B\u4F7F\u7528\u3059\u308B\u30AF\u30A8\u30EA\u3092\u5F37\u8ABF\u8868\u793A\u3059\u308B\u306B\u306F '*' \u3092\u8FFD\u52A0\u3057\u307E\u3059\u3002",
+    "copy_edit_title": "\u30B3\u30D4\u30FC\u3068\u7DE8\u96C6",
+    "copy_edit_desc": "\u30EF\u30FC\u30AF\u30D9\u30F3\u30C1\u306B\u30DE\u30A6\u30B9\u3092\u5408\u308F\u305B\u308B\u3068\u3001\u30B3\u30FC\u30C9\u306E\u30B3\u30D4\u30FC\u3068\u30D6\u30ED\u30C3\u30AF\u7DE8\u96C6\u306E\u30AF\u30A4\u30C3\u30AF\u30DC\u30BF\u30F3\u304C\u8868\u793A\u3055\u308C\u307E\u3059\u3002"
+  },
+  "modals": {
+    "confirm_delete_title": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u524A\u9664",
+    "confirm_delete_msg": '\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9 "{dbName}" \u3092\u524A\u9664\u3057\u3088\u3046\u3068\u3057\u3066\u3044\u307E\u3059\u3002\u3053\u306E\u64CD\u4F5C\u306F\u53D6\u308A\u6D88\u305B\u307E\u305B\u3093\u3002\u3059\u3079\u3066\u306E\u30C6\u30FC\u30D6\u30EB\u3068\u30C7\u30FC\u30BF\u304C\u5931\u308F\u308C\u307E\u3059\u3002',
+    "confirm_clear_title": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u30AF\u30EA\u30A2",
+    "confirm_clear_msg": '"{dbName}" \u5185\u306E\u3059\u3079\u3066\u306E\u30C6\u30FC\u30D6\u30EB\u3092\u30AF\u30EA\u30A2\u3057\u3066\u3082\u3088\u308D\u3057\u3044\u3067\u3059\u304B\uFF1F\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306F\u4FDD\u6301\u3055\u308C\u307E\u3059\u304C\u3001\u30C7\u30FC\u30BF\u306F\u3059\u3079\u3066\u524A\u9664\u3055\u308C\u307E\u3059\u3002',
+    "btn_cancel": "\u30AD\u30E3\u30F3\u30BB\u30EB",
+    "btn_confirm": "\u78BA\u8A8D",
+    "btn_delete": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u524A\u9664",
+    "btn_clear": "\u3059\u3079\u3066\u306E\u30C7\u30FC\u30BF\u3092\u30AF\u30EA\u30A2",
+    "btn_ativar": "\u6709\u52B9\u5316",
+    "btn_duplicar": "\u8907\u88FD",
+    "btn_renomear": "\u540D\u524D\u5909\u66F4",
+    "btn_tabelas": "\u30C6\u30FC\u30D6\u30EB",
+    "btn_exportar": "\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8",
+    "btn_deletar": "\u524A\u9664",
+    "badge_ativo": "\u6709\u52B9",
+    "badge_system": "\u30B7\u30B9\u30C6\u30E0",
+    "stat_tables": "\u30C6\u30FC\u30D6\u30EB",
+    "stat_rows": "\u884C",
+    "stat_size": "\u30B5\u30A4\u30BA",
+    "stat_updated": "\u66F4\u65B0\u65E5\u6642",
+    "time_just_now": "\u305F\u3063\u305F\u4ECA",
+    "time_ago": "{time} \u524D",
+    "time_never": "\u306A\u3057",
+    "switch_title": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u5207\u308A\u66FF\u3048",
+    "no_user_dbs": "\u30E6\u30FC\u30B6\u30FC\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3002",
+    "tip_system_db": "\u30B7\u30B9\u30C6\u30E0\u30C7\u30D5\u30A9\u30EB\u30C8\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3002\u524A\u9664\u3067\u304D\u307E\u305B\u3093\u3002",
+    "tip_protected_db": "\u3053\u306E\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u524A\u9664\u3059\u308B\u306B\u306F\u3001\u5225\u306E\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306B\u5207\u308A\u66FF\u3048\u3066\u304F\u3060\u3055\u3044\u3002",
+    "rename_title": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u540D\u524D\u5909\u66F4: {name}",
+    "rename_placeholder": "\u65B0\u3057\u3044\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u540D...",
+    "create_title": "\u65B0\u898F\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u4F5C\u6210",
+    "create_placeholder": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u540D (\u4F8B: my_project)",
+    "duplicate_title": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u8907\u88FD: {name}",
+    "notice_create_empty": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u540D\u306F\u7A7A\u306B\u3067\u304D\u307E\u305B\u3093\u3002",
+    "notice_rename_success": '\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u540D\u524D\u304C "{name}" \u306B\u5909\u66F4\u3055\u308C\u307E\u3057\u305F',
+    "notice_create_success": '\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9 "{name}" \u304C\u4F5C\u6210\u3055\u308C\u307E\u3057\u305F\u3002',
+    "notice_duplicate_success": '\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u304C "{name}" \u306B\u8907\u88FD\u3055\u308C\u307E\u3057\u305F',
+    "notice_delete_success": '\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9 "{name}" \u304C\u524A\u9664\u3055\u308C\u307E\u3057\u305F\u3002',
+    "notice_switch_success": '"{name}" \u306B\u5207\u308A\u66FF\u3048\u307E\u3057\u305F',
+    "tables_title": '"{name}" \u5185\u306E\u30C6\u30FC\u30D6\u30EB',
+    "null_value": "NULL",
+    "status_error": "\u30A8\u30E9\u30FC",
+    "status_done": "\u5B8C\u4E86",
+    "switch_db_help": "\u30C6\u30FC\u30D6\u30EB\u306E\u3042\u308B\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306B\u5207\u308A\u66FF\u3048\u308B\u304B\u3001",
+    "btn_open_settings": "\u8A2D\u5B9A\u3092\u958B\u3044\u3066\u304F\u3060\u3055\u3044",
+    "notice_table_data_copied": "\u30C6\u30FC\u30D6\u30EB\u30C7\u30FC\u30BF\u3092\u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
+    "notice_copy_failed": "\u30B3\u30D4\u30FC\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
+    "notice_screenshot_failed": "\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u306E\u4F5C\u6210\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
+    "notice_no_active_note": "\u30A2\u30AF\u30C6\u30A3\u30D6\u306A\u30CE\u30FC\u30C8\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093",
+    "notice_table_inserted": "\u30C6\u30FC\u30D6\u30EB\u3092\u30CE\u30FC\u30C8\u306B\u633F\u5165\u3057\u307E\u3057\u305F\uFF01",
+    "notice_insert_failed": "\u633F\u5165\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}"
+  },
+  "workbench": {
+    "btn_run": "\u5B9F\u884C",
+    "btn_executing": "\u5B9F\u884C\u4E2D...",
+    "btn_cancel": "\u30AD\u30E3\u30F3\u30BB\u30EB",
+    "notice_copy": "SQL \u30B3\u30FC\u30C9\u3092\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
+    "notice_aborted": "\u30E6\u30FC\u30B6\u30FC\u306B\u3088\u308A\u30AF\u30A8\u30EA\u304C\u4E2D\u65AD\u3055\u308C\u307E\u3057\u305F"
+  },
+  "renderer": {
+    "btn_copy": "\u30B3\u30D4\u30FC",
+    "btn_screenshot": "SS",
+    "btn_add_note": "\u30CE\u30FC\u30C8\u3078\u8FFD\u52A0",
+    "tip_copy": "\u7D50\u679C\u3092\u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC",
+    "tip_screenshot": "\u7D50\u679C\u306E\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u64AE\u308B",
+    "tip_add_note": "\u7D50\u679C\u3092\u30CE\u30FC\u30C8\u306B\u633F\u5165",
+    "notice_copied": "\u2713 \u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
+    "notice_copy_failed": "\u274C \u30B3\u30D4\u30FC\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
+    "notice_screenshot_failed": "\u274C \u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u306E\u4F5C\u6210\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
+    "notice_screenshot_copied": "\u2713 \u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
+    "notice_screenshot_downloaded": "\u2713 \u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u30C0\u30A6\u30F3\u30ED\u30FC\u30C9\u3057\u307E\u3057\u305F\uFF01",
+    "notice_insert_no_note": "\u274C \u30A2\u30AF\u30C6\u30A3\u30D6\u306A\u30CE\u30FC\u30C8\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093",
+    "notice_insert_success": "\u2713 \u7D50\u679C\u3092\u30CE\u30FC\u30C8\u306B\u633F\u5165\u3057\u307E\u3057\u305F\uFF01",
+    "notice_insert_failed": "\u274C \u633F\u5165\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
+    "msg_no_result": "\u30AF\u30A8\u30EA\u306F\u6B63\u5E38\u306B\u5B9F\u884C\u3055\u308C\u307E\u3057\u305F (\u7D50\u679C\u30BB\u30C3\u30C8\u306A\u3057)",
+    "msg_rows_found": "{count} \u884C\u898B\u3064\u304B\u308A\u307E\u3057\u305F",
+    "msg_no_data": "\u30C7\u30FC\u30BF\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093",
+    "msg_showing_rows": "{total} \u884C\u4E2D {count} \u884C\u3092\u8868\u793A\u4E2D",
+    "msg_showing_all": "\u5168 {count} \u884C\u3092\u8868\u793A\u4E2D",
+    "btn_show_all": "\u3059\u3079\u3066\u306E\u884C\u3092\u8868\u793A",
+    "err_title": "\u5B9F\u884C\u30A8\u30E9\u30FC",
+    "result_label": "\u7D50\u679C #{idx}",
+    "table_label": "\u30C6\u30FC\u30D6\u30EB: {name}",
+    "query_result": "\u30AF\u30A8\u30EA\u7D50\u679C",
+    "msg_loading": "\u30C7\u30FC\u30BF\u3092\u8AAD\u307F\u8FBC\u307F\u4E2D...",
+    "msg_showing_limit": "\u6700\u521D\u306E {count} \u884C\u306E\u307F\u8868\u793A\u3057\u3066\u3044\u307E\u3059\u3002",
+    "msg_no_tables": "\u3053\u306E\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306B\u306F\u30C6\u30FC\u30D6\u30EB\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3002",
+    "msg_no_tables_in": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u5185\u306B\u30C6\u30FC\u30D6\u30EB\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093 ",
+    "tip_back": "\u30C6\u30FC\u30D6\u30EB\u4E00\u89A7\u306B\u623B\u308B",
+    "btn_back": "\u623B\u308B",
+    "title_results": "\u30AF\u30A8\u30EA\u7D50\u679C",
+    "rows_affected": "{count} \u884C\u304C\u5F71\u97FF\u3092\u53D7\u3051\u307E\u3057\u305F",
+    "no_data_md": "_\u30C7\u30FC\u30BF\u306A\u3057_",
+    "result_dml": "**\u7D50\u679C:** {count} \u884C\u304C\u5F71\u97FF\u3092\u53D7\u3051\u307E\u3057\u305F"
+  },
+  "form": {
+    "title_insert": "{name} \u306B\u633F\u5165",
+    "btn_save": "\u30EC\u30B3\u30FC\u30C9\u4FDD\u5B58",
+    "btn_saving": "\u4FDD\u5B58\u4E2D...",
+    "btn_clear": "\u30AF\u30EA\u30A2",
+    "msg_success": "{name} \u3078\u306E\u4FDD\u5B58\u304C\u6210\u529F\u3057\u307E\u3057\u305F",
+    "msg_error": "\u30A8\u30E9\u30FC: {error}",
+    "msg_unexpected": "\u4E88\u671F\u3057\u306A\u3044\u30A8\u30E9\u30FC: {error}",
+    "notice_success": "{name} \u306B\u30EC\u30B3\u30FC\u30C9\u3092\u4FDD\u5B58\u3057\u307E\u3057\u305F",
+    "notice_error": "\u30EC\u30B3\u30FC\u30C9\u4FDD\u5B58\u30A8\u30E9\u30FC: {error}",
+    "err_invalid_table": "\u7121\u52B9\u306A\u30C6\u30FC\u30D6\u30EB\u540D",
+    "err_invalid_col": "\u7121\u52B9\u306A\u5217\u540D: {name}"
+  },
+  "pro": {
+    "label_from": "\u5DEE\u51FA\u4EBA:",
+    "label_to": "\u5B9B\u5148:",
+    "label_subject": "\u4EF6\u540D:",
+    "from_name": "SQL Notebook \u958B\u767A\u30C1\u30FC\u30E0 <dev@obsidian-sql.internal>",
+    "to_name": "\u89AA\u611B\u306A\u308B\u958B\u767A\u8005\u69D8",
+    "subject": "\u30D7\u30ED\u306E\u79D8\u8A23: \u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u30B3\u30F3\u30C6\u30AD\u30B9\u30C8\u306E\u30D9\u30B9\u30C8\u30D7\u30E9\u30AF\u30C6\u30A3\u30B9",
+    "hello": "\u3053\u3093\u306B\u3061\u306F\u3001",
+    "msg_1": "UI \u304B\u3089\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u5207\u308A\u66FF\u3048\u3066\u3044\u308B\u3088\u3046\u3067\u3059\u306D\u3002\u30AF\u30A4\u30C3\u30AF\u30CA\u30D3\u30B2\u30FC\u30B7\u30E7\u30F3\u306B\u306F\u6700\u9069\u3067\u3059\u304C\u3001\u30D7\u30ED\u304B\u3089\u306E\u30A2\u30C9\u30D0\u30A4\u30B9\u3067\u3059\u3002\u30B9\u30AF\u30EA\u30D7\u30C8\u5185\u3067\u660E\u793A\u7684\u306A `USE` \u30B3\u30DE\u30F3\u30C9\u3092\u4F7F\u7528\u3059\u308B\u3053\u3068\u3067\u3001\u30EF\u30FC\u30AF\u30D5\u30ED\u30FC\u304C\u3088\u308A\u5805\u7262\u306B\u306A\u308A\u307E\u3059\u3002",
+    "msg_quote": "\u30B3\u30F3\u30C6\u30AD\u30B9\u30C8\u3092\u660E\u793A\u7684\u306B\u5B9A\u7FA9\u3059\u308B\u3053\u3068\u306F\u3001\u7570\u306A\u308B\u74B0\u5883\u9593\u3067\u3082\u30B9\u30AF\u30EA\u30D7\u30C8\u306E\u79FB\u690D\u6027\u3068\u660E\u78BA\u3055\u3092\u78BA\u4FDD\u3059\u308B\u305F\u3081\u306E\u30D9\u30B9\u30C8\u30D7\u30E9\u30AF\u30C6\u30A3\u30B9\u3067\u3059\u3002",
+    "msg_2": "\u30B3\u30FC\u30C9\u5185\u3067\u30B3\u30F3\u30C6\u30AD\u30B9\u30C8\u3092\u5B9A\u7FA9\u3059\u308B\u3053\u3068\u3067\u6DF7\u4E71\u3092\u907F\u3051\u3001\u4F5C\u696D\u3092\u78BA\u8A8D\u3059\u308B\u8AB0\u306B\u3068\u3063\u3066\u3082\u610F\u56F3\u3092\u660E\u78BA\u306B\u3067\u304D\u307E\u3059\u3002\u3082\u3061\u308D\u3093\u3001\u4FBF\u5229\u306A\u30B0\u30ED\u30FC\u30D0\u30EB\u30B9\u30A4\u30C3\u30C1\u3082\u5F15\u304D\u7D9A\u304D\u3054\u5229\u7528\u3044\u305F\u3060\u3051\u307E\u3059\uFF01",
+    "punchline": "\u5FEB\u9069\u306A\u30AF\u30A8\u30EA\u30E9\u30A4\u30D5\u3092\uFF01 \u{1F680}",
+    "signature_regards": "\u656C\u5177",
+    "signature_team": "SQL Notebook \u958B\u767A\u30C1\u30FC\u30E0",
+    "btn_read": "\u65E2\u8AAD\u306B\u3059\u308B"
+  },
+  "footer": {
+    "tip_help": "\u30D8\u30EB\u30D7\u3068\u6A5F\u80FD",
+    "status_ready": "\u6E96\u5099\u5B8C\u4E86",
+    "status_error": "\u30A8\u30E9\u30FC",
+    "status_aborted": "\u4E2D\u65AD",
+    "status_live": "\u30E9\u30A4\u30D6"
+  },
+  "common": {
+    "error": "\u30A8\u30E9\u30FC: {error}",
+    "invalid_name": "\u65B0\u3057\u3044\u540D\u524D\u306F\u5143\u306E\u540D\u524D\u3068\u7570\u306A\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059\u3002",
+    "notice_export_success": "{name} \u306B\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8\u3057\u307E\u3057\u305F",
+    "notice_import_loading": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u30A4\u30F3\u30DD\u30FC\u30C8\u4E2D...",
+    "notice_import_success": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u30A4\u30F3\u30DD\u30FC\u30C8\u306B\u6210\u529F\u3057\u307E\u3057\u305F\uFF01",
+    "notice_anchor_form": "FORM \u3092 {name} \u306B\u56FA\u5B9A\u3057\u307E\u3057\u305F",
+    "notice_anchor_live": "LIVE \u30D6\u30ED\u30C3\u30AF\u3092 {name} \u306B\u56FA\u5B9A\u3057\u307E\u3057\u305F",
+    "notice_update_live": "{name} \u304B\u3089 LIVE \u30C7\u30FC\u30BF\u3092\u66F4\u65B0\u4E2D...",
+    "notice_reset_success": "\u30EA\u30BB\u30C3\u30C8\u304C\u6B63\u5E38\u306B\u5B8C\u4E86\u3057\u307E\u3057\u305F",
+    "app_name": "SQL Notebook"
+  },
+  "executor": {
+    "err_reserved_word": `{message}
+
+\u{1F4A1} \u30D2\u30F3\u30C8: '{word}' \u306F\u4E88\u7D04\u8A9E\u3067\u3059\u3002\u5F15\u7528\u7B26\u3092\u4F7F\u7528\u3059\u308B\u304B (\u4F8B: "{lower}")\u3001\u540D\u524D\u3092\u5909\u66F4\u3057\u3066\u304F\u3060\u3055\u3044\u3002`,
+    "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F \u65E2\u77E5\u306E AlaSQL \u30A8\u30E9\u30FC: 'INSERT INTO ... SELECT' \u3067\u660E\u793A\u7684\u306A\u5217\u30EA\u30B9\u30C8\u3092\u4F7F\u7528\u3057\u305F\u305F\u3081\u5931\u6557\u3057\u307E\u3057\u305F\u3002\n\n\u89E3\u6C7A\u7B56: \u5217\u30EA\u30B9\u30C8\u3092\u524A\u9664\u3057\u3001\u9806\u5E8F\u304C\u6B63\u78BA\u306B\u4E00\u81F4\u3057\u3066\u3044\u308B\u3053\u3068\u3092\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
+    "err_parse": "{message}\n\n\u{1F4A1} \u30BB\u30DF\u30B3\u30ED\u30F3\u306E\u5FD8\u308C\u3001\u62EC\u5F27/\u5F15\u7528\u7B26\u306E\u9589\u3058\u5FD8\u308C\u3001\u307E\u305F\u306F\u30BF\u30A4\u30DD\u304C\u306A\u3044\u304B\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
+    "warn_fragile_insert": "\u26A0\uFE0F 'INSERT INTO ... (\u5217) SELECT' \u3092\u691C\u51FA\u3057\u307E\u3057\u305F\u3002AlaSQL \u306F\u30A8\u30E9\u30FC '$01' \u3067\u5931\u6557\u3059\u308B\u53EF\u80FD\u6027\u304C\u3042\u308A\u307E\u3059\u3002\u767A\u751F\u3057\u305F\u5834\u5408\u306F\u5217\u30EA\u30B9\u30C8\u3092\u524A\u9664\u3057\u3066\u304F\u3060\u3055\u3044\u3002"
+  }
+};
+
+// src/locales/ko.ts
+var ko_default = {
+  "settings": {
+    "title": "SQL Notebook",
+    "subtitle": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uAD00\uB9AC\uC790",
+    "btn_atualizar": "\uC5C5\uB370\uC774\uD2B8",
+    "btn_importar": "\uAC00\uC838\uC624\uAE30",
+    "btn_novo_db": "\uC0C8 \uB370\uC774\uD130\uBCA0\uC774\uC2A4",
+    "welcome_title": "SQL Notebook\uC5D0 \uC624\uC2E0 \uAC83\uC744 \uD658\uC601\uD569\uB2C8\uB2E4!",
+    "welcome_desc": "Obsidian\uC5D0\uC11C \uC9C1\uC811 \uB85C\uCEEC \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uAD00\uB9AC\uD558\uACE0, \uCFFC\uB9AC\uB97C \uC2E4\uD589\uD558\uBA70, \uACB0\uACFC\uB97C \uC2DC\uAC01\uD654\uD558\uC138\uC694.",
+    "search_placeholder": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uAC80\uC0C9...",
+    "info_title": "\uC911\uC694 \uC815\uBCF4:",
+    "info_li_1": "<b>\uD65C\uC131</b> \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uC0AD\uC81C\uD558\uAC70\uB098 \uC774\uB984\uC744 \uBC14\uAFB8\uB824\uBA74 \uBA3C\uC800 \uB2E4\uB978 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB85C \uC804\uD658\uD558\uC138\uC694.",
+    "info_li_2": '\uC2DC\uC2A4\uD15C \uB370\uC774\uD130\uBCA0\uC774\uC2A4 <b>"dbo"</b>\uB294 \uC774\uB984\uC744 \uBC14\uAFB8\uAC70\uB098 \uC0AD\uC81C\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.',
+    "info_li_3": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 <b>\uC774\uB984\uC744 \uBCC0\uACBD</b>\uD558\uBA74 \uB0B4\uBD80 \uCC38\uC870\uAC00 \uC790\uB3D9\uC73C\uB85C \uC5C5\uB370\uC774\uD2B8\uB429\uB2C8\uB2E4.",
+    "section_general": "\uAE30\uBCF8 \uC124\uC815",
+    "section_appearance": "\uBAA8\uC591",
+    "section_data_security": "\uB370\uC774\uD130 \uBC0F \uBCF4\uC548",
+    "lang_name": "\uC5B8\uC5B4",
+    "lang_desc": "\uC778\uD130\uD398\uC774\uC2A4 \uC5B8\uC5B4\uB97C \uC120\uD0DD\uD558\uC138\uC694.",
+    "accent_obsidian": "Obsidian \uAC15\uC870 \uC0C9\uC0C1 \uC0AC\uC6A9",
+    "accent_obsidian_desc": "\uC0AC\uC6A9\uC790 \uC815\uC758 \uC0C9\uC0C1 \uB300\uC2E0 \uC804\uC5ED Obsidian \uAC15\uC870 \uC0C9\uC0C1\uC744 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.",
+    "theme_accent": "\uD14C\uB9C8 \uAC15\uC870 \uC0C9\uC0C1",
+    "theme_accent_desc": "\uC8FC\uC694 \uAC15\uC870 \uC0C9\uC0C1\uC744 \uC120\uD0DD\uD558\uC138\uC694.",
+    "auto_save": "\uC790\uB3D9 \uC800\uC7A5",
+    "auto_save_desc": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uBCC0\uACBD \uC0AC\uD56D\uC744 \uC790\uB3D9\uC73C\uB85C \uC800\uC7A5\uD569\uB2C8\uB2E4.",
+    "auto_save_delay": "\uC790\uB3D9 \uC800\uC7A5 \uC9C0\uC5F0",
+    "auto_save_delay_desc": "\uC790\uB3D9 \uC800\uC7A5\uC744 \uC2DC\uC791\uD558\uAE30 \uC804 \uB300\uAE30\uD560 \uBC00\uB9AC\uCD08\uC785\uB2C8\uB2E4.",
+    "export_folder": "\uB0B4\uBCF4\uB0B4\uAE30 \uD3F4\uB354",
+    "export_folder_desc": "CSV \uB0B4\uBCF4\uB0B4\uAE30\uB97C \uC704\uD55C \uAE30\uBCF8 \uD3F4\uB354\uC785\uB2C8\uB2E4.",
+    "safe_mode": "\uC548\uC804 \uBAA8\uB4DC",
+    "safe_mode_desc": "\uC704\uD5D8\uD55C \uBA85\uB839(DROP, ALTER)\uC744 \uCC28\uB2E8\uD558\uACE0 \uC81C\uD55C\uC744 \uC801\uC6A9\uD569\uB2C8\uB2E4.",
+    "enable_logging": "\uB514\uBC84\uADF8 \uB85C\uAE45 \uD65C\uC131\uD654",
+    "enable_logging_desc": "\uAC1C\uBC1C\uC790 \uCF58\uC194(Ctrl+Shift+I)\uC5D0 \uC790\uC138\uD55C \uB85C\uADF8\uB97C \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uB3D9\uAE30\uD654 \uB514\uBC84\uAE45\uC5D0 \uC720\uC6A9\uD569\uB2C8\uB2E4.",
+    "snapshot_limit": "\uC2A4\uB0C5\uC0F7 \uD589 \uC81C\uD55C",
+    "snapshot_limit_desc": "\uC800\uC7A5\uD560 \uD14C\uC774\uBE14\uB2F9 \uCD5C\uB300 \uD589 \uC218\uC785\uB2C8\uB2E4(\uBA54\uBAA8\uB9AC \uBB38\uC81C \uBC29\uC9C0).",
+    "batch_size": "\uBC30\uCE58 \uD06C\uAE30",
+    "batch_size_desc": "\uACB0\uACFC \uD398\uC774\uC9C0\uB2F9 \uD45C\uC2DC\uD560 \uD589 \uC218\uC785\uB2C8\uB2E4.",
+    "reset_all": "\uBAA8\uB4E0 \uB370\uC774\uD130 \uCD08\uAE30\uD654",
+    "reset_btn": "\uBAA8\uB4E0 \uD56D\uBAA9 \uCD08\uAE30\uD654",
+    "reset_all_confirm_msg": "\uBAA8\uB4E0 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uC640 \uD14C\uC774\uBE14\uC774 \uC0AD\uC81C\uB429\uB2C8\uB2E4. \uC774 \uC791\uC5C5\uC740 \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. \uACC4\uC18D\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C?",
+    "footer_by": "Diego Pena"
+  },
+  "help": {
+    "title": "SQL Notebook \uAE30\uB2A5",
+    "collapsible_title": "\uC811\uC774\uC2DD \uC6CC\uD06C\uBCA4\uCE58",
+    "collapsible_desc": "\uC6CC\uD06C\uBCA4\uCE58 \uBCF4\uAE30\uB97C \uC804\uD658\uD558\uC5EC \uACF5\uAC04\uC744 \uC808\uC57D\uD558\uC138\uC694. \uD5E4\uB354\uB098 \uC170\uBE0C\uB860 \uC544\uC774\uCF58\uC744 \uD074\uB9AD\uD558\uC138\uC694.",
+    "auto_collapse_title": "\uC790\uB3D9 \uC811\uAE30",
+    "auto_collapse_desc": "\uC8FC\uC11D\uC744 '@'\uB85C \uC2DC\uC791\uD558\uBA74(\uC608: '-- @ My Query') \uB178\uD2B8\uB97C \uC5F4 \uB54C \uC6CC\uD06C\uBCA4\uCE58\uAC00 \uC790\uB3D9\uC73C\uB85C \uC811\uD799\uB2C8\uB2E4.",
+    "alert_title": "\uACBD\uACE0 \uD45C\uC2DC (!)",
+    "alert_desc": "\uC8FC\uC11D \uC2DC\uC791 \uBD80\uBD84\uC5D0 '!'\uB97C \uCD94\uAC00\uD558\uC5EC \uACBD\uACE0\uB098 \uC8FC\uC758 \uC0AC\uD56D\uC73C\uB85C \uAC15\uC870\uD558\uC138\uC694.",
+    "question_title": "\uC9C8\uBB38 \uD45C\uC2DC (?)",
+    "question_desc": "\uAC80\uD1A0\uAC00 \uD544\uC694\uD558\uAC70\uB098 \uC2E4\uD5D8\uC801\uC778 \uCFFC\uB9AC\uC784\uC744 \uB098\uD0C0\uB0B4\uB824\uBA74 '?'\uB97C \uCD94\uAC00\uD558\uC138\uC694.",
+    "favorite_title": "\uC990\uACA8\uCC3E\uAE30 \uD45C\uC2DC (*)",
+    "favorite_desc": "\uC911\uC694\uD558\uAC70\uB098 \uC790\uC8FC \uC0AC\uC6A9\uD558\uB294 \uCFFC\uB9AC\uB97C \uAC15\uC870\uD558\uB824\uBA74 '*'\uB97C \uCD94\uAC00\uD558\uC138\uC694.",
+    "copy_edit_title": "\uBCF5\uC0AC \uBC0F \uD3B8\uC9D1",
+    "copy_edit_desc": "\uC6CC\uD06C\uBCA4\uCE58 \uC704\uC5D0 \uB9C8\uC6B0\uC2A4\uB97C \uC62C\uB824 \uCF54\uB4DC \uBCF5\uC0AC \uBC0F \uBE14\uB85D \uD3B8\uC9D1 \uBC84\uD2BC\uC744 \uC0AC\uC6A9\uD558\uC138\uC694."
+  },
+  "modals": {
+    "confirm_delete_title": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC0AD\uC81C",
+    "confirm_delete_msg": '"{dbName}" \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uC0AD\uC81C\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C? \uC774 \uC791\uC5C5\uC740 \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC73C\uBA70 \uBAA8\uB4E0 \uD14C\uC774\uBE14\uACFC \uB370\uC774\uD130\uAC00 \uC720\uC2E4\uB429\uB2C8\uB2E4.',
+    "confirm_clear_title": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uBE44\uC6B0\uAE30",
+    "confirm_clear_msg": '"{dbName}"\uC758 \uBAA8\uB4E0 \uD14C\uC774\uBE14 \uB370\uC774\uD130\uB97C \uBE44\uC6B0\uC2DC\uACA0\uC2B5\uB2C8\uAE4C? \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB294 \uC720\uC9C0\uB418\uC9C0\uB9CC \uB370\uC774\uD130\uB294 \uBAA8\uB450 \uC0AD\uC81C\uB429\uB2C8\uB2E4.',
+    "btn_cancel": "\uCDE8\uC18C",
+    "btn_confirm": "\uD655\uC778",
+    "btn_delete": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC0AD\uC81C",
+    "btn_clear": "\uBAA8\uB4E0 \uB370\uC774\uD130 \uC9C0\uC6B0\uAE30",
+    "btn_ativar": "\uD65C\uC131\uD654",
+    "btn_duplicar": "\uBCF5\uC81C",
+    "btn_renomear": "\uC774\uB984 \uBCC0\uACBD",
+    "btn_tabelas": "\uD14C\uC774\uBE14",
+    "btn_exportar": "\uB0B4\uBCF4\uB0B4\uAE30",
+    "btn_deletar": "\uC0AD\uC81C",
+    "badge_ativo": "\uD65C\uC131",
+    "badge_system": "\uC2DC\uC2A4\uD15C",
+    "stat_tables": "\uD14C\uC774\uBE14",
+    "stat_rows": "\uD589",
+    "stat_size": "\uD06C\uAE30",
+    "stat_updated": "\uC5C5\uB370\uC774\uD2B8\uB428",
+    "time_just_now": "\uBC29\uAE08 \uC804",
+    "time_ago": "{time} \uC804",
+    "time_never": "\uC5C6\uC74C",
+    "switch_title": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC804\uD658",
+    "no_user_dbs": "\uC0AC\uC6A9\uC790 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+    "tip_system_db": "\uC2DC\uC2A4\uD15C \uAE30\uBCF8 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uC785\uB2C8\uB2E4. \uC0AD\uC81C\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+    "tip_protected_db": "\uC774 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uC0AD\uC81C\uD558\uB824\uBA74 \uBA3C\uC800 \uB2E4\uB978 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB85C \uC804\uD658\uD558\uC138\uC694.",
+    "rename_title": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC774\uB984 \uBCC0\uACBD: {name}",
+    "rename_placeholder": "\uC0C8 \uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC774\uB984...",
+    "create_title": "\uC0C8 \uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC0DD\uC131",
+    "create_placeholder": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC774\uB984 (\uC608: my_project)",
+    "duplicate_title": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uBCF5\uC81C: {name}",
+    "notice_create_empty": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC774\uB984\uC740 \uBE44\uC6CC\uB458 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+    "notice_rename_success": '\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC774\uB984\uC744 "{name}"(\uC73C)\uB85C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.',
+    "notice_create_success": '"{name}" \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uAC00 \uC0DD\uC131\uB418\uC5C8\uC2B5\uB2C8\uB2E4.',
+    "notice_duplicate_success": '\uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C "{name}"(\uC73C)\uB85C \uBCF5\uC81C\uD588\uC2B5\uB2C8\uB2E4.',
+    "notice_delete_success": '"{name}" \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uAC00 \uC0AD\uC81C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.',
+    "notice_switch_success": '"{name}"(\uC73C)\uB85C \uC804\uD658\uD588\uC2B5\uB2C8\uB2E4.',
+    "tables_title": '"{name}"\uC758 \uD14C\uC774\uBE14',
+    "null_value": "NULL",
+    "status_error": "\uC624\uB958",
+    "status_done": "\uC644\uB8CC",
+    "switch_db_help": "\uD14C\uC774\uBE14\uC774 \uC788\uB294 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB85C \uC804\uD658\uD558\uAC70\uB098 ",
+    "btn_open_settings": "\uC124\uC815\uC744 \uC5EC\uC138\uC694",
+    "notice_table_data_copied": "\uD14C\uC774\uBE14 \uB370\uC774\uD130\uB97C \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4!",
+    "notice_copy_failed": "\uBCF5\uC0AC \uC2E4\uD328: {error}",
+    "notice_screenshot_failed": "\uC2A4\uD06C\uB9B0\uC0F7 \uC0DD\uC131\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4: {error}",
+    "notice_no_active_note": "\uD65C\uC131 \uB178\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+    "notice_table_inserted": "\uB178\uD2B8\uC5D0 \uD14C\uC774\uBE14\uC744 \uC0BD\uC785\uD588\uC2B5\uB2C8\uB2E4!",
+    "notice_insert_failed": "\uC0BD\uC785 \uC2E4\uD328: {error}"
+  },
+  "workbench": {
+    "btn_run": "\uC2E4\uD589",
+    "btn_executing": "\uC2E4\uD589 \uC911...",
+    "btn_cancel": "\uCDE8\uC18C",
+    "notice_copy": "SQL \uCF54\uB4DC\uB97C \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4!",
+    "notice_aborted": "\uC0AC\uC6A9\uC790\uC5D0 \uC758\uD574 \uCFFC\uB9AC\uAC00 \uC911\uB2E8\uB428"
+  },
+  "renderer": {
+    "btn_copy": "\uBCF5\uC0AC",
+    "btn_screenshot": "\uC2A4\uB0C5\uC0F7",
+    "btn_add_note": "\uB178\uD2B8\uC5D0 \uCD94\uAC00",
+    "tip_copy": "\uACB0\uACFC\uB97C \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC",
+    "tip_screenshot": "\uACB0\uACFC \uC2A4\uD06C\uB9B0\uC0F7 \uCC0D\uAE30",
+    "tip_add_note": "\uACB0\uACFC\uB97C \uB178\uD2B8\uC5D0 \uC0BD\uC785",
+    "notice_copied": "\u2713 \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4!",
+    "notice_copy_failed": "\u274C \uBCF5\uC0AC \uC2E4\uD328: {error}",
+    "notice_screenshot_failed": "\u274C \uC2A4\uD06C\uB9B0\uC0F7 \uC0DD\uC131 \uC2E4\uD328: {error}",
+    "notice_screenshot_copied": "\u2713 \uC2A4\uD06C\uB9B0\uC0F7\uC774 \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4!",
+    "notice_screenshot_downloaded": "\u2713 \uC2A4\uD06C\uB9B0\uC0F7\uC744 \uB2E4\uC6B4\uB85C\uB4DC\uD588\uC2B5\uB2C8\uB2E4!",
+    "notice_insert_no_note": "\u274C \uD65C\uC131 \uB178\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+    "notice_insert_success": "\u2713 \uACB0\uACFC\uB97C \uB178\uD2B8\uC5D0 \uC0BD\uC785\uD588\uC2B5\uB2C8\uB2E4!",
+    "notice_insert_failed": "\u274C \uC0BD\uC785 \uC2E4\uD328: {error}",
+    "msg_no_result": "\uCFFC\uB9AC\uAC00 \uC131\uACF5\uC801\uC73C\uB85C \uC2E4\uD589\uB418\uC5C8\uC2B5\uB2C8\uB2E4(\uACB0\uACFC \uC5C6\uC74C)",
+    "msg_rows_found": "{count}\uAC1C\uC758 \uD589\uC744 \uBC1C\uACAC\uD588\uC2B5\uB2C8\uB2E4",
+    "msg_no_data": "\uB370\uC774\uD130\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
+    "msg_showing_rows": "{total}\uD589 \uC911 {count}\uD589 \uD45C\uC2DC \uC911",
+    "msg_showing_all": "\uC804\uCCB4 {count}\uD589 \uD45C\uC2DC \uC911",
+    "btn_show_all": "\uBAA8\uB4E0 \uD589 \uD45C\uC2DC",
+    "err_title": "\uC2E4\uD589 \uC624\uB958",
+    "result_label": "\uACB0\uACFC #{idx}",
+    "table_label": "\uD14C\uC774\uBE14: {name}",
+    "query_result": "\uCFFC\uB9AC \uACB0\uACFC",
+    "msg_loading": "\uB370\uC774\uD130 \uB85C\uB4DC \uC911...",
+    "msg_showing_limit": "\uCC98\uC74C {count}\uD589\uB9CC \uD45C\uC2DC\uB429\uB2C8\uB2E4.",
+    "msg_no_tables": "\uC774 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uC5D0\uC11C \uD14C\uC774\uBE14\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
+    "msg_no_tables_in": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4\uC5D0\uC11C \uD14C\uC774\uBE14\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4 ",
+    "tip_back": "\uD14C\uC774\uBE14 \uBAA9\uB85D\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30",
+    "btn_back": "\uB4A4\uB85C",
+    "title_results": "\uCFFC\uB9AC \uACB0\uACFC",
+    "rows_affected": "{count}\uAC1C \uD589\uC774 \uC601\uD5A5\uC744 \uBC1B\uC558\uC2B5\uB2C8\uB2E4",
+    "no_data_md": "_\uB370\uC774\uD130 \uC5C6\uC74C_",
+    "result_dml": "**\uACB0\uACFC:** {count}\uAC1C \uD589\uC774 \uC601\uD5A5\uC744 \uBC1B\uC558\uC2B5\uB2C8\uB2E4"
+  },
+  "form": {
+    "title_insert": "{name}\uC5D0 \uC0BD\uC785",
+    "btn_save": "\uB808\uCF54\uB4DC \uC800\uC7A5",
+    "btn_saving": "\uC800\uC7A5 \uC911...",
+    "btn_clear": "\uC9C0\uC6B0\uAE30",
+    "msg_success": "{name}\uC5D0 \uC131\uACF5\uC801\uC73C\uB85C \uC800\uC7A5\uB418\uC5C8\uC2B5\uB2C8\uB2E4",
+    "msg_error": "\uC624\uB958: {error}",
+    "msg_unexpected": "\uC608\uAE30\uCE58 \uC54A\uC740 \uC624\uB958: {error}",
+    "notice_success": "{name}\uC5D0 \uB808\uCF54\uB4DC\uB97C \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4",
+    "notice_error": "\uB808\uCF54\uB4DC \uC800\uC7A5 \uC624\uB958: {error}",
+    "err_invalid_table": "\uC720\uD6A8\uD558\uC9C0 \uC54A\uC740 \uD14C\uC774\uBE14 \uC774\uB984",
+    "err_invalid_col": "\uC720\uD6A8\uD558\uC9C0 \uC54A\uC740 \uCEEC\uB7FC \uC774\uB984: {name}"
+  },
+  "pro": {
+    "label_from": "\uBCF4\uB0B4\uB294 \uC0AC\uB78C:",
+    "label_to": "\uBC1B\uB294 \uC0AC\uB78C:",
+    "label_subject": "\uC81C\uBAA9:",
+    "from_name": "SQL Notebook \uAC1C\uBC1C \uD300 <dev@obsidian-sql.internal>",
+    "to_name": "\uC874\uACBD\uD558\uB294 \uAC1C\uBC1C\uC790\uB2D8",
+    "subject": "Pro Practice \uC54C\uB9BC: \uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uCEE8\uD14D\uC2A4\uD2B8 \uBAA8\uBC94 \uC0AC\uB840",
+    "hello": "\uC548\uB155\uD558\uC138\uC694,",
+    "msg_1": "UI\uB97C \uD1B5\uD574 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uC804\uD658\uD558\uACE0 \uACC4\uC2DC\uB124\uC694. \uBE60\uB978 \uD0D0\uC0C9\uC5D0\uB294 \uC88B\uC9C0\uB9CC, \uD55C \uAC00\uC9C0 \uD301\uC744 \uB4DC\uB9AC\uC790\uBA74 \uC2A4\uD06C\uB9BD\uD2B8\uC5D0\uC11C \uBA85\uC2DC\uC801\uC778 `USE` \uBA85\uB839\uC744 \uC0AC\uC6A9\uD558\uB294 \uAC83\uC774 \uC6CC\uD06C\uD50C\uB85C\uC6B0\uB97C \uB354\uC6B1 \uACAC\uACE0\uD558\uAC8C \uB9CC\uB4E4\uC5B4 \uC90D\uB2C8\uB2E4.",
+    "msg_quote": "\uCEE8\uD14D\uC2A4\uD2B8\uB97C \uBA85\uC2DC\uC801\uC73C\uB85C \uC815\uC758\uD558\uB294 \uAC83\uC740 \uC2A4\uD06C\uB9BD\uD2B8\uC758 \uC774\uC2DD\uC131\uACFC \uBA85\uD655\uC131\uC744 \uBCF4\uC7A5\uD558\uB294 \uBAA8\uBC94 \uC0AC\uB840\uC785\uB2C8\uB2E4.",
+    "msg_2": "\uCF54\uB4DC \uB0B4\uC5D0\uC11C \uCEE8\uD14D\uC2A4\uD2B8\uB97C \uC815\uC758\uD558\uBA74 \uD63C\uB780\uC744 \uBC29\uC9C0\uD558\uACE0 \uCF54\uB4DC \uB9AC\uBDF0 \uC2DC \uC758\uB3C4\uB97C \uBA85\uD655\uD788 \uC804\uB2EC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uBB3C\uB860 \uD3B8\uB9AC\uD55C \uC804\uC5ED \uC804\uD658\uAE30\uB3C4 \uACC4\uC18D \uC0AC\uC6A9\uD558\uC2E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4!",
+    "punchline": "\uC990\uAC70\uC6B4 \uCFFC\uB9AC \uB418\uC138\uC694! \u{1F680}",
+    "signature_regards": "\uAC10\uC0AC\uD569\uB2C8\uB2E4.",
+    "signature_team": "SQL Notebook \uAC1C\uBC1C \uD300",
+    "btn_read": "\uC77D\uC74C\uC73C\uB85C \uD45C\uC2DC"
+  },
+  "footer": {
+    "tip_help": "\uB3C4\uC6C0\uB9D0 \uBC0F \uAE30\uB2A5",
+    "status_ready": "\uC900\uBE44\uB428",
+    "status_error": "\uC624\uB958",
+    "status_aborted": "\uC911\uB2E8\uB428",
+    "status_live": "\uC2E4\uC2DC\uAC04"
+  },
+  "common": {
+    "error": "\uC624\uB958: {error}",
+    "invalid_name": "\uC0C8 \uC774\uB984\uC740 \uAE30\uC874 \uC774\uB984\uACFC \uB2EC\uB77C\uC57C \uD569\uB2C8\uB2E4.",
+    "notice_export_success": "{name}(\uC73C)\uB85C \uB0B4\uBCF4\uB0C8\uC2B5\uB2C8\uB2E4",
+    "notice_import_loading": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uAC00\uC838\uC624\uB294 \uC911...",
+    "notice_import_success": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uAC00\uC838\uC624\uAE30\uC5D0 \uC131\uACF5\uD588\uC2B5\uB2C8\uB2E4!",
+    "notice_anchor_form": "FORM\uC744 {name}\uC5D0 \uACE0\uC815\uD588\uC2B5\uB2C8\uB2E4",
+    "notice_anchor_live": "LIVE \uBE14\uB85D\uC744 {name}\uC5D0 \uACE0\uC815\uD588\uC2B5\uB2C8\uB2E4",
+    "notice_update_live": "{name}\uC5D0\uC11C \uC2E4\uC2DC\uAC04 \uB370\uC774\uD130\uB97C \uC5C5\uB370\uC774\uD2B8\uD558\uB294 \uC911...",
+    "notice_reset_success": "\uCD08\uAE30\uD654\uAC00 \uC131\uACF5\uC801\uC73C\uB85C \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4",
+    "app_name": "SQL Notebook"
+  },
+  "executor": {
+    "err_reserved_word": `{message}
+
+\u{1F4A1} \uD78C\uD2B8: '{word}'\uC740(\uB294) \uC608\uC57D\uC5B4\uC785\uB2C8\uB2E4. \uB530\uC634\uD45C\uB97C \uC0AC\uC6A9\uD558\uAC70\uB098(\uC608: "{lower}") \uC774\uB984\uC744 \uBCC0\uACBD\uD558\uC138\uC694.`,
+    "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F \uC54C\uB824\uC9C4 AlaSQL \uC624\uB958: 'INSERT INTO ... SELECT'\uC5D0\uC11C \uBA85\uC2DC\uC801 \uCEEC\uB7FC \uBAA9\uB85D\uC744 \uC0AC\uC6A9\uD558\uC5EC \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.\n\n\uD574\uACB0\uCC45: \uCEEC\uB7FC \uBAA9\uB85D\uC744 \uC81C\uAC70\uD558\uACE0 \uC21C\uC11C\uAC00 \uC815\uD655\uD788 \uC77C\uCE58\uD558\uB294\uC9C0 \uD655\uC778\uD558\uC138\uC694.",
+    "err_parse": "{message}\n\n\u{1F4A1} \uC138\uBBF8\uCF5C\uB860 \uB204\uB77D, \uAD04\uD638/\uB530\uC634\uD45C \uB2EB\uD798 \uC5EC\uBD80 \uB610\uB294 \uC624\uD0C0\uAC00 \uC788\uB294\uC9C0 \uD655\uC778\uD558\uC138\uC694.",
+    "warn_fragile_insert": "\u26A0\uFE0F 'INSERT INTO ... (\uCEEC\uB7FC) SELECT'\uAC00 \uAC10\uC9C0\uB418\uC5C8\uC2B5\uB2C8\uB2E4. AlaSQL\uC774 '$01' \uC624\uB958\uB85C \uC2E4\uD328\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uBC1C\uC0DD \uC2DC \uCEEC\uB7FC \uBAA9\uB85D\uC744 \uC81C\uAC70\uD558\uC138\uC694."
+  }
+};
+
+// src/utils/i18n.ts
+var locales = {
+  "en": en_default,
+  "pt-BR": pt_BR_default,
+  "zh": zh_default,
+  "es": es_default,
+  "de": de_default,
+  "fr": fr_default,
+  "ja": ja_default,
+  "ko": ko_default
+};
+var currentLanguage = "en";
+function resolveLanguage(lang) {
+  if (lang !== "auto") return lang;
+  const obsidianLang = (window.localStorage.getItem("language") || "en").toLowerCase();
+  if (obsidianLang.startsWith("pt")) return "pt-BR";
+  if (obsidianLang.startsWith("zh")) return "zh";
+  if (obsidianLang.startsWith("es")) return "es";
+  if (obsidianLang.startsWith("de")) return "de";
+  if (obsidianLang.startsWith("fr")) return "fr";
+  if (obsidianLang.startsWith("ja")) return "ja";
+  if (obsidianLang.startsWith("ko")) return "ko";
+  return "en";
+}
+function setLanguage(lang) {
+  currentLanguage = lang;
+}
+function t(keyPath, vars) {
+  const keys = keyPath.split(".");
+  const resolvedLang = resolveLanguage(currentLanguage);
+  let value = locales[resolvedLang];
+  for (const key of keys) {
+    if (!value || typeof value !== "object") {
+      value = void 0;
+      break;
+    }
+    value = value[key];
+  }
+  if (typeof value !== "string" && resolvedLang !== "en") {
+    let fallbackValue = locales["en"];
+    for (const key of keys) {
+      if (!fallbackValue || typeof fallbackValue !== "object") {
+        fallbackValue = void 0;
+        break;
+      }
+      fallbackValue = fallbackValue[key];
+    }
+    value = fallbackValue;
+  }
+  if (typeof value !== "string") {
+    return keyPath;
+  }
+  if (vars) {
+    let interpolated = value;
+    for (const [varName, varValue] of Object.entries(vars)) {
+      const sanitizedValue = String(varValue).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      interpolated = interpolated.replace(new RegExp(`{${varName}}`, "g"), sanitizedValue);
+    }
+    return interpolated;
+  }
+  return value;
+}
+
 // src/core/QueryExecutor.ts
 var QueryExecutor = class {
   static async executeWithTimeout(query, params, timeout = 3e4, signal) {
@@ -64635,7 +66384,7 @@ var QueryExecutor = class {
             continue;
           }
           if (SQLTransformer.hasFragileInsertSelect(stmt)) {
-            warnings.push(`\u26A0\uFE0F Detectado 'INSERT INTO ... (colunas) SELECT'. O AlaSQL pode falhar com erro '$01'. Se ocorrer, remova a lista de colunas, mas garanta que a ordem do SELECT corresponda exatamente \xE0s colunas da tabela.`);
+            warnings.push(t("executor.warn_fragile_insert"));
           }
           stmt = SQLTransformer.prefixTablesWithDatabase(stmt, currentDB);
           const result = await this.executeWithTimeout(stmt, params, 3e4, options.signal);
@@ -64653,7 +66402,7 @@ var QueryExecutor = class {
       if (useMatch) {
         const newDB = useMatch[1];
         if (!import_alasql3.default.databases[newDB]) throw new Error(`Database '${newDB}' does not exist`);
-        return { success: true, data: [{ type: "message", data: null, message: `Database changed to '${newDB}'` }], executionTime: monitor.end(), activeDatabase: newDB };
+        return { success: true, data: [{ type: "message", data: null, message: t("modals.notice_switch_success", { name: newDB }) }], executionTime: monitor.end(), activeDatabase: newDB };
       }
       const SECURITY_BLOCKED = [/\bDROP\s+DATABASE\b/i, /\bSHUTDOWN\b/i, /\bALTER\s+SYSTEM\b/i];
       for (const pattern of SECURITY_BLOCKED) {
@@ -64666,7 +66415,7 @@ var QueryExecutor = class {
         }
       }
       if (SQLTransformer.hasFragileInsertSelect(trimmed)) {
-        warnings.push(`\u26A0\uFE0F Detectado 'INSERT INTO ... (colunas) SELECT'. O AlaSQL pode falhar com erro '$01'. Se ocorrer, remova e garanta a ordem exata das colunas.`);
+        warnings.push(t("executor.warn_fragile_insert"));
       }
       const looksLikeSingleSelect = trimmedUpper.startsWith("SELECT") && !trimmed.includes(";") && !trimmedUpper.includes("LIMIT");
       let finalQuery = looksLikeSingleSelect ? trimmed + " LIMIT 1000;" : trimmed;
@@ -64689,22 +66438,14 @@ var QueryExecutor = class {
       const word = match[1].toUpperCase();
       const reserved = ["TOTAL", "VALUE", "SUM", "COUNT", "MIN", "MAX", "AVG", "KEY", "ORDER", "GROUP", "DATE", "DESC", "ASC"];
       if (reserved.includes(word)) {
-        return `${message}
-
-\u{1F4A1} Dica: '${word}' \xE9 uma palavra reservada do banco de dados. Tente usar aspas (ex: "${word.toLowerCase()}") ou mude o nome (ex: "${word.toLowerCase()}_total").`;
+        return t("executor.err_reserved_word", { message, word, lower: word.toLowerCase() });
       }
     }
     if (message.includes("$01 is not defined")) {
-      return `${message}
-
-\u26A0\uFE0F Erro Conhecido do AlaSQL: O uso de lista de colunas expl\xEDcita em 'INSERT INTO ... SELECT' causou falha.
-
-Solu\xE7\xE3o: Remova a lista de colunas (ex: 'INSERT INTO T SELECT ...') e certifique-se de que a ordem dos campos no SELECT corresponda EXATAMENTE \xE0 ordem das colunas na tabela de destino.`;
+      return t("executor.err_alasql_bug_01", { message });
     }
     if (message.includes("Parse error")) {
-      return `${message}
-
-\u{1F4A1} Verifique se voc\xEA esqueceu algum ponto e v\xEDrgula, se h\xE1 par\xEAnteses/aspas n\xE3o fechadas ou erros de digita\xE7\xE3o nos nomes das tabelas.`;
+      return t("executor.err_parse", { message });
     }
     return message;
   }
@@ -64716,7 +66457,7 @@ Solu\xE7\xE3o: Remova a lista de colunas (ex: 'INSERT INTO T SELECT ...') e cert
     return [this.createResultSet(raw)];
   }
   static createResultSet(res) {
-    if (res === void 0 || res === null) return { type: "message", data: null, message: "Command executed successfully" };
+    if (res === void 0 || res === null) return { type: "message", data: null, message: t("modals.status_done") };
     if (typeof res === "object" && res !== null && "type" in res && "data" in res) {
       return res;
     }
@@ -64728,7 +66469,7 @@ Solu\xE7\xE3o: Remova a lista de colunas (ex: 'INSERT INTO T SELECT ...') e cert
       }
       return { type: "scalar", data: res, rowCount: res.length };
     }
-    if (typeof res === "number") return { type: "message", data: res, message: `${res} row(s) affected` };
+    if (typeof res === "number") return { type: "message", data: res, message: t("renderer.rows_affected", { count: String(res) }) };
     let message = "";
     if (typeof res === "object" && res !== null) {
       message = JSON.stringify(res);
@@ -64763,7 +66504,7 @@ Solu\xE7\xE3o: Remova a lista de colunas (ex: 'INSERT INTO T SELECT ...') e cert
         throw new Error(`Table '${tableName}' found but has no columns.`);
       }
     } catch (e) {
-      throw new Error(`Table '${fullTableName}' not found. Certifique-se de que voc\xEA executou o setup (01_setup.md) ou criou a tabela.`);
+      throw new Error(`Table '${fullTableName}' not found.`);
     }
     const customFields = {};
     for (let i = 1; i < lines.length; i++) {
@@ -64884,1606 +66625,6 @@ var import_html2canvas = __toESM(require_html2canvas());
 
 // src/ui/FormRenderer.ts
 var import_obsidian3 = require("obsidian");
-
-// src/locales/en.ts
-var en_default = {
-  "settings": {
-    "title": "SQL Notebook",
-    "subtitle": "Database manager",
-    "btn_atualizar": "Update",
-    "btn_importar": "Import",
-    "btn_novo_db": "New database",
-    "welcome_title": "Welcome to SQL Notebook",
-    "welcome_desc": "Manage your local databases, execute queries, and visualize results directly in Obsidian.",
-    "search_placeholder": "Search databases...",
-    "info_title": "Important information:",
-    "info_li_1": "To delete or rename an <b>active</b> database, switch to another first.",
-    "info_li_2": 'The system database <b>"dbo"</b> cannot be renamed or deleted.',
-    "info_li_3": "<b>Renaming</b> a database automatically updates internal references.",
-    "section_general": "General settings",
-    "section_appearance": "Appearance",
-    "section_data_security": "Data & security",
-    "lang_name": "Language",
-    "lang_desc": "Choose the interface language.",
-    "accent_obsidian": "Use Obsidian accent color",
-    "accent_obsidian_desc": "Use the global Obsidian accent color instead of a custom color.",
-    "theme_accent": "Theme accent",
-    "theme_accent_desc": "Choose the primary accent color.",
-    "auto_save": "Auto-save",
-    "auto_save_desc": "Automatically save database changes.",
-    "auto_save_delay": "Auto-save delay",
-    "auto_save_delay_desc": "Milliseconds to wait before auto-saving.",
-    "export_folder": "Export folder",
-    "export_folder_desc": "Default folder for CSV exports.",
-    "safe_mode": "Safe mode",
-    "safe_mode_desc": "Block dangerous commands (DROP, ALTER) and enforce limits.",
-    "enable_logging": "Enable debug logging",
-    "enable_logging_desc": "Show detailed logs in the developer console (Ctrl+Shift+I). Useful for debugging synchronization.",
-    "snapshot_limit": "Snapshot row limit",
-    "snapshot_limit_desc": "Max rows per table to save (prevents memory issues).",
-    "batch_size": "Batch size",
-    "batch_size_desc": "Rows to display per page in results.",
-    "reset_all": "Reset all data",
-    "reset_btn": "Reset everything",
-    "reset_all_confirm_msg": "This will delete ALL databases and tables. This action cannot be undone. Are you sure?",
-    "footer_by": "Diego Pena"
-  },
-  "help": {
-    "title": "SQL Notebook features",
-    "collapsible_title": "Collapsible workbench",
-    "collapsible_desc": "Toggle the workbench view to save space. Click the header or the chevron icon.",
-    "auto_collapse_title": "Auto-collapse",
-    "auto_collapse_desc": "Start a comment with '@' (e.g., '-- @ My Query') to automatically collapse the workbench when the note opens.",
-    "alert_title": "Alert marker (!)",
-    "alert_desc": "Add '!' to your comment start to highlight it as an alert or warning.",
-    "question_title": "Question marker (?)",
-    "question_desc": "Add '?' to indicate a query that needs review or is experimental.",
-    "favorite_title": "Favorite marker (*)",
-    "favorite_desc": "Add '*' to highlight important or frequently used queries.",
-    "copy_edit_title": "Copy & edit",
-    "copy_edit_desc": "Hover over the workbench to access quick Copy Code and Edit Block buttons."
-  },
-  "modals": {
-    "confirm_delete_title": "Delete database",
-    "confirm_delete_msg": 'You are about to delete database "{dbName}". This action cannot be undone. All tables and data will be lost.',
-    "confirm_clear_title": "Clear database",
-    "confirm_clear_msg": 'Are you sure you want to clear all tables in "{dbName}"? This keeps the database but deletes all data.',
-    "btn_cancel": "Cancel",
-    "btn_confirm": "Confirm",
-    "btn_delete": "Delete database",
-    "btn_clear": "Clear all data",
-    "btn_ativar": "Activate",
-    "btn_duplicar": "Duplicate",
-    "btn_renomear": "Rename",
-    "btn_tabelas": "Tables",
-    "btn_exportar": "Export",
-    "btn_deletar": "Delete",
-    "badge_ativo": "Active",
-    "badge_system": "System",
-    "stat_tables": "Tables",
-    "stat_rows": "Rows",
-    "stat_size": "Size",
-    "stat_updated": "Updated",
-    "time_just_now": "Just now",
-    "time_ago": "{time} ago",
-    "time_never": "Never",
-    "switch_title": "Switch database",
-    "no_user_dbs": "No user databases found.",
-    "tip_system_db": "System default database. Cannot be deleted.",
-    "tip_protected_db": "Switch to another database to delete this one.",
-    "rename_title": "Rename database: {name}",
-    "rename_placeholder": "New database name...",
-    "create_title": "Create new database",
-    "create_placeholder": "Database name (e.g., my_project)",
-    "duplicate_title": "Duplicate database: {name}",
-    "notice_create_empty": "Database name cannot be empty.",
-    "notice_rename_success": 'Database renamed to "{name}"',
-    "notice_create_success": 'Database "{name}" created.',
-    "notice_duplicate_success": 'Database duplicated to "{name}"',
-    "notice_delete_success": 'Database "{name}" deleted.',
-    "notice_switch_success": 'Switched to "{name}"',
-    "tables_title": 'Tables in "{name}"',
-    "null_value": "NULL",
-    "status_error": "Error",
-    "status_done": "Done",
-    "notice_table_data_copied": "Table data copied to clipboard",
-    "notice_copy_failed": "Failed to copy: {error}",
-    "notice_screenshot_failed": "Failed to create screenshot: {error}",
-    "notice_no_active_note": "No active note found",
-    "notice_table_inserted": "Table inserted into note",
-    "notice_insert_failed": "Failed to insert: {error}"
-  },
-  "workbench": {
-    "btn_run": "Run",
-    "btn_executing": "Executing...",
-    "btn_cancel": "Cancel",
-    "notice_copy": "SQL code copied",
-    "notice_aborted": "Query aborted by user"
-  },
-  "renderer": {
-    "btn_copy": "Copy",
-    "btn_screenshot": "Screenshot",
-    "btn_add_note": "Add to note",
-    "tip_copy": "Copy result to clipboard",
-    "tip_screenshot": "Take screenshot of result",
-    "tip_add_note": "Insert result into note",
-    "notice_copied": "Copied to clipboard",
-    "notice_copy_failed": "Failed to copy: {error}",
-    "notice_screenshot_failed": "Failed to create screenshot: {error}",
-    "notice_screenshot_copied": "Screenshot copied to clipboard",
-    "notice_screenshot_downloaded": "Screenshot downloaded",
-    "notice_insert_no_note": "No active note found",
-    "notice_insert_success": "Result inserted into note",
-    "notice_insert_failed": "Failed to insert: {error}",
-    "msg_no_result": "Query executed successfully (no result set)",
-    "msg_rows_found": "{count} rows found",
-    "msg_no_data": "No data found",
-    "msg_showing_rows": "Showing {count} of {total} rows",
-    "msg_showing_all": "Showing all {count} rows",
-    "btn_show_all": "Show all rows",
-    "err_title": "Execution error",
-    "result_label": "Result #{idx}",
-    "table_label": "Table: {name}",
-    "query_result": "Query result",
-    "msg_loading": "Loading data...",
-    "msg_showing_limit": "Showing first {count} rows only.",
-    "msg_no_tables": "No tables found in this database.",
-    "tip_back": "Back to tables list",
-    "btn_back": "Back"
-  },
-  "form": {
-    "title_insert": "Insert into {name}",
-    "btn_save": "Save record",
-    "btn_saving": "Saving...",
-    "btn_clear": "Clear",
-    "msg_success": "Saved successfully to {name}",
-    "msg_error": "Error: {error}",
-    "msg_unexpected": "Unexpected error: {error}",
-    "notice_success": "Record saved to {name}",
-    "notice_error": "Error saving record: {error}",
-    "err_invalid_table": "Invalid table name",
-    "err_invalid_col": "Invalid column name: {name}"
-  },
-  "pro": {
-    "label_from": "From:",
-    "label_to": "To:",
-    "label_subject": "Subject:",
-    "from_name": "SQL Notebook dev team <dev@obsidian-sql.internal>",
-    "to_name": "Valued developer",
-    "subject": "Pro practice alert: database context best practices",
-    "hello": "Hello,",
-    "msg_1": "We noticed you're switching databases via the UI. While this is great for quick navigation, we'd like to share a professional tip: using the explicit `USE` command in your scripts can make your workflow even more robust.",
-    "msg_quote": "Explicitly defining your context is a best practice that ensures your scripts are portable and unambiguous across different environments:",
-    "msg_2": "Defining the context within the code helps avoid confusion and makes your intent clear to anyone reviewing your work. You can always continue using the global switcher for convenience!",
-    "punchline": "Happy querying! \u{1F680}",
-    "signature_regards": "Best regards,",
-    "signature_team": "SQL Notebook development team",
-    "btn_read": "Mark as read"
-  },
-  "footer": {
-    "tip_help": "Help & features",
-    "status_ready": "Ready",
-    "status_error": "Error",
-    "status_aborted": "Aborted",
-    "status_live": "Live"
-  },
-  "common": {
-    "error": "Error: {error}",
-    "invalid_name": "New name must be different from the old name.",
-    "notice_export_success": "Exported to {name}",
-    "notice_import_loading": "Importing database...",
-    "notice_import_success": "Database imported successfully",
-    "notice_anchor_form": "FORM anchored to {name}",
-    "notice_anchor_live": "LIVE block anchored to {name}",
-    "notice_update_live": "Updating LIVE data from {name}...",
-    "notice_reset_success": "Reset completed successfully"
-  }
-};
-
-// src/locales/pt-BR.ts
-var pt_BR_default = {
-  "settings": {
-    "title": "SQL Notebook",
-    "subtitle": "Gestor de banco de dados",
-    "btn_atualizar": "Atualizar",
-    "btn_importar": "Importar",
-    "btn_novo_db": "Novo banco",
-    "welcome_title": "Bem-vindo ao SQL Notebook!",
-    "welcome_desc": "Gerencie seus bancos de dados locais, execute consultas e visualize resultados diretamente no Obsidian.",
-    "search_placeholder": "Buscar bancos de dados...",
-    "info_title": "Informa\xE7\xF5es importantes:",
-    "info_li_1": "Para excluir ou renomear um banco <b>ativo</b>, mude para outro primeiro.",
-    "info_li_2": 'O banco de sistema <b>"dbo"</b> n\xE3o pode ser renomeado ou exclu\xEDdo.',
-    "info_li_3": "<b>Renomear</b> um banco atualiza automaticamente as refer\xEAncias internas.",
-    "section_general": "Configura\xE7\xF5es gerais",
-    "section_appearance": "Apar\xEAncia",
-    "section_data_security": "Dados e seguran\xE7a",
-    "lang_name": "Idioma",
-    "lang_desc": "Escolha o idioma da interface.",
-    "accent_obsidian": "Usar cor de destaque do Obsidian",
-    "accent_obsidian_desc": "Usa a cor de destaque global do Obsidian em vez de uma cor personalizada.",
-    "theme_accent": "Cor de destaque",
-    "theme_accent_desc": "Escolha a cor de destaque principal.",
-    "auto_save": "Salvamento autom\xE1tico",
-    "auto_save_desc": "Salvar automaticamente as altera\xE7\xF5es no banco.",
-    "auto_save_delay": "Atraso de salvamento",
-    "auto_save_delay_desc": "Milissegundos a esperar antes de salvar automaticamente.",
-    "export_folder": "Pasta de exporta\xE7\xE3o",
-    "export_folder_desc": "Pasta padr\xE3o para exporta\xE7\xF5es CSV.",
-    "safe_mode": "Modo seguro",
-    "safe_mode_desc": "Bloquear comandos perigosos (DROP, ALTER) e impor limites.",
-    "enable_logging": "Habilitar logs de depura\xE7\xE3o",
-    "enable_logging_desc": "Mostrar logs detalhados no console (Ctrl+Shift+I). \xDAtil para depura\xE7\xE3o.",
-    "snapshot_limit": "Limite de linhas do snapshot",
-    "snapshot_limit_desc": "M\xE1ximo de linhas por tabela para salvar.",
-    "batch_size": "Tamanho do lote",
-    "batch_size_desc": "Linhas a exibir por p\xE1gina nos resultados.",
-    "reset_all": "Resetar todos os dados",
-    "reset_btn": "Resetar tudo",
-    "reset_all_confirm_msg": "Isso excluir\xE1 TODOS os bancos de dados e tabelas. Esta a\xE7\xE3o n\xE3o pode ser desfeita. Tem certeza?",
-    "footer_by": "Diego Pena"
-  },
-  "help": {
-    "title": "Recursos do SQL Notebook",
-    "collapsible_title": "Bancada retr\xE1til",
-    "collapsible_desc": "Alterne a visualiza\xE7\xE3o da bancada para economizar espa\xE7o. Clique no cabe\xE7alho ou no \xEDcone.",
-    "auto_collapse_title": "Auto-recolhimento",
-    "auto_collapse_desc": "Inicie um coment\xE1rio com '@' (ex: '-- @ Minha Query') para recolher automaticamente ao abrir a nota.",
-    "alert_title": "Marcador de alerta (!)",
-    "alert_desc": "Adicione '!' ao in\xEDcio do coment\xE1rio para destac\xE1-lo como um alerta ou aviso.",
-    "question_title": "Marcador de d\xFAvida (?)",
-    "question_desc": "Adicione '?' para indicar uma consulta que precisa de revis\xE3o ou \xE9 experimental.",
-    "favorite_title": "Marcador de favorito (*)",
-    "favorite_desc": "Adicione '*' para destacar consultas importantes ou frequentes.",
-    "copy_edit_title": "Copiar e editar",
-    "copy_edit_desc": "Passe o mouse sobre a bancada para acessar bot\xF5es r\xE1pidos de Copiar C\xF3digo e Editar Bloco."
-  },
-  "modals": {
-    "confirm_delete_title": "Excluir banco de dados",
-    "confirm_delete_msg": 'Voc\xEA est\xE1 prestes a excluir o banco "{dbName}". Esta a\xE7\xE3o n\xE3o pode ser desfeita. Todas as tabelas e dados ser\xE3o perdidos.',
-    "confirm_clear_title": "Limpar banco de dados",
-    "confirm_clear_msg": 'Tem certeza que deseja limpar todas as tabelas em "{dbName}"? O banco ser\xE1 mantido, mas todos os dados ser\xE3o apagados.',
-    "btn_cancel": "Cancelar",
-    "btn_confirm": "Confirmar",
-    "btn_delete": "Excluir banco",
-    "btn_clear": "Limpar dados",
-    "btn_ativar": "Ativar",
-    "btn_duplicar": "Duplicar",
-    "btn_renomear": "Renomear",
-    "btn_tabelas": "Tabelas",
-    "btn_exportar": "Exportar",
-    "btn_deletar": "Deletar",
-    "badge_ativo": "Ativo",
-    "badge_system": "Sistema",
-    "stat_tables": "Tabelas",
-    "stat_rows": "Linhas",
-    "stat_size": "Tamanho",
-    "stat_updated": "Atualizado",
-    "time_just_now": "Agora mesmo",
-    "time_ago": "{time} atr\xE1s",
-    "time_never": "Nunca",
-    "switch_title": "Alternar banco",
-    "no_user_dbs": "Nenhum banco de usu\xE1rio encontrado.",
-    "tip_system_db": "Banco padr\xE3o do sistema. N\xE3o pode ser exclu\xEDdo.",
-    "tip_protected_db": "Mude para outro banco para excluir este.",
-    "rename_title": "Renomear banco: {name}",
-    "rename_placeholder": "Novo nome do banco...",
-    "create_title": "Criar novo banco",
-    "create_placeholder": "Nome do banco (ex: meu_projeto)",
-    "duplicate_title": "Duplicar banco: {name}",
-    "notice_create_empty": "Nome do banco n\xE3o pode ser vazio.",
-    "notice_rename_success": 'Banco renomeado para "{name}"',
-    "notice_create_success": 'Banco "{name}" criado.',
-    "notice_duplicate_success": 'Banco duplicado para "{name}"',
-    "notice_delete_success": 'Banco "{name}" exclu\xEDdo.',
-    "notice_switch_success": 'Alternado para "{name}"',
-    "tables_title": 'Tabelas em "{name}"',
-    "null_value": "Nulo",
-    "status_error": "Erro",
-    "status_done": "Conclu\xEDdo",
-    "notice_table_data_copied": "Dados da tabela copiados para a \xE1rea de transfer\xEAncia!",
-    "notice_copy_failed": "Falha ao copiar: {error}",
-    "notice_screenshot_failed": "Falha ao criar captura de tela: {error}",
-    "notice_no_active_note": "Nenhuma nota ativa encontrada",
-    "notice_table_inserted": "Tabela inserida na nota!",
-    "notice_insert_failed": "Falha ao inserir: {error}"
-  },
-  "workbench": {
-    "btn_run": "Executar",
-    "btn_executing": "Executando...",
-    "btn_cancel": "Cancelar",
-    "notice_copy": "C\xF3digo SQL copiado!",
-    "notice_aborted": "Consulta abortada pelo usu\xE1rio"
-  },
-  "renderer": {
-    "btn_copy": "Copiar",
-    "btn_screenshot": "Captura",
-    "btn_add_note": "Add na nota",
-    "tip_copy": "Copiar resultado",
-    "tip_screenshot": "Tirar foto do resultado",
-    "tip_add_note": "Inserir resultado na nota",
-    "notice_copied": "\u2713 Copiado!",
-    "notice_copy_failed": "\u274C Falha ao copiar: {error}",
-    "notice_screenshot_failed": "\u274C Falha ao criar captura de tela: {error}",
-    "notice_screenshot_copied": "\u2713 Captura de tela copiada!",
-    "notice_screenshot_downloaded": "\u2713 Captura de tela baixada!",
-    "notice_insert_no_note": "\u274C Nenhuma nota ativa encontrada",
-    "notice_insert_success": "\u2713 Resultado inserido na nota!",
-    "notice_insert_failed": "\u274C Falha ao inserir: {error}",
-    "msg_no_result": "Consulta executada com sucesso (sem retorno)",
-    "msg_rows_found": "{count} linhas encontradas",
-    "msg_no_data": "Nenhum dado encontrado",
-    "msg_showing_rows": "Mostrando {count} de {total} linhas",
-    "msg_showing_all": "Mostrando todas as {count} linhas",
-    "btn_show_all": "Mostrar todas",
-    "err_title": "Erro de execu\xE7\xE3o",
-    "result_label": "Resultado #{idx}",
-    "table_label": "Tabela: {name}",
-    "query_result": "Resultado da consulta",
-    "msg_loading": "Carregando dados...",
-    "msg_showing_limit": "Mostrando apenas as primeiras {count} linhas.",
-    "msg_no_tables": "Nenhuma tabela encontrada neste banco de dados.",
-    "tip_back": "Voltar para lista de tabelas",
-    "btn_back": "Voltar"
-  },
-  "form": {
-    "title_insert": "Inserir em {name}",
-    "btn_save": "Salvar registro",
-    "btn_saving": "Salvando...",
-    "btn_clear": "Limpar",
-    "msg_success": "Salvo com sucesso em {name}",
-    "msg_error": "Erro: {error}",
-    "msg_unexpected": "Erro inesperado: {error}",
-    "notice_success": "Registro salvo em {name}",
-    "notice_error": "Erro ao salvar registro: {error}",
-    "err_invalid_table": "Nome de tabela inv\xE1lido",
-    "err_invalid_col": "Nome de coluna inv\xE1lido: {name}"
-  },
-  "pro": {
-    "label_from": "De:",
-    "label_to": "Para:",
-    "label_subject": "Assunto:",
-    "from_name": "Time de dev do SQL Notebook <dev@obsidian-sql.internal>",
-    "to_name": "Desenvolvedor(a)",
-    "subject": "Alerta pro practice: boas pr\xE1ticas de contexto de banco",
-    "hello": "Ol\xE1,",
-    "msg_1": "Notamos que voc\xEA est\xE1 trocando de banco de dados via interface. Embora isso seja \xF3timo para navega\xE7\xE3o r\xE1pida, gostar\xEDamos de compartilhar uma dica profissional: usar o comando expl\xEDcito `USE` em seus scripts pode tornar seu fluxo de trabalho ainda mais robusto.",
-    "msg_quote": "Definir explicitamente o seu contexto \xE9 uma boa pr\xE1tica que garante que seus scripts sejam port\xE1teis e claros em diferentes ambientes:",
-    "msg_2": "Definir o contexto no c\xF3digo ajuda a evitar confus\xE3o e torna sua inten\xE7\xE3o clara para qualquer pessoa que revise seu trabalho. Voc\xEA sempre pode continuar usando o alternador global para conveni\xEAncia!",
-    "punchline": "Bons c\xF3digos! \u{1F680}",
-    "signature_regards": "Atenciosamente,",
-    "signature_team": "Time de desenvolvimento do SQL Notebook",
-    "btn_read": "Marcar como lido"
-  },
-  "footer": {
-    "tip_help": "Ajuda e recursos",
-    "status_ready": "Pronto",
-    "status_error": "Erro",
-    "status_aborted": "Abortado",
-    "status_live": "Live"
-  },
-  "common": {
-    "error": "Erro: {error}",
-    "invalid_name": "O novo nome deve ser diferente do antigo.",
-    "notice_export_success": "Exportado para {name}",
-    "notice_import_loading": "Importando banco de dados...",
-    "notice_import_success": "Banco de dados importado com sucesso!",
-    "notice_anchor_form": "FORM ancorado a {name}",
-    "notice_anchor_live": "Bloco LIVE ancorado a {name}",
-    "notice_update_live": "Atualizando dados LIVE de {name}...",
-    "notice_reset_success": "Reinicializa\xE7\xE3o completa com sucesso!"
-  }
-};
-
-// src/locales/zh.ts
-var zh_default = {
-  "settings": {
-    "title": "SQL Notebook",
-    "subtitle": "\u6570\u636E\u5E93\u7BA1\u7406\u5668",
-    "btn_atualizar": "\u66F4\u65B0",
-    "btn_importar": "\u5BFC\u5165",
-    "btn_novo_db": "\u65B0\u5EFA\u6570\u636E\u5E93",
-    "welcome_title": "\u6B22\u8FCE\u4F7F\u7528 SQL Notebook!",
-    "welcome_desc": "\u5728 Obsidian \u4E2D\u76F4\u63A5\u7BA1\u7406\u672C\u5730\u6570\u636E\u5E93\u3001\u6267\u884C\u67E5\u8BE2\u5E76\u53EF\u89C6\u5316\u7ED3\u679C\u3002",
-    "search_placeholder": "\u641C\u7D22\u6570\u636E\u5E93...",
-    "info_title": "\u91CD\u8981\u4FE1\u606F\uFF1A",
-    "info_li_1": "\u82E5\u8981\u5220\u9664\u6216\u91CD\u547D\u540D<b>\u6D3B\u52A8</b>\u6570\u636E\u5E93\uFF0C\u8BF7\u5148\u5207\u6362\u5230\u53E6\u4E00\u4E2A\u6570\u636E\u5E93\u3002",
-    "info_li_2": '\u7CFB\u7EDF\u6570\u636E\u5E93 <b>"dbo"</b> \u4E0D\u80FD\u88AB\u91CD\u547D\u540D\u6216\u5220\u9664\u3002',
-    "info_li_3": "<b>\u91CD\u547D\u540D</b>\u6570\u636E\u5E93\u4F1A\u81EA\u52A8\u66F4\u65B0\u5185\u90E8\u5F15\u7528\u3002",
-    "section_general": "\u5E38\u89C4\u8BBE\u7F6E",
-    "section_appearance": "\u5916\u89C2",
-    "section_data_security": "\u6570\u636E\u4E0E\u5B89\u5168",
-    "lang_name": "\u8BED\u8A00",
-    "lang_desc": "\u9009\u62E9\u754C\u9762\u8BED\u8A00\u3002",
-    "accent_obsidian": "\u4F7F\u7528 Obsidian \u5F3A\u8C03\u8272",
-    "accent_obsidian_desc": "\u4F7F\u7528\u5168\u5C40 Obsidian \u5F3A\u8C03\u8272\u800C\u975E\u81EA\u5B9A\u4E49\u989C\u8272\u3002",
-    "theme_accent": "\u4E3B\u9898\u5F3A\u8C03\u8272",
-    "theme_accent_desc": "\u9009\u62E9\u4E3B\u5F3A\u8C03\u8272\u3002",
-    "auto_save": "\u81EA\u52A8\u4FDD\u5B58",
-    "auto_save_desc": "\u81EA\u52A8\u4FDD\u5B58\u6570\u636E\u5E93\u66F4\u6539\u3002",
-    "auto_save_delay": "\u81EA\u52A8\u4FDD\u5B58\u5EF6\u8FDF",
-    "auto_save_delay_desc": "\u81EA\u52A8\u4FDD\u5B58\u524D\u7684\u7B49\u5F85\u6BEB\u79D2\u6570\u3002",
-    "export_folder": "\u5BFC\u51FA\u6587\u4EF6\u5939",
-    "export_folder_desc": "CSV \u5BFC\u51FA\u7684\u9ED8\u8BA4\u6587\u4EF6\u5939\u3002",
-    "safe_mode": "\u5B89\u5168\u6A21\u5F0F",
-    "safe_mode_desc": "\u963B\u6B62\u5371\u9669\u547D\u4EE4 (DROP, ALTER) \u5E76\u5F3A\u5236\u6267\u884C\u9650\u5236\u3002",
-    "enable_logging": "\u542F\u7528\u8C03\u8BD5\u65E5\u5FD7",
-    "enable_logging_desc": "\u5728\u5F00\u53D1\u8005\u63A7\u5236\u53F0 (Ctrl+Shift+I) \u4E2D\u663E\u793A\u8BE6\u7EC6\u65E5\u5FD7\u3002\u5BF9\u4E8E\u8C03\u8BD5\u540C\u6B65\u5F88\u6709\u7528\u3002",
-    "snapshot_limit": "\u5FEB\u7167\u884C\u6570\u9650\u5236",
-    "snapshot_limit_desc": "\u6BCF\u5F20\u8868\u4FDD\u5B58\u7684\u6700\u5927\u884C\u6570\uFF08\u9632\u6B62\u5185\u5B58\u95EE\u9898\uFF09\u3002",
-    "batch_size": "\u6279\u5904\u7406\u5927\u5C0F",
-    "batch_size_desc": "\u7ED3\u679C\u4E2D\u6BCF\u9875\u663E\u793A\u7684\u884C\u6570\u3002",
-    "reset_all": "\u91CD\u7F6E\u6240\u6709\u6570\u636E",
-    "reset_btn": "\u91CD\u7F6E\u4E00\u5207",
-    "footer_by": "Diego Pena"
-  },
-  "help": {
-    "title": "SQL Notebook \u529F\u80FD",
-    "collapsible_title": "\u53EF\u6298\u53E0\u5DE5\u4F5C\u53F0",
-    "collapsible_desc": "\u5207\u6362\u5DE5\u4F5C\u53F0\u89C6\u56FE\u4EE5\u8282\u7701\u7A7A\u95F4\u3002\u70B9\u51FB\u9875\u7709\u6216\u6298\u53E0\u56FE\u6807\u3002",
-    "auto_collapse_title": "\u81EA\u52A8\u6298\u53E0",
-    "auto_collapse_desc": "\u4EE5 '@' \u5F00\u59CB\u6CE8\u91CA\uFF08\u4F8B\u5982 '-- @ My Query'\uFF09\uFF0C\u5728\u6253\u5F00\u7B14\u8BB0\u65F6\u81EA\u52A8\u6298\u53E0\u5DE5\u4F5C\u53F0\u3002",
-    "alert_title": "\u8B66\u62A5\u6807\u8BB0 (!)",
-    "alert_desc": "\u5728\u6CE8\u91CA\u5F00\u5934\u6DFB\u52A0 '!' \u4EE5\u5C06\u5176\u7A81\u51FA\u663E\u793A\u4E3A\u8B66\u62A5\u6216\u8B66\u544A\u3002",
-    "question_title": "\u7591\u95EE\u6807\u8BB0 (?)",
-    "question_desc": "\u6DFB\u52A0 '?' \u4EE5\u6307\u793A\u9700\u8981\u5BA1\u67E5\u6216\u5177\u6709\u5B9E\u9A8C\u6027\u7684\u67E5\u8BE2\u3002",
-    "favorite_title": "\u6536\u85CF\u6807\u8BB0 (*)",
-    "favorite_desc": "\u6DFB\u52A0 '*' \u4EE5\u7A81\u51FA\u663E\u793A\u91CD\u8981\u6216\u5E38\u7528\u7684\u67E5\u8BE2\u3002",
-    "copy_edit_title": "\u590D\u5236\u4E0E\u7F16\u8F91",
-    "copy_edit_desc": "\u5C06\u9F20\u6807\u60AC\u505C\u5728\u5DE5\u4F5C\u53F0\u4E0A\u4EE5\u8BBF\u95EE\u5FEB\u901F\u590D\u5236\u4EE3\u7801\u548C\u7F16\u8F91\u5757\u6309\u94AE\u3002"
-  },
-  "modals": {
-    "confirm_delete_title": "\u5220\u9664\u6570\u636E\u5E93",
-    "confirm_delete_msg": '\u60A8\u5373\u5C06\u5220\u9664\u6570\u636E\u5E93 "{dbName}"\u3002\u6B64\u64CD\u4F5C\u65E0\u6CD5\u64A4\u9500\u3002\u6240\u6709\u8868\u548C\u6570\u636E\u90FD\u5C06\u4E22\u5931\u3002',
-    "confirm_clear_title": "\u6E05\u7A7A\u6570\u636E\u5E93",
-    "confirm_clear_msg": '\u60A8\u786E\u5B9A\u8981\u6E05\u7A7A "{dbName}" \u4E2D\u7684\u6240\u6709\u8868\u5417\uFF1F\u8FD9\u5C06\u4FDD\u7559\u6570\u636E\u5E93\u4F46\u5220\u9664\u6240\u6709\u6570\u636E\u3002',
-    "btn_cancel": "\u53D6\u6D88",
-    "btn_confirm": "\u786E\u8BA4",
-    "btn_delete": "\u5220\u9664\u6570\u636E\u5E93",
-    "btn_clear": "\u6E05\u7A7A\u6240\u6709\u6570\u636E",
-    "btn_ativar": "\u6FC0\u6D3B",
-    "btn_duplicar": "\u590D\u5236",
-    "btn_renomear": "\u91CD\u547D\u540D",
-    "btn_tabelas": "\u8868",
-    "btn_exportar": "\u5BFC\u51FA",
-    "btn_deletar": "\u5220\u9664",
-    "badge_ativo": "\u6FC0\u6D3B",
-    "badge_system": "\u7CFB\u7EDF",
-    "stat_tables": "\u8868",
-    "stat_rows": "\u884C",
-    "stat_size": "\u5927\u5C0F",
-    "stat_updated": "\u5DF2\u66F4\u65B0",
-    "time_just_now": "\u521A\u521A",
-    "time_ago": "{time} \u524D",
-    "time_never": "\u4ECE\u4E0D",
-    "switch_title": "\u5207\u6362\u6570\u636E\u5E93",
-    "no_user_dbs": "\u672A\u627E\u5230\u7528\u6237\u6570\u636E\u5E93\u3002",
-    "tip_system_db": "\u7CFB\u7EDF\u9ED8\u8BA4\u6570\u636E\u5E93\u3002\u65E0\u6CD5\u5220\u9664\u3002",
-    "tip_protected_db": "\u5207\u6362\u5230\u53E6\u4E00\u4E2A\u6570\u636E\u5E93\u4EE5\u5220\u9664\u6B64\u6570\u636E\u5E93\u3002",
-    "rename_title": "\u91CD\u547D\u540D\u6570\u636E\u5E93\uFF1A{name}",
-    "rename_placeholder": "\u65B0\u6570\u636E\u5E93\u540D\u79F0...",
-    "create_title": "\u521B\u5EFA\u65B0\u6570\u636E\u5E93",
-    "create_placeholder": "\u6570\u636E\u5E93\u540D\u79F0 (\u4F8B\u5982\uFF1Amy_project)",
-    "duplicate_title": "\u590D\u5236\u6570\u636E\u5E93\uFF1A{name}",
-    "notice_create_empty": "\u6570\u636E\u5E93\u540D\u79F0\u4E0D\u80FD\u4E3A\u7A7A\u3002",
-    "notice_rename_success": '\u6570\u636E\u5E93\u91CD\u547D\u540D\u4E3A "{name}"',
-    "notice_create_success": '\u6570\u636E\u5E93 "{name}" \u5DF2\u521B\u5EFA\u3002',
-    "notice_duplicate_success": '\u6570\u636E\u5E93\u5DF2\u590D\u5236\u5230 "{name}"',
-    "notice_delete_success": '\u6570\u636E\u5E93 "{name}" \u5DF2\u5220\u9664\u3002',
-    "notice_switch_success": '\u5DF2\u5207\u6362\u5230 "{name}"',
-    "tables_title": '"{name}" \u4E2D\u7684\u8868',
-    "null_value": "\u7A7A",
-    "status_error": "\u9519\u8BEF",
-    "status_done": "\u5B8C\u6210",
-    "notice_table_data_copied": "\u8868\u6570\u636E\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01",
-    "notice_copy_failed": "\u590D\u5236\u5931\u8D25: {error}",
-    "notice_screenshot_failed": "\u521B\u5EFA\u622A\u56FE\u5931\u8D25: {error}",
-    "notice_no_active_note": "\u4E5F\u672A\u627E\u5230\u6D3B\u52A8\u7B14\u8BB0",
-    "notice_table_inserted": "\u8868\u683C\u5DF2\u63D2\u5165\u7B14\u8BB0\uFF01",
-    "notice_insert_failed": "\u63D2\u5165\u5931\u8D25: {error}"
-  },
-  "workbench": {
-    "btn_run": "\u8FD0\u884C",
-    "btn_executing": "\u6B63\u5728\u6267\u884C...",
-    "btn_cancel": "\u53D6\u6D88",
-    "notice_copy": "SQL \u4EE3\u7801\u5DF2\u590D\u5236\uFF01",
-    "notice_aborted": "\u67E5\u8BE2\u5DF2\u88AB\u7528\u6237\u4E2D\u6B62"
-  },
-  "renderer": {
-    "btn_copy": "\u590D\u5236",
-    "btn_screenshot": "\u622A\u56FE",
-    "btn_add_note": "\u6DFB\u52A0\u5230\u7B14\u8BB0",
-    "tip_copy": "\u5C06\u7ED3\u679C\u590D\u5236\u5230\u526A\u8D34\u677F",
-    "tip_screenshot": "\u83B7\u53D6\u7ED3\u679C\u622A\u56FE",
-    "tip_add_note": "\u5C06\u7ED3\u679C\u63D2\u5165\u7B14\u8BB0",
-    "notice_copied": "\u2713 \u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01",
-    "notice_copy_failed": "\u274C \u590D\u5236\u5931\u8D25: {error}",
-    "notice_screenshot_failed": "\u274C \u521B\u5EFA\u622A\u56FE\u5931\u8D25: {error}",
-    "notice_screenshot_copied": "\u2713 \u622A\u56FE\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01",
-    "notice_screenshot_downloaded": "\u2713 \u622A\u56FE\u5DF2\u4E0B\u8F7D\uFF01",
-    "notice_insert_no_note": "\u274C \u672A\u627E\u5230\u6D3B\u52A8\u7B14\u8BB0",
-    "notice_insert_success": "\u2713 \u7ED3\u679C\u5DF2\u63D2\u5165\u7B14\u8BB0\uFF01",
-    "notice_insert_failed": "\u274C \u63D2\u5165\u5931\u8D25: {error}",
-    "msg_no_result": "\u67E5\u8BE2\u6210\u529F\u6267\u884C\uFF08\u65E0\u7ED3\u679C\u96C6\uFF09",
-    "msg_rows_found": "\u627E\u5230 {count} \u884C",
-    "msg_no_data": "\u672A\u627E\u5230\u6570\u636E",
-    "msg_showing_rows": "\u6B63\u5728\u663E\u793A {count} / {total} \u884C",
-    "msg_showing_all": "\u6B63\u5728\u663E\u793A\u5168\u90E8 {count} \u884C",
-    "btn_show_all": "\u663E\u793A\u6240\u6709\u884C",
-    "err_title": "\u6267\u884C\u9519\u8BEF",
-    "result_label": "\u7ED3\u679C #{idx}",
-    "table_label": "\u8868\uFF1A{name}",
-    "query_result": "\u67E5\u8BE2\u7ED3\u679C",
-    "msg_loading": "\u6B63\u5728\u52A0\u8F7D\u6570\u636E...",
-    "msg_showing_limit": "\u4EC5\u663E\u793A\u524D {count} \u884C\u3002",
-    "msg_no_tables": "\u5728\u6B64\u6570\u636E\u5E93\u4E2D\u672A\u627E\u5230\u8868\u3002",
-    "tip_back": "\u8FD4\u56DE\u8868\u5217\u8868"
-  },
-  "form": {
-    "title_insert": "\u63D2\u5165\u5230 {name}",
-    "btn_save": "\u4FDD\u5B58\u8BB0\u5F55",
-    "btn_saving": "\u6B63\u5728\u4FDD\u5B58...",
-    "btn_clear": "\u6E05\u7A7A",
-    "msg_success": "\u5DF2\u6210\u529F\u4FDD\u5B58\u5230 {name}",
-    "msg_error": "\u9519\u8BEF\uFF1A{error}",
-    "msg_unexpected": "\u610F\u5916\u9519\u8BEF\uFF1A{error}",
-    "notice_success": "\u8BB0\u5F55\u5DF2\u4FDD\u5B58\u5230 {name}",
-    "notice_error": "\u4FDD\u5B58\u8BB0\u5F55\u65F6\u51FA\u9519\uFF1A{error}",
-    "err_invalid_table": "\u65E0\u6548\u7684\u8868\u540D",
-    "err_invalid_col": "\u65E0\u6548\u7684\u5217\u540D\uFF1A{name}"
-  },
-  "pro": {
-    "label_from": "\u6765\u81EA\uFF1A",
-    "label_to": "\u53D1\u9001\u81F3\uFF1A",
-    "label_subject": "\u4E3B\u9898\uFF1A",
-    "from_name": "SQL Notebook \u5F00\u53D1\u56E2\u961F <dev@obsidian-sql.internal>",
-    "to_name": "\u4EB2\u7231\u7684\u5F00\u53D1\u8005",
-    "subject": "Pro Practice \u63D0\u9192\uFF1A\u6570\u636E\u5E93\u4E0A\u4E0B\u6587\u6700\u4F73\u5B9E\u8DF5",
-    "hello": "\u60A8\u597D\uFF0C",
-    "msg_1": "\u6211\u4EEC\u6CE8\u610F\u5230\u60A8\u6B63\u5728\u901A\u8FC7 UI \u5207\u6362\u6570\u636E\u5E93\u3002\u867D\u7136\u8FD9\u5BF9\u4E8E\u5FEB\u901F\u5BFC\u822A\u975E\u5E38\u68D2\uFF0C\u4F46\u6211\u4EEC\u60F3\u5206\u4EAB\u4E00\u4E2A\u4E13\u4E1A\u63D0\u793A\uFF1A\u5728\u811A\u672C\u4E2D\u4F7F\u7528\u663E\u5F0F\u7684 `USE` \u547D\u4EE4\u53EF\u4EE5\u4F7F\u60A8\u7684\u5DE5\u4F5C\u6D41\u7A0B\u66F4\u52A0\u5065\u58EE\u3002",
-    "msg_quote": "\u663E\u5F0F\u5B9A\u4E49\u4E0A\u4E0B\u6587\u662F\u4E00\u9879\u6700\u4F73\u5B9E\u8DF5\uFF0C\u53EF\u786E\u4FDD\u60A8\u7684\u811A\u672C\u5728\u4E0D\u540C\u73AF\u5883\u4E2D\u5177\u6709\u53EF\u79FB\u690D\u6027\u4E14\u660E\u786E\uFF1A",
-    "msg_2": "\u5728\u4EE3\u7801\u4E2D\u5B9A\u4E49\u4E0A\u4E0B\u6587\u6709\u52A9\u4E8E\u907F\u514D\u6DF7\u6DC6\uFF0C\u5E76\u4F7F\u4EFB\u4F55\u67E5\u770B\u60A8\u5DE5\u4F5C\u7684\u4EBA\u90FD\u80FD\u6E05\u695A\u60A8\u7684\u610F\u56FE\u3002\u4E3A\u4E86\u65B9\u4FBF\u8D77\u89C1\uFF0C\u60A8\u53EF\u4EE5\u59CB\u7EC8\u7EE7\u7EED\u4F7F\u7528\u5168\u5C40\u5207\u6362\u5668\uFF01",
-    "punchline": "\u795D\u67E5\u8BE2\u6109\u5FEB\uFF01 \u{1F680}",
-    "signature_regards": "\u6B64\u81F4\uFF0C",
-    "signature_team": "SQL Notebook \u5F00\u53D1\u56E2\u961F",
-    "btn_read": "\u6807\u8BB0\u4E3A\u5DF2\u8BFB"
-  },
-  "footer": {
-    "tip_help": "\u5E2E\u52A9\u4E0E\u529F\u80FD",
-    "status_ready": "\u5C31\u7EEA",
-    "status_error": "\u9519\u8BEF",
-    "status_aborted": "\u5DF2\u4E2D\u6B62",
-    "status_live": "\u5B9E\u65F6"
-  },
-  "common": {
-    "error": "\u9519\u8BEF\uFF1A{error}",
-    "invalid_name": "\u65B0\u540D\u79F0\u5FC5\u987B\u4E0E\u65E7\u540D\u79F0\u4E0D\u540C\u3002",
-    "notice_export_success": "\u5DF2\u5BFC\u51FA\u5230 {name}",
-    "notice_import_loading": "\u6B63\u5728\u5BFC\u5165\u6570\u636E\u5E93...",
-    "notice_import_success": "\u6570\u636E\u5E93\u5BFC\u5165\u6210\u529F\uFF01",
-    "notice_anchor_form": "FORM \u5DF2\u951A\u5B9A\u5230 {name}",
-    "notice_anchor_live": "LIVE \u5757\u5DF2\u951A\u5B9A\u5230 {name}",
-    "notice_update_live": "\u6B63\u5728\u4ECE {name} \u66F4\u65B0 LIVE \u6570\u636E..."
-  }
-};
-
-// src/locales/es.ts
-var es_default = {
-  "settings": {
-    "title": "SQL Notebook",
-    "subtitle": "Gestor de Base de Datos",
-    "btn_atualizar": "Actualizar",
-    "btn_importar": "Importar",
-    "btn_novo_db": "Nueva Base de Datos",
-    "welcome_title": "\xA1Bienvenido a SQL Notebook!",
-    "welcome_desc": "Administra tus bases de datos locales, ejecuta consultas y visualiza resultados directamente en Obsidian.",
-    "search_placeholder": "Buscar bases de datos...",
-    "info_title": "Informaci\xF3n Importante:",
-    "info_li_1": "Para eliminar o renombrar una base de datos <b>activa</b>, cambia primero a otra.",
-    "info_li_2": 'La base de datos del sistema <b>"dbo"</b> no puede ser renombrada ni eliminada.',
-    "info_li_3": "<b>Renombrar</b> una base de datos actualiza autom\xE1ticamente las referencias internas.",
-    "section_general": "Configuraci\xF3n General",
-    "section_appearance": "Apariencia",
-    "section_data_security": "Datos y Seguridad",
-    "lang_name": "Idioma",
-    "lang_desc": "Elige el idioma de la interfaz.",
-    "accent_obsidian": "Usar Color de Acento de Obsidian",
-    "accent_obsidian_desc": "Usa el color de acento global de Obsidian en lugar de uno personalizado.",
-    "theme_accent": "Acento del Tema",
-    "theme_accent_desc": "Elige el color de acento principal.",
-    "auto_save": "Guardado Autom\xE1tico",
-    "auto_save_desc": "Guardar autom\xE1ticamente los cambios de la base de datos.",
-    "auto_save_delay": "Retraso de Guardado Autom\xE1tico",
-    "auto_save_delay_desc": "Milisegundos a esperar antes de guardar autom\xE1ticamente.",
-    "export_folder": "Carpeta de Exportaci\xF3n",
-    "export_folder_desc": "Carpeta predeterminada para exportaciones CSV.",
-    "safe_mode": "Modo Seguro",
-    "safe_mode_desc": "Bloquear comandos peligrosos (DROP, ALTER) y aplicar l\xEDmites.",
-    "enable_logging": "Activar Registro de Depuraci\xF3n",
-    "enable_logging_desc": "Mostrar registros detallados en la consola de desarrollador (Ctrl+Shift+I). \xDAtil para depurar sincronizaci\xF3n.",
-    "snapshot_limit": "L\xEDmite de Filas de Instant\xE1nea",
-    "snapshot_limit_desc": "M\xE1ximo de filas por tabla para guardar (evita problemas de memoria).",
-    "batch_size": "Tama\xF1o de Lote",
-    "batch_size_desc": "Filas a mostrar por p\xE1gina en los resultados.",
-    "reset_all": "Restablecer Todos los Datos",
-    "reset_btn": "Restablecer Todo",
-    "footer_by": "Diego Pena"
-  },
-  "help": {
-    "title": "Caracter\xEDsticas de SQL Notebook",
-    "collapsible_title": "Panel de Trabajo Plegable",
-    "collapsible_desc": "Alterna la vista del panel para ahorrar espacio. Haz clic en el encabezado o en el icono de flecha.",
-    "auto_collapse_title": "Plegado Autom\xE1tico",
-    "auto_collapse_desc": "Comienza un comentario con '@' (ej., '-- @ Mi Consulta') para plegar autom\xE1ticamente el panel al abrir la nota.",
-    "alert_title": "Marcador de Alerta (!)",
-    "alert_desc": "A\xF1ade '!' al inicio de tu comentario para resaltarlo como una alerta o advertencia.",
-    "question_title": "Marcador de Pregunta (?)",
-    "question_desc": "A\xF1ade '?' para indicar una consulta que necesita revisi\xF3n o es experimental.",
-    "favorite_title": "Marcador de Favorito (*)",
-    "favorite_desc": "A\xF1ade '*' para resaltar consultas importantes o frecuentes.",
-    "copy_edit_title": "Copiar y Editar",
-    "copy_edit_desc": "Pasa el rat\xF3n sobre el panel para acceder a los botones r\xE1pidos de Copiar C\xF3digo y Editar Bloque."
-  },
-  "modals": {
-    "confirm_delete_title": "Eliminar Base de Datos",
-    "confirm_delete_msg": 'Est\xE1s a punto de eliminar la base de datos "{dbName}". Esta acci\xF3n no se puede deshacer. Se perder\xE1n todas las tablas y datos.',
-    "confirm_clear_title": "Limpiar Base de Datos",
-    "confirm_clear_msg": '\xBFEst\xE1s seguro de que quieres limpiar todas las tablas en "{dbName}"? Esto mantiene la base de datos pero elimina todos los datos.',
-    "btn_cancel": "Cancelar",
-    "btn_confirm": "Confirmar",
-    "btn_delete": "Eliminar Base de Datos",
-    "btn_clear": "Limpiar todos los datos",
-    "btn_ativar": "Activar",
-    "btn_duplicar": "Duplicar",
-    "btn_renomear": "Renombrar",
-    "btn_tabelas": "Tablas",
-    "btn_exportar": "Exportar",
-    "btn_deletar": "Eliminar",
-    "badge_ativo": "ACTIVO",
-    "badge_system": "Sistema",
-    "stat_tables": "Tablas",
-    "stat_rows": "Filas",
-    "stat_size": "Tama\xF1o",
-    "stat_updated": "Actualizado",
-    "time_just_now": "Ahora mismo",
-    "time_ago": "hace {time}",
-    "time_never": "Nunca",
-    "switch_title": "Cambiar Base de Datos",
-    "no_user_dbs": "No se encontraron bases de datos de usuario.",
-    "tip_system_db": "Base de datos predeterminada del sistema. No se puede eliminar.",
-    "tip_protected_db": "Cambia a otra base de datos para eliminar esta.",
-    "rename_title": "Renombrar Base de Datos: {name}",
-    "rename_placeholder": "Nuevo nombre de la base de datos...",
-    "create_title": "Crear Nueva Base de Datos",
-    "create_placeholder": "Nombre de la base de datos (ej., mi_proyecto)",
-    "duplicate_title": "Duplicar Base de Datos: {name}",
-    "notice_create_empty": "El nombre de la base de datos no puede estar vac\xEDo.",
-    "notice_rename_success": 'Base de datos renombrada a "{name}"',
-    "notice_create_success": 'Base de datos "{name}" creada.',
-    "notice_duplicate_success": 'Base de datos duplicada a "{name}"',
-    "notice_delete_success": 'Base de datos "{name}" eliminada.',
-    "notice_switch_success": 'Cambiado a "{name}"',
-    "tables_title": 'Tablas en "{name}"',
-    "null_value": "NULO",
-    "status_error": "Error",
-    "status_done": "Hecho",
-    "notice_table_data_copied": "\xA1Datos de la tabla copiados al portapapeles!",
-    "notice_copy_failed": "Error al copiar: {error}",
-    "notice_screenshot_failed": "Error al crear la captura de pantalla: {error}",
-    "notice_no_active_note": "No se encontr\xF3 ninguna nota activa",
-    "notice_table_inserted": "\xA1Tabla insertada en la nota!",
-    "notice_insert_failed": "Error al insertar: {error}"
-  },
-  "workbench": {
-    "btn_run": "Ejecutar",
-    "btn_executing": "Ejecutando...",
-    "btn_cancel": "Cancelar",
-    "notice_copy": "\xA1C\xF3digo SQL copiado!",
-    "notice_aborted": "Consulta abortada por el usuario"
-  },
-  "renderer": {
-    "btn_copy": "Copiar",
-    "btn_screenshot": "Captura",
-    "btn_add_note": "A\xF1adir a Nota",
-    "tip_copy": "Copiar resultado al portapapeles",
-    "tip_screenshot": "Tomar captura del resultado",
-    "tip_add_note": "Insertar resultado en la nota",
-    "notice_copied": "\u2713 \xA1Copiado al portapapeles!",
-    "notice_copy_failed": "\u274C Error al copiar: {error}",
-    "notice_screenshot_failed": "\u274C Error al crear captura: {error}",
-    "notice_screenshot_copied": "\u2713 \xA1Captura copiada al portapapeles!",
-    "notice_screenshot_downloaded": "\u2713 \xA1Captura descargada!",
-    "notice_insert_no_note": "\u274C No se encontr\xF3 nota activa",
-    "notice_insert_success": "\u2713 \xA1Resultado insertado en la nota!",
-    "notice_insert_failed": "\u274C Error al insertar: {error}",
-    "msg_no_result": "Consulta ejecutada con \xE9xito (sin resultados)",
-    "msg_rows_found": "{count} filas encontradas",
-    "msg_no_data": "No se encontraron datos",
-    "msg_showing_rows": "Mostrando {count} de {total} filas",
-    "msg_showing_all": "Mostrando las {count} filas",
-    "btn_show_all": "Mostrar todas las filas",
-    "err_title": "Error de Ejecuci\xF3n",
-    "result_label": "Resultado #{idx}",
-    "table_label": "Tabla: {name}",
-    "query_result": "Resultado de la Consulta",
-    "msg_loading": "Cargando datos...",
-    "msg_showing_limit": "Mostrando solo las primeras {count} filas.",
-    "msg_no_tables": "No se encontraron tablas en esta base de datos.",
-    "tip_back": "Volver a la lista de tablas"
-  },
-  "form": {
-    "title_insert": "Insertar en {name}",
-    "btn_save": "Guardar Registro",
-    "btn_saving": "Guardando...",
-    "btn_clear": "Limpiar",
-    "msg_success": "Guardado con \xE9xito en {name}",
-    "msg_error": "Error: {error}",
-    "msg_unexpected": "Error inesperado: {error}",
-    "notice_success": "Registro guardado en {name}",
-    "notice_error": "Error al guardar registro: {error}",
-    "err_invalid_table": "Nombre de tabla no v\xE1lido",
-    "err_invalid_col": "Nombre de columna no v\xE1lido: {name}"
-  },
-  "pro": {
-    "label_from": "De:",
-    "label_to": "Para:",
-    "label_subject": "Asunto:",
-    "from_name": "Equipo de Desarrollo de SQL Notebook <dev@obsidian-sql.internal>",
-    "to_name": "Estimado Desarrollador",
-    "subject": "Alerta Pro Practice: Mejores Pr\xE1cticas de Contexto de Base de Datos",
-    "hello": "Hola,",
-    "msg_1": "Notamos que est\xE1s cambiando de base de datos a trav\xE9s de la interfaz. Si bien esto es excelente para una navegaci\xF3n r\xE1pida, nos gustar\xEDa compartir un consejo profesional: el uso del comando expl\xEDcito `USE` en tus scripts puede hacer que tu flujo de trabajo sea a\xFAn m\xE1s s\xF3lido.",
-    "msg_quote": "Definir expl\xEDcitamente tu contexto es una mejor pr\xE1ctica que garantiza que tus scripts sean port\xE1tiles y claros en diferentes entornos:",
-    "msg_2": "Definir el contexto dentro del c\xF3digo ayuda a evitar confusiones y aclara tu intenci\xF3n a cualquiera que revise tu trabajo. \xA1Siempre puedes seguir usando el selector global por conveniencia!",
-    "punchline": "\xA1Felices consultas! \u{1F680}",
-    "signature_regards": "Saludos cordiales,",
-    "signature_team": "Equipo de Desarrollo de SQL Notebook",
-    "btn_read": "Marcar como le\xEDdo"
-  },
-  "footer": {
-    "tip_help": "Ayuda y Recursos",
-    "status_ready": "Listo",
-    "status_error": "Error",
-    "status_aborted": "Abortado",
-    "status_live": "EN VIVO"
-  },
-  "common": {
-    "error": "Error: {error}",
-    "invalid_name": "El nuevo nombre debe ser diferente del antiguo.",
-    "notice_export_success": "Exportado a {name}",
-    "notice_import_loading": "Importando base de datos...",
-    "notice_import_success": "\xA1Base de datos importada con \xE9xito!",
-    "notice_anchor_form": "FORM anclado a {name}",
-    "notice_anchor_live": "Bloque LIVE anclado a {name}",
-    "notice_update_live": "Actualizando datos LIVE desde {name}..."
-  }
-};
-
-// src/locales/de.ts
-var de_default = {
-  "settings": {
-    "title": "SQL Notebook",
-    "subtitle": "Datenbank-Manager",
-    "btn_atualizar": "Aktualisieren",
-    "btn_importar": "Importieren",
-    "btn_novo_db": "Neue Datenbank",
-    "welcome_title": "Willkommen bei SQL Notebook!",
-    "welcome_desc": "Verwalten Sie Ihre lokalen Datenbanken, f\xFChren Sie Abfragen aus und visualisieren Sie Ergebnisse direkt in Obsidian.",
-    "search_placeholder": "Datenbanken suchen...",
-    "info_title": "Wichtige Informationen:",
-    "info_li_1": "Um eine <b>aktive</b> Datenbank zu l\xF6schen oder umzubenennen, wechseln Sie zuerst zu einer anderen.",
-    "info_li_2": 'Die Systemdatenbank <b>"dbo"</b> kann nicht umbenannt oder gel\xF6scht werden.',
-    "info_li_3": "Das <b>Umbenennen</b> einer Datenbank aktualisiert automatisch interne Referenzen.",
-    "section_general": "Allgemeine Einstellungen",
-    "section_appearance": "Erscheinungsbild",
-    "section_data_security": "Daten & Sicherheit",
-    "lang_name": "Sprache",
-    "lang_desc": "W\xE4hlen Sie die Oberfl\xE4chensprache.",
-    "accent_obsidian": "Obsidian-Akzentfarbe verwenden",
-    "accent_obsidian_desc": "Verwenden Sie die globale Obsidian-Akzentfarbe anstelle einer benutzerdefinierten Farbe.",
-    "theme_accent": "Themen-Akzent",
-    "theme_accent_desc": "W\xE4hlen Sie die prim\xE4re Akzentfarbe.",
-    "auto_save": "Automatisches Speichern",
-    "auto_save_desc": "Datenbank\xE4nderungen automatisch speichern.",
-    "auto_save_delay": "Verz\xF6gerung f\xFCr automatisches Speichern",
-    "auto_save_delay_desc": "Millisekunden, die vor dem automatischen Speichern gewartet werden soll.",
-    "export_folder": "Export-Ordner",
-    "export_folder_desc": "Standardordner f\xFCr CSV-Exporte.",
-    "safe_mode": "Sicherer Modus",
-    "safe_mode_desc": "Gef\xE4hrliche Befehle (DROP, ALTER) blockieren und Limits durchsetzen.",
-    "enable_logging": "Debug-Logging aktivieren",
-    "enable_logging_desc": "Schauen Sie sich detaillierte Protokolle in der Entwicklerkonsole (Strg+Umschalt+I) an. N\xFCtzlich f\xFCr das Debugging der Synchronisation.",
-    "snapshot_limit": "Snapshot-Zeilenlimit",
-    "snapshot_limit_desc": "Maximale Zeilen pro Tabelle zum Speichern (verhindert Speicherprobleme).",
-    "batch_size": "Batch-Gr\xF6\xDFe",
-    "batch_size_desc": "Zeilen, die pro Seite in den Ergebnissen angezeigt werden sollen.",
-    "reset_all": "Alle Daten zur\xFCcksetzen",
-    "reset_btn": "Alles zur\xFCcksetzen",
-    "footer_by": "Diego Pena"
-  },
-  "help": {
-    "title": "SQL Notebook Funktionen",
-    "collapsible_title": "Einklappbare Workbench",
-    "collapsible_desc": "Schalten Sie die Workbench-Ansicht um, um Platz zu sparen. Klicken Sie auf den Header oder das Chevron-Symbol.",
-    "auto_collapse_title": "Automatisches Einklappen",
-    "auto_collapse_desc": "Beginnen Sie einen Kommentar mit '@' (z. B. '-- @ Meine Abfrage'), um die Workbench automatisch einzuklappen, wenn die Notiz ge\xF6ffnet wird.",
-    "alert_title": "Warnungs-Marker (!)",
-    "alert_desc": "F\xFCgen Sie '!' zum Anfang Ihres Kommentars hinzu, um ihn als Warnung hervorzuheben.",
-    "question_title": "Frage-Marker (?)",
-    "question_desc": "F\xFCgen Sie '?' hinzu, um eine Abfrage zu kennzeichnen, die \xFCberpr\xFCft werden muss oder experimentell ist.",
-    "favorite_title": "Favoriten-Marker (*)",
-    "favorite_desc": "F\xFCgen Sie '*' hinzu, um wichtige oder h\xE4ufig verwendete Abfragen hervorzuheben.",
-    "copy_edit_title": "Kopieren & Bearbeiten",
-    "copy_edit_desc": "Bewegen Sie den Mauszeiger \xFCber die Workbench, um auf die Schaltfl\xE4chen zum schnellen Kopieren von Code und Bearbeiten von Bl\xF6cken zuzugreifen."
-  },
-  "modals": {
-    "confirm_delete_title": "Datenbank l\xF6schen",
-    "confirm_delete_msg": 'Sie sind dabei, die Datenbank "{dbName}" zu l\xF6schen. Diese Aktion kann nicht r\xFCckg\xE4ngig gemacht werden. Alle Tabellen und Daten gehen verloren.',
-    "confirm_clear_title": "Datenbank leeren",
-    "confirm_clear_msg": 'Sind Sie sicher, dass Sie alle Tabellen in "{dbName}" leeren m\xF6chten? Die Datenbank bleibt erhalten, aber alle Daten werden gel\xF6scht.',
-    "btn_cancel": "Abbrechen",
-    "btn_confirm": "Best\xE4tigen",
-    "btn_delete": "Datenbank l\xF6schen",
-    "btn_clear": "Alle Daten leeren",
-    "btn_ativar": "Aktivieren",
-    "btn_duplicar": "Duplizieren",
-    "btn_renomear": "Umbenennen",
-    "btn_tabelas": "Tabellen",
-    "btn_exportar": "Exportieren",
-    "btn_deletar": "L\xF6schen",
-    "badge_ativo": "AKTIV",
-    "badge_system": "System",
-    "stat_tables": "Tabellen",
-    "stat_rows": "Zeilen",
-    "stat_size": "Gr\xF6\xDFe",
-    "stat_updated": "Aktualisiert",
-    "time_just_now": "Gerade eben",
-    "time_ago": "vor {time}",
-    "time_never": "Nie",
-    "switch_title": "Datenbank wechseln",
-    "no_user_dbs": "Keine Benutzerdatenbanken gefunden.",
-    "tip_system_db": "System-Standarddatenbank. Kann nicht gel\xF6scht werden.",
-    "tip_protected_db": "Wechseln Sie zu einer anderen Datenbank, um diese zu l\xF6schen.",
-    "rename_title": "Datenbank umbenennen: {name}",
-    "rename_placeholder": "Neuer Datenbankname...",
-    "create_title": "Neue Datenbank erstellen",
-    "create_placeholder": "Datenbankname (z. B. mein_projekt)",
-    "duplicate_title": "Datenbank duplizieren: {name}",
-    "notice_create_empty": "Datenbankname darf nicht leer sein.",
-    "notice_rename_success": 'Datenbank in "{name}" umbenannt',
-    "notice_create_success": 'Datenbank "{name}" erstellt.',
-    "notice_duplicate_success": 'Datenbank nach "{name}" dupliziert',
-    "notice_delete_success": 'Datenbank "{name}" gel\xF6scht.',
-    "notice_switch_success": 'Zu "{name}" gewechselt',
-    "tables_title": 'Tabellen in "{name}"',
-    "null_value": "NULL",
-    "status_error": "Fehler",
-    "status_done": "Fertig",
-    "notice_table_data_copied": "Tabellendaten in die Zwischenablage kopiert!",
-    "notice_copy_failed": "Kopieren fehlgeschlagen: {error}",
-    "notice_screenshot_failed": "Screenshot-Erstellung fehlgeschlagen: {error}",
-    "notice_no_active_note": "Keine aktive Notiz gefunden",
-    "notice_table_inserted": "Tabelle in Notiz eingef\xFCgt!",
-    "notice_insert_failed": "Einf\xFCgen fehlgeschlagen: {error}"
-  },
-  "workbench": {
-    "btn_run": "Ausf\xFChren",
-    "btn_executing": "Wird ausgef\xFChrt...",
-    "btn_cancel": "Abbrechen",
-    "notice_copy": "SQL-Code kopiert!",
-    "notice_aborted": "Abfrage vom Benutzer abgebrochen"
-  },
-  "renderer": {
-    "btn_copy": "Kopieren",
-    "btn_screenshot": "Screenshot",
-    "btn_add_note": "Zur Notiz hinzuf\xFCgen",
-    "tip_copy": "Ergebnis in die Zwischenablage kopieren",
-    "tip_screenshot": "Screenshot vom Ergebnis machen",
-    "tip_add_note": "Ergebnis in die Notiz einf\xFCgen",
-    "notice_copied": "\u2713 In die Zwischenablage kopiert!",
-    "notice_copy_failed": "\u274C Kopieren fehlgeschlagen: {error}",
-    "notice_screenshot_failed": "\u274C Screenshot-Erstellung fehlgeschlagen: {error}",
-    "notice_screenshot_copied": "\u2713 Screenshot in die Zwischenablage kopiert!",
-    "notice_screenshot_downloaded": "\u2713 Screenshot heruntergeladen!",
-    "notice_insert_no_note": "\u274C Keine aktive Notiz gefunden",
-    "notice_insert_success": "\u2713 Ergebnis in Notiz eingef\xFCgt!",
-    "notice_insert_failed": "\u274C Einf\xFCgen fehlgeschlagen: {error}",
-    "msg_no_result": "Abfrage erfolgreich ausgef\xFChrt (kein Ergebnissatz)",
-    "msg_rows_found": "{count} Zeilen gefunden",
-    "msg_no_data": "Keine Daten gefunden",
-    "msg_showing_rows": "Zeige {count} von {total} Zeilen",
-    "msg_showing_all": "Zeige alle {count} Zeilen",
-    "btn_show_all": "Alle Zeilen anzeigen",
-    "err_title": "Ausf\xFChrungsfehler",
-    "result_label": "Ergebnis #{idx}",
-    "table_label": "Tabelle: {name}",
-    "query_result": "Abfrageergebnis",
-    "msg_loading": "Lade Daten...",
-    "msg_showing_limit": "Zeige nur die ersten {count} Zeilen.",
-    "msg_no_tables": "Keine Tabellen in dieser Datenbank gefunden.",
-    "tip_back": "Zur\xFCck zur Tabellenliste"
-  },
-  "form": {
-    "title_insert": "Einf\xFCgen in {name}",
-    "btn_save": "Datensatz speichern",
-    "btn_saving": "Speichere...",
-    "btn_clear": "Leeren",
-    "msg_success": "Erfolgreich in {name} gespeichert",
-    "msg_error": "Fehler: {error}",
-    "msg_unexpected": "Unerwarteter Fehler: {error}",
-    "notice_success": "Datensatz in {name} gespeichert",
-    "notice_error": "Fehler beim Speichern des Datensatzes: {error}",
-    "err_invalid_table": "Ung\xFCltiger Tabellenname",
-    "err_invalid_col": "Ung\xFCltiger Spaltenname: {name}"
-  },
-  "pro": {
-    "label_from": "Von:",
-    "label_to": "An:",
-    "label_subject": "Betreff:",
-    "from_name": "SQL Notebook Entwicklerteam <dev@obsidian-sql.internal>",
-    "to_name": "Gesch\xE4tzter Entwickler",
-    "subject": "Pro Practice Hinweis: Best Practices f\xFCr den Datenbank-Kontext",
-    "hello": "Hallo,",
-    "msg_1": "Wir haben bemerkt, dass Sie die Datenbank \xFCber die Benutzeroberfl\xE4che wechseln. Dies ist zwar hervorragend f\xFCr die schnelle Navigation, aber wir m\xF6chten einen Profi-Tipp teilen: Die Verwendung des expliziten `USE`-Befehls in Ihren Skripten kann Ihren Workflow noch robuster machen.",
-    "msg_quote": "Die explizite Definition Ihres Kontextes ist eine Best Practice, die sicherstellt, dass Ihre Skripte \xFCber verschiedene Umgebungen hinweg portabel und eindeutig sind:",
-    "msg_2": "Die Definition des Kontextes innerhalb des Codes hilft, Verwirrung zu vermeiden und macht Ihre Absicht f\xFCr jeden klar, der Ihre Arbeit \xFCberpr\xFCft. F\xFCr maximale Bequemlichkeit k\xF6nnen Sie nat\xFCrlich weiterhin den globalen Umschalter verwenden!",
-    "punchline": "Viel Spa\xDF beim Abfragen! \u{1F680}",
-    "signature_regards": "Mit freundlichen Gr\xFC\xDFen,",
-    "signature_team": "SQL Notebook Entwicklerteam",
-    "btn_read": "Als gelesen markieren"
-  },
-  "footer": {
-    "tip_help": "Hilfe & Funktionen",
-    "status_ready": "Bereit",
-    "status_error": "Fehler",
-    "status_aborted": "Abgebrochen",
-    "status_live": "LIVE"
-  },
-  "common": {
-    "error": "Fehler: {error}",
-    "invalid_name": "Der neue Name muss sich vom alten unterscheiden.",
-    "notice_export_success": "Exportiert nach {name}",
-    "notice_import_loading": "Importiere Datenbank...",
-    "notice_import_success": "Datenbank erfolgreich importiert!",
-    "notice_anchor_form": "FORM an {name} verankert",
-    "notice_anchor_live": "LIVE-Block an {name} verankert",
-    "notice_update_live": "Aktualisiere LIVE-Daten von {name}..."
-  }
-};
-
-// src/locales/fr.ts
-var fr_default = {
-  "settings": {
-    "title": "SQL Notebook",
-    "subtitle": "Gestionnaire de base de donn\xE9es",
-    "btn_atualizar": "Mettre \xE0 jour",
-    "btn_importar": "Importer",
-    "btn_novo_db": "Nouvelle base de donn\xE9es",
-    "welcome_title": "Bienvenue sur SQL Notebook !",
-    "welcome_desc": "G\xE9rez vos bases de donn\xE9es locales, ex\xE9cutez des requ\xEAtes et visualisez les r\xE9sultats directement dans Obsidian.",
-    "search_placeholder": "Rechercher des bases de donn\xE9es...",
-    "info_title": "Informations importantes :",
-    "info_li_1": "Pour supprimer ou renommer une base de donn\xE9es <b>active</b>, passez d'abord \xE0 une autre.",
-    "info_li_2": 'La base de donn\xE9es syst\xE8me <b>"dbo"</b> ne peut pas \xEAtre renomm\xE9e ou supprim\xE9e.',
-    "info_li_3": "Le <b>renommage</b> d'une base de donn\xE9es met automatiquement \xE0 jour les r\xE9f\xE9rences internes.",
-    "section_general": "Param\xE8tres g\xE9n\xE9raux",
-    "section_appearance": "Apparence",
-    "section_data_security": "Donn\xE9es et s\xE9curit\xE9",
-    "lang_name": "Langue",
-    "lang_desc": "Choisissez la langue de l'interface.",
-    "accent_obsidian": "Utiliser la couleur d'accentuation d'Obsidian",
-    "accent_obsidian_desc": "Utilisez la couleur d'accentuation globale d'Obsidian au lieu d'une couleur personnalis\xE9e.",
-    "theme_accent": "Accentuation du th\xE8me",
-    "theme_accent_desc": "Choisissez la couleur d'accentuation principale.",
-    "auto_save": "Sauvegarde automatique",
-    "auto_save_desc": "Sauvegarder automatiquement les modifications de la base de donn\xE9es.",
-    "auto_save_delay": "D\xE9lai de sauvegarde automatique",
-    "auto_save_delay_desc": "Millisecondes \xE0 attendre avant la sauvegarde automatique.",
-    "export_folder": "Dossier d'exportation",
-    "export_folder_desc": "Dossier par d\xE9faut pour les exportations CSV.",
-    "safe_mode": "Mode s\xE9curis\xE9",
-    "safe_mode_desc": "Bloquer les commandes dangereuses (DROP, ALTER) et imposer des limites.",
-    "enable_logging": "Activer le journal de d\xE9bogage",
-    "enable_logging_desc": "Afficher les journaux d\xE9taill\xE9s dans la console d\xE9veloppeur (Ctrl+Shift+I). Utile pour d\xE9boguer la synchronisation.",
-    "snapshot_limit": "Limite de lignes d'instantan\xE9",
-    "snapshot_limit_desc": "Nombre maximal de lignes par tableau \xE0 sauvegarder (\xE9vite les probl\xE8mes de m\xE9moire).",
-    "batch_size": "Taille du lot",
-    "batch_size_desc": "Lignes \xE0 afficher par page dans les r\xE9sultats.",
-    "reset_all": "R\xE9initialiser toutes les donn\xE9es",
-    "reset_btn": "Tout r\xE9initialiser",
-    "footer_by": "Diego Pena"
-  },
-  "help": {
-    "title": "Fonctionnalit\xE9s de SQL Notebook",
-    "collapsible_title": "Banc de travail pliable",
-    "collapsible_desc": "Basculez la vue du banc de travail pour gagner de l'espace. Cliquez sur l'en-t\xEAte ou l'ic\xF4ne chevron.",
-    "auto_collapse_title": "Pliage automatique",
-    "auto_collapse_desc": "Commencez un commentaire par '@' (ex: '-- @ Ma requ\xEAte') pour plier automatiquement le banc de travail \xE0 l'ouverture de la note.",
-    "alert_title": "Marqueur d'alerte (!)",
-    "alert_desc": "Ajoutez '!' au d\xE9but de votre commentaire pour le mettre en \xE9vidence comme une alerte ou un avertissement.",
-    "question_title": "Marqueur de question (?)",
-    "question_desc": "Ajoutez '?' pour indiquer une requ\xEAte n\xE9cessitant une r\xE9vision ou exp\xE9rimentale.",
-    "favorite_title": "Marqueur de favori (*)",
-    "favorite_desc": "Ajoutez '*' pour mettre en \xE9vidence les requ\xEAtes importantes ou fr\xE9quentes.",
-    "copy_edit_title": "Copier et modifier",
-    "copy_edit_desc": "Survolez le banc de travail pour acc\xE9der aux boutons rapides de copie de code et de modification de bloc."
-  },
-  "modals": {
-    "confirm_delete_title": "Supprimer la base de donn\xE9es",
-    "confirm_delete_msg": 'Vous \xEAtes sur le point de supprimer la base de donn\xE9es "{dbName}". Cette action est irr\xE9versible. Toutes les tables et donn\xE9es seront perdues.',
-    "confirm_clear_title": "Effacer la base de donn\xE9es",
-    "confirm_clear_msg": '\xCAtes-vous s\xFBr de vouloir effacer toutes les tables de "{dbName}" ? Cela conserve la base de donn\xE9es mais supprime toutes les donn\xE9es.',
-    "btn_cancel": "Annuler",
-    "btn_confirm": "Confirmer",
-    "btn_delete": "Supprimer la base de donn\xE9es",
-    "btn_clear": "Effacer toutes les donn\xE9es",
-    "btn_ativar": "Activer",
-    "btn_duplicar": "Dupliquer",
-    "btn_renomear": "Renommer",
-    "btn_tabelas": "Tables",
-    "btn_exportar": "Exporter",
-    "btn_deletar": "Supprimer",
-    "badge_ativo": "ACTIF",
-    "badge_system": "Syst\xE8me",
-    "stat_tables": "Tables",
-    "stat_rows": "Lignes",
-    "stat_size": "Taille",
-    "stat_updated": "Mis \xE0 jour",
-    "time_just_now": "\xC0 l'instant",
-    "time_ago": "Il y a {time}",
-    "time_never": "Jamais",
-    "switch_title": "Changer de base de donn\xE9es",
-    "no_user_dbs": "Aucune base de donn\xE9es utilisateur trouv\xE9e.",
-    "tip_system_db": "Base de donn\xE9es syst\xE8me par d\xE9faut. Impossible de la supprimer.",
-    "tip_protected_db": "Passez \xE0 une autre base de donn\xE9es pour supprimer celle-ci.",
-    "rename_title": "Renommer la base de donn\xE9es : {name}",
-    "rename_placeholder": "Nouveau nom de base de donn\xE9es...",
-    "create_title": "Cr\xE9er une nouvelle base de donn\xE9es",
-    "create_placeholder": "Nom de la base de donn\xE9es (ex: mon_projet)",
-    "duplicate_title": "Dupliquer la base de donn\xE9es : {name}",
-    "notice_create_empty": "Le nom de la base de donn\xE9es ne peut pas \xEAtre vide.",
-    "notice_rename_success": 'Base de donn\xE9es renomm\xE9e en "{name}"',
-    "notice_create_success": 'Base de donn\xE9es "{name}" cr\xE9\xE9e.',
-    "notice_duplicate_success": 'Base de donn\xE9es dupliqu\xE9e en "{name}"',
-    "notice_delete_success": 'Base de donn\xE9es "{name}" supprim\xE9e.',
-    "notice_switch_success": 'Pass\xE9 \xE0 "{name}"',
-    "tables_title": 'Tables dans "{name}"',
-    "null_value": "NULL",
-    "status_error": "Erreur",
-    "status_done": "Termin\xE9",
-    "notice_table_data_copied": "Donn\xE9es de table copi\xE9es dans le presse-papiers !",
-    "notice_copy_failed": "\xC9chec de la copie : {error}",
-    "notice_screenshot_failed": "\xC9chec de la capture d'\xE9cran : {error}",
-    "notice_no_active_note": "Aucune note active trouv\xE9e",
-    "notice_table_inserted": "Table ins\xE9r\xE9e dans la note !",
-    "notice_insert_failed": "\xC9chec de l'insertion : {error}"
-  },
-  "workbench": {
-    "btn_run": "Ex\xE9cuter",
-    "btn_executing": "Ex\xE9cution...",
-    "btn_cancel": "Annuler",
-    "notice_copy": "Code SQL copi\xE9 !",
-    "notice_aborted": "Requ\xEAte interrompue par l'utilisateur"
-  },
-  "renderer": {
-    "btn_copy": "Copier",
-    "btn_screenshot": "Capture",
-    "btn_add_note": "Ajouter \xE0 la note",
-    "tip_copy": "Copier le r\xE9sultat dans le presse-papiers",
-    "tip_screenshot": "Prendre une capture du r\xE9sultat",
-    "tip_add_note": "Ins\xE9rer le r\xE9sultat dans la note",
-    "notice_copied": "\u2713 Copi\xE9 dans le presse-papiers !",
-    "notice_copy_failed": "\u274C \xC9chec de la copie : {error}",
-    "notice_screenshot_failed": "\u274C \xC9chec de la capture d'\xE9cran : {error}",
-    "notice_screenshot_copied": "\u2713 Capture copi\xE9e dans le presse-papiers !",
-    "notice_screenshot_downloaded": "\u2713 Capture t\xE9l\xE9charg\xE9e !",
-    "notice_insert_no_note": "\u274C Aucune note active trouv\xE9e",
-    "notice_insert_success": "\u2713 R\xE9sultat ins\xE9r\xE9 dans la note !",
-    "notice_insert_failed": "\u274C \xC9chec de l'insertion : {error}",
-    "msg_no_result": "Requ\xEAte ex\xE9cut\xE9e avec succ\xE8s (aucun r\xE9sultat)",
-    "msg_rows_found": "{count} lignes trouv\xE9es",
-    "msg_no_data": "Aucune donn\xE9e trouv\xE9e",
-    "msg_showing_rows": "Affichage de {count} sur {total} lignes",
-    "msg_showing_all": "Affichage de toutes les {count} lignes",
-    "btn_show_all": "Afficher toutes les lignes",
-    "err_title": "Erreur d'ex\xE9cution",
-    "result_label": "R\xE9sultat #{idx}",
-    "table_label": "Table : {name}",
-    "query_result": "R\xE9sultat de la requ\xEAte",
-    "msg_loading": "Chargement des donn\xE9es...",
-    "msg_showing_limit": "Affichage des {count} premi\xE8res lignes uniquement.",
-    "msg_no_tables": "Aucune table trouv\xE9e dans cette base de donn\xE9es.",
-    "tip_back": "Retour \xE0 la liste des tables"
-  },
-  "form": {
-    "title_insert": "Ins\xE9rer dans {name}",
-    "btn_save": "Enregistrer l'enregistrement",
-    "btn_saving": "Enregistrement...",
-    "btn_clear": "Effacer",
-    "msg_success": "Enregistr\xE9 avec succ\xE8s dans {name}",
-    "msg_error": "Erreur : {error}",
-    "msg_unexpected": "Erreur inattendue : {error}",
-    "notice_success": "Enregistrement sauvegard\xE9 dans {name}",
-    "notice_error": "Erreur lors de l'enregistrement : {error}",
-    "err_invalid_table": "Nom de table non valide",
-    "err_invalid_col": "Nom de colonne non valide : {name}"
-  },
-  "pro": {
-    "label_from": "De :",
-    "label_to": "\xC0 :",
-    "label_subject": "Sujet :",
-    "from_name": "\xC9quipe de d\xE9veloppement SQL Notebook <dev@obsidian-sql.internal>",
-    "to_name": "Cher d\xE9veloppeur",
-    "subject": "Alerte Pro Practice : Bonnes pratiques dans le contexte de base de donn\xE9es",
-    "hello": "Bonjour,",
-    "msg_1": "Nous avons remarqu\xE9 que vous changez de base de donn\xE9es via l'interface. Bien que cela soit pratique pour une navigation rapide, nous aimerions partager un conseil : l'utilisation de la commande explicite `USE` dans vos scripts peut rendre votre flux de travail encore plus robuste.",
-    "msg_quote": "D\xE9finir explicitement votre contexte est une bonne pratique qui garantit que vos scripts sont portables et clairs dans diff\xE9rents environnements :",
-    "msg_2": "D\xE9finir le contexte dans le code aide \xE0 \xE9viter la confusion et rend votre intention claire pour quiconque examine votre travail. Vous pouvez toujours continuer \xE0 utiliser le s\xE9lecteur global pour plus de commodit\xE9 !",
-    "punchline": "Bonnes requ\xEAtes ! \u{1F680}",
-    "signature_regards": "Cordialement,",
-    "signature_team": "L'\xE9quipe de d\xE9veloppement SQL Notebook",
-    "btn_read": "Marquer comme lu"
-  },
-  "footer": {
-    "tip_help": "Aide et ressources",
-    "status_ready": "Pr\xEAt",
-    "status_error": "Erreur",
-    "status_aborted": "Interrompu",
-    "status_live": "EN DIRECT"
-  },
-  "common": {
-    "error": "Erreur : {error}",
-    "invalid_name": "Le nouveau nom doit \xEAtre diff\xE9rent de l'ancien.",
-    "notice_export_success": "Export\xE9 dans {name}",
-    "notice_import_loading": "Importation de la base de donn\xE9es...",
-    "notice_import_success": "Base de donn\xE9es import\xE9e avec succ\xE8s !",
-    "notice_anchor_form": "FORM ancr\xE9 \xE0 {name}",
-    "notice_anchor_live": "Bloc LIVE ancr\xE9 \xE0 {name}",
-    "notice_update_live": "Mise \xE0 jour des donn\xE9es LIVE depuis {name}..."
-  }
-};
-
-// src/locales/ja.ts
-var ja_default = {
-  "settings": {
-    "title": "SQL Notebook",
-    "subtitle": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u30DE\u30CD\u30FC\u30B8\u30E3\u30FC",
-    "btn_atualizar": "\u66F4\u65B0",
-    "btn_importar": "\u30A4\u30F3\u30DD\u30FC\u30C8",
-    "btn_novo_db": "\u65B0\u898F\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9",
-    "welcome_title": "SQL Notebook \u3078\u3088\u3046\u3053\u305D\uFF01",
-    "welcome_desc": "Obsidian \u5185\u3067\u30ED\u30FC\u30AB\u30EB\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u7BA1\u7406\u3001\u30AF\u30A8\u30EA\u306E\u5B9F\u884C\u3001\u7D50\u679C\u306E\u8996\u899A\u5316\u3092\u76F4\u63A5\u884C\u3048\u307E\u3059\u3002",
-    "search_placeholder": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u691C\u7D22...",
-    "info_title": "\u91CD\u8981\u306A\u60C5\u5831:",
-    "info_li_1": "<b>\u30A2\u30AF\u30C6\u30A3\u30D6</b>\u306A\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u524A\u9664\u307E\u305F\u306F\u540D\u524D\u5909\u66F4\u3059\u308B\u306B\u306F\u3001\u307E\u305A\u5225\u306E\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306B\u5207\u308A\u66FF\u3048\u3066\u304F\u3060\u3055\u3044\u3002",
-    "info_li_2": '\u30B7\u30B9\u30C6\u30E0\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9 <b>"dbo"</b> \u306F\u540D\u524D\u306E\u5909\u66F4\u3084\u524A\u9664\u304C\u3067\u304D\u307E\u305B\u3093\u3002',
-    "info_li_3": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E<b>\u540D\u524D\u5909\u66F4</b>\u306F\u3001\u5185\u90E8\u306E\u53C2\u7167\u3092\u81EA\u52D5\u7684\u306B\u66F4\u65B0\u3057\u307E\u3059\u3002",
-    "section_general": "\u4E00\u822C\u8A2D\u5B9A",
-    "section_appearance": "\u5916\u89B3",
-    "section_data_security": "\u30C7\u30FC\u30BF\u3068\u30BB\u30AD\u30E5\u30EA\u30C6\u30A3",
-    "lang_name": "\u8A00\u8A9E",
-    "lang_desc": "\u30A4\u30F3\u30BF\u30FC\u30D5\u30A7\u30FC\u30B9\u306E\u8A00\u8A9E\u3092\u9078\u629E\u3057\u307E\u3059\u3002",
-    "accent_obsidian": "Obsidian \u306E\u30A2\u30AF\u30BB\u30F3\u30C8\u30AB\u30E9\u30FC\u3092\u4F7F\u7528",
-    "accent_obsidian_desc": "\u30AB\u30B9\u30BF\u30E0\u30AB\u30E9\u30FC\u306E\u4EE3\u308F\u308A\u306B Obsidian \u5168\u4F53\u306E\u30A2\u30AF\u30BB\u30F3\u30C8\u30AB\u30E9\u30FC\u3092\u4F7F\u7528\u3057\u307E\u3059\u3002",
-    "theme_accent": "\u30C6\u30FC\u30DE\u306E\u30A2\u30AF\u30BB\u30F3\u30C8\u30AB\u30E9\u30FC",
-    "theme_accent_desc": "\u30E1\u30A4\u30F3\u306E\u30A2\u30AF\u30BB\u30F3\u30C8\u30AB\u30E9\u30FC\u3092\u9078\u629E\u3057\u307E\u3059\u3002",
-    "auto_save": "\u81EA\u52D5\u4FDD\u5B58",
-    "auto_save_desc": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u5909\u66F4\u3092\u81EA\u52D5\u7684\u306B\u4FDD\u5B58\u3057\u307E\u3059\u3002",
-    "auto_save_delay": "\u81EA\u52D5\u4FDD\u5B58\u306E\u9045\u5EF6",
-    "auto_save_delay_desc": "\u81EA\u52D5\u4FDD\u5B58\u307E\u3067\u5F85\u6A5F\u3059\u308B\u30DF\u30EA\u79D2\u6570\u3002",
-    "export_folder": "\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8\u5148\u30D5\u30A9\u30EB\u30C0\u30FC",
-    "export_folder_desc": "CSV \u30A8\u30AF\u30B9\u30DD\u30FC\u30C8\u306E\u30C7\u30D5\u30A9\u30EB\u30C8\u30D5\u30A9\u30EB\u30C0\u30FC\u3002",
-    "safe_mode": "\u30BB\u30FC\u30D5\u30E2\u30FC\u30C9",
-    "safe_mode_desc": "\u5371\u967A\u306A\u30B3\u30DE\u30F3\u30C9 (DROP, ALTER) \u3092\u30D6\u30ED\u30C3\u30AF\u3057\u3001\u5236\u9650\u3092\u9069\u7528\u3057\u307E\u3059\u3002",
-    "enable_logging": "\u30C7\u30D0\u30C3\u30B0\u30ED\u30B0\u3092\u6709\u52B9\u5316",
-    "enable_logging_desc": "\u958B\u767A\u8005\u30B3\u30F3\u30BD\u30FC\u30EB (Ctrl+Shift+I) \u306B\u8A73\u7D30\u306A\u30ED\u30B0\u3092\u8868\u793A\u3057\u307E\u3059\u3002\u540C\u671F\u306E\u30C7\u30D0\u30C3\u30B0\u306B\u4FBF\u5229\u3067\u3059\u3002",
-    "snapshot_limit": "\u30B9\u30CA\u30C3\u30D7\u30B7\u30E7\u30C3\u30C8\u884C\u6570\u5236\u9650",
-    "snapshot_limit_desc": "\u4FDD\u5B58\u3059\u308B\u30C6\u30FC\u30D6\u30EB\u3054\u3068\u306E\u6700\u5927\u884C\u6570 (\u30E1\u30E2\u30EA\u306E\u554F\u984C\u3092\u9632\u6B62)\u3002",
-    "batch_size": "\u30D0\u30C3\u30C1\u30B5\u30A4\u30BA",
-    "batch_size_desc": "\u7D50\u679C\u306E 1 \u30DA\u30FC\u30B8\u3042\u305F\u308A\u306B\u8868\u793A\u3059\u308B\u884C\u6570\u3002",
-    "reset_all": "\u3059\u3079\u3066\u306E\u30C7\u30FC\u30BF\u3092\u30EA\u30BB\u30C3\u30C8",
-    "reset_btn": "\u3059\u3079\u3066\u3092\u30EA\u30BB\u30C3\u30C8",
-    "footer_by": "Diego Pena"
-  },
-  "help": {
-    "title": "SQL Notebook \u306E\u6A5F\u80FD",
-    "collapsible_title": "\u6298\u308A\u305F\u305F\u307F\u53EF\u80FD\u306A\u30EF\u30FC\u30AF\u30D9\u30F3\u30C1",
-    "collapsible_desc": "\u30EF\u30FC\u30AF\u30D9\u30F3\u30C1\u306E\u8868\u793A\u3092\u5207\u308A\u66FF\u3048\u3066\u30B9\u30DA\u30FC\u30B9\u3092\u7BC0\u7D04\u3057\u307E\u3059\u3002\u30D8\u30C3\u30C0\u30FC\u307E\u305F\u306F\u30B7\u30A7\u30D6\u30ED\u30F3\u30A2\u30A4\u30B3\u30F3\u3092\u30AF\u30EA\u30C3\u30AF\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
-    "auto_collapse_title": "\u81EA\u52D5\u6298\u308A\u305F\u305F\u307F",
-    "auto_collapse_desc": "\u30B3\u30E1\u30F3\u30C8\u3092 '@' \u3067\u59CB\u3081\u308B (\u4F8B: '-- @ My Query') \u3068\u3001\u30CE\u30FC\u30C8\u3092\u958B\u3044\u305F\u3068\u304D\u306B\u30EF\u30FC\u30AF\u30D9\u30F3\u30C1\u304C\u81EA\u52D5\u7684\u306B\u6298\u308A\u305F\u305F\u307E\u308C\u307E\u3059\u3002",
-    "alert_title": "\u30A2\u30E9\u30FC\u30C8\u30DE\u30FC\u30AB\u30FC (!)",
-    "alert_desc": "\u30B3\u30E1\u30F3\u30C8\u306E\u6700\u521D\u306B '!' \u3092\u8FFD\u52A0\u3059\u308B\u3068\u3001\u30A2\u30E9\u30FC\u30C8\u307E\u305F\u306F\u8B66\u544A\u3068\u3057\u3066\u5F37\u8ABF\u8868\u793A\u3055\u308C\u307E\u3059\u3002",
-    "question_title": "\u8CEA\u554F\u30DE\u30FC\u30AB\u30FC (?)",
-    "question_desc": "\u30EC\u30D3\u30E5\u30FC\u304C\u5FC5\u8981\u306A\u30AF\u30A8\u30EA\u3084\u5B9F\u9A13\u7684\u306A\u30AF\u30A8\u30EA\u3092\u793A\u3059\u306B\u306F '?' \u3092\u8FFD\u52A0\u3057\u307E\u3059\u3002",
-    "favorite_title": "\u304A\u6C17\u306B\u5165\u308A\u30DE\u30FC\u30AB\u30FC (*)",
-    "favorite_desc": "\u91CD\u8981\u307E\u305F\u306F\u983B\u7E41\u306B\u4F7F\u7528\u3059\u308B\u30AF\u30A8\u30EA\u3092\u5F37\u8ABF\u8868\u793A\u3059\u308B\u306B\u306F '*' \u3092\u8FFD\u52A0\u3057\u307E\u3059\u3002",
-    "copy_edit_title": "\u30B3\u30D4\u30FC\u3068\u7DE8\u96C6",
-    "copy_edit_desc": "\u30EF\u30FC\u30AF\u30D9\u30F3\u30C1\u306B\u30DE\u30A6\u30B9\u3092\u5408\u308F\u305B\u308B\u3068\u3001\u30B3\u30FC\u30C9\u306E\u30B3\u30D4\u30FC\u3068\u30D6\u30ED\u30C3\u30AF\u7DE8\u96C6\u306E\u30AF\u30A4\u30C3\u30AF\u30DC\u30BF\u30F3\u304C\u8868\u793A\u3055\u308C\u307E\u3059\u3002"
-  },
-  "modals": {
-    "confirm_delete_title": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u524A\u9664",
-    "confirm_delete_msg": '\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9 "{dbName}" \u3092\u524A\u9664\u3057\u3088\u3046\u3068\u3057\u3066\u3044\u307E\u3059\u3002\u3053\u306E\u64CD\u4F5C\u306F\u53D6\u308A\u6D88\u305B\u307E\u305B\u3093\u3002\u3059\u3079\u3066\u306E\u30C6\u30FC\u30D6\u30EB\u3068\u30C7\u30FC\u30BF\u304C\u5931\u308F\u308C\u307E\u3059\u3002',
-    "confirm_clear_title": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u30AF\u30EA\u30A2",
-    "confirm_clear_msg": '"{dbName}" \u5185\u306E\u3059\u3079\u3066\u306E\u30C6\u30FC\u30D6\u30EB\u3092\u30AF\u30EA\u30A2\u3057\u3066\u3082\u3088\u308D\u3057\u3044\u3067\u3059\u304B\uFF1F\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306F\u4FDD\u6301\u3055\u308C\u307E\u3059\u304C\u3001\u30C7\u30FC\u30BF\u306F\u3059\u3079\u3066\u524A\u9664\u3055\u308C\u307E\u3059\u3002',
-    "btn_cancel": "\u30AD\u30E3\u30F3\u30BB\u30EB",
-    "btn_confirm": "\u78BA\u8A8D",
-    "btn_delete": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u524A\u9664",
-    "btn_clear": "\u3059\u3079\u3066\u306E\u30C7\u30FC\u30BF\u3092\u30AF\u30EA\u30A2",
-    "btn_ativar": "\u6709\u52B9\u5316",
-    "btn_duplicar": "\u8907\u88FD",
-    "btn_renomear": "\u540D\u524D\u5909\u66F4",
-    "btn_tabelas": "\u30C6\u30FC\u30D6\u30EB",
-    "btn_exportar": "\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8",
-    "btn_deletar": "\u524A\u9664",
-    "badge_ativo": "\u6709\u52B9",
-    "badge_system": "\u30B7\u30B9\u30C6\u30E0",
-    "stat_tables": "\u30C6\u30FC\u30D6\u30EB",
-    "stat_rows": "\u884C",
-    "stat_size": "\u30B5\u30A4\u30BA",
-    "stat_updated": "\u66F4\u65B0\u65E5\u6642",
-    "time_just_now": "\u305F\u3063\u305F\u4ECA",
-    "time_ago": "{time} \u524D",
-    "time_never": "\u306A\u3057",
-    "switch_title": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u5207\u308A\u66FF\u3048",
-    "no_user_dbs": "\u30E6\u30FC\u30B6\u30FC\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3002",
-    "tip_system_db": "\u30B7\u30B9\u30C6\u30E0\u30C7\u30D5\u30A9\u30EB\u30C8\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3002\u524A\u9664\u3067\u304D\u307E\u305B\u3093\u3002",
-    "tip_protected_db": "\u3053\u306E\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u524A\u9664\u3059\u308B\u306B\u306F\u3001\u5225\u306E\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306B\u5207\u308A\u66FF\u3048\u3066\u304F\u3060\u3055\u3044\u3002",
-    "rename_title": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u540D\u524D\u5909\u66F4: {name}",
-    "rename_placeholder": "\u65B0\u3057\u3044\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u540D...",
-    "create_title": "\u65B0\u898F\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u4F5C\u6210",
-    "create_placeholder": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u540D (\u4F8B: my_project)",
-    "duplicate_title": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u8907\u88FD: {name}",
-    "notice_create_empty": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u540D\u306F\u7A7A\u306B\u3067\u304D\u307E\u305B\u3093\u3002",
-    "notice_rename_success": '\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u540D\u524D\u304C "{name}" \u306B\u5909\u66F4\u3055\u308C\u307E\u3057\u305F',
-    "notice_create_success": '\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9 "{name}" \u304C\u4F5C\u6210\u3055\u308C\u307E\u3057\u305F\u3002',
-    "notice_duplicate_success": '\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u304C "{name}" \u306B\u8907\u88FD\u3055\u308C\u307E\u3057\u305F',
-    "notice_delete_success": '\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9 "{name}" \u304C\u524A\u9664\u3055\u308C\u307E\u3057\u305F\u3002',
-    "notice_switch_success": '"{name}" \u306B\u5207\u308A\u66FF\u3048\u307E\u3057\u305F',
-    "tables_title": '"{name}" \u5185\u306E\u30C6\u30FC\u30D6\u30EB',
-    "null_value": "NULL",
-    "status_error": "\u30A8\u30E9\u30FC",
-    "status_done": "\u5B8C\u4E86",
-    "notice_table_data_copied": "\u30C6\u30FC\u30D6\u30EB\u30C7\u30FC\u30BF\u3092\u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
-    "notice_copy_failed": "\u30B3\u30D4\u30FC\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
-    "notice_screenshot_failed": "\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u306E\u4F5C\u6210\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
-    "notice_no_active_note": "\u30A2\u30AF\u30C6\u30A3\u30D6\u306A\u30CE\u30FC\u30C8\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093",
-    "notice_table_inserted": "\u30C6\u30FC\u30D6\u30EB\u3092\u30CE\u30FC\u30C8\u306B\u633F\u5165\u3057\u307E\u3057\u305F\uFF01",
-    "notice_insert_failed": "\u633F\u5165\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}"
-  },
-  "workbench": {
-    "btn_run": "\u5B9F\u884C",
-    "btn_executing": "\u5B9F\u884C\u4E2D...",
-    "btn_cancel": "\u30AD\u30E3\u30F3\u30BB\u30EB",
-    "notice_copy": "SQL \u30B3\u30FC\u30C9\u3092\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
-    "notice_aborted": "\u30E6\u30FC\u30B6\u30FC\u306B\u3088\u308A\u30AF\u30A8\u30EA\u304C\u4E2D\u65AD\u3055\u308C\u307E\u3057\u305F"
-  },
-  "renderer": {
-    "btn_copy": "\u30B3\u30D4\u30FC",
-    "btn_screenshot": "SS",
-    "btn_add_note": "\u30CE\u30FC\u30C8\u3078\u8FFD\u52A0",
-    "tip_copy": "\u7D50\u679C\u3092\u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC",
-    "tip_screenshot": "\u7D50\u679C\u306E\u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u64AE\u308B",
-    "tip_add_note": "\u7D50\u679C\u3092\u30CE\u30FC\u30C8\u306B\u633F\u5165",
-    "notice_copied": "\u2713 \u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
-    "notice_copy_failed": "\u274C \u30B3\u30D4\u30FC\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
-    "notice_screenshot_failed": "\u274C \u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u306E\u4F5C\u6210\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
-    "notice_screenshot_copied": "\u2713 \u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
-    "notice_screenshot_downloaded": "\u2713 \u30B9\u30AF\u30EA\u30FC\u30F3\u30B7\u30E7\u30C3\u30C8\u3092\u30C0\u30A6\u30F3\u30ED\u30FC\u30C9\u3057\u307E\u3057\u305F\uFF01",
-    "notice_insert_no_note": "\u274C \u30A2\u30AF\u30C6\u30A3\u30D6\u306A\u30CE\u30FC\u30C8\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093",
-    "notice_insert_success": "\u2713 \u7D50\u679C\u3092\u30CE\u30FC\u30C8\u306B\u633F\u5165\u3057\u307E\u3057\u305F\uFF01",
-    "notice_insert_failed": "\u274C \u633F\u5165\u306B\u5931\u6557\u3057\u307E\u3057\u305F: {error}",
-    "msg_no_result": "\u30AF\u30A8\u30EA\u306F\u6B63\u5E38\u306B\u5B9F\u884C\u3055\u308C\u307E\u3057\u305F (\u7D50\u679C\u30BB\u30C3\u30C8\u306A\u3057)",
-    "msg_rows_found": "{count} \u884C\u898B\u3064\u304B\u308A\u307E\u3057\u305F",
-    "msg_no_data": "\u30C7\u30FC\u30BF\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093",
-    "msg_showing_rows": "{total} \u884C\u4E2D {count} \u884C\u3092\u8868\u793A\u4E2D",
-    "msg_showing_all": "\u5168 {count} \u884C\u3092\u8868\u793A\u4E2D",
-    "btn_show_all": "\u3059\u3079\u3066\u306E\u884C\u3092\u8868\u793A",
-    "err_title": "\u5B9F\u884C\u30A8\u30E9\u30FC",
-    "result_label": "\u7D50\u679C #{idx}",
-    "table_label": "\u30C6\u30FC\u30D6\u30EB: {name}",
-    "query_result": "\u30AF\u30A8\u30EA\u7D50\u679C",
-    "msg_loading": "\u30C7\u30FC\u30BF\u3092\u8AAD\u307F\u8FBC\u307F\u4E2D...",
-    "msg_showing_limit": "\u6700\u521D\u306E {count} \u884C\u306E\u307F\u8868\u793A\u3057\u3066\u3044\u307E\u3059\u3002",
-    "msg_no_tables": "\u3053\u306E\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306B\u306F\u30C6\u30FC\u30D6\u30EB\u304C\u898B\u3064\u304B\u308A\u307E\u305B\u3093\u3002",
-    "tip_back": "\u30C6\u30FC\u30D6\u30EB\u4E00\u89A7\u306B\u623B\u308B"
-  },
-  "form": {
-    "title_insert": "{name} \u306B\u633F\u5165",
-    "btn_save": "\u30EC\u30B3\u30FC\u30C9\u4FDD\u5B58",
-    "btn_saving": "\u4FDD\u5B58\u4E2D...",
-    "btn_clear": "\u30AF\u30EA\u30A2",
-    "msg_success": "{name} \u3078\u306E\u4FDD\u5B58\u304C\u6210\u529F\u3057\u307E\u3057\u305F",
-    "msg_error": "\u30A8\u30E9\u30FC: {error}",
-    "msg_unexpected": "\u4E88\u671F\u3057\u306A\u3044\u30A8\u30E9\u30FC: {error}",
-    "notice_success": "{name} \u306B\u30EC\u30B3\u30FC\u30C9\u3092\u4FDD\u5B58\u3057\u307E\u3057\u305F",
-    "notice_error": "\u30EC\u30B3\u30FC\u30C9\u4FDD\u5B58\u30A8\u30E9\u30FC: {error}",
-    "err_invalid_table": "\u7121\u52B9\u306A\u30C6\u30FC\u30D6\u30EB\u540D",
-    "err_invalid_col": "\u7121\u52B9\u306A\u5217\u540D: {name}"
-  },
-  "pro": {
-    "label_from": "\u5DEE\u51FA\u4EBA:",
-    "label_to": "\u5B9B\u5148:",
-    "label_subject": "\u4EF6\u540D:",
-    "from_name": "SQL Notebook \u958B\u767A\u30C1\u30FC\u30E0 <dev@obsidian-sql.internal>",
-    "to_name": "\u89AA\u611B\u306A\u308B\u958B\u767A\u8005\u69D8",
-    "subject": "\u30D7\u30ED\u306E\u79D8\u8A23: \u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u30B3\u30F3\u30C6\u30AD\u30B9\u30C8\u306E\u30D9\u30B9\u30C8\u30D7\u30E9\u30AF\u30C6\u30A3\u30B9",
-    "hello": "\u3053\u3093\u306B\u3061\u306F\u3001",
-    "msg_1": "UI \u304B\u3089\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u5207\u308A\u66FF\u3048\u3066\u3044\u308B\u3088\u3046\u3067\u3059\u306D\u3002\u30AF\u30A4\u30C3\u30AF\u30CA\u30D3\u30B2\u30FC\u30B7\u30E7\u30F3\u306B\u306F\u6700\u9069\u3067\u3059\u304C\u3001\u30D7\u30ED\u304B\u3089\u306E\u30A2\u30C9\u30D0\u30A4\u30B9\u3067\u3059\u3002\u30B9\u30AF\u30EA\u30D7\u30C8\u5185\u3067\u660E\u793A\u7684\u306A `USE` \u30B3\u30DE\u30F3\u30C9\u3092\u4F7F\u7528\u3059\u308B\u3053\u3068\u3067\u3001\u30EF\u30FC\u30AF\u30D5\u30ED\u30FC\u304C\u3088\u308A\u5805\u7262\u306B\u306A\u308A\u307E\u3059\u3002",
-    "msg_quote": "\u30B3\u30F3\u30C6\u30AD\u30B9\u30C8\u3092\u660E\u793A\u7684\u306B\u5B9A\u7FA9\u3059\u308B\u3053\u3068\u306F\u3001\u7570\u306A\u308B\u74B0\u5883\u9593\u3067\u3082\u30B9\u30AF\u30EA\u30D7\u30C8\u306E\u79FB\u690D\u6027\u3068\u660E\u78BA\u3055\u3092\u78BA\u4FDD\u3059\u308B\u305F\u3081\u306E\u30D9\u30B9\u30C8\u30D7\u30E9\u30AF\u30C6\u30A3\u30B9\u3067\u3059\u3002",
-    "msg_2": "\u30B3\u30FC\u30C9\u5185\u3067\u30B3\u30F3\u30C6\u30AD\u30B9\u30C8\u3092\u5B9A\u7FA9\u3059\u308B\u3053\u3068\u3067\u6DF7\u4E71\u3092\u907F\u3051\u3001\u4F5C\u696D\u3092\u78BA\u8A8D\u3059\u308B\u8AB0\u306B\u3068\u3063\u3066\u3082\u610F\u56F3\u3092\u660E\u78BA\u306B\u3067\u304D\u307E\u3059\u3002\u3082\u3061\u308D\u3093\u3001\u4FBF\u5229\u306A\u30B0\u30ED\u30FC\u30D0\u30EB\u30B9\u30A4\u30C3\u30C1\u3082\u5F15\u304D\u7D9A\u304D\u3054\u5229\u7528\u3044\u305F\u3060\u3051\u307E\u3059\uFF01",
-    "punchline": "\u5FEB\u9069\u306A\u30AF\u30A8\u30EA\u30E9\u30A4\u30D5\u3092\uFF01 \u{1F680}",
-    "signature_regards": "\u656C\u5177",
-    "signature_team": "SQL Notebook \u958B\u767A\u30C1\u30FC\u30E0",
-    "btn_read": "\u65E2\u8AAD\u306B\u3059\u308B"
-  },
-  "footer": {
-    "tip_help": "\u30D8\u30EB\u30D7\u3068\u6A5F\u80FD",
-    "status_ready": "\u6E96\u5099\u5B8C\u4E86",
-    "status_error": "\u30A8\u30E9\u30FC",
-    "status_aborted": "\u4E2D\u65AD",
-    "status_live": "\u30E9\u30A4\u30D6"
-  },
-  "common": {
-    "error": "\u30A8\u30E9\u30FC: {error}",
-    "invalid_name": "\u65B0\u3057\u3044\u540D\u524D\u306F\u5143\u306E\u540D\u524D\u3068\u7570\u306A\u308B\u5FC5\u8981\u304C\u3042\u308A\u307E\u3059\u3002",
-    "notice_export_success": "{name} \u306B\u30A8\u30AF\u30B9\u30DD\u30FC\u30C8\u3057\u307E\u3057\u305F",
-    "notice_import_loading": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092\u30A4\u30F3\u30DD\u30FC\u30C8\u4E2D...",
-    "notice_import_success": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306E\u30A4\u30F3\u30DD\u30FC\u30C8\u306B\u6210\u529F\u3057\u307E\u3057\u305F\uFF01",
-    "notice_anchor_form": "FORM \u3092 {name} \u306B\u56FA\u5B9A\u3057\u307E\u3057\u305F",
-    "notice_anchor_live": "LIVE \u30D6\u30ED\u30C3\u30AF\u3092 {name} \u306B\u56FA\u5B9A\u3057\u307E\u3057\u305F",
-    "notice_update_live": "{name} \u304B\u3089 LIVE \u30C7\u30FC\u30BF\u3092\u66F4\u65B0\u4E2D..."
-  }
-};
-
-// src/locales/ko.ts
-var ko_default = {
-  "settings": {
-    "title": "SQL Notebook",
-    "subtitle": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uAD00\uB9AC\uC790",
-    "btn_atualizar": "\uC5C5\uB370\uC774\uD2B8",
-    "btn_importar": "\uAC00\uC838\uC624\uAE30",
-    "btn_novo_db": "\uC0C8 \uB370\uC774\uD130\uBCA0\uC774\uC2A4",
-    "welcome_title": "SQL Notebook\uC5D0 \uC624\uC2E0 \uAC83\uC744 \uD658\uC601\uD569\uB2C8\uB2E4!",
-    "welcome_desc": "Obsidian\uC5D0\uC11C \uC9C1\uC811 \uB85C\uCEEC \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uAD00\uB9AC\uD558\uACE0, \uCFFC\uB9AC\uB97C \uC2E4\uD589\uD558\uBA70, \uACB0\uACFC\uB97C \uC2DC\uAC01\uD654\uD558\uC138\uC694.",
-    "search_placeholder": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uAC80\uC0C9...",
-    "info_title": "\uC911\uC694 \uC815\uBCF4:",
-    "info_li_1": "<b>\uD65C\uC131</b> \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uC0AD\uC81C\uD558\uAC70\uB098 \uC774\uB984\uC744 \uBC14\uAFB8\uB824\uBA74 \uBA3C\uC800 \uB2E4\uB978 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB85C \uC804\uD658\uD558\uC138\uC694.",
-    "info_li_2": '\uC2DC\uC2A4\uD15C \uB370\uC774\uD130\uBCA0\uC774\uC2A4 <b>"dbo"</b>\uB294 \uC774\uB984\uC744 \uBC14\uAFB8\uAC70\uB098 \uC0AD\uC81C\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.',
-    "info_li_3": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 <b>\uC774\uB984\uC744 \uBCC0\uACBD</b>\uD558\uBA74 \uB0B4\uBD80 \uCC38\uC870\uAC00 \uC790\uB3D9\uC73C\uB85C \uC5C5\uB370\uC774\uD2B8\uB429\uB2C8\uB2E4.",
-    "section_general": "\uAE30\uBCF8 \uC124\uC815",
-    "section_appearance": "\uBAA8\uC591",
-    "section_data_security": "\uB370\uC774\uD130 \uBC0F \uBCF4\uC548",
-    "lang_name": "\uC5B8\uC5B4",
-    "lang_desc": "\uC778\uD130\uD398\uC774\uC2A4 \uC5B8\uC5B4\uB97C \uC120\uD0DD\uD558\uC138\uC694.",
-    "accent_obsidian": "Obsidian \uAC15\uC870 \uC0C9\uC0C1 \uC0AC\uC6A9",
-    "accent_obsidian_desc": "\uC0AC\uC6A9\uC790 \uC815\uC758 \uC0C9\uC0C1 \uB300\uC2E0 \uC804\uC5ED Obsidian \uAC15\uC870 \uC0C9\uC0C1\uC744 \uC0AC\uC6A9\uD569\uB2C8\uB2E4.",
-    "theme_accent": "\uD14C\uB9C8 \uAC15\uC870 \uC0C9\uC0C1",
-    "theme_accent_desc": "\uC8FC\uC694 \uAC15\uC870 \uC0C9\uC0C1\uC744 \uC120\uD0DD\uD558\uC138\uC694.",
-    "auto_save": "\uC790\uB3D9 \uC800\uC7A5",
-    "auto_save_desc": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uBCC0\uACBD \uC0AC\uD56D\uC744 \uC790\uB3D9\uC73C\uB85C \uC800\uC7A5\uD569\uB2C8\uB2E4.",
-    "auto_save_delay": "\uC790\uB3D9 \uC800\uC7A5 \uC9C0\uC5F0",
-    "auto_save_delay_desc": "\uC790\uB3D9 \uC800\uC7A5\uC744 \uC2DC\uC791\uD558\uAE30 \uC804 \uB300\uAE30\uD560 \uBC00\uB9AC\uCD08\uC785\uB2C8\uB2E4.",
-    "export_folder": "\uB0B4\uBCF4\uB0B4\uAE30 \uD3F4\uB354",
-    "export_folder_desc": "CSV \uB0B4\uBCF4\uB0B4\uAE30\uB97C \uC704\uD55C \uAE30\uBCF8 \uD3F4\uB354\uC785\uB2C8\uB2E4.",
-    "safe_mode": "\uC548\uC804 \uBAA8\uB4DC",
-    "safe_mode_desc": "\uC704\uD5D8\uD55C \uBA85\uB839(DROP, ALTER)\uC744 \uCC28\uB2E8\uD558\uACE0 \uC81C\uD55C\uC744 \uC801\uC6A9\uD569\uB2C8\uB2E4.",
-    "enable_logging": "\uB514\uBC84\uADF8 \uB85C\uAE45 \uD65C\uC131\uD654",
-    "enable_logging_desc": "\uAC1C\uBC1C\uC790 \uCF58\uC194(Ctrl+Shift+I)\uC5D0 \uC790\uC138\uD55C \uB85C\uADF8\uB97C \uD45C\uC2DC\uD569\uB2C8\uB2E4. \uB3D9\uAE30\uD654 \uB514\uBC84\uAE45\uC5D0 \uC720\uC6A9\uD569\uB2C8\uB2E4.",
-    "snapshot_limit": "\uC2A4\uB0C5\uC0F7 \uD589 \uC81C\uD55C",
-    "snapshot_limit_desc": "\uC800\uC7A5\uD560 \uD14C\uC774\uBE14\uB2F9 \uCD5C\uB300 \uD589 \uC218\uC785\uB2C8\uB2E4(\uBA54\uBAA8\uB9AC \uBB38\uC81C \uBC29\uC9C0).",
-    "batch_size": "\uBC30\uCE58 \uD06C\uAE30",
-    "batch_size_desc": "\uACB0\uACFC \uD398\uC774\uC9C0\uB2F9 \uD45C\uC2DC\uD560 \uD589 \uC218\uC785\uB2C8\uB2E4.",
-    "reset_all": "\uBAA8\uB4E0 \uB370\uC774\uD130 \uCD08\uAE30\uD654",
-    "reset_btn": "\uBAA8\uB4E0 \uD56D\uBAA9 \uCD08\uAE30\uD654",
-    "footer_by": "Diego Pena"
-  },
-  "help": {
-    "title": "SQL Notebook \uAE30\uB2A5",
-    "collapsible_title": "\uC811\uC774\uC2DD \uC6CC\uD06C\uBCA4\uCE58",
-    "collapsible_desc": "\uC6CC\uD06C\uBCA4\uCE58 \uBCF4\uAE30\uB97C \uC804\uD658\uD558\uC5EC \uACF5\uAC04\uC744 \uC808\uC57D\uD558\uC138\uC694. \uD5E4\uB354\uB098 \uC170\uBE0C\uB860 \uC544\uC774\uCF58\uC744 \uD074\uB9AD\uD558\uC138\uC694.",
-    "auto_collapse_title": "\uC790\uB3D9 \uC811\uAE30",
-    "auto_collapse_desc": "\uC8FC\uC11D\uC744 '@'\uB85C \uC2DC\uC791\uD558\uBA74(\uC608: '-- @ My Query') \uB178\uD2B8\uB97C \uC5F4 \uB54C \uC6CC\uD06C\uBCA4\uCE58\uAC00 \uC790\uB3D9\uC73C\uB85C \uC811\uD799\uB2C8\uB2E4.",
-    "alert_title": "\uACBD\uACE0 \uD45C\uC2DC (!)",
-    "alert_desc": "\uC8FC\uC11D \uC2DC\uC791 \uBD80\uBD84\uC5D0 '!'\uB97C \uCD94\uAC00\uD558\uC5EC \uACBD\uACE0\uB098 \uC8FC\uC758 \uC0AC\uD56D\uC73C\uB85C \uAC15\uC870\uD558\uC138\uC694.",
-    "question_title": "\uC9C8\uBB38 \uD45C\uC2DC (?)",
-    "question_desc": "\uAC80\uD1A0\uAC00 \uD544\uC694\uD558\uAC70\uB098 \uC2E4\uD5D8\uC801\uC778 \uCFFC\uB9AC\uC784\uC744 \uB098\uD0C0\uB0B4\uB824\uBA74 '?'\uB97C \uCD94\uAC00\uD558\uC138\uC694.",
-    "favorite_title": "\uC990\uACA8\uCC3E\uAE30 \uD45C\uC2DC (*)",
-    "favorite_desc": "\uC911\uC694\uD558\uAC70\uB098 \uC790\uC8FC \uC0AC\uC6A9\uD558\uB294 \uCFFC\uB9AC\uB97C \uAC15\uC870\uD558\uB824\uBA74 '*'\uB97C \uCD94\uAC00\uD558\uC138\uC694.",
-    "copy_edit_title": "\uBCF5\uC0AC \uBC0F \uD3B8\uC9D1",
-    "copy_edit_desc": "\uC6CC\uD06C\uBCA4\uCE58 \uC704\uC5D0 \uB9C8\uC6B0\uC2A4\uB97C \uC62C\uB824 \uCF54\uB4DC \uBCF5\uC0AC \uBC0F \uBE14\uB85D \uD3B8\uC9D1 \uBC84\uD2BC\uC744 \uC0AC\uC6A9\uD558\uC138\uC694."
-  },
-  "modals": {
-    "confirm_delete_title": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC0AD\uC81C",
-    "confirm_delete_msg": '"{dbName}" \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uC0AD\uC81C\uD558\uC2DC\uACA0\uC2B5\uB2C8\uAE4C? \uC774 \uC791\uC5C5\uC740 \uB418\uB3CC\uB9B4 \uC218 \uC5C6\uC73C\uBA70 \uBAA8\uB4E0 \uD14C\uC774\uBE14\uACFC \uB370\uC774\uD130\uAC00 \uC720\uC2E4\uB429\uB2C8\uB2E4.',
-    "confirm_clear_title": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uBE44\uC6B0\uAE30",
-    "confirm_clear_msg": '"{dbName}"\uC758 \uBAA8\uB4E0 \uD14C\uC774\uBE14 \uB370\uC774\uD130\uB97C \uBE44\uC6B0\uC2DC\uACA0\uC2B5\uB2C8\uAE4C? \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB294 \uC720\uC9C0\uB418\uC9C0\uB9CC \uB370\uC774\uD130\uB294 \uBAA8\uB450 \uC0AD\uC81C\uB429\uB2C8\uB2E4.',
-    "btn_cancel": "\uCDE8\uC18C",
-    "btn_confirm": "\uD655\uC778",
-    "btn_delete": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC0AD\uC81C",
-    "btn_clear": "\uBAA8\uB4E0 \uB370\uC774\uD130 \uC9C0\uC6B0\uAE30",
-    "btn_ativar": "\uD65C\uC131\uD654",
-    "btn_duplicar": "\uBCF5\uC81C",
-    "btn_renomear": "\uC774\uB984 \uBCC0\uACBD",
-    "btn_tabelas": "\uD14C\uC774\uBE14",
-    "btn_exportar": "\uB0B4\uBCF4\uB0B4\uAE30",
-    "btn_deletar": "\uC0AD\uC81C",
-    "badge_ativo": "\uD65C\uC131",
-    "badge_system": "\uC2DC\uC2A4\uD15C",
-    "stat_tables": "\uD14C\uC774\uBE14",
-    "stat_rows": "\uD589",
-    "stat_size": "\uD06C\uAE30",
-    "stat_updated": "\uC5C5\uB370\uC774\uD2B8\uB428",
-    "time_just_now": "\uBC29\uAE08 \uC804",
-    "time_ago": "{time} \uC804",
-    "time_never": "\uC5C6\uC74C",
-    "switch_title": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC804\uD658",
-    "no_user_dbs": "\uC0AC\uC6A9\uC790 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
-    "tip_system_db": "\uC2DC\uC2A4\uD15C \uAE30\uBCF8 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uC785\uB2C8\uB2E4. \uC0AD\uC81C\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
-    "tip_protected_db": "\uC774 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uC0AD\uC81C\uD558\uB824\uBA74 \uBA3C\uC800 \uB2E4\uB978 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB85C \uC804\uD658\uD558\uC138\uC694.",
-    "rename_title": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC774\uB984 \uBCC0\uACBD: {name}",
-    "rename_placeholder": "\uC0C8 \uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC774\uB984...",
-    "create_title": "\uC0C8 \uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC0DD\uC131",
-    "create_placeholder": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC774\uB984 (\uC608: my_project)",
-    "duplicate_title": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uBCF5\uC81C: {name}",
-    "notice_create_empty": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC774\uB984\uC740 \uBE44\uC6CC\uB458 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
-    "notice_rename_success": '\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uC774\uB984\uC744 "{name}"(\uC73C)\uB85C \uBCC0\uACBD\uD588\uC2B5\uB2C8\uB2E4.',
-    "notice_create_success": '"{name}" \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uAC00 \uC0DD\uC131\uB418\uC5C8\uC2B5\uB2C8\uB2E4.',
-    "notice_duplicate_success": '\uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C "{name}"(\uC73C)\uB85C \uBCF5\uC81C\uD588\uC2B5\uB2C8\uB2E4.',
-    "notice_delete_success": '"{name}" \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uAC00 \uC0AD\uC81C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.',
-    "notice_switch_success": '"{name}"(\uC73C)\uB85C \uC804\uD658\uD588\uC2B5\uB2C8\uB2E4.',
-    "tables_title": '"{name}"\uC758 \uD14C\uC774\uBE14',
-    "null_value": "NULL",
-    "status_error": "\uC624\uB958",
-    "status_done": "\uC644\uB8CC",
-    "notice_table_data_copied": "\uD14C\uC774\uBE14 \uB370\uC774\uD130\uB97C \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4!",
-    "notice_copy_failed": "\uBCF5\uC0AC \uC2E4\uD328: {error}",
-    "notice_screenshot_failed": "\uC2A4\uD06C\uB9B0\uC0F7 \uC0DD\uC131\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4: {error}",
-    "notice_no_active_note": "\uD65C\uC131 \uB178\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
-    "notice_table_inserted": "\uB178\uD2B8\uC5D0 \uD14C\uC774\uBE14\uC744 \uC0BD\uC785\uD588\uC2B5\uB2C8\uB2E4!",
-    "notice_insert_failed": "\uC0BD\uC785 \uC2E4\uD328: {error}"
-  },
-  "workbench": {
-    "btn_run": "\uC2E4\uD589",
-    "btn_executing": "\uC2E4\uD589 \uC911...",
-    "btn_cancel": "\uCDE8\uC18C",
-    "notice_copy": "SQL \uCF54\uB4DC\uB97C \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4!",
-    "notice_aborted": "\uC0AC\uC6A9\uC790\uC5D0 \uC758\uD574 \uCFFC\uB9AC\uAC00 \uC911\uB2E8\uB428"
-  },
-  "renderer": {
-    "btn_copy": "\uBCF5\uC0AC",
-    "btn_screenshot": "\uC2A4\uB0C5\uC0F7",
-    "btn_add_note": "\uB178\uD2B8\uC5D0 \uCD94\uAC00",
-    "tip_copy": "\uACB0\uACFC\uB97C \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC",
-    "tip_screenshot": "\uACB0\uACFC \uC2A4\uD06C\uB9B0\uC0F7 \uCC0D\uAE30",
-    "tip_add_note": "\uACB0\uACFC\uB97C \uB178\uD2B8\uC5D0 \uC0BD\uC785",
-    "notice_copied": "\u2713 \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4!",
-    "notice_copy_failed": "\u274C \uBCF5\uC0AC \uC2E4\uD328: {error}",
-    "notice_screenshot_failed": "\u274C \uC2A4\uD06C\uB9B0\uC0F7 \uC0DD\uC131 \uC2E4\uD328: {error}",
-    "notice_screenshot_copied": "\u2713 \uC2A4\uD06C\uB9B0\uC0F7\uC774 \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4!",
-    "notice_screenshot_downloaded": "\u2713 \uC2A4\uD06C\uB9B0\uC0F7\uC744 \uB2E4\uC6B4\uB85C\uB4DC\uD588\uC2B5\uB2C8\uB2E4!",
-    "notice_insert_no_note": "\u274C \uD65C\uC131 \uB178\uD2B8\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
-    "notice_insert_success": "\u2713 \uACB0\uACFC\uB97C \uB178\uD2B8\uC5D0 \uC0BD\uC785\uD588\uC2B5\uB2C8\uB2E4!",
-    "notice_insert_failed": "\u274C \uC0BD\uC785 \uC2E4\uD328: {error}",
-    "msg_no_result": "\uCFFC\uB9AC\uAC00 \uC131\uACF5\uC801\uC73C\uB85C \uC2E4\uD589\uB418\uC5C8\uC2B5\uB2C8\uB2E4(\uACB0\uACFC \uC5C6\uC74C)",
-    "msg_rows_found": "{count}\uAC1C\uC758 \uD589\uC744 \uBC1C\uACAC\uD588\uC2B5\uB2C8\uB2E4",
-    "msg_no_data": "\uB370\uC774\uD130\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4",
-    "msg_showing_rows": "{total}\uD589 \uC911 {count}\uD589 \uD45C\uC2DC \uC911",
-    "msg_showing_all": "\uC804\uCCB4 {count}\uD589 \uD45C\uC2DC \uC911",
-    "btn_show_all": "\uBAA8\uB4E0 \uD589 \uD45C\uC2DC",
-    "err_title": "\uC2E4\uD589 \uC624\uB958",
-    "result_label": "\uACB0\uACFC #{idx}",
-    "table_label": "\uD14C\uC774\uBE14: {name}",
-    "query_result": "\uCFFC\uB9AC \uACB0\uACFC",
-    "msg_loading": "\uB370\uC774\uD130 \uB85C\uB4DC \uC911...",
-    "msg_showing_limit": "\uCC98\uC74C {count}\uD589\uB9CC \uD45C\uC2DC\uB429\uB2C8\uB2E4.",
-    "msg_no_tables": "\uC774 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uC5D0\uC11C \uD14C\uC774\uBE14\uC744 \uCC3E\uC744 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.",
-    "tip_back": "\uD14C\uC774\uBE14 \uBAA9\uB85D\uC73C\uB85C \uB3CC\uC544\uAC00\uAE30"
-  },
-  "form": {
-    "title_insert": "{name}\uC5D0 \uC0BD\uC785",
-    "btn_save": "\uB808\uCF54\uB4DC \uC800\uC7A5",
-    "btn_saving": "\uC800\uC7A5 \uC911...",
-    "btn_clear": "\uC9C0\uC6B0\uAE30",
-    "msg_success": "{name}\uC5D0 \uC131\uACF5\uC801\uC73C\uB85C \uC800\uC7A5\uB418\uC5C8\uC2B5\uB2C8\uB2E4",
-    "msg_error": "\uC624\uB958: {error}",
-    "msg_unexpected": "\uC608\uAE30\uCE58 \uC54A\uC740 \uC624\uB958: {error}",
-    "notice_success": "{name}\uC5D0 \uB808\uCF54\uB4DC\uB97C \uC800\uC7A5\uD588\uC2B5\uB2C8\uB2E4",
-    "notice_error": "\uB808\uCF54\uB4DC \uC800\uC7A5 \uC624\uB958: {error}",
-    "err_invalid_table": "\uC720\uD6A8\uD558\uC9C0 \uC54A\uC740 \uD14C\uC774\uBE14 \uC774\uB984",
-    "err_invalid_col": "\uC720\uD6A8\uD558\uC9C0 \uC54A\uC740 \uCEEC\uB7FC \uC774\uB984: {name}"
-  },
-  "pro": {
-    "label_from": "\uBCF4\uB0B4\uB294 \uC0AC\uB78C:",
-    "label_to": "\uBC1B\uB294 \uC0AC\uB78C:",
-    "label_subject": "\uC81C\uBAA9:",
-    "from_name": "SQL Notebook \uAC1C\uBC1C \uD300 <dev@obsidian-sql.internal>",
-    "to_name": "\uC874\uACBD\uD558\uB294 \uAC1C\uBC1C\uC790\uB2D8",
-    "subject": "Pro Practice \uC54C\uB9BC: \uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uCEE8\uD14D\uC2A4\uD2B8 \uBAA8\uBC94 \uC0AC\uB840",
-    "hello": "\uC548\uB155\uD558\uC138\uC694,",
-    "msg_1": "UI\uB97C \uD1B5\uD574 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB97C \uC804\uD658\uD558\uACE0 \uACC4\uC2DC\uB124\uC694. \uBE60\uB978 \uD0D0\uC0C9\uC5D0\uB294 \uC88B\uC9C0\uB9CC, \uD55C \uAC00\uC9C0 \uD301\uC744 \uB4DC\uB9AC\uC790\uBA74 \uC2A4\uD06C\uB9BD\uD2B8\uC5D0\uC11C \uBA85\uC2DC\uC801\uC778 `USE` \uBA85\uB839\uC744 \uC0AC\uC6A9\uD558\uB294 \uAC83\uC774 \uC6CC\uD06C\uD50C\uB85C\uC6B0\uB97C \uB354\uC6B1 \uACAC\uACE0\uD558\uAC8C \uB9CC\uB4E4\uC5B4 \uC90D\uB2C8\uB2E4.",
-    "msg_quote": "\uCEE8\uD14D\uC2A4\uD2B8\uB97C \uBA85\uC2DC\uC801\uC73C\uB85C \uC815\uC758\uD558\uB294 \uAC83\uC740 \uC2A4\uD06C\uB9BD\uD2B8\uC758 \uC774\uC2DD\uC131\uACFC \uBA85\uD655\uC131\uC744 \uBCF4\uC7A5\uD558\uB294 \uBAA8\uBC94 \uC0AC\uB840\uC785\uB2C8\uB2E4.",
-    "msg_2": "\uCF54\uB4DC \uB0B4\uC5D0\uC11C \uCEE8\uD14D\uC2A4\uD2B8\uB97C \uC815\uC758\uD558\uBA74 \uD63C\uB780\uC744 \uBC29\uC9C0\uD558\uACE0 \uCF54\uB4DC \uB9AC\uBDF0 \uC2DC \uC758\uB3C4\uB97C \uBA85\uD655\uD788 \uC804\uB2EC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uBB3C\uB860 \uD3B8\uB9AC\uD55C \uC804\uC5ED \uC804\uD658\uAE30\uB3C4 \uACC4\uC18D \uC0AC\uC6A9\uD558\uC2E4 \uC218 \uC788\uC2B5\uB2C8\uB2E4!",
-    "punchline": "\uC990\uAC70\uC6B4 \uCFFC\uB9AC \uB418\uC138\uC694! \u{1F680}",
-    "signature_regards": "\uAC10\uC0AC\uD569\uB2C8\uB2E4.",
-    "signature_team": "SQL Notebook \uAC1C\uBC1C \uD300",
-    "btn_read": "\uC77D\uC74C\uC73C\uB85C \uD45C\uC2DC"
-  },
-  "footer": {
-    "tip_help": "\uB3C4\uC6C0\uB9D0 \uBC0F \uAE30\uB2A5",
-    "status_ready": "\uC900\uBE44\uB428",
-    "status_error": "\uC624\uB958",
-    "status_aborted": "\uC911\uB2E8\uB428",
-    "status_live": "\uC2E4\uC2DC\uAC04"
-  },
-  "common": {
-    "error": "\uC624\uB958: {error}",
-    "invalid_name": "\uC0C8 \uC774\uB984\uC740 \uAE30\uC874 \uC774\uB984\uACFC \uB2EC\uB77C\uC57C \uD569\uB2C8\uB2E4.",
-    "notice_export_success": "{name}(\uC73C)\uB85C \uB0B4\uBCF4\uB0C8\uC2B5\uB2C8\uB2E4",
-    "notice_import_loading": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uAC00\uC838\uC624\uB294 \uC911...",
-    "notice_import_success": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 \uAC00\uC838\uC624\uAE30\uC5D0 \uC131\uACF5\uD588\uC2B5\uB2C8\uB2E4!",
-    "notice_anchor_form": "FORM\uC744 {name}\uC5D0 \uACE0\uC815\uD588\uC2B5\uB2C8\uB2E4",
-    "notice_anchor_live": "LIVE \uBE14\uB85D\uC744 {name}\uC5D0 \uACE0\uC815\uD588\uC2B5\uB2C8\uB2E4",
-    "notice_update_live": "{name}\uC5D0\uC11C \uC2E4\uC2DC\uAC04 \uB370\uC774\uD130\uB97C \uC5C5\uB370\uC774\uD2B8\uD558\uB294 \uC911..."
-  }
-};
-
-// src/utils/i18n.ts
-var locales = {
-  "en": en_default,
-  "pt-BR": pt_BR_default,
-  "zh": zh_default,
-  "es": es_default,
-  "de": de_default,
-  "fr": fr_default,
-  "ja": ja_default,
-  "ko": ko_default
-};
-var currentLanguage = "en";
-function resolveLanguage(lang) {
-  if (lang !== "auto") return lang;
-  const obsidianLang = (window.localStorage.getItem("language") || "en").toLowerCase();
-  if (obsidianLang.startsWith("pt")) return "pt-BR";
-  if (obsidianLang.startsWith("zh")) return "zh";
-  if (obsidianLang.startsWith("es")) return "es";
-  if (obsidianLang.startsWith("de")) return "de";
-  if (obsidianLang.startsWith("fr")) return "fr";
-  if (obsidianLang.startsWith("ja")) return "ja";
-  if (obsidianLang.startsWith("ko")) return "ko";
-  return "en";
-}
-function setLanguage(lang) {
-  currentLanguage = lang;
-}
-function t(keyPath, vars) {
-  const keys = keyPath.split(".");
-  const resolvedLang = resolveLanguage(currentLanguage);
-  let value = locales[resolvedLang];
-  for (const key of keys) {
-    if (!value || typeof value !== "object") {
-      value = locales["en"];
-      for (const fallbackKey of keys) {
-        if (!value) break;
-        value = value[fallbackKey];
-      }
-      break;
-    }
-    value = value[key];
-  }
-  if (typeof value !== "string") {
-    return keyPath;
-  }
-  if (vars) {
-    let interpolated = value;
-    for (const [varName, varValue] of Object.entries(vars)) {
-      const sanitizedValue = String(varValue).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-      interpolated = interpolated.replace(new RegExp(`{${varName}}`, "g"), sanitizedValue);
-    }
-    return interpolated;
-  }
-  return value;
-}
-
-// src/ui/FormRenderer.ts
 var FormRenderer = class {
   static render(data, container, app, plugin) {
     const formWrapper = container.createDiv({ cls: "mysql-form-wrapper" });
@@ -66723,7 +66864,7 @@ var ResultRenderer = class {
       if (Array.isArray(data) && data.length > 0 && typeof data[0] === "object") {
         textToInsert = this.dataToMarkdownTable(data);
       } else if (typeof data === "number") {
-        textToInsert = `**Result:** ${String(data)} row(s) affected`;
+        textToInsert = t("renderer.result_dml", { count: String(data) });
       } else {
         textToInsert = "```json\n" + JSON.stringify(data, null, 2) + "\n```";
       }
@@ -66737,7 +66878,7 @@ var ResultRenderer = class {
     }
   }
   static dataToMarkdownTable(rows) {
-    if (rows.length === 0) return "_No data_";
+    if (rows.length === 0) return t("renderer.no_data_md");
     const keys = Object.keys(rows[0]);
     let md = "| " + keys.join(" | ") + " |\n";
     md += "| " + keys.map(() => "---").join(" | ") + " |\n";
@@ -66795,7 +66936,7 @@ var ResultRenderer = class {
           break;
         case "message":
         case "error": {
-          const isDML = rs.type === "message" && rs.message && rs.message.includes("affected");
+          const isDML = rs.type === "message" && typeof rs.data === "number";
           const msgWrapper = contentWrapper.createDiv({
             cls: rs.type === "error" ? "mysql-error-inline" : isDML ? "mysql-success-state mysql-msg-compact" : "mysql-info-state mysql-msg-compact"
           });
@@ -67514,7 +67655,7 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
     const logo = titleGroup.createDiv({ cls: "mysql-logo" });
     this.renderLogo(logo, 40);
     const titleText = titleGroup.createDiv({ cls: "mysql-title-text" });
-    new import_obsidian8.Setting(titleText).setName("").setHeading();
+    new import_obsidian8.Setting(titleText).setName(t("settings.title")).setHeading();
     titleText.createEl("span", { text: t("settings.subtitle") });
     const actions = header.createDiv({ cls: "mysql-header-actions" });
     const importBtnContainer = actions.createDiv({ cls: "mysql-import-wrapper" });
@@ -67538,7 +67679,6 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
     new import_obsidian8.ButtonComponent(importBtnContainer).setButtonText(t("settings.btn_importar")).setIcon("import").setTooltip(t("settings.btn_importar")).onClick(() => importInput.click());
     new import_obsidian8.ButtonComponent(actions).setButtonText(t("settings.btn_novo_db")).setIcon("plus").setCta().onClick(() => this.openCreateModal());
     const welcomeSection = containerEl.createDiv({ cls: "mysql-welcome-section" });
-    new import_obsidian8.Setting(welcomeSection).setName("").setHeading();
     welcomeSection.createEl("p", { text: t("settings.welcome_desc") });
     const searchSection = containerEl.createDiv({ cls: "mysql-search-section" });
     const searchWrapper = searchSection.createDiv({ cls: "mysql-search-wrapper" });
@@ -67556,7 +67696,6 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
       this.renderDatabaseGrid(grid, term);
     });
     const infoSection = containerEl.createDiv({ cls: "mysql-info-board" });
-    new import_obsidian8.Setting(infoSection).setName("").setHeading();
     const list = infoSection.createEl("ul");
     const liText1 = t("settings.info_li_1");
     const li1 = list.createEl("li");
@@ -67574,7 +67713,7 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
     const footer = containerEl.createDiv({ cls: "mysql-settings-footer" });
     const footerLogo = footer.createDiv({ cls: "mysql-logo-footer" });
     this.renderLogo(footerLogo, 40);
-    new import_obsidian8.Setting(footer).setName("").setHeading();
+    new import_obsidian8.Setting(footer).setName(t("settings.title")).setHeading().setClass("mysql-footer-title");
     footer.createEl("span", { text: t("settings.footer_by"), cls: "mysql-footer-by" });
   }
   renderDatabaseGrid(container, searchTerm, page = 1) {
@@ -67759,7 +67898,7 @@ var MySQLSettingTab = class extends import_obsidian8.PluginSettingTab {
   createSectionHeader(container, text, icon) {
     const header = container.createDiv({ cls: "mysql-settings-section-header" });
     (0, import_obsidian8.setIcon)(header.createDiv({ cls: "mysql-section-icon" }), icon);
-    new import_obsidian8.Setting(header).setName("").setHeading();
+    new import_obsidian8.Setting(header).setName(text).setHeading().setClass("mysql-section-header-item");
   }
   renderActiveDatabaseCard(containerEl) {
     const activeDB = this.plugin.activeDatabase;
@@ -68173,13 +68312,16 @@ var WorkbenchFooter = class {
     (0, import_obsidian11.setIcon)(logo, "circle");
     left.createSpan({ text: t("common.app_name") || "SQL Notebook", cls: "mysql-app-name" });
     this.rightEl = this.footerEl.createDiv({ cls: "mysql-footer-right" });
-    this.dbEl = this.rightEl.createDiv({ cls: "mysql-footer-db-container mysql-footer-db-interactive" });
+    this.timeEl = this.rightEl.createDiv({
+      cls: "mysql-footer-time-container mysql-footer-item u-display-none"
+    });
+    this.dbEl = this.rightEl.createDiv({ cls: "mysql-footer-db-container mysql-footer-item mysql-footer-interactive" });
     this.dbEl.onclick = () => {
       new ProPracticeModal(this.app).open();
     };
     this.setActiveDatabase("dbo");
     const helpBtn = this.rightEl.createDiv({
-      cls: "mysql-footer-help-btn",
+      cls: "mysql-footer-help-btn mysql-footer-item mysql-footer-interactive",
       attr: { "aria-label": t("footer.tip_help") }
     });
     (0, import_obsidian11.setIcon)(helpBtn, "help-circle");
@@ -68193,16 +68335,20 @@ var WorkbenchFooter = class {
   setStatus(status, spinning = false) {
     if (!this.statusSpan) return;
     this.statusSpan.setText(status);
-    if (spinning) this.statusSpan.addClass("is-spinning");
-    else this.statusSpan.removeClass("is-spinning");
+    if (spinning) {
+      this.statusSpan.addClass("is-spinning");
+      this.timeEl.addClass("u-display-none");
+    } else {
+      this.statusSpan.removeClass("is-spinning");
+    }
   }
   updateTime(ms) {
-    this.statusEl.empty();
-    const timeWrapper = this.statusEl.createDiv({ cls: "mysql-footer-time-wrapper" });
+    this.timeEl.empty();
+    this.timeEl.removeClass("u-display-none");
+    const timeWrapper = this.timeEl.createDiv({ cls: "mysql-footer-time-wrapper" });
     (0, import_obsidian11.setIcon)(timeWrapper, "timer");
     const timeVal = timeWrapper.createSpan({ cls: "mysql-footer-time-val" });
     timeVal.setText(`${ms}ms`);
-    this.statusSpan = this.statusEl.createSpan({ cls: "mysql-footer-status" });
   }
   setActiveDatabase(dbName) {
     this.dbEl.empty();
@@ -68211,11 +68357,15 @@ var WorkbenchFooter = class {
     this.dbEl.createSpan({ text: dbName, cls: "mysql-footer-db-name" });
   }
   setLive() {
-    this.statusEl.empty();
+    this.timeEl.addClass("u-display-none");
+    const existingIndicator = this.statusEl.querySelector(".mysql-live-indicator");
+    if (existingIndicator) existingIndicator.remove();
     const indicator = this.statusEl.createDiv({ cls: "mysql-live-indicator" });
     indicator.createDiv({ cls: "mysql-pulse-dot" });
     indicator.createSpan({ text: t("footer.status_live") });
-    this.statusSpan = this.statusEl.createSpan({ cls: "mysql-footer-status" });
+    if (this.statusSpan) {
+      this.statusEl.appendChild(this.statusSpan);
+    }
   }
   setError() {
     this.setStatus(t("footer.status_error"));
@@ -68698,18 +68848,17 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
     if (Object.keys(params).length > 0) {
       finalQuery = this.injectParams(query, params);
     }
+    let result;
     try {
-      const result = await QueryExecutor.execute(finalQuery, void 0, {
+      result = await QueryExecutor.execute(finalQuery, void 0, {
         safeMode: this.settings.safeMode,
         signal: abortController.signal,
         activeDatabase: options.activeDatabase || this.activeDatabase,
         originId: options.originId,
         isLive: options.isLive
       });
-      if (cancelBtn) cancelBtn.remove();
       ResultRenderer.render(result, container, this.app, this, void 0, options.isLive);
       if (result.activeDatabase) this.activeDatabase = result.activeDatabase;
-      if (footer && result.executionTime !== void 0) footer.updateTime(result.executionTime);
       if (result.success && this.settings.autoSave) {
         const cleanQuery = query.trim().toUpperCase();
         if (!cleanQuery.startsWith("SELECT") && !cleanQuery.startsWith("SHOW")) {
@@ -68721,8 +68870,14 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
       ResultRenderer.render({ success: false, error: e.message }, container, this.app, this);
       if (footer) footer.setError();
     } finally {
+      if (cancelBtn) cancelBtn.remove();
       if (options.isLive && workbench) workbench.removeClass("is-loading");
-      if (footer) footer.setStatus("Ready");
+      if (footer) {
+        footer.setStatus(t("footer.status_ready"));
+        if (result && result.executionTime !== void 0) {
+          footer.updateTime(result.executionTime);
+        }
+      }
       btn.disabled = false;
       btn.empty();
       (0, import_obsidian12.setIcon)(btn, "play");
@@ -68750,7 +68905,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
         const iconWrapper = titleRow.createDiv({ cls: "mysql-info-icon" });
         (0, import_obsidian12.setIcon)(iconWrapper, "info");
         const msg = titleRow.createEl("p", { cls: "mysql-info-text" });
-        msg.setText("No tables found in database ");
+        msg.setText(t("renderer.msg_no_tables_in") || "No tables found in database ");
         msg.createSpan({ text: activeDB, cls: "mysql-accent u-font-bold" });
         const help = content.createEl("p", {
           text: t("modals.switch_db_help"),

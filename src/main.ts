@@ -4,7 +4,7 @@ import alasql from 'alasql';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-sql';
 
-import { MySQLSettings, IMySQLPlugin, IDatabaseManager, IQueryExecutor, AlaSQLInstance } from './types';
+import { MySQLSettings, IMySQLPlugin, IDatabaseManager, IQueryExecutor, AlaSQLInstance, QueryResult } from './types';
 import { DEFAULT_SETTINGS } from './utils/constants';
 import { SQLSanitizer } from './utils/SQLSanitizer';
 import { Logger } from './utils/Logger';
@@ -595,8 +595,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             finalQuery = this.injectParams(query, params);
         }
 
+        let result: QueryResult | undefined;
         try {
-            const result = await QueryExecutor.execute(finalQuery, undefined, {
+            result = await QueryExecutor.execute(finalQuery, undefined, {
                 safeMode: this.settings.safeMode,
                 signal: abortController.signal,
                 activeDatabase: options.activeDatabase || this.activeDatabase,
@@ -604,11 +605,8 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 isLive: options.isLive
             });
 
-            if (cancelBtn) cancelBtn.remove();
             ResultRenderer.render(result, container, this.app, this, undefined, options.isLive);
-
             if (result.activeDatabase) this.activeDatabase = result.activeDatabase;
-            if (footer && result.executionTime !== undefined) footer.updateTime(result.executionTime);
 
             if (result.success && this.settings.autoSave) {
                 const cleanQuery = query.trim().toUpperCase();
@@ -621,8 +619,14 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             ResultRenderer.render({ success: false, error: (e as Error).message }, container, this.app, this);
             if (footer) footer.setError();
         } finally {
+            if (cancelBtn) cancelBtn.remove();
             if (options.isLive && workbench) workbench.removeClass('is-loading');
-            if (footer) footer.setStatus("Ready");
+            if (footer) {
+                footer.setStatus(t('footer.status_ready'));
+                if (result && result.executionTime !== undefined) {
+                    footer.updateTime(result.executionTime);
+                }
+            }
             btn.disabled = false;
             btn.empty();
             setIcon(btn, "play");
@@ -653,7 +657,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 const iconWrapper = titleRow.createDiv({ cls: "mysql-info-icon" });
                 setIcon(iconWrapper, "info");
                 const msg = titleRow.createEl("p", { cls: "mysql-info-text" });
-                msg.setText("No tables found in database ");
+                msg.setText(t('renderer.msg_no_tables_in') || "No tables found in database ");
                 msg.createSpan({ text: activeDB, cls: "mysql-accent u-font-bold" });
 
                 const help = content.createEl("p", {

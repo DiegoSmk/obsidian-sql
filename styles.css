@@ -560,34 +560,45 @@
   gap: 6px;
 }
 .mysql-footer-help-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
   color: var(--text-muted);
-  padding: 2px 8px;
-  background: rgba(128, 128, 128, 0.05);
-  border-radius: 4px;
-  height: 20px;
-  transition: all var(--mysql-transition-fast);
-}
-.mysql-footer-help-btn:hover {
-  color: var(--text-normal);
 }
 .mysql-footer-help-btn svg {
   width: 14px;
   height: 14px;
   stroke-width: 1.5px;
 }
-.mysql-footer-db-interactive {
+.mysql-footer-db-container {
+  gap: 6px;
+  color: var(--text-muted);
+  margin-right: 8px;
+}
+.mysql-footer-item {
+  padding: 2px 8px;
+  background: rgba(128, 128, 128, 0.05);
+  border-radius: 4px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mysql-footer-interactive {
   cursor: pointer;
   transition: all var(--mysql-transition-fast);
-  padding: 2px 6px;
-  border-radius: 4px;
 }
-.mysql-footer-db-interactive:hover {
+.mysql-footer-interactive:hover {
   background: color-mix(in srgb, var(--mysql-accent), transparent 90%);
   color: var(--mysql-accent);
+}
+.mysql-footer-time-container {
+  opacity: 0.9;
+}
+.mysql-footer-help-btn {
+  color: var(--text-muted);
+}
+.mysql-footer-status-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 /* src/styles/ui/utilities.css */
@@ -2335,13 +2346,37 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
 .mysql-settings-modal .mysql-logo {
   color: var(--mysql-accent, var(--interactive-accent));
 }
-.mysql-settings-modal .mysql-title-text h2 {
+.mysql-settings-modal .mysql-title-text .setting-item-heading {
   margin: 0;
   line-height: 1.2;
+  border: none;
+  padding: 0;
 }
-.mysql-settings-modal .mysql-title-text span {
-  font-size: 13px;
-  color: var(--text-muted);
+.mysql-settings-modal .mysql-title-text .setting-item-name {
+  font-size: 24px;
+  font-weight: bold;
+}
+.mysql-settings-modal .mysql-settings-section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 30px;
+  margin-bottom: 15px;
+}
+.mysql-settings-modal .mysql-section-header-item {
+  border: none !important;
+  padding: 0 !important;
+  flex: 1;
+}
+.mysql-settings-modal .mysql-section-header-item .setting-item-heading {
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}
+.mysql-settings-modal .mysql-section-header-item .setting-item-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-normal);
 }
 .mysql-settings-modal .mysql-welcome-section {
   margin-bottom: 20px;
@@ -2349,6 +2384,10 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   background: color-mix(in srgb, var(--mysql-accent), transparent 90%);
   border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--mysql-accent), transparent 70%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 50px;
 }
 .mysql-settings-modal .mysql-welcome-section h3 {
   margin: 0 0 5px 0;
@@ -2358,6 +2397,7 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   margin: 0;
   font-size: 14px;
   color: var(--text-normal);
+  line-height: 1.4;
 }
 .mysql-settings-modal .mysql-search-wrapper {
   display: flex;
@@ -2386,6 +2426,9 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   border-radius: 6px;
   margin-top: 20px;
   border: 1px solid var(--background-modifier-border);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 .mysql-settings-modal .mysql-info-board h4 {
   margin-top: 0;
@@ -2397,6 +2440,7 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   padding-left: 20px;
   color: var(--text-muted);
   font-size: 13px;
+  line-height: 1.5;
 }
 .mysql-settings-modal .mysql-settings-divider {
   margin: 40px 0;
@@ -2417,8 +2461,13 @@ div.mysql-workbench-container.mysql-mode-alert:hover {
   color: var(--mysql-accent, var(--interactive-accent));
   margin-bottom: 10px;
 }
-.mysql-settings-modal .mysql-footer-title {
+.mysql-settings-modal .mysql-settings-footer .setting-item-heading {
   margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+.mysql-settings-modal .mysql-footer-title .setting-item-name {
   font-size: 16px;
   color: var(--text-normal);
 }

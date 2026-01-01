@@ -37,6 +37,7 @@ export default {
         "batch_size_desc": "결과 페이지당 표시할 행 수입니다.",
         "reset_all": "모든 데이터 초기화",
         "reset_btn": "모든 항목 초기화",
+        "reset_all_confirm_msg": "모든 데이터베이스와 테이블이 삭제됩니다. 이 작업은 되돌릴 수 없습니다. 계속하시겠습니까?",
         "footer_by": "Diego Pena"
     },
     "help": {
@@ -97,6 +98,8 @@ export default {
         "null_value": "NULL",
         "status_error": "오류",
         "status_done": "완료",
+        "switch_db_help": "테이블이 있는 데이터베이스로 전환하거나 ",
+        "btn_open_settings": "설정을 여세요",
         "notice_table_data_copied": "테이블 데이터를 클립보드에 복사했습니다!",
         "notice_copy_failed": "복사 실패: {error}",
         "notice_screenshot_failed": "스크린샷 생성에 실패했습니다: {error}",
@@ -139,7 +142,13 @@ export default {
         "msg_loading": "데이터 로드 중...",
         "msg_showing_limit": "처음 {count}행만 표시됩니다.",
         "msg_no_tables": "이 데이터베이스에서 테이블을 찾을 수 없습니다.",
-        "tip_back": "테이블 목록으로 돌아가기"
+        "msg_no_tables_in": "데이터베이스에서 테이블을 찾을 수 없습니다 ",
+        "tip_back": "테이블 목록으로 돌아가기",
+        "btn_back": "뒤로",
+        "title_results": "쿼리 결과",
+        "rows_affected": "{count}개 행이 영향을 받았습니다",
+        "no_data_md": "_데이터 없음_",
+        "result_dml": "**결과:** {count}개 행이 영향을 받았습니다"
     },
     "form": {
         "title_insert": "{name}에 삽입",
@@ -185,6 +194,14 @@ export default {
         "notice_import_success": "데이터베이스 가져오기에 성공했습니다!",
         "notice_anchor_form": "FORM을 {name}에 고정했습니다",
         "notice_anchor_live": "LIVE 블록을 {name}에 고정했습니다",
-        "notice_update_live": "{name}에서 실시간 데이터를 업데이트하는 중..."
+        "notice_update_live": "{name}에서 실시간 데이터를 업데이트하는 중...",
+        "notice_reset_success": "초기화가 성공적으로 완료되었습니다",
+        "app_name": "SQL Notebook"
+    },
+    "executor": {
+        "err_reserved_word": "{message}\n\n💡 힌트: '{word}'은(는) 예약어입니다. 따옴표를 사용하거나(예: \"{lower}\") 이름을 변경하세요.",
+        "err_alasql_bug_01": "{message}\n\n⚠️ 알려진 AlaSQL 오류: 'INSERT INTO ... SELECT'에서 명시적 컬럼 목록을 사용하여 실패했습니다.\n\n해결책: 컬럼 목록을 제거하고 순서가 정확히 일치하는지 확인하세요.",
+        "err_parse": "{message}\n\n💡 세미콜론 누락, 괄호/따옴표 닫힘 여부 또는 오타가 있는지 확인하세요.",
+        "warn_fragile_insert": "⚠️ 'INSERT INTO ... (컬럼) SELECT'가 감지되었습니다. AlaSQL이 '$01' 오류로 실패할 수 있습니다. 발생 시 컬럼 목록을 제거하세요."
     }
 }

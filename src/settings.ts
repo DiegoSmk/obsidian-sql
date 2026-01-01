@@ -48,7 +48,7 @@ export class MySQLSettingTab extends PluginSettingTab {
 
         // Title & Welcome
         const titleText = titleGroup.createDiv({ cls: 'mysql-title-text' });
-        new Setting(titleText).setName("").setHeading();
+        new Setting(titleText).setName(t('settings.title')).setHeading();
         titleText.createEl('span', { text: t('settings.subtitle') });
 
         // Welcome Section (Full width below header or integrated?)
@@ -98,7 +98,6 @@ export class MySQLSettingTab extends PluginSettingTab {
         // --- Welcome Section ---
         const welcomeSection = containerEl.createDiv({ cls: 'mysql-welcome-section' });
 
-        new Setting(welcomeSection).setName("").setHeading();
         welcomeSection.createEl('p', { text: t('settings.welcome_desc') });
 
 
@@ -132,7 +131,6 @@ export class MySQLSettingTab extends PluginSettingTab {
         // --- Info Section ---
         const infoSection = containerEl.createDiv({ cls: 'mysql-info-board' });
 
-        new Setting(infoSection).setName("").setHeading();
         const list = infoSection.createEl('ul');
 
         const liText1 = t('settings.info_li_1');
@@ -159,7 +157,7 @@ export class MySQLSettingTab extends PluginSettingTab {
 
         const footerLogo = footer.createDiv({ cls: 'mysql-logo-footer' });
         this.renderLogo(footerLogo, 40);
-        new Setting(footer).setName("").setHeading();
+        new Setting(footer).setName(t('settings.title')).setHeading().setClass('mysql-footer-title');
         footer.createEl('span', { text: t('settings.footer_by'), cls: 'mysql-footer-by' });
     }
 
@@ -502,7 +500,7 @@ export class MySQLSettingTab extends PluginSettingTab {
     private createSectionHeader(container: HTMLElement, text: string, icon: string) {
         const header = container.createDiv({ cls: 'mysql-settings-section-header' });
         setIcon(header.createDiv({ cls: 'mysql-section-icon' }), icon);
-        new Setting(header).setName("").setHeading();
+        new Setting(header).setName(text).setHeading().setClass('mysql-section-header-item');
     }
 
     private renderActiveDatabaseCard(containerEl: HTMLElement): void {

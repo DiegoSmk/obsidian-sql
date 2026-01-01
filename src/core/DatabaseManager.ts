@@ -21,32 +21,16 @@ export class DatabaseManager {
         this.pendingSave = false;
 
         try {
-            const snapshot = this.createSnapshot();
-            const existingData = (await this.plugin.loadData() as (DatabaseSnapshot & { _temp?: unknown, backup?: unknown, currentDB?: string })) || {} as (DatabaseSnapshot & { _temp?: unknown, backup?: unknown, currentDB?: string });
+            const snapshot = await this.createSnapshot();
+            // Directly merge settings with snapshot. snapshot already contains activeDatabase and version.
+            const finalData = { ...this.plugin.settings, ...snapshot };
 
-            if (existingData.databases) {
-                const backupData = { ...existingData };
-                delete backupData.backup;
-
-                existingData.backup = {
-                    databases: backupData.databases,
-                    activeDatabase: backupData.activeDatabase || backupData.currentDB,
-                    version: backupData.version,
-                    createdAt: backupData.createdAt
-                };
-            }
-
-            const tempData = { ...this.plugin.settings, ...existingData, ...snapshot, _temp: snapshot };
-            await this.plugin.saveData(tempData);
-
-            const finalData = { ...tempData } as (DatabaseSnapshot & { _temp?: unknown, backup?: unknown, currentDB?: string });
-            delete finalData._temp;
-
+            // Single write operation to disk
             await this.plugin.saveData(finalData);
 
+            Logger.info("Database saved successfully.");
         } catch (error) {
             console.error('MySQL Plugin: Save failed', error);
-            throw error;
         } finally {
             this.isSaving = false;
             // Check if a save was requested while we were saving
@@ -56,7 +40,7 @@ export class DatabaseManager {
         }
     }
 
-    private createSnapshot(): DatabaseSnapshot {
+    private async createSnapshot(): Promise<DatabaseSnapshot> {
         const activeDatabase = this.plugin.activeDatabase || 'dbo';
         // Filter out default alasql database to prevent duplication/pollution
         const databases = Object.keys((alasql as unknown as AlaSQLInstance).databases).filter(d => d !== 'alasql');
@@ -77,6 +61,7 @@ export class DatabaseManager {
                 const dbSchema: Record<string, string> = {};
 
                 if (dbInstance.tables) {
+                    let tableCount = 0;
                     for (const tableName of Object.keys(dbInstance.tables)) {
                         const tableObj = dbInstance.tables[tableName];
                         const rows = tableObj.data || [];
@@ -124,12 +109,14 @@ export class DatabaseManager {
 
                                 const createSQL = `CREATE TABLE \`${tableName}\` (${columns})`;
                                 dbSchema[tableName] = createSQL;
-
-                                // Alert user about fallback (Potential loss of AUTO_INCREMENT/Constraints)
-                                Logger.warn(`[DATA INTEGRITY] Imperfect schema restoration for '${tableName}'. Table structure was inferred from data, meaning constraints like PRIMARY KEY or AUTO_INCREMENT are likely missing. Manual schema definition is recommended.`);
                             }
                         } catch (e) {
                             console.debug(`MySQL Plugin: Failed to generate schema for '${tableName}':`, e);
+                        }
+
+                        tableCount++;
+                        if (tableCount % 10 === 0) {
+                            await new Promise(resolve => setTimeout(resolve, 0));
                         }
                     }
                 }
@@ -145,8 +132,6 @@ export class DatabaseManager {
             }
         }
 
-
-
         return snapshot;
     }
 
@@ -159,11 +144,14 @@ export class DatabaseManager {
 
         try {
             const activeDB = data.activeDatabase || data.currentDB || 'dbo';
+            const dbNames = Object.keys(data.databases);
 
-            for (const [dbName, content] of Object.entries(data.databases)) {
+            Logger.info(`Starting database restoration for ${dbNames.length} databases...`);
+
+            for (const dbName of dbNames) {
                 if (dbName === 'alasql') continue; // Skip default/system db
 
-                const db = content;
+                const db = data.databases[dbName];
 
                 if (!db.tables && !db.schema) continue;
 
@@ -171,8 +159,8 @@ export class DatabaseManager {
                     await (alasql as unknown as AlaSQLInstance).promise(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
                 }
 
-                // Temporary switch context for restoration
-                await (alasql as unknown as AlaSQLInstance).promise(`USE ${dbName}`);
+                // Yield to keep UI responsive
+                await new Promise(resolve => setTimeout(resolve, 0));
 
                 if (db.schema) {
                     for (const [tableName, sql] of Object.entries(db.schema)) {
@@ -183,10 +171,9 @@ export class DatabaseManager {
                             if (createSQL.toUpperCase().includes('CREATE TABLE')) {
                                 // Robust replacement: matches optional [ " ` around the table name and avoids double prefixing
                                 if (!createSQL.match(new RegExp(`CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?${dbName}\\.`, 'i'))) {
-                                    createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\\s+EXISTS\\s+)?([["`]?)([a-zA-Z0-9_]+)([\]"`]?)/i, `CREATE TABLE ${dbName}.$2`);
+                                    createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([["`]?)([a-zA-Z0-9_]+)([\]"`]?)/i, `CREATE TABLE ${dbName}.$2`);
                                 }
                             }
-                            Logger.info(`Restored table schema: ${dbName}.${tableName}`);
                             await (alasql as AlaSQLInstance).promise(createSQL);
                         } catch (e) {
                             console.error(`Error restoring schema for '${tableName}':`, e);
@@ -195,6 +182,7 @@ export class DatabaseManager {
                 }
 
                 if (db.tables) {
+                    let tableCount = 0;
                     for (const [tableName, rows] of Object.entries(db.tables)) {
                         if (!rows || rows.length === 0) continue;
                         try {
@@ -213,12 +201,20 @@ export class DatabaseManager {
                                         await (alasql as AlaSQLInstance).promise(`SELECT * INTO ${dbName}.${tableName} FROM ?`, [rows]);
                                     }
                                 }
+                                tableCount++;
                             }
                         } catch (e) {
                             console.error(`Error loading data for '${tableName}':`, e);
                         }
+
+                        // Yield every few tables if large database
+                        if (tableCount % 5 === 0) {
+                            await new Promise(resolve => setTimeout(resolve, 0));
+                        }
                     }
                 }
+
+                Logger.info(`Restored database: ${dbName}`);
             }
 
             // No longer need to switch alaSQL context globally, we just update plugin state
@@ -237,6 +233,7 @@ export class DatabaseManager {
                 await (alasql as AlaSQLInstance).promise('CREATE DATABASE dbo');
             }
 
+            Logger.info("Database restoration complete.");
             // Explicitly sync alasql context with plugin state to prevent leakage
         } catch (error) {
             console.debug('MySQL Plugin: Load failed', error);
@@ -326,6 +323,7 @@ export class DatabaseManager {
         if (oldName === 'alasql') throw new Error("Cannot rename system database 'alasql'");
         if (oldName === 'dbo') throw new Error("Cannot rename default database 'dbo'");
         if (this.plugin.activeDatabase === oldName) throw new Error("Cannot rename active database. Switch to another database first.");
+        if (!(alasql as AlaSQLInstance).databases[oldName]) throw new Error(`Database ${oldName} does not exist`);
         if ((alasql as AlaSQLInstance).databases[newName]) throw new Error(`Database ${newName} already exists`);
 
         try {
@@ -333,7 +331,7 @@ export class DatabaseManager {
             await (alasql as AlaSQLInstance).promise(`CREATE DATABASE ${newName}`);
 
             // 2. Get tables from old DB
-            const tables = (alasql as AlaSQLInstance)(`SHOW TABLES FROM [${oldName}]`) as { tableid: string }[];
+            const tables = (alasql as AlaSQLInstance)(`SHOW TABLES FROM ${oldName}`) as { tableid: string }[];
 
             for (const t of tables) {
                 const tableName = t.tableid;
@@ -342,15 +340,15 @@ export class DatabaseManager {
                 // Copy Table Struct and Data using Manual Construction
                 try {
                     // 1. Get Columns
-                    const cols = (alasql as AlaSQLInstance)(`SHOW COLUMNS FROM [${oldName}].[${tableName}]`) as { columnid: string, dbtypeid: string }[];
+                    const cols = (alasql as AlaSQLInstance)(`SHOW COLUMNS FROM ${oldName}.${tableName}`) as { columnid: string, dbtypeid: string }[];
                     if (cols && cols.length > 0) {
                         const colDefs = cols.map(c => `${c.columnid} ${c.dbtypeid}`).join(', ');
-                        await (alasql as AlaSQLInstance).promise(`CREATE TABLE [${newName}].[${tableName}] (${colDefs})`);
+                        await (alasql as AlaSQLInstance).promise(`CREATE TABLE ${newName}.${tableName} (${colDefs})`);
 
                         // 2. Copy Data
-                        const sourceData = (alasql as AlaSQLInstance)(`SELECT * FROM [${oldName}].[${tableName}]`) as unknown[];
-                        if (sourceData && sourceData.length > 0) {
-                            await (alasql as AlaSQLInstance).promise(`INSERT INTO [${newName}].[${tableName}] SELECT * FROM ?`, [sourceData]);
+                        const sourceData = (alasql as AlaSQLInstance)(`SELECT * FROM ${oldName}.${tableName}`) as unknown[];
+                        if (sourceData && sourceData && (sourceData as unknown[]).length > 0) {
+                            await (alasql as AlaSQLInstance).promise(`INSERT INTO ${newName}.${tableName} SELECT * FROM ?`, [sourceData]);
                         }
                     }
                 } catch (e) {
