@@ -1,11 +1,11 @@
 export default {
     "settings": {
-        "title": "SQL Notebook",
+        "title": "SQL notebook",
         "subtitle": "Database manager",
         "btn_atualizar": "Update",
         "btn_importar": "Import",
         "btn_novo_db": "New database",
-        "welcome_title": "Welcome to SQL Notebook",
+        "welcome_title": "Welcome to SQL notebook",
         "welcome_desc": "Manage your local databases, execute queries, and visualize results directly in Obsidian.",
         "search_placeholder": "Search databases...",
         "info_title": "Important information:",
@@ -28,7 +28,7 @@ export default {
         "export_folder": "Export folder",
         "export_folder_desc": "Default folder for CSV exports.",
         "safe_mode": "Safe mode",
-        "safe_mode_desc": "Block dangerous commands (DROP, ALTER) and enforce limits.",
+        "safe_mode_desc": "Block dangerous commands (drop, alter) and enforce limits.",
         "enable_logging": "Enable debug logging",
         "enable_logging_desc": "Show detailed logs in the developer console (Ctrl+Shift+I). Useful for debugging synchronization.",
         "snapshot_limit": "Snapshot row limit",
@@ -37,15 +37,15 @@ export default {
         "batch_size_desc": "Rows to display per page in results.",
         "reset_all": "Reset all data",
         "reset_btn": "Reset everything",
-        "reset_all_confirm_msg": "This will delete ALL databases and tables. This action cannot be undone. Are you sure?",
+        "reset_all_confirm_msg": "This will delete all databases and tables. This action cannot be undone. Are you sure?",
         "footer_by": "Diego Pena"
     },
     "help": {
-        "title": "SQL Notebook features",
+        "title": "SQL notebook features",
         "collapsible_title": "Collapsible workbench",
         "collapsible_desc": "Toggle the workbench view to save space. Click the header or the chevron icon.",
         "auto_collapse_title": "Auto-collapse",
-        "auto_collapse_desc": "Start a comment with '@' (e.g., '-- @ My Query') to automatically collapse the workbench when the note opens.",
+        "auto_collapse_desc": "Start a comment with '@' (e.g., '-- @ my query') to automatically collapse the workbench when the note opens.",
         "alert_title": "Alert marker (!)",
         "alert_desc": "Add '!' to your comment start to highlight it as an alert or warning.",
         "question_title": "Question marker (?)",
@@ -53,7 +53,7 @@ export default {
         "favorite_title": "Favorite marker (*)",
         "favorite_desc": "Add '*' to highlight important or frequently used queries.",
         "copy_edit_title": "Copy & edit",
-        "copy_edit_desc": "Hover over the workbench to access quick Copy Code and Edit Block buttons."
+        "copy_edit_desc": "Hover over the workbench to access quick copy code and edit block buttons."
     },
     "modals": {
         "confirm_delete_title": "Delete database",
@@ -145,7 +145,7 @@ export default {
         "msg_no_tables_in": "No tables found in database ",
         "tip_back": "Back to tables list",
         "btn_back": "Back",
-        "title_results": "Query Results",
+        "title_results": "Query results",
         "rows_affected": "{count} row(s) affected",
         "no_data_md": "_No data_",
         "result_dml": "**Result:** {count} row(s) affected"
@@ -176,7 +176,7 @@ export default {
         "msg_2": "Defining the context within the code helps avoid confusion and makes your intent clear to anyone reviewing your work. You can always continue using the global switcher for convenience!",
         "punchline": "Happy querying! 🚀",
         "signature_regards": "Best regards,",
-        "signature_team": "SQL Notebook development team",
+        "signature_team": "SQL notebook development team",
         "btn_read": "Mark as read"
     },
     "footer": {
@@ -196,7 +196,7 @@ export default {
         "notice_anchor_live": "LIVE block anchored to {name}",
         "notice_update_live": "Updating LIVE data from {name}...",
         "notice_reset_success": "Reset completed successfully",
-        "app_name": "SQL Notebook"
+        "app_name": "SQL notebook"
     },
     "executor": {
         "err_reserved_word": "{message}\n\n💡 Tip: '{word}' is a reserved word. Try using quotes (e.g. \"{lower}\") or change the name.",

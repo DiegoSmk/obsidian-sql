@@ -347,7 +347,7 @@ export class DatabaseManager {
 
                         // 2. Copy Data
                         const sourceData = (alasql as AlaSQLInstance)(`SELECT * FROM ${oldName}.${tableName}`) as unknown[];
-                        if (sourceData && sourceData && (sourceData as unknown[]).length > 0) {
+                        if (sourceData && sourceData.length > 0) {
                             await (alasql as AlaSQLInstance).promise(`INSERT INTO ${newName}.${tableName} SELECT * FROM ?`, [sourceData]);
                         }
                     }
