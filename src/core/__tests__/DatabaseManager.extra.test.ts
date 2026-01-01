@@ -40,12 +40,12 @@ describe('DatabaseManager Extra Coverage', () => {
             alasql('INSERT INTO test_save VALUES (1)');
 
             vi.spyOn(mockPlugin, 'loadData').mockResolvedValue({});
-            const saveDataMock = vi.spyOn(mockPlugin, 'saveData').mockResolvedValue(true as unknown);
+            const saveDataMock = vi.spyOn(mockPlugin, 'saveData').mockResolvedValue();
 
             await dbManager.save();
 
             expect(saveDataMock).toHaveBeenCalledTimes(1);
-            const saveDataCall = saveDataMock.mock.calls[0][0] as { databases: Record<string, { tables: Record<string, any[]> }> };
+            const saveDataCall = saveDataMock.mock.calls[0][0] as { databases: Record<string, { tables: Record<string, unknown[]> }> };
             expect(saveDataCall.databases.dbo).toBeDefined();
             expect(saveDataCall.databases.dbo.tables.test_save).toHaveLength(1);
         });
@@ -100,9 +100,9 @@ describe('DatabaseManager Extra Coverage', () => {
 
             expect(consoleSpy).toHaveBeenCalled();
 
-            const tables = (alasql as AlaSQLInstance)('SHOW TABLES FROM corrupted_db') as unknown[];
+            const tables = (alasql as AlaSQLInstance)('SHOW TABLES FROM corrupted_db') as Array<{ tableid: string }>;
 
-            expect(tables.find((t: unknown) => t.tableid === 'bad_table')).toBeUndefined();
+            expect(tables.find(t => t.tableid === 'bad_table')).toBeUndefined();
 
             consoleSpy.mockRestore();
         });

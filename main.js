@@ -64264,20 +64264,21 @@ var DatabaseManager = class {
     if (oldName === "alasql") throw new Error("Cannot rename system database 'alasql'");
     if (oldName === "dbo") throw new Error("Cannot rename default database 'dbo'");
     if (this.plugin.activeDatabase === oldName) throw new Error("Cannot rename active database. Switch to another database first.");
+    if (!import_alasql.default.databases[oldName]) throw new Error(`Database ${oldName} does not exist`);
     if (import_alasql.default.databases[newName]) throw new Error(`Database ${newName} already exists`);
     try {
       await import_alasql.default.promise(`CREATE DATABASE ${newName}`);
-      const tables = (0, import_alasql.default)(`SHOW TABLES FROM [${oldName}]`);
+      const tables = (0, import_alasql.default)(`SHOW TABLES FROM ${oldName}`);
       for (const t2 of tables) {
         const tableName = t2.tableid;
         try {
-          const cols = (0, import_alasql.default)(`SHOW COLUMNS FROM [${oldName}].[${tableName}]`);
+          const cols = (0, import_alasql.default)(`SHOW COLUMNS FROM ${oldName}.${tableName}`);
           if (cols && cols.length > 0) {
             const colDefs = cols.map((c) => `${c.columnid} ${c.dbtypeid}`).join(", ");
-            await import_alasql.default.promise(`CREATE TABLE [${newName}].[${tableName}] (${colDefs})`);
-            const sourceData = (0, import_alasql.default)(`SELECT * FROM [${oldName}].[${tableName}]`);
+            await import_alasql.default.promise(`CREATE TABLE ${newName}.${tableName} (${colDefs})`);
+            const sourceData = (0, import_alasql.default)(`SELECT * FROM ${oldName}.${tableName}`);
             if (sourceData && sourceData.length > 0) {
-              await import_alasql.default.promise(`INSERT INTO [${newName}].[${tableName}] SELECT * FROM ?`, [sourceData]);
+              await import_alasql.default.promise(`INSERT INTO ${newName}.${tableName} SELECT * FROM ?`, [sourceData]);
             }
           }
         } catch (e) {
@@ -64556,12 +64557,12 @@ var SQLTransformer = class {
 // src/locales/en.ts
 var en_default = {
   "settings": {
-    "title": "SQL Notebook",
+    "title": "SQL notebook",
     "subtitle": "Database manager",
     "btn_atualizar": "Update",
     "btn_importar": "Import",
     "btn_novo_db": "New database",
-    "welcome_title": "Welcome to SQL Notebook",
+    "welcome_title": "Welcome to SQL notebook",
     "welcome_desc": "Manage your local databases, execute queries, and visualize results directly in Obsidian.",
     "search_placeholder": "Search databases...",
     "info_title": "Important information:",
@@ -64584,7 +64585,7 @@ var en_default = {
     "export_folder": "Export folder",
     "export_folder_desc": "Default folder for CSV exports.",
     "safe_mode": "Safe mode",
-    "safe_mode_desc": "Block dangerous commands (DROP, ALTER) and enforce limits.",
+    "safe_mode_desc": "Block dangerous commands (drop, alter) and enforce limits.",
     "enable_logging": "Enable debug logging",
     "enable_logging_desc": "Show detailed logs in the developer console (Ctrl+Shift+I). Useful for debugging synchronization.",
     "snapshot_limit": "Snapshot row limit",
@@ -64593,15 +64594,15 @@ var en_default = {
     "batch_size_desc": "Rows to display per page in results.",
     "reset_all": "Reset all data",
     "reset_btn": "Reset everything",
-    "reset_all_confirm_msg": "This will delete ALL databases and tables. This action cannot be undone. Are you sure?",
+    "reset_all_confirm_msg": "This will delete all databases and tables. This action cannot be undone. Are you sure?",
     "footer_by": "Diego Pena"
   },
   "help": {
-    "title": "SQL Notebook features",
+    "title": "SQL notebook features",
     "collapsible_title": "Collapsible workbench",
     "collapsible_desc": "Toggle the workbench view to save space. Click the header or the chevron icon.",
     "auto_collapse_title": "Auto-collapse",
-    "auto_collapse_desc": "Start a comment with '@' (e.g., '-- @ My Query') to automatically collapse the workbench when the note opens.",
+    "auto_collapse_desc": "Start a comment with '@' (e.g., '-- @ my query') to automatically collapse the workbench when the note opens.",
     "alert_title": "Alert marker (!)",
     "alert_desc": "Add '!' to your comment start to highlight it as an alert or warning.",
     "question_title": "Question marker (?)",
@@ -64609,7 +64610,7 @@ var en_default = {
     "favorite_title": "Favorite marker (*)",
     "favorite_desc": "Add '*' to highlight important or frequently used queries.",
     "copy_edit_title": "Copy & edit",
-    "copy_edit_desc": "Hover over the workbench to access quick Copy Code and Edit Block buttons."
+    "copy_edit_desc": "Hover over the workbench to access quick copy code and edit block buttons."
   },
   "modals": {
     "confirm_delete_title": "Delete database",
@@ -64701,7 +64702,7 @@ var en_default = {
     "msg_no_tables_in": "No tables found in database ",
     "tip_back": "Back to tables list",
     "btn_back": "Back",
-    "title_results": "Query Results",
+    "title_results": "Query results",
     "rows_affected": "{count} row(s) affected",
     "no_data_md": "_No data_",
     "result_dml": "**Result:** {count} row(s) affected"
@@ -64732,7 +64733,7 @@ var en_default = {
     "msg_2": "Defining the context within the code helps avoid confusion and makes your intent clear to anyone reviewing your work. You can always continue using the global switcher for convenience!",
     "punchline": "Happy querying! \u{1F680}",
     "signature_regards": "Best regards,",
-    "signature_team": "SQL Notebook development team",
+    "signature_team": "SQL notebook development team",
     "btn_read": "Mark as read"
   },
   "footer": {
@@ -64752,7 +64753,7 @@ var en_default = {
     "notice_anchor_live": "LIVE block anchored to {name}",
     "notice_update_live": "Updating LIVE data from {name}...",
     "notice_reset_success": "Reset completed successfully",
-    "app_name": "SQL Notebook"
+    "app_name": "SQL notebook"
   },
   "executor": {
     "err_reserved_word": `{message}
@@ -66345,7 +66346,7 @@ var QueryExecutor = class {
         return await this.handleFormCommand(cleanQuery, currentDB, monitor);
       }
       if (options.isLive) {
-        const isSelect = upperSql.startsWith("SELECT") || upperSql.startsWith("SHOW") || upperSql.startsWith("WITH");
+        const isSelect = upperSql.startsWith("SELECT") || upperSql.startsWith("SHOW") || upperSql.startsWith("WITH") || upperSql.startsWith("USE");
         if (!isSelect || upperSql.includes("INSERT ") || upperSql.includes("UPDATE ") || upperSql.includes("DELETE ") || upperSql.includes("DROP ")) {
           throw new Error("Security Block: LIVE blocks are strictly read-only and must be SELECT/SHOW queries.");
         }
@@ -68483,7 +68484,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
     el.addClass("mysql-block-parent");
     const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
     const trimmedSource = source.trim();
-    const isLive = trimmedSource.toUpperCase().startsWith("LIVE SELECT");
+    const isLive = /^LIVE\s/i.test(trimmedSource);
     const isForm = trimmedSource.toUpperCase().startsWith("FORM");
     const stableId = isLive || isForm ? this.generateBlockStableId(source, ctx) : null;
     if (isLive && this.settings.enableLogging) {
@@ -68519,7 +68520,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
     if (isLive) {
       workbench.addClass("mysql-live-mode");
       try {
-        const sqlForAST = trimmedSource.substring(5).trim();
+        const sqlForAST = trimmedSource.replace(/^LIVE\s+/i, "");
         const extractFromNode = (node) => {
           var _a;
           if (!node) return;
@@ -68727,7 +68728,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
               }
               dbNameSpan.setText(db);
               new import_obsidian12.Notice(t("common.notice_anchor_live", { name: db }) || `Live result anchored to ${db}`);
-              void this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footerInstance, {
+              void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
                 activeDatabase: anchoredDB,
                 originId: stableId,
                 isLive: true
@@ -68744,7 +68745,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
       (0, import_obsidian12.setIcon)(refreshBtn, "refresh-cw");
       refreshBtn.onclick = () => {
         refreshBtn.addClass("is-spinning");
-        void this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footerInstance, {
+        void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
           activeDatabase: anchoredDB,
           originId: stableId,
           isLive: true
@@ -68752,7 +68753,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
           setTimeout(() => refreshBtn.removeClass("is-spinning"), 600);
         });
       };
-      void this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footerInstance, {
+      void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
         activeDatabase: anchoredDB,
         originId: stableId,
         isLive: true
@@ -68760,7 +68761,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
       footerInstance.setLive();
       const eventBus = DatabaseEventBus.getInstance();
       const debouncedExec = (0, import_obsidian12.debounce)(() => {
-        void this.executeQuery(source.substring(5).trim(), {}, runBtn, resultContainer, footerInstance, {
+        void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
           activeDatabase: anchoredDB,
           originId: stableId,
           isLive: true
