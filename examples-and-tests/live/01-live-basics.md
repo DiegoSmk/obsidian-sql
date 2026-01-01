@@ -14,13 +14,13 @@ INSERT INTO live_tasks (task, done) VALUES ('Learn SQL', true);
 INSERT INTO live_tasks (task, done) VALUES ('Build Plugin', false);
 ```
 
-2.  **Observe this LIVE block**:
-To make a block live, simply start your query with the `LIVE` keyword inside a standard `mysql` block.
-
 ```mysql
 LIVE USE playground;
 SELECT * FROM live_tasks;
 ```
+
+> [!TIP]
+> **Database Anchoring**: Just like with forms, you can change the target database of a `LIVE` block by clicking the **Database Selector** button in the footer. This is useful for monitoring different databases simultaneously.
 
 ## 🔄 How to trigger an update?
 
