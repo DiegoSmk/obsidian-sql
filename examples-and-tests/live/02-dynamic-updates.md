@@ -1,0 +1,38 @@
+# 02 - Dynamic Updates with Parameters
+
+Live blocks also support dynamic parameters, allowing you to create interactive dashboards.
+
+## 🎛️ Interactive Filter
+
+Change the `min_price` in the input below and see the results update.
+
+```sql-live
+/* params: {
+  "min_price": 100
+} */
+USE playground;
+SELECT * FROM inventory WHERE price >= :min_price;
+```
+
+## 📈 Real-time Dashboards
+
+You can have multiple live blocks on the same page reflecting different views of the same data.
+
+```sql-live
+-- Summary view
+USE playground;
+SELECT 
+    COUNT(*) as total_items, 
+    SUM(price) as total_value 
+FROM inventory;
+```
+
+Try adding an item to `inventory` in another block and see both blocks above update!
+
+```mysql
+USE playground;
+INSERT INTO inventory (item, price) VALUES ('Secret Gadget', 999);
+```
+
+---
+[Back: Live Basics](./01-live-basics.md)
