@@ -156,4 +156,18 @@ FROM RANGE(1, 10);`;
         const result = await QueryExecutor.execute('SELECT * FROM many');
         expect(result.success).toBe(true);
     });
+
+    it('should handle LIVE keyword correctly with USE statements', async () => {
+        alasql('CREATE DATABASE playground');
+        alasql('CREATE TABLE playground.inventory (id INT, price INT)');
+        alasql('INSERT INTO playground.inventory VALUES (1, 150)');
+
+        const sql = 'USE playground; LIVE SELECT * FROM inventory WHERE price >= 100';
+        const result = await QueryExecutor.execute(sql, [], { isLive: true });
+
+        expect(result.success).toBe(true);
+        expect(result.activeDatabase).toBe('playground');
+        expect(result.data?.[1].type).toBe('table');
+        expect(result.data?.[1].data).toHaveLength(1);
+    });
 });

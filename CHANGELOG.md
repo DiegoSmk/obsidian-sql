@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.1] - 2026-01-01
+- **Fix**: Improved `LIVE` mode detection logic to handle comments and `USE` statements correctly.
+- **Fix**: Implemented robust stripping of the `LIVE` keyword before query execution to prevent parser errors.
+- **Fix**: Ensured database anchors (`liveBlockAnchors`) persist correctly by fixing a state-wiping bug in `saveSettings`.
+- **Polish**: Removed parameter input rendering for `LIVE` blocks to ensure a cleaner interface.
+- **Docs**: Updated examples to use the recommended `USE; LIVE SELECT` syntax.
+- **Lint**: Fixed unsafe type assignments in `main.ts` uncovered by the validation script.
+
 ## [0.6.0] - 2026-01-01
 - **Performance**: Implemented cooperative multitasking (yielding) in database load/save processes to prevent UI freezing on startup.
 - **Optimization**: Eliminated redundant disk writes and unified database snapshot process.

@@ -2,16 +2,13 @@
 
 Live blocks also support dynamic parameters, allowing you to create interactive dashboards.
 
-## 🎛️ Interactive Filter
+## 🎛️ Real-time Data View
 
-Change the `min_price` in the input below and see the results update.
+Live blocks update instantly when data in the relevant tables change.
 
 ```mysql
-/* params: {
-  "min_price": 100
-} */
-LIVE USE playground;
-SELECT * FROM inventory WHERE price >= :min_price;
+USE playground;
+LIVE SELECT * FROM inventory;
 ```
 
 ## 📈 Real-time Dashboards
@@ -19,9 +16,9 @@ SELECT * FROM inventory WHERE price >= :min_price;
 You can have multiple live blocks on the same page reflecting different views of the same data.
 
 ```mysql
-LIVE USE playground;
+USE playground;
 -- Summary view
-SELECT 
+LIVE SELECT 
     COUNT(*) as qty_items, 
     SUM(price) as total_value 
 FROM inventory;

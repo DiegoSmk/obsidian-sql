@@ -37,4 +37,8 @@ export class SQLSanitizer {
         if (typeof value === 'object') return `'${JSON.stringify(value).replace(/'/g, "''")}'`;
         return `'${String(value as string | boolean).replace(/'/g, "''")}'`;
     }
+
+    static stripLiveKeyword(sql: string): string {
+        return sql.replace(/\bLIVE\s+/gi, '');
+    }
 }

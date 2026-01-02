@@ -15,8 +15,8 @@ INSERT INTO live_tasks (task, done) VALUES ('Build Plugin', false);
 ```
 
 ```mysql
-LIVE USE playground;
-SELECT * FROM live_tasks;
+USE playground;
+LIVE SELECT * FROM live_tasks;
 ```
 
 > [!TIP]

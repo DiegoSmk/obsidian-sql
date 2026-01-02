@@ -55,6 +55,9 @@ export class QueryExecutor {
 
         try {
             let cleanQuery = SQLSanitizer.clean(query);
+            if (options.isLive) {
+                cleanQuery = SQLSanitizer.stripLiveKeyword(cleanQuery);
+            }
             const upperSql = cleanQuery.toUpperCase().trim();
 
             let warnings: string[] = [];

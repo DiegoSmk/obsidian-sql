@@ -63990,6 +63990,9 @@ var SQLSanitizer = class {
     if (typeof value === "object") return `'${JSON.stringify(value).replace(/'/g, "''")}'`;
     return `'${String(value).replace(/'/g, "''")}'`;
   }
+  static stripLiveKeyword(sql) {
+    return sql.replace(/\bLIVE\s+/gi, "");
+  }
 };
 
 // src/main.ts
@@ -66343,6 +66346,9 @@ var QueryExecutor = class {
     let currentDB = options.activeDatabase || "dbo";
     try {
       let cleanQuery = SQLSanitizer.clean(query);
+      if (options.isLive) {
+        cleanQuery = SQLSanitizer.stripLiveKeyword(cleanQuery);
+      }
       const upperSql = cleanQuery.toUpperCase().trim();
       let warnings = [];
       if (upperSql.startsWith("FORM")) {
@@ -68451,7 +68457,9 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
     setLanguage(this.settings.language);
   }
   async saveSettings() {
-    await this.saveData(this.settings);
+    const existingData = await this.loadData() || {};
+    const finalData = { ...existingData, ...this.settings };
+    await this.saveData(finalData);
     if (this.debouncedSave) {
       this.debouncedSave = (0, import_obsidian12.debounce)(
         () => this.dbManager.save(),
@@ -68486,9 +68494,9 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
     el.empty();
     el.addClass("mysql-block-parent");
     const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
-    const trimmedSource = source.trim();
-    const isLive = /^LIVE\s/i.test(trimmedSource);
-    const isForm = trimmedSource.toUpperCase().startsWith("FORM");
+    const cleanedForDetection = SQLSanitizer.clean(source);
+    const isLive = /\bLIVE\s+SELECT/i.test(cleanedForDetection);
+    const isForm = cleanedForDetection.toUpperCase().startsWith("FORM");
     const stableId = isLive || isForm ? this.generateBlockStableId(source, ctx) : null;
     if (isLive && this.settings.enableLogging) {
       Logger.info(`[LIVE] Initializing block: stableId=${stableId}`);
@@ -68523,7 +68531,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
     if (isLive) {
       workbench.addClass("mysql-live-mode");
       try {
-        const sqlForAST = trimmedSource.replace(/^LIVE\s+/i, "");
+        const sqlForAST = SQLSanitizer.stripLiveKeyword(cleanedForDetection);
         const extractFromNode = (node) => {
           var _a;
           if (!node) return;
@@ -68657,7 +68665,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
     resetBtn.onclick = () => void this.resetDatabase(resultContainer, footerInstance);
     const paramMatch = source.match(/\/\*\s*params\s*:\s*({[\s\S]*?})\s*\*\//);
     const params = paramMatch ? JSON.parse(paramMatch[1]) : {};
-    if (Object.keys(params).length > 0) {
+    if (Object.keys(params).length > 0 && !isLive) {
       this.renderParameterInputs(params, controls, runBtn, (newParams) => {
         void this.executeQuery(source, newParams, runBtn, resultContainer, footerInstance);
       });
@@ -68731,7 +68739,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
               }
               dbNameSpan.setText(db);
               new import_obsidian12.Notice(t("common.notice_anchor_live", { name: db }) || `Live result anchored to ${db}`);
-              void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
+              void this.executeQuery(source, {}, runBtn, resultContainer, footerInstance, {
                 activeDatabase: anchoredDB,
                 originId: stableId,
                 isLive: true
@@ -68748,7 +68756,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
       (0, import_obsidian12.setIcon)(refreshBtn, "refresh-cw");
       refreshBtn.onclick = () => {
         refreshBtn.addClass("is-spinning");
-        void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
+        void this.executeQuery(source, {}, runBtn, resultContainer, footerInstance, {
           activeDatabase: anchoredDB,
           originId: stableId,
           isLive: true
@@ -68756,7 +68764,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
           setTimeout(() => refreshBtn.removeClass("is-spinning"), 600);
         });
       };
-      void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
+      void this.executeQuery(source, {}, runBtn, resultContainer, footerInstance, {
         activeDatabase: anchoredDB,
         originId: stableId,
         isLive: true
@@ -68764,7 +68772,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
       footerInstance.setLive();
       const eventBus = DatabaseEventBus.getInstance();
       const debouncedExec = (0, import_obsidian12.debounce)(() => {
-        void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
+        void this.executeQuery(source, {}, runBtn, resultContainer, footerInstance, {
           activeDatabase: anchoredDB,
           originId: stableId,
           isLive: true

@@ -116,7 +116,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     }
 
     async saveSettings() {
-        await this.saveData(this.settings);
+        const existingData = (await this.loadData() as Record<string, unknown>) || {};
+        const finalData = { ...existingData, ...this.settings };
+        await this.saveData(finalData);
         // Update debounce delay if changed
         if (this.debouncedSave) {
             this.debouncedSave = debounce(
@@ -163,9 +165,9 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         const workbench = el.createEl("div", { cls: "mysql-workbench-container" });
 
         // Phase 2: LIVE Mode Detection & Identity
-        const trimmedSource = source.trim();
-        const isLive = /^LIVE\s/i.test(trimmedSource);
-        const isForm = trimmedSource.toUpperCase().startsWith("FORM");
+        const cleanedForDetection = SQLSanitizer.clean(source);
+        const isLive = /\bLIVE\s+SELECT/i.test(cleanedForDetection);
+        const isForm = cleanedForDetection.toUpperCase().startsWith("FORM");
         const stableId = (isLive || isForm) ? this.generateBlockStableId(source, ctx) : null;
 
         if (isLive && this.settings.enableLogging) {
@@ -212,7 +214,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             workbench.addClass("mysql-live-mode");
             try {
                 // Extract SQL without LIVE prefix correctly
-                const sqlForAST = trimmedSource.replace(/^LIVE\s+/i, "");
+                const sqlForAST = SQLSanitizer.stripLiveKeyword(cleanedForDetection);
                 const extractFromNode = (node: unknown) => {
                     if (!node) return;
                     if (typeof node === 'object' && node !== null && 'tableid' in node) {
@@ -367,7 +369,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         const paramMatch = source.match(/\/\*\s*params\s*:\s*({[\s\S]*?})\s*\*\//);
         const params: Record<string, unknown> = paramMatch ? (JSON.parse(paramMatch[1]) as Record<string, unknown>) : {};
 
-        if (Object.keys(params).length > 0) {
+        if (Object.keys(params).length > 0 && !isLive) {
             this.renderParameterInputs(params, controls, runBtn, (newParams) => {
                 void this.executeQuery(source, newParams, runBtn, resultContainer, footerInstance);
             });
@@ -457,7 +459,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                                 }
                                 dbNameSpan.setText(db);
                                 new Notice(t('common.notice_anchor_live', { name: db }) || `Live result anchored to ${db}`);
-                                void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
+                                void this.executeQuery(source, {}, runBtn, resultContainer, footerInstance, {
                                     activeDatabase: anchoredDB,
                                     originId: stableId,
                                     isLive: true
@@ -475,7 +477,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
             setIcon(refreshBtn, "refresh-cw");
             refreshBtn.onclick = () => {
                 refreshBtn.addClass("is-spinning");
-                void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
+                void this.executeQuery(source, {}, runBtn, resultContainer, footerInstance, {
                     activeDatabase: anchoredDB,
                     originId: stableId,
                     isLive: true
@@ -484,7 +486,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
                 });
             };
 
-            void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
+            void this.executeQuery(source, {}, runBtn, resultContainer, footerInstance, {
                 activeDatabase: anchoredDB,
                 originId: stableId,
                 isLive: true
@@ -494,7 +496,7 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
 
             const eventBus = DatabaseEventBus.getInstance();
             const debouncedExec = debounce(() => {
-                void this.executeQuery(source.trim().replace(/^LIVE\s+/i, ""), {}, runBtn, resultContainer, footerInstance, {
+                void this.executeQuery(source, {}, runBtn, resultContainer, footerInstance, {
                     activeDatabase: anchoredDB,
                     originId: stableId,
                     isLive: true
