@@ -135,7 +135,19 @@ export class QueryExecutor {
                 }
 
                 this.notifyIfModified(statements, currentDB, options.originId);
-                const normalizedData = this.normalizeResult(results);
+                let normalizedData = this.normalizeResult(results);
+
+                // In LIVE mode, filter out "1 rows affected" type messages from USE statements
+                if (options.isLive) {
+                    const dataResults = normalizedData.filter(r => r.type === 'table' || r.type === 'error' || r.type === 'scalar');
+                    if (dataResults.length > 0) {
+                        normalizedData = dataResults;
+                    } else if (normalizedData.length > 0) {
+                        // If only messages remain, just show the last one (e.g. valid single INSERT/UPDATE if we allowed it, or just status)
+                        normalizedData = [normalizedData[normalizedData.length - 1]];
+                    }
+                }
+
                 Logger.info(`Batch query executed (${statements.length} statements)`, { executionTime: monitor.end(), finalDatabase: currentDB });
                 const finalWarning = warnings.length > 0 ? warnings.join('\n') : undefined;
                 return { success: true, data: normalizedData, executionTime: monitor.end(), activeDatabase: currentDB, warning: finalWarning };

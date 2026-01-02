@@ -64150,19 +64150,21 @@ var DatabaseManager = class {
         if (dbName === "alasql") continue;
         const db = data.databases[dbName];
         if (!db.tables && !db.schema) continue;
-        if (!import_alasql.default.databases[dbName]) {
-          await import_alasql.default.promise(`CREATE DATABASE IF NOT EXISTS ${dbName}`);
+        try {
+          await import_alasql.default.promise(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
+        } catch (e) {
+          if (!e.message.includes("already exists")) throw e;
         }
+        await import_alasql.default.promise(`USE \`${dbName}\``);
         await new Promise((resolve) => setTimeout(resolve, 0));
         if (db.schema) {
           for (const [tableName, sql] of Object.entries(db.schema)) {
             try {
-              await import_alasql.default.promise(`DROP TABLE IF EXISTS ${dbName}.${tableName}`);
+              await import_alasql.default.promise(`DROP TABLE IF EXISTS \`${tableName}\``);
               let createSQL = String(sql);
-              if (createSQL.toUpperCase().includes("CREATE TABLE")) {
-                if (!createSQL.match(new RegExp(`CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?${dbName}\\.`, "i"))) {
-                  createSQL = createSQL.replace(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([["`]?)([a-zA-Z0-9_]+)([\]"`]?)/i, `CREATE TABLE ${dbName}.$2`);
-                }
+              const prefixRegex = new RegExp(`CREATE\\s+TABLE\\s+(?:\`?${dbName}\`?\\.)`, "i");
+              if (createSQL.match(prefixRegex)) {
+                createSQL = createSQL.replace(prefixRegex, "CREATE TABLE ");
               }
               await import_alasql.default.promise(createSQL);
             } catch (e) {
@@ -64174,18 +64176,26 @@ var DatabaseManager = class {
           let tableCount = 0;
           for (const [tableName, rows] of Object.entries(db.tables)) {
             if (!rows || rows.length === 0) continue;
+            if (!Array.isArray(rows)) {
+              Logger.warn(`Skipping table ${tableName}: data is not an array`);
+              continue;
+            }
+            if (rows.length > 0 && (typeof rows[0] !== "object" || rows[0] === null)) {
+              Logger.warn(`Skipping table ${tableName}: data rows are not objects`);
+              continue;
+            }
             try {
-              const exists = await import_alasql.default.promise(`SHOW TABLES FROM ${dbName} LIKE '${tableName}'`);
+              const exists = await import_alasql.default.promise(`SHOW TABLES LIKE '${tableName}'`);
               if (exists.length > 0) {
                 if (rows && rows.length > 0) {
-                  const hasSchema = db.schema && db.schema[tableName];
-                  if (hasSchema) {
-                    await import_alasql.default.promise(`INSERT INTO ${dbName}.${tableName} SELECT * FROM ?`, [rows]);
-                  } else {
-                    await import_alasql.default.promise(`SELECT * INTO ${dbName}.${tableName} FROM ?`, [rows]);
-                  }
+                  await import_alasql.default.promise(`INSERT INTO \`${tableName}\` SELECT * FROM ?`, [rows]);
                 }
                 tableCount++;
+              } else {
+                const firstRow = rows[0];
+                const columns = Object.keys(firstRow).map((col) => `\`${col}\` STRING`).join(", ");
+                await import_alasql.default.promise(`CREATE TABLE \`${tableName}\` (${columns})`);
+                await import_alasql.default.promise(`INSERT INTO \`${tableName}\` SELECT * FROM ?`, [rows]);
               }
             } catch (e) {
               console.error(`Error loading data for '${tableName}':`, e);
@@ -64198,8 +64208,15 @@ var DatabaseManager = class {
         Logger.info(`Restored database: ${dbName}`);
       }
       this.plugin.activeDatabase = activeDB;
-      if (!import_alasql.default.databases["dbo"]) {
-        await import_alasql.default.promise("CREATE DATABASE dbo");
+      try {
+        await import_alasql.default.promise("CREATE DATABASE IF NOT EXISTS dbo");
+      } catch (e) {
+        Logger.debug("Safe creation of dbo failed (ignoring):", e);
+      }
+      try {
+        await import_alasql.default.promise(`USE \`${activeDB}\``);
+      } catch (e) {
+        await import_alasql.default.promise("USE dbo");
       }
       Logger.info("Database restoration complete.");
     } catch (error) {
@@ -66401,7 +66418,15 @@ var QueryExecutor = class {
           results.push(result);
         }
         this.notifyIfModified(statements, currentDB, options.originId);
-        const normalizedData2 = this.normalizeResult(results);
+        let normalizedData2 = this.normalizeResult(results);
+        if (options.isLive) {
+          const dataResults = normalizedData2.filter((r) => r.type === "table" || r.type === "error" || r.type === "scalar");
+          if (dataResults.length > 0) {
+            normalizedData2 = dataResults;
+          } else if (normalizedData2.length > 0) {
+            normalizedData2 = [normalizedData2[normalizedData2.length - 1]];
+          }
+        }
         Logger.info(`Batch query executed (${statements.length} statements)`, { executionTime: monitor.end(), finalDatabase: currentDB });
         const finalWarning = warnings.length > 0 ? warnings.join("\n") : void 0;
         return { success: true, data: normalizedData2, executionTime: monitor.end(), activeDatabase: currentDB, warning: finalWarning };
@@ -68427,7 +68452,13 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
       this.settings.autoSaveDelay,
       true
     );
-    await this.dbManager.load();
+    try {
+      await this.dbManager.load();
+    } catch (e) {
+      console.error("MySQL Plugin: Failed to restore databases during load:", e);
+      new import_obsidian12.Notice("MySQL Plugin: Failed to load previous database state. Starting fresh.");
+    }
+    if (this.settings.databases) delete this.settings.databases;
     this.registerMarkdownCodeBlockProcessor("mysql", (source, el, ctx) => {
       void this.processSQLBlock(source, el, ctx);
     });
@@ -68457,9 +68488,7 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
     setLanguage(this.settings.language);
   }
   async saveSettings() {
-    const existingData = await this.loadData() || {};
-    const finalData = { ...existingData, ...this.settings };
-    await this.saveData(finalData);
+    await this.dbManager.save();
     if (this.debouncedSave) {
       this.debouncedSave = (0, import_obsidian12.debounce)(
         () => this.dbManager.save(),

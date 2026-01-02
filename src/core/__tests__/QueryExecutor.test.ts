@@ -167,7 +167,8 @@ FROM RANGE(1, 10);`;
 
         expect(result.success).toBe(true);
         expect(result.activeDatabase).toBe('playground');
-        expect(result.data?.[1].type).toBe('table');
-        expect(result.data?.[1].data).toHaveLength(1);
+        expect(result.data?.[0].type).toBe('table'); // Should be the table, not the message from USE
+        expect(result.data).toHaveLength(1); // Should only have 1 result (the table)
+        expect(result.data?.[0].data).toHaveLength(1);
     });
 });

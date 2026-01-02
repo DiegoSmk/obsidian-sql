@@ -102,7 +102,12 @@ describe('DatabaseManager Extra Coverage', () => {
 
             const tables = (alasql as AlaSQLInstance)('SHOW TABLES FROM corrupted_db') as Array<{ tableid: string }>;
 
-            expect(tables.find(t => t.tableid === 'bad_table')).toBeUndefined();
+            // Since we now infer schema from data if CREATE fails, the table SHOULD exist
+            expect(tables.find(t => t.tableid === 'bad_table')).toBeDefined();
+
+            // Verify data was loaded despite invalid schema
+            const res = alasql('SELECT * FROM corrupted_db.bad_table');
+            expect(res).toHaveLength(1);
 
             consoleSpy.mockRestore();
         });

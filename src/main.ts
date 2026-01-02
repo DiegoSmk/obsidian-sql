@@ -77,7 +77,18 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         );
 
         // CRITICAL: restore database before UI or processors
-        await this.dbManager.load();
+        try {
+            await this.dbManager.load();
+        } catch (e) {
+            console.error('MySQL Plugin: Failed to restore databases during load:', e);
+            new Notice('MySQL Plugin: Failed to load previous database state. Starting fresh.');
+        }
+
+        // OPTIMIZATION: Clear the huge database object from settings memory.
+        // The single source of truth is now the in-memory AlaSQL instance.
+        // This prevents 'saveSettings' from accidentally merging stale data if save() fails.
+        // @ts-ignore
+        if (this.settings.databases) delete this.settings.databases;
 
         // Register SQL code block
         this.registerMarkdownCodeBlockProcessor("mysql", (source, el, ctx) => {
@@ -116,9 +127,8 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
     }
 
     async saveSettings() {
-        const existingData = (await this.loadData() as Record<string, unknown>) || {};
-        const finalData = { ...existingData, ...this.settings };
-        await this.saveData(finalData);
+        // Delegate to DB Manager to ensure settings + database are saved atomically
+        await this.dbManager.save();
         // Update debounce delay if changed
         if (this.debouncedSave) {
             this.debouncedSave = debounce(

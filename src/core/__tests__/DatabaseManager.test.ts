@@ -122,4 +122,30 @@ describe('DatabaseManager', () => {
             .rejects.toThrow(/Cannot rename active database/);
     });
 
+    it('should load databases with special characters correctly', async () => {
+        // Mock data directly to simulate loadData result
+        (mockPlugin as { loadData: unknown }).loadData = vi.fn().mockResolvedValue({
+            activeDatabase: 'my-project-db',
+            databases: {
+                'my-project-db': {
+                    tables: {
+                        'user-data': [{ id: 1, name: 'Test' }]
+                    },
+                    schema: {
+                        'user-data': 'CREATE TABLE `user-data` (id INT, name STRING)'
+                    }
+                }
+            }
+        });
+
+        await dbManager.load();
+
+        expect(alasql.databases['my-project-db']).toBeDefined();
+        // Switch explicitly to verify table existence in correct DB context
+        alasql('USE [my-project-db]');
+        const res = alasql('SELECT * FROM [user-data]');
+        expect(res).toHaveLength(1);
+        expect((res[0] as unknown).name).toBe('Test');
+    });
+
 });
