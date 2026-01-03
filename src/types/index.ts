@@ -14,18 +14,26 @@ export interface MySQLSettings {
     enableLogging: boolean;
 }
 
+export type Locale = Record<string, Record<string, string>>;
+
 export interface AlaSQLColumn {
     columnid: string;
     dbtypeid?: string;
     primarykey?: boolean;
     auto_increment?: boolean;
-    autoincrement?: boolean;
+    autoincrement?: boolean; // Alias often used
     identity?: boolean;
+    notnull?: boolean;
+    dflt_value?: unknown;
+    default?: unknown;
 }
 
 export interface AlaSQLTable {
     data: unknown[];
     columns?: AlaSQLColumn[];
+    pk?: { columns: string[] };
+    identities?: Record<string, { value: number; step: number }>;
+    defaultfns?: string; // Compiled functions string
 }
 
 export interface AlaSQLDatabase {
@@ -56,7 +64,7 @@ export interface DatabaseStats {
 export type Row = Record<string, unknown>;
 
 export interface ResultSet {
-    type: 'table' | 'scalar' | 'message' | 'error' | 'form';
+    type: 'table' | 'scalar' | 'message' | 'error' | 'form' | 'note';
     data: unknown;
     columns?: string[];
     message?: string;

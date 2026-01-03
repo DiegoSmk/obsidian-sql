@@ -98,6 +98,7 @@ export default {
         "null_value": "NULL",
         "status_error": "Fehler",
         "status_done": "Fertig",
+        "status_note": "Hinweis",
         "switch_db_help": "Wechseln Sie zu einer Datenbank mit Tabellen oder ",
         "btn_open_settings": "öffnen Sie die Einstellungen",
         "notice_table_data_copied": "Tabellendaten in die Zwischenablage kopiert!",
@@ -202,6 +203,16 @@ export default {
         "err_reserved_word": "{message}\n\n💡 Tipp: '{word}' ist ein reserviertes Wort. Versuchen Sie, Anführungszeichen zu verwenden (z. B. \"{lower}\") oder ändern Sie den Namen.",
         "err_alasql_bug_01": "{message}\n\n⚠️ Bekannter AlaSQL-Fehler: Die Verwendung einer expliziten Spaltenliste in 'INSERT INTO ... SELECT' hat zu einem Fehler geführt.\n\nLösung: Entfernen Sie die Spaltenliste und stellen Sie sicher, dass die Reihenfolge genau übereinstimmt.",
         "err_parse": "{message}\n\n💡 Überprüfen Sie, ob Sie ein Semikolon vergessen haben, ob Klammern/Anführungszeichen nicht geschlossen sind oder ob Tippfehler vorliegen.",
-        "warn_fragile_insert": "⚠️ 'INSERT INTO ... (Spalten) SELECT' erkannt. AlaSQL kann mit dem Fehler '$01' fehlschlagen. Falls dies passiert, entfernen Sie die Spaltenliste."
+        "warn_fragile_insert": "⚠️ 'INSERT INTO ... (Spalten) SELECT' erkannt. AlaSQL kann mit dem Fehler '$01' fehlschlagen. Falls dies passiert, entfernen Sie die Spaltenliste.",
+        "note_db_exists": "Datenbank '{name}' existiert bereits.",
+        "note_table_exists": "Tabelle '{name}' existiert bereits.",
+        "msg_db_changed": "Datenbank zu '{name}' gewechselt.",
+        "msg_rows_inserted": "{count} Zeile(n) eingefügt.",
+        "msg_rows_updated": "{count} Zeile(n) aktualisiert.",
+        "msg_rows_deleted": "{count} Zeile(n) gelöscht.",
+        "msg_row_affected": "{count} Zeile(n) betroffen.",
+        "err_table_not_found": "Tabelle '{name}' existiert nicht.",
+        "err_db_not_found": "Datenbank '{name}' existiert nicht.",
+        "err_column_not_found": "Spalte '{name}' existiert nicht."
     }
 }

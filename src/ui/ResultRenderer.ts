@@ -5,7 +5,7 @@ import { FormRenderer, FormData } from './FormRenderer';
 import { t } from '../utils/i18n';
 
 interface ResultSet {
-    type: 'table' | 'scalar' | 'message' | 'error' | 'form';
+    type: 'table' | 'scalar' | 'message' | 'error' | 'form' | 'note';
     data?: unknown;
     message?: string;
     rowCount?: number;
@@ -237,16 +237,25 @@ export class ResultRenderer {
                     }
                     break;
                 case 'message':
+                case 'note':
                 case 'error': {
                     const isDML = rs.type === 'message' && typeof rs.data === 'number';
+                    const isNote = rs.type === 'note' || (rs.message && rs.message.toLowerCase().startsWith('note:'));
+
                     const msgWrapper = contentWrapper.createDiv({
-                        cls: rs.type === 'error' ? 'mysql-error-inline' : (isDML ? 'mysql-success-state mysql-msg-compact' : 'mysql-info-state mysql-msg-compact')
+                        cls: rs.type === 'error' ? 'mysql-error-inline' : (isNote ? 'mysql-note-state mysql-msg-compact' : (isDML ? 'mysql-success-state mysql-msg-compact' : 'mysql-info-state mysql-msg-compact'))
                     });
 
                     if (rs.type === 'error') {
                         const iconWrapper = msgWrapper.createDiv({ cls: "mysql-error-icon" });
                         setIcon(iconWrapper, "alert-circle");
                         msgWrapper.createSpan({ text: rs.message || t('modals.status_error') });
+                    } else if (isNote) {
+                        const iconWrapper = msgWrapper.createDiv({ cls: "mysql-note-icon" });
+                        setIcon(iconWrapper, "alert-triangle");
+                        const textDiv = msgWrapper.createDiv({ cls: "mysql-note-text" });
+                        textDiv.createSpan({ text: t('modals.status_note') + ": ", cls: "mysql-strong" });
+                        textDiv.createSpan({ text: rs.message || "" });
                     } else {
                         const iconWrapper = msgWrapper.createDiv({ cls: isDML ? "mysql-success-icon" : "mysql-info-icon" });
                         setIcon(iconWrapper, isDML ? "check-circle" : "info");

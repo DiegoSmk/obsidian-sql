@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.2] - 2026-01-02
+
+### Fixed
+- Prevent token merging across newlines (SQLSanitizer) which caused "100FRO" style parse errors.
+- Removed damaging auto-escaping of `VALUE`/`KEY` keywords in SQLTransformer that broke native AlaSQL keyword usage.
+- Added automatic database prefixing for `DROP`, `ALTER`, and `TRUNCATE` commands.
+- Automatic context reset to `dbo` after successful `DROP DATABASE` of the current active database.
+- Fixed typo in `validate.sh` to correctly handle `--d` deployment flag.
+
+### Documentation
+- Updated performance tests with AlaSQL best practices (using `_` instead of `VALUE` for some contexts).
+
 ## [0.6.1] - 2026-01-01
 - **Fix**: Improved `LIVE` mode detection logic to handle comments and `USE` statements correctly.
 - **Fix**: Implemented robust stripping of the `LIVE` keyword before query execution to prevent parser errors.

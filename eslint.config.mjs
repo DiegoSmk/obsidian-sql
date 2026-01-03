@@ -5,7 +5,7 @@ import globals from "globals";
 
 export default defineConfig([
     {
-        ignores: ["coverage/**", "main.js", "node_modules/**", "esbuild.config.mjs", "vitest.config.ts", "vitest.setup.ts", "tests_live/**"],
+        ignores: ["coverage/**", "main.js", "node_modules/**", "esbuild.config.mjs", "vitest.config.ts", "vitest.setup.ts", "tests_live/**", "tests/integration/**", "test_*.js"],
     },
     {
         files: ["**/*.ts", "**/*.js"],

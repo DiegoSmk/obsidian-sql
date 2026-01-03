@@ -47,7 +47,7 @@ describe('DatabaseManager', () => {
         expect(snapshot.databases.dbo).toBeDefined();
         expect(snapshot.databases.dbo.tables.test_table).toHaveLength(2);
         expect((snapshot.databases.dbo.tables.test_table[0]).name).toBe('Alice');
-        expect(snapshot.databases.dbo.schema.test_table).toContain('CREATE TABLE `test_table`');
+        expect(snapshot.databases.dbo.schema.test_table).toContain('CREATE TABLE IF NOT EXISTS `test_table`');
     });
 
     it('should respect snapshotRowLimit', async () => {

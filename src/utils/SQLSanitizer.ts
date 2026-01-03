@@ -4,16 +4,27 @@ export class SQLSanitizer {
     static clean(sql: string): string {
         let cleaned = sql;
 
-        // Remove block comments
-        cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, '');
+        // 1. Remove block comments but keep the space to avoid merging
+        cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, ' ');
 
-        // Remove line comments but preserve the newline character to avoid merging lines
-        cleaned = cleaned.replace(/--.*$|#.*$/gm, '');
+        // 2. Remove line comments but PRESERVE THE NEWLINE
+        // We replacement from -- or # until the end of the line.
+        // We must be careful not to consume the newline itself if we want to preserve it.
+        cleaned = cleaned.replace(/(--|#).*?(\r?\n|$)/gm, (match, prefix, after) => {
+            return ' ' + after;
+        });
 
-        // Apply other cleanup patterns
+        // 3. Ensure newlines are treated as separators by adding a space before them.
+        // This prevents issues where newlines might be stripped or ignored by parsers/transformers,
+        // causing words to merge (e.g. "table\nSELECT" -> "tableSELECT").
+        // We use a lookbehind to avoid adding space if one already exists.
+        cleaned = cleaned.replace(/(?<!\s)(\r?\n)/g, ' $1');
+
+        // 4. Apply other cleanup patterns
         for (const { pattern, name } of SQL_CLEANUP_PATTERNS) {
             if (name === 'block-comments' || name === 'line-comments') continue;
-            cleaned = cleaned.replace(pattern, '');
+            // Always replace with a space to avoid merging words
+            cleaned = cleaned.replace(pattern, ' ');
         }
 
         return cleaned.trim();
@@ -24,9 +35,6 @@ export class SQLSanitizer {
     }
 
     static validateIdentifier(name: string): boolean {
-        // Strict whitelist: alpha-numeric and underscore only.
-        // No length greater than 64.
-        // Reject empty strings.
         if (!name) return false;
         return /^[a-zA-Z0-9_]{1,64}$/.test(name);
     }
@@ -39,6 +47,7 @@ export class SQLSanitizer {
     }
 
     static stripLiveKeyword(sql: string): string {
-        return sql.replace(/\bLIVE\s+/gi, '');
+        // Only strip LIVE if it's followed by whitespace. Replace with a space to preserve separation.
+        return sql.replace(/\bLIVE\s+/gi, ' ');
     }
 }

@@ -98,6 +98,7 @@ export default {
         "null_value": "NULL",
         "status_error": "エラー",
         "status_done": "完了",
+        "status_note": "注",
         "switch_db_help": "テーブルのあるデータベースに切り替えるか、",
         "btn_open_settings": "設定を開いてください",
         "notice_table_data_copied": "テーブルデータをクリップボードにコピーしました！",
@@ -202,6 +203,16 @@ export default {
         "err_reserved_word": "{message}\n\n💡 ヒント: '{word}' は予約語です。引用符を使用するか (例: \"{lower}\")、名前を変更してください。",
         "err_alasql_bug_01": "{message}\n\n⚠️ 既知の AlaSQL エラー: 'INSERT INTO ... SELECT' で明示的な列リストを使用したため失敗しました。\n\n解決策: 列リストを削除し、順序が正確に一致していることを確認してください。",
         "err_parse": "{message}\n\n💡 セミコロンの忘れ、括弧/引用符の閉じ忘れ、またはタイポがないか確認してください。",
-        "warn_fragile_insert": "⚠️ 'INSERT INTO ... (列) SELECT' を検出しました。AlaSQL はエラー '$01' で失敗する可能性があります。発生した場合は列リストを削除してください。"
+        "warn_fragile_insert": "⚠️ 'INSERT INTO ... (列) SELECT' を検出しました。AlaSQL はエラー '$01' で失敗する可能性があります。発生した場合は列リストを削除してください。",
+        "note_db_exists": "データベース '{name}' は既に存在します。",
+        "note_table_exists": "テーブル '{name}' は既に存在します。",
+        "msg_db_changed": "データベースを '{name}' に変更しました。",
+        "msg_rows_inserted": "{count} 行が挿入されました。",
+        "msg_rows_updated": "{count} 行が更新されました。",
+        "msg_rows_deleted": "{count} 行が削除されました。",
+        "msg_row_affected": "{count} 行が影響を受けました。",
+        "err_table_not_found": "テーブル '{name}' は存在しません。",
+        "err_db_not_found": "データベース '{name}' は存在しません。",
+        "err_column_not_found": "カラム '{name}' は存在しません。"
     }
 }

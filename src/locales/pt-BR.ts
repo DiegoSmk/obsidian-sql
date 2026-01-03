@@ -1,4 +1,6 @@
-export default {
+import { Locale } from '../types';
+
+const locale: Locale = {
     "settings": {
         "title": "SQL Notebook",
         "subtitle": "Gestor de banco de dados",
@@ -98,6 +100,7 @@ export default {
         "null_value": "Nulo",
         "status_error": "Erro",
         "status_done": "Concluído",
+        "status_note": "Nota",
         "switch_db_help": "Mude para um banco com tabelas ou ",
         "btn_open_settings": "abra as configurações",
         "notice_table_data_copied": "Dados da tabela copiados para a área de transferência!",
@@ -112,7 +115,18 @@ export default {
         "btn_executing": "Executando...",
         "btn_cancel": "Cancelar",
         "notice_copy": "Código SQL copiado!",
-        "notice_aborted": "Consulta abortada pelo usuário"
+        "notice_aborted": "Consulta abortada pelo usuário",
+        "empty_title": "Nenhuma tabela encontrada",
+        "empty_desc": "Este banco de dados está vazio. Crie uma tabela ou importe um CSV para começar.",
+        "btn_clear": "Limpar Resultados",
+        "btn_copy": "Copiar Resultado",
+        "btn_export": "Exportar CSV",
+        "label_rows": "linhas encontradas",
+        "label_time": "ms",
+        "placeholder_sql": "-- Escreva seu SQL aqui...\nSELECT * FROM minha_tabela;",
+        "parameter_title": "Parâmetros da Consulta",
+        "parameter_desc": "Esta consulta contém parâmetros. Forneça os valores abaixo.",
+        "live_pulse": "Dados em Tempo Real"
     },
     "renderer": {
         "btn_copy": "Copiar",
@@ -148,7 +162,11 @@ export default {
         "title_results": "Resultados da consulta",
         "rows_affected": "{count} linha(s) afetada(s)",
         "no_data_md": "_Sem dados_",
-        "result_dml": "**Resultado:** {count} linha(s) afetada(s)"
+        "result_dml": "**Resultado:** {count} linha(s) afetada(s)",
+        "blob_not_supported": "A exibição de dados BLOB não é suportada.",
+        "json_view": "Ver JSON",
+        "table_view": "Ver Tabela",
+        "no_results": "Consulta executada com sucesso, sem resultados para exibir."
     },
     "form": {
         "title_insert": "Inserir em {name}",
@@ -161,7 +179,13 @@ export default {
         "notice_success": "Registro salvo em {name}",
         "notice_error": "Erro ao salvar registro: {error}",
         "err_invalid_table": "Nome de tabela inválido",
-        "err_invalid_col": "Nome de coluna inválido: {name}"
+        "err_invalid_col": "Nome de coluna inválido: {name}",
+        "title_new": "Novo Registro",
+        "title_edit": "Editar Registro",
+        "btn_insert": "Inserir Registro",
+        "btn_update": "Atualizar Registro",
+        "notice_insert_success": "Novo registro adicionado a '{table}'.",
+        "notice_update_success": "Registro atualizado em '{table}'."
     },
     "pro": {
         "label_from": "De:",
@@ -172,7 +196,7 @@ export default {
         "subject": "Alerta pro practice: boas práticas de contexto de banco",
         "hello": "Olá,",
         "msg_1": "Notamos que você está trocando de banco de dados via interface. Embora isso seja ótimo para navegação rápida, gostaríamos de compartilhar uma dica profissional: usar o comando explícito `USE` em seus scripts pode tornar seu fluxo de trabalho ainda mais robusto.",
-        "msg_quote": "Definir explicitamente o seu contexto é uma boa prática que garante que seus scripts sejam portáteis e claros em diferentes ambientes:",
+        "msg_quote": "Definir explicitamente o seu contexto é uma boa prática que garante que seus scripts sejam portátiles e claros em diferentes ambientes:",
         "msg_2": "Definir o contexto no código ajuda a evitar confusão e torna sua intenção clara para qualquer pessoa que revise seu trabalho. Você sempre pode continuar usando o alternador global para conveniência!",
         "punchline": "Bons códigos! 🚀",
         "signature_regards": "Atenciosamente,",
@@ -196,12 +220,32 @@ export default {
         "notice_anchor_live": "Bloco LIVE ancorado a {name}",
         "notice_update_live": "Atualizando dados LIVE de {name}...",
         "notice_reset_success": "Reinicialização completa com sucesso!",
-        "app_name": "SQL Notebook"
+        "app_name": "SQL Notebook",
+        "btn_save": "Salvar",
+        "btn_cancel": "Cancelar",
+        "btn_delete": "Excluir",
+        "btn_confirm": "Confirmar",
+        "notice_success": "Sucesso",
+        "notice_deleted": "Excluído com sucesso"
     },
     "executor": {
         "err_reserved_word": "{message}\n\n💡 Dica: '{word}' é uma palavra reservada. Tente usar aspas (ex: \"{lower}\") ou mude o nome.",
         "err_alasql_bug_01": "{message}\n\n⚠️ Erro Conhecido do AlaSQL: O uso de lista de colunas explícita em 'INSERT INTO ... SELECT' causou falha.\n\nSolução: Remova a lista de colunas e garanta que a ordem corresponda exatamente.",
         "err_parse": "{message}\n\n💡 Verifique se você esqueceu algum ponto e vírgula, se há parênteses/aspas não fechadas ou erros de digitação.",
-        "warn_fragile_insert": "⚠️ Detectado 'INSERT INTO ... (colunas) SELECT'. O AlaSQL pode falhar com erro '$01'. Se ocorrer, remova a lista de colunas."
+        "warn_fragile_insert": "⚠️ Detectado 'INSERT INTO ... (colunas) SELECT'. O AlaSQL pode falhar com erro '$01'. Se ocorrer, remova a lista de colunas.",
+        "note_db_exists": "O banco de dados '{name}' já existe.",
+        "note_table_exists": "A tabela '{name}' já existe.",
+        "msg_db_changed": "Banco de dados alterado para '{name}'.",
+        "msg_rows_inserted": "{count} linha(s) inserida(s).",
+        "msg_rows_updated": "{count} linha(s) atualizada(s).",
+        "msg_rows_deleted": "{count} linha(s) deletada(s).",
+        "msg_row_affected": "{count} linha(s) afetada(s).",
+        "err_table_not_found": "A tabela '{name}' não existe.",
+        "err_db_not_found": "O banco de dados '{name}' não existe.",
+        "err_column_not_found": "A coluna '{name}' não existe.",
+        "err_blocked_command": "Bloqueio de Segurança: O comando SQL '{command}' não é permitido.",
+        "err_safe_mode": "Modo Seguro: O comando '{command}' está desabilitado para evitar perda de dados."
     }
 }
+
+export default locale;

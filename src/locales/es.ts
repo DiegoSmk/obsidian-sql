@@ -98,6 +98,7 @@ export default {
         "null_value": "NULO",
         "status_error": "Error",
         "status_done": "Hecho",
+        "status_note": "Nota",
         "switch_db_help": "Cambia a una base de datos con tablas o ",
         "btn_open_settings": "abre la configuración",
         "notice_table_data_copied": "¡Datos de la tabla copiados al portapapeles!",
@@ -202,6 +203,16 @@ export default {
         "err_reserved_word": "{message}\n\n💡 Sugerencia: '{word}' es una palabra reservada. Intente usar comillas (ej: \"{lower}\") o cambie el nombre.",
         "err_alasql_bug_01": "{message}\n\n⚠️ Error Conocido de AlaSQL: El uso de una lista de columnas explícita en 'INSERT INTO ... SELECT' causó un fallo.\n\nSolución: Elimine la lista de columnas y asegúrese de que el orden coincida exactamente.",
         "err_parse": "{message}\n\n💡 Verifique si olvidó algún punto y coma, paréntesis/comillas sin cerrar o errores tipográficos.",
-        "warn_fragile_insert": "⚠️ Detectado 'INSERT INTO ... (columnas) SELECT'. AlaSQL puede fallar con el error '$01'. Si ocurre, elimine la lista de columnas y asegúrese de que el orden sea exacto."
+        "warn_fragile_insert": "⚠️ Detectado 'INSERT INTO ... (columnas) SELECT'. AlaSQL puede fallar con el error '$01'. Si ocurre, elimine la lista de columnas y asegúrese de que el orden sea exacto.",
+        "note_db_exists": "La base de datos '{name}' ya existe.",
+        "note_table_exists": "La tabla '{name}' ya existe.",
+        "msg_db_changed": "Base de datos cambiada a '{name}'.",
+        "msg_rows_inserted": "{count} fila(s) insertada(s).",
+        "msg_rows_updated": "{count} fila(s) actualizada(s).",
+        "msg_rows_deleted": "{count} fila(s) eliminada(s).",
+        "msg_row_affected": "{count} fila(s) afectada(s).",
+        "err_table_not_found": "La tabla '{name}' no existe.",
+        "err_db_not_found": "La base de datos '{name}' no existe.",
+        "err_column_not_found": "La columna '{name}' no existe."
     }
 }

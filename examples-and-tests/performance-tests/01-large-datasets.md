@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS stress_test (id INT, val NUMBER);
 DELETE FROM stress_test;
 
 INSERT INTO stress_test
-SELECT VALUE, RANDOM() * 100
+SELECT _ AS id, RANDOM() * 100 AS val
 FROM RANGE(1, 1000);
 
 -- Query with some calculation
@@ -22,6 +22,11 @@ SELECT
     MAX(val) as maximum 
 FROM stress_test;
 ```
+
+> [!INFO] AlaSQL Syntax Note
+> When using `RANGE()`, use `_` to select the value. 
+> Also, when using `INSERT INTO ... SELECT`, you **must** use aliases (`AS column_name`) that match the target table columns exactly, otherwise values may be inserted as `undefined` (NULL).
+
 
 ## 📦 Batch Operations
 

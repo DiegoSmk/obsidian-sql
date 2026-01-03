@@ -63969,11 +63969,14 @@ var SQL_CLEANUP_PATTERNS = [
 var SQLSanitizer = class {
   static clean(sql) {
     let cleaned = sql;
-    cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, "");
-    cleaned = cleaned.replace(/--.*$|#.*$/gm, "");
+    cleaned = cleaned.replace(/\/\*[\s\S]*?\*\//g, " ");
+    cleaned = cleaned.replace(/(--|#).*?(\r?\n|$)/gm, (match, prefix, after) => {
+      return " " + after;
+    });
+    cleaned = cleaned.replace(/(?<!\s)(\r?\n)/g, " $1");
     for (const { pattern, name } of SQL_CLEANUP_PATTERNS) {
       if (name === "block-comments" || name === "line-comments") continue;
-      cleaned = cleaned.replace(pattern, "");
+      cleaned = cleaned.replace(pattern, " ");
     }
     return cleaned.trim();
   }
@@ -63991,7 +63994,7 @@ var SQLSanitizer = class {
     return `'${String(value).replace(/'/g, "''")}'`;
   }
   static stripLiveKeyword(sql) {
-    return sql.replace(/\bLIVE\s+/gi, "");
+    return sql.replace(/\bLIVE\s+/gi, " ");
   }
 };
 
@@ -64034,6 +64037,49 @@ var _DatabaseEventBus = class _DatabaseEventBus extends import_obsidian.Events {
 };
 _DatabaseEventBus.DATABASE_MODIFIED = "database-modified";
 var DatabaseEventBus = _DatabaseEventBus;
+
+// src/utils/SchemaReconstructor.ts
+var SchemaReconstructor = class {
+  /**
+   * Reconstructs a CREATE TABLE statement from AlaSQL's internal table object.
+   * This is necessary because AlaSQL's SHOW CREATE TABLE is often incomplete.
+   */
+  static reconstruct(tableName, table) {
+    if (!table.columns || table.columns.length === 0) {
+      return `CREATE TABLE ${tableName} (id INT)`;
+    }
+    const columnDefs = table.columns.map((col) => {
+      const parts = [`\`${col.columnid}\``];
+      parts.push(col.dbtypeid || "VARCHAR");
+      if (col.notnull) parts.push("NOT NULL");
+      const isIdentity = table.identities && table.identities[col.columnid] || col.identity || col.auto_increment;
+      if (isIdentity) parts.push("AUTO_INCREMENT");
+      const isPK = table.pk && table.pk.columns && table.pk.columns.includes(col.columnid) || col.primarykey;
+      if (isPK) parts.push("PRIMARY KEY");
+      const defaultVal = this.extractDefaultValue(col, table);
+      if (defaultVal) parts.push(`DEFAULT ${defaultVal}`);
+      return parts.join(" ");
+    });
+    return `CREATE TABLE IF NOT EXISTS \`${tableName}\` (${columnDefs.join(", ")})`;
+  }
+  static extractDefaultValue(col, table) {
+    if (col.dflt_value !== void 0) {
+      if (typeof col.dflt_value === "string") return `'${col.dflt_value}'`;
+      if (typeof col.dflt_value === "number" || typeof col.dflt_value === "boolean") return String(col.dflt_value);
+      return String(col.dflt_value);
+    }
+    if (table.defaultfns) {
+      const fnStr = table.defaultfns;
+      if (fnStr.includes(`"${col.columnid}":alasql.stdfn["NOW"]`)) {
+        return "NOW()";
+      }
+      if (fnStr.includes(`"${col.columnid}":alasql.stdfn["UUID"]`)) {
+        return "UUID()";
+      }
+    }
+    return null;
+  }
+};
 
 // src/core/DatabaseManager.ts
 var DatabaseManager = class {
@@ -64091,19 +64137,10 @@ var DatabaseManager = class {
               dbData[tableName] = rows;
             }
             try {
-              const createRes = (0, import_alasql.default)(`SHOW CREATE TABLE ${dbName}.${tableName}`);
-              if (createRes == null ? void 0 : createRes[0]) {
-                dbSchema[tableName] = createRes[0]["Create Table"] || createRes[0]["CreateTable"];
-              }
-              if (!dbSchema[tableName] && tableObj.columns && tableObj.columns.length > 0) {
-                const colDefs = tableObj.columns.map((c) => {
-                  let def = `\`${c.columnid}\` ${c.dbtypeid || "VARCHAR"}`;
-                  if (c.primarykey) def += " PRIMARY KEY";
-                  if (c.auto_increment || c.autoincrement || c.identity) def += " AUTO_INCREMENT";
-                  return def;
-                }).join(", ");
-                dbSchema[tableName] = `CREATE TABLE \`${tableName}\` (${colDefs})`;
-              } else if (!dbSchema[tableName] && rows.length > 0) {
+              dbSchema[tableName] = SchemaReconstructor.reconstruct(tableName, tableObj);
+            } catch (e) {
+              Logger.warn(`Failed to reconstruct schema for table '${tableName}':`, e);
+              if (rows.length > 0) {
                 const firstRow = rows[0];
                 const columns = Object.keys(firstRow).map((col) => {
                   const value = firstRow[col];
@@ -64117,8 +64154,6 @@ var DatabaseManager = class {
                 const createSQL = `CREATE TABLE \`${tableName}\` (${columns})`;
                 dbSchema[tableName] = createSQL;
               }
-            } catch (e) {
-              console.debug(`MySQL Plugin: Failed to generate schema for '${tableName}':`, e);
             }
             tableCount++;
             if (tableCount % 10 === 0) {
@@ -64530,252 +64565,145 @@ init_Logger();
 // src/utils/SQLTransformer.ts
 var SQLTransformer = class {
   /**
-   * Prefixes table names with the database name unless it's a known function or already prefixed.
+   * Prefixes table names with the database name.
    */
   static prefixTablesWithDatabase(sql, database) {
     if (!database || database === "alasql") return sql;
     let result = sql;
-    const tableFnCheck = (m, t2, after) => {
-      const upperT = t2.toUpperCase();
-      const isFunction = after.trim().startsWith("(");
-      const isReserved = ["SELECT", "VALUES", "RANGE", "EXPLODE", "JSON", "CSV", "TAB", "TSV", "XLSX"].includes(upperT);
-      if (isFunction || isReserved) return m;
-      return m.replace(t2, `[${database}].[${t2}]`);
-    };
-    result = result.replace(
-      /CREATE\s+TABLE\s+(IF\s+NOT\s+EXISTS\s+)?(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
-      (m, i, t2) => `CREATE TABLE ${i || ""}[${database}].[${t2}]`
-    );
-    result = result.replace(
-      /INSERT\s+INTO\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
-      (m, t2) => `INSERT INTO [${database}].[${t2}]`
-    );
-    result = result.replace(
-      /UPDATE\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b(\s+SET)/gi,
-      (m, t2, set) => `UPDATE [${database}].[${t2}]${set}`
-    );
-    result = result.replace(
-      /DELETE\s+FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)/gi,
-      (m, t2) => `DELETE FROM [${database}].[${t2}]`
-    );
-    result = result.replace(/FROM\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s]*\(?)/gi, (m, t2, after) => {
-      return tableFnCheck(m, t2, after);
+    result = result.replace(/\b(CREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+)(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)(\s*)/gi, (m, p, t2, s) => {
+      if (this.RESERVED_WORDS.includes(t2.toUpperCase())) return m;
+      return `${p}[${database}].[${t2}]${s}`;
     });
-    result = result.replace(/JOIN\s+(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s]*\(?)/gi, (m, t2, after) => {
-      return tableFnCheck(m, t2, after);
+    result = result.replace(/\b(INSERT\s+INTO\s+)(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)(\s*)/gi, (m, p, t2, s) => {
+      if (this.RESERVED_WORDS.includes(t2.toUpperCase())) return m;
+      return `${p}[${database}].[${t2}]${s}`;
     });
+    result = result.replace(/\b(UPDATE\s+)(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)\b(\s+SET)/gi, (m, p, t2, s) => {
+      return `${p}[${database}].[${t2}]${s}`;
+    });
+    result = result.replace(/\b(DELETE\s+FROM\s+)(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)(\s*)/gi, (m, p, t2, s) => {
+      return `${p}[${database}].[${t2}]${s}`;
+    });
+    result = result.replace(/\b((?:DROP|TRUNCATE|ALTER)\s+TABLE\s+(?:IF\s+EXISTS\s+)?)(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)(\s*)/gi, (m, p, t2, s) => {
+      return `${p}[${database}].[${t2}]${s}`;
+    });
+    result = result.replace(/(\b(?:FROM|JOIN)\s+)(?![\w]+\.)([a-zA-Z_][a-zA-Z0-9_]*)([\s(]*)/gi, (m, p, t2, s) => {
+      const upperTable = t2.toUpperCase();
+      if (s.includes("(") || this.RESERVED_WORDS.includes(upperTable)) return m;
+      return `${p}[${database}].[${t2}]${s}`;
+    });
+    result = result.replace(/([0-9])([a-zA-Z]{3,})/g, "$1 $2");
+    result = result.replace(/(\]\]?)([a-zA-Z0-9])/g, "$1 $2");
     return result;
   }
-  /**
-   * Detects usage of INSERT INTO with explicit column list followed by SELECT.
-   * This pattern often triggers error "$01 is not defined" in AlaSQL.
-   */
   static hasFragileInsertSelect(sql) {
     const upper = sql.toUpperCase().replace(/\s+/g, " ");
-    const match = upper.match(/INSERT INTO\s+[^(]+\s*\([^)]+\)\s*SELECT/);
-    return !!match;
+    return !!upper.match(/INSERT INTO\s+[^(]+\s*\([^)]+\)\s*SELECT/);
   }
 };
+SQLTransformer.RESERVED_WORDS = ["SELECT", "VALUES", "RANGE", "WITH", "USE", "FOR", "EXPLODE", "JSON", "CSV", "TAB", "TSV", "XLSX"];
 
 // src/locales/en.ts
-var en_default = {
-  "settings": {
-    "title": "SQL notebook",
-    "subtitle": "Database manager",
-    "btn_atualizar": "Update",
-    "btn_importar": "Import",
-    "btn_novo_db": "New database",
-    "welcome_title": "Welcome to SQL notebook",
-    "welcome_desc": "Manage your local databases, execute queries, and visualize results directly in Obsidian.",
-    "search_placeholder": "Search databases...",
-    "info_title": "Important information:",
-    "info_li_1": "To delete or rename an <b>active</b> database, switch to another first.",
-    "info_li_2": 'The system database <b>"dbo"</b> cannot be renamed or deleted.',
-    "info_li_3": "<b>Renaming</b> a database automatically updates internal references.",
-    "section_general": "General settings",
-    "section_appearance": "Appearance",
-    "section_data_security": "Data & security",
-    "lang_name": "Language",
-    "lang_desc": "Choose the interface language.",
-    "accent_obsidian": "Use Obsidian accent color",
-    "accent_obsidian_desc": "Use the global Obsidian accent color instead of a custom color.",
-    "theme_accent": "Theme accent",
-    "theme_accent_desc": "Choose the primary accent color.",
-    "auto_save": "Auto-save",
-    "auto_save_desc": "Automatically save database changes.",
-    "auto_save_delay": "Auto-save delay",
-    "auto_save_delay_desc": "Milliseconds to wait before auto-saving.",
-    "export_folder": "Export folder",
-    "export_folder_desc": "Default folder for CSV exports.",
-    "safe_mode": "Safe mode",
-    "safe_mode_desc": "Block dangerous commands (drop, alter) and enforce limits.",
-    "enable_logging": "Enable debug logging",
-    "enable_logging_desc": "Show detailed logs in the developer console (Ctrl+Shift+I). Useful for debugging synchronization.",
-    "snapshot_limit": "Snapshot row limit",
-    "snapshot_limit_desc": "Max rows per table to save (prevents memory issues).",
-    "batch_size": "Batch size",
-    "batch_size_desc": "Rows to display per page in results.",
-    "reset_all": "Reset all data",
-    "reset_btn": "Reset everything",
-    "reset_all_confirm_msg": "This will delete all databases and tables. This action cannot be undone. Are you sure?",
-    "footer_by": "Diego Pena"
+var locale = {
+  "common": {
+    "btn_save": "Save",
+    "btn_cancel": "Cancel",
+    "btn_delete": "Delete",
+    "btn_confirm": "Confirm",
+    "notice_success": "Success",
+    "notice_error": "Error",
+    "notice_deleted": "Deleted successfully",
+    "notice_anchor_live": "Live block anchored to '{name}'",
+    "notice_anchor_form": "Form anchored to '{name}'"
   },
-  "help": {
-    "title": "SQL notebook features",
-    "collapsible_title": "Collapsible workbench",
-    "collapsible_desc": "Toggle the workbench view to save space. Click the header or the chevron icon.",
-    "auto_collapse_title": "Auto-collapse",
-    "auto_collapse_desc": "Start a comment with '@' (e.g., '-- @ my query') to automatically collapse the workbench when the note opens.",
-    "alert_title": "Alert marker (!)",
-    "alert_desc": "Add '!' to your comment start to highlight it as an alert or warning.",
-    "question_title": "Question marker (?)",
-    "question_desc": "Add '?' to indicate a query that needs review or is experimental.",
-    "favorite_title": "Favorite marker (*)",
-    "favorite_desc": "Add '*' to highlight important or frequently used queries.",
-    "copy_edit_title": "Copy & edit",
-    "copy_edit_desc": "Hover over the workbench to access quick copy code and edit block buttons."
+  "settings": {
+    "title": "SQL Notebook Settings",
+    "subtitle": "Configure your local SQL environment.",
+    "btn_atualizar": "Check for updates",
+    "btn_importar": "Import CSV",
+    "btn_novo_db": "New Database",
+    "welcome_title": "Welcome to SQL Notebook!",
+    "welcome_desc": "Transform your notes into a powerful relational database.",
+    "search_placeholder": "Search databases or tables...",
+    "info_title": "Database Insight",
+    "info_tables": "Tables",
+    "info_rows": "Total Rows",
+    "info_size": "Memory Size",
+    "info_last_sync": "Last Sync",
+    "tab_general": "General",
+    "tab_databases": "Databases",
+    "tab_advanced": "Advanced",
+    "auto_save": "Auto-save",
+    "auto_save_desc": "Automatically save database state to disk.",
+    "auto_save_delay": "Save Delay (ms)",
+    "safe_mode": "Safe Mode",
+    "safe_mode_desc": "Prevent destructive operations like DROP TABLE.",
+    "enable_logging": "Enable Logging",
+    "enable_logging_desc": "Detailed execution logs in console.",
+    "theme_color": "Accent Color",
+    "use_obsidian_accent": "Use Obsidian Accent",
+    "reset_danger": "Danger Zone",
+    "reset_btn": "Reset All Data",
+    "reset_confirm": "This will PERMANENTLY delete all local databases. Are you sure?",
+    "reset_success": "All data has been reset.",
+    "language": "Language",
+    "footer_by": "Designed with \u2764\uFE0F by SQL Notebook Team"
   },
   "modals": {
-    "confirm_delete_title": "Delete database",
-    "confirm_delete_msg": 'You are about to delete database "{dbName}". This action cannot be undone. All tables and data will be lost.',
-    "confirm_clear_title": "Clear database",
-    "confirm_clear_msg": 'Are you sure you want to clear all tables in "{dbName}"? This keeps the database but deletes all data.',
-    "btn_cancel": "Cancel",
-    "btn_confirm": "Confirm",
-    "btn_delete": "Delete database",
-    "btn_clear": "Clear all data",
-    "btn_ativar": "Activate",
-    "btn_duplicar": "Duplicate",
-    "btn_renomear": "Rename",
-    "btn_tabelas": "Tables",
-    "btn_exportar": "Export",
-    "btn_deletar": "Delete",
-    "badge_ativo": "Active",
-    "badge_system": "System",
-    "stat_tables": "Tables",
-    "stat_rows": "Rows",
-    "stat_size": "Size",
-    "stat_updated": "Updated",
-    "time_just_now": "Just now",
-    "time_ago": "{time} ago",
-    "time_never": "Never",
-    "switch_title": "Switch database",
-    "no_user_dbs": "No user databases found.",
-    "tip_system_db": "System default database. Cannot be deleted.",
-    "tip_protected_db": "Switch to another database to delete this one.",
-    "rename_title": "Rename database: {name}",
-    "rename_placeholder": "New database name...",
-    "create_title": "Create new database",
-    "create_placeholder": "Database name (e.g., my_project)",
-    "duplicate_title": "Duplicate database: {name}",
-    "notice_create_empty": "Database name cannot be empty.",
-    "notice_rename_success": 'Database renamed to "{name}"',
-    "notice_create_success": 'Database "{name}" created.',
-    "notice_duplicate_success": 'Database duplicated to "{name}"',
-    "notice_delete_success": 'Database "{name}" deleted.',
-    "notice_switch_success": 'Switched to "{name}"',
-    "tables_title": 'Tables in "{name}"',
-    "null_value": "NULL",
-    "status_error": "Error",
+    "title_new_db": "Create New Database",
+    "title_import_csv": "Import CSV to Table",
+    "label_db_name": "Database Name",
+    "label_table_name": "Table Name",
+    "label_select_file": "Select CSV File",
+    "btn_create": "Create",
+    "btn_import": "Import",
+    "btn_tabelas": "Show All Tables",
+    "status_executing": "Executing...",
     "status_done": "Done",
-    "switch_db_help": "Switch to a database with tables or ",
-    "btn_open_settings": "Open settings",
-    "notice_table_data_copied": "Table data copied to clipboard",
-    "notice_copy_failed": "Failed to copy: {error}",
-    "notice_screenshot_failed": "Failed to create screenshot: {error}",
-    "notice_no_active_note": "No active note found",
-    "notice_table_inserted": "Table inserted into note",
-    "notice_insert_failed": "Failed to insert: {error}"
+    "status_error": "Error",
+    "status_note": "Note",
+    "notice_db_created": "Database '{name}' created.",
+    "notice_import_success": "Imported {rows} rows into '{table}'.",
+    "notice_switch_success": "Switched to database '{name}'."
   },
   "workbench": {
-    "btn_run": "Run",
-    "btn_executing": "Executing...",
+    "empty_title": "No tables found",
+    "empty_desc": "This database is empty. Create a table or import a CSV to start.",
+    "btn_run": "Run SQL",
+    "btn_clear": "Clear Results",
+    "btn_copy": "Copy Result",
+    "btn_export": "Export CSV",
     "btn_cancel": "Cancel",
-    "notice_copy": "SQL code copied",
-    "notice_aborted": "Query aborted by user"
+    "btn_executing": "Executing...",
+    "label_rows": "rows found",
+    "label_time": "ms",
+    "notice_copy": "Copied to clipboard",
+    "notice_aborted": "Execution aborted",
+    "placeholder_sql": "-- Write your SQL here...\nSELECT * FROM my_table;",
+    "parameter_title": "Query Parameters",
+    "parameter_desc": "This query contains parameters. Provide values below.",
+    "live_pulse": "Live Data"
   },
   "renderer": {
-    "btn_copy": "Copy",
-    "btn_screenshot": "Screenshot",
-    "btn_add_note": "Add to note",
-    "tip_copy": "Copy result to clipboard",
-    "tip_screenshot": "Take screenshot of result",
-    "tip_add_note": "Insert result into note",
-    "notice_copied": "Copied to clipboard",
-    "notice_copy_failed": "Failed to copy: {error}",
-    "notice_screenshot_failed": "Failed to create screenshot: {error}",
-    "notice_screenshot_copied": "Screenshot copied to clipboard",
-    "notice_screenshot_downloaded": "Screenshot downloaded",
-    "notice_insert_no_note": "No active note found",
-    "notice_insert_success": "Result inserted into note",
-    "notice_insert_failed": "Failed to insert: {error}",
-    "msg_no_result": "Query executed successfully (no result set)",
-    "msg_rows_found": "{count} rows found",
-    "msg_no_data": "No data found",
-    "msg_showing_rows": "Showing {count} of {total} rows",
-    "msg_showing_all": "Showing all {count} rows",
-    "btn_show_all": "Show all rows",
-    "err_title": "Execution error",
-    "result_label": "Result #{idx}",
-    "table_label": "Table: {name}",
-    "query_result": "Query result",
-    "msg_loading": "Loading data...",
-    "msg_showing_limit": "Showing first {count} rows only.",
-    "msg_no_tables": "No tables found in this database.",
-    "msg_no_tables_in": "No tables found in database ",
-    "tip_back": "Back to tables list",
-    "btn_back": "Back",
-    "title_results": "Query results",
-    "rows_affected": "{count} row(s) affected",
-    "no_data_md": "_No data_",
-    "result_dml": "**Result:** {count} row(s) affected"
+    "rows_affected": "{count} rows affected",
+    "no_results": "Query executed successfully, no results to show.",
+    "blob_not_supported": "Displaying BLOB data is not supported.",
+    "json_view": "View JSON",
+    "table_view": "View Table"
   },
-  "form": {
-    "title_insert": "Insert into {name}",
-    "btn_save": "Save record",
-    "btn_saving": "Saving...",
-    "btn_clear": "Clear",
-    "msg_success": "Saved successfully to {name}",
-    "msg_error": "Error: {error}",
-    "msg_unexpected": "Unexpected error: {error}",
-    "notice_success": "Record saved to {name}",
-    "notice_error": "Error saving record: {error}",
-    "err_invalid_table": "Invalid table name",
-    "err_invalid_col": "Invalid column name: {name}"
+  "forms": {
+    "title_new": "New Record",
+    "title_edit": "Edit Record",
+    "btn_insert": "Insert Record",
+    "btn_update": "Update Record",
+    "notice_insert_success": "New record added to '{table}'.",
+    "notice_update_success": "Record updated in '{table}'."
   },
-  "pro": {
-    "label_from": "From:",
-    "label_to": "To:",
-    "label_subject": "Subject:",
-    "from_name": "SQL Notebook dev team <dev@obsidian-sql.internal>",
-    "to_name": "Valued developer",
-    "subject": "Pro practice alert: database context best practices",
-    "hello": "Hello,",
-    "msg_1": "We noticed you're switching databases via the UI. While this is great for quick navigation, we'd like to share a professional tip: using the explicit `USE` command in your scripts can make your workflow even more robust.",
-    "msg_quote": "Explicitly defining your context is a best practice that ensures your scripts are portable and unambiguous across different environments:",
-    "msg_2": "Defining the context within the code helps avoid confusion and makes your intent clear to anyone reviewing your work. You can always continue using the global switcher for convenience!",
-    "punchline": "Happy querying! \u{1F680}",
-    "signature_regards": "Best regards,",
-    "signature_team": "SQL notebook development team",
-    "btn_read": "Mark as read"
+  "help": {
+    "reserved_title": "Reserved Words",
+    "reserved_tip": "If you use these names for tables or columns, wrap them in backticks (e.g. `order`)."
   },
-  "footer": {
-    "tip_help": "Help & features",
-    "status_ready": "Ready",
-    "status_error": "Error",
-    "status_aborted": "Aborted",
-    "status_live": "Live"
-  },
-  "common": {
-    "error": "Error: {error}",
-    "invalid_name": "New name must be different from the old name.",
-    "notice_export_success": "Exported to {name}",
-    "notice_import_loading": "Importing database...",
-    "notice_import_success": "Database imported successfully",
-    "notice_anchor_form": "FORM anchored to {name}",
-    "notice_anchor_live": "LIVE block anchored to {name}",
-    "notice_update_live": "Updating LIVE data from {name}...",
-    "notice_reset_success": "Reset completed successfully",
+  "app": {
     "app_name": "SQL notebook"
   },
   "executor": {
@@ -64784,12 +64712,25 @@ var en_default = {
 \u{1F4A1} Tip: '{word}' is a reserved word. Try using quotes (e.g. "{lower}") or change the name.`,
     "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F Known AlaSQL Bug: Using an explicit column list in 'INSERT INTO ... SELECT' caused a failure.\n\nSolution: Remove the column list and ensure the order matches exactly.",
     "err_parse": "{message}\n\n\u{1F4A1} Check if you forgot a semicolon, have unclosed parentheses/quotes, or typos.",
-    "warn_fragile_insert": "\u26A0\uFE0F 'INSERT INTO ... (columns) SELECT' detected. AlaSQL may fail with error '$01'. If it happens, remove the column list."
+    "warn_fragile_insert": "\u26A0\uFE0F 'INSERT INTO ... (columns) SELECT' detected. AlaSQL may fail with error '$01'. If it happens, remove the column list.",
+    "note_db_exists": "Database '{name}' already exists.",
+    "note_table_exists": "Table '{name}' already exists.",
+    "msg_db_changed": "Database changed to '{name}'.",
+    "msg_rows_inserted": "{count} row(s) inserted.",
+    "msg_rows_updated": "{count} row(s) updated.",
+    "msg_rows_deleted": "{count} row(s) deleted.",
+    "msg_row_affected": "{count} row(s) affected.",
+    "err_table_not_found": "Table '{name}' does not exist.",
+    "err_db_not_found": "Database '{name}' does not exist.",
+    "err_column_not_found": "Column '{name}' does not exist.",
+    "err_blocked_command": "Security Block: SQL command '{command}' is not allowed.",
+    "err_safe_mode": "Safe Mode: Command '{command}' is disabled to prevent data loss."
   }
 };
+var en_default = locale;
 
 // src/locales/pt-BR.ts
-var pt_BR_default = {
+var locale2 = {
   "settings": {
     "title": "SQL Notebook",
     "subtitle": "Gestor de banco de dados",
@@ -64889,6 +64830,7 @@ var pt_BR_default = {
     "null_value": "Nulo",
     "status_error": "Erro",
     "status_done": "Conclu\xEDdo",
+    "status_note": "Nota",
     "switch_db_help": "Mude para um banco com tabelas ou ",
     "btn_open_settings": "abra as configura\xE7\xF5es",
     "notice_table_data_copied": "Dados da tabela copiados para a \xE1rea de transfer\xEAncia!",
@@ -64903,7 +64845,18 @@ var pt_BR_default = {
     "btn_executing": "Executando...",
     "btn_cancel": "Cancelar",
     "notice_copy": "C\xF3digo SQL copiado!",
-    "notice_aborted": "Consulta abortada pelo usu\xE1rio"
+    "notice_aborted": "Consulta abortada pelo usu\xE1rio",
+    "empty_title": "Nenhuma tabela encontrada",
+    "empty_desc": "Este banco de dados est\xE1 vazio. Crie uma tabela ou importe um CSV para come\xE7ar.",
+    "btn_clear": "Limpar Resultados",
+    "btn_copy": "Copiar Resultado",
+    "btn_export": "Exportar CSV",
+    "label_rows": "linhas encontradas",
+    "label_time": "ms",
+    "placeholder_sql": "-- Escreva seu SQL aqui...\nSELECT * FROM minha_tabela;",
+    "parameter_title": "Par\xE2metros da Consulta",
+    "parameter_desc": "Esta consulta cont\xE9m par\xE2metros. Forne\xE7a os valores abaixo.",
+    "live_pulse": "Dados em Tempo Real"
   },
   "renderer": {
     "btn_copy": "Copiar",
@@ -64939,7 +64892,11 @@ var pt_BR_default = {
     "title_results": "Resultados da consulta",
     "rows_affected": "{count} linha(s) afetada(s)",
     "no_data_md": "_Sem dados_",
-    "result_dml": "**Resultado:** {count} linha(s) afetada(s)"
+    "result_dml": "**Resultado:** {count} linha(s) afetada(s)",
+    "blob_not_supported": "A exibi\xE7\xE3o de dados BLOB n\xE3o \xE9 suportada.",
+    "json_view": "Ver JSON",
+    "table_view": "Ver Tabela",
+    "no_results": "Consulta executada com sucesso, sem resultados para exibir."
   },
   "form": {
     "title_insert": "Inserir em {name}",
@@ -64952,7 +64909,13 @@ var pt_BR_default = {
     "notice_success": "Registro salvo em {name}",
     "notice_error": "Erro ao salvar registro: {error}",
     "err_invalid_table": "Nome de tabela inv\xE1lido",
-    "err_invalid_col": "Nome de coluna inv\xE1lido: {name}"
+    "err_invalid_col": "Nome de coluna inv\xE1lido: {name}",
+    "title_new": "Novo Registro",
+    "title_edit": "Editar Registro",
+    "btn_insert": "Inserir Registro",
+    "btn_update": "Atualizar Registro",
+    "notice_insert_success": "Novo registro adicionado a '{table}'.",
+    "notice_update_success": "Registro atualizado em '{table}'."
   },
   "pro": {
     "label_from": "De:",
@@ -64963,7 +64926,7 @@ var pt_BR_default = {
     "subject": "Alerta pro practice: boas pr\xE1ticas de contexto de banco",
     "hello": "Ol\xE1,",
     "msg_1": "Notamos que voc\xEA est\xE1 trocando de banco de dados via interface. Embora isso seja \xF3timo para navega\xE7\xE3o r\xE1pida, gostar\xEDamos de compartilhar uma dica profissional: usar o comando expl\xEDcito `USE` em seus scripts pode tornar seu fluxo de trabalho ainda mais robusto.",
-    "msg_quote": "Definir explicitamente o seu contexto \xE9 uma boa pr\xE1tica que garante que seus scripts sejam port\xE1teis e claros em diferentes ambientes:",
+    "msg_quote": "Definir explicitamente o seu contexto \xE9 uma boa pr\xE1tica que garante que seus scripts sejam port\xE1tiles e claros em diferentes ambientes:",
     "msg_2": "Definir o contexto no c\xF3digo ajuda a evitar confus\xE3o e torna sua inten\xE7\xE3o clara para qualquer pessoa que revise seu trabalho. Voc\xEA sempre pode continuar usando o alternador global para conveni\xEAncia!",
     "punchline": "Bons c\xF3digos! \u{1F680}",
     "signature_regards": "Atenciosamente,",
@@ -64987,7 +64950,13 @@ var pt_BR_default = {
     "notice_anchor_live": "Bloco LIVE ancorado a {name}",
     "notice_update_live": "Atualizando dados LIVE de {name}...",
     "notice_reset_success": "Reinicializa\xE7\xE3o completa com sucesso!",
-    "app_name": "SQL Notebook"
+    "app_name": "SQL Notebook",
+    "btn_save": "Salvar",
+    "btn_cancel": "Cancelar",
+    "btn_delete": "Excluir",
+    "btn_confirm": "Confirmar",
+    "notice_success": "Sucesso",
+    "notice_deleted": "Exclu\xEDdo com sucesso"
   },
   "executor": {
     "err_reserved_word": `{message}
@@ -64995,9 +64964,22 @@ var pt_BR_default = {
 \u{1F4A1} Dica: '{word}' \xE9 uma palavra reservada. Tente usar aspas (ex: "{lower}") ou mude o nome.`,
     "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F Erro Conhecido do AlaSQL: O uso de lista de colunas expl\xEDcita em 'INSERT INTO ... SELECT' causou falha.\n\nSolu\xE7\xE3o: Remova a lista de colunas e garanta que a ordem corresponda exatamente.",
     "err_parse": "{message}\n\n\u{1F4A1} Verifique se voc\xEA esqueceu algum ponto e v\xEDrgula, se h\xE1 par\xEAnteses/aspas n\xE3o fechadas ou erros de digita\xE7\xE3o.",
-    "warn_fragile_insert": "\u26A0\uFE0F Detectado 'INSERT INTO ... (colunas) SELECT'. O AlaSQL pode falhar com erro '$01'. Se ocorrer, remova a lista de colunas."
+    "warn_fragile_insert": "\u26A0\uFE0F Detectado 'INSERT INTO ... (colunas) SELECT'. O AlaSQL pode falhar com erro '$01'. Se ocorrer, remova a lista de colunas.",
+    "note_db_exists": "O banco de dados '{name}' j\xE1 existe.",
+    "note_table_exists": "A tabela '{name}' j\xE1 existe.",
+    "msg_db_changed": "Banco de dados alterado para '{name}'.",
+    "msg_rows_inserted": "{count} linha(s) inserida(s).",
+    "msg_rows_updated": "{count} linha(s) atualizada(s).",
+    "msg_rows_deleted": "{count} linha(s) deletada(s).",
+    "msg_row_affected": "{count} linha(s) afetada(s).",
+    "err_table_not_found": "A tabela '{name}' n\xE3o existe.",
+    "err_db_not_found": "O banco de dados '{name}' n\xE3o existe.",
+    "err_column_not_found": "A coluna '{name}' n\xE3o existe.",
+    "err_blocked_command": "Bloqueio de Seguran\xE7a: O comando SQL '{command}' n\xE3o \xE9 permitido.",
+    "err_safe_mode": "Modo Seguro: O comando '{command}' est\xE1 desabilitado para evitar perda de dados."
   }
 };
+var pt_BR_default = locale2;
 
 // src/locales/zh.ts
 var zh_default = {
@@ -65100,6 +65082,7 @@ var zh_default = {
     "null_value": "\u7A7A",
     "status_error": "\u9519\u8BEF",
     "status_done": "\u5B8C\u6210",
+    "status_note": "\u6CE8\u610F",
     "switch_db_help": "\u5207\u6362\u5230\u5305\u542B\u8868\u7684\u6570\u636E\u5E93\u6216 ",
     "btn_open_settings": "\u6253\u5F00\u8BBE\u7F6E",
     "notice_table_data_copied": "\u8868\u6570\u636E\u5DF2\u590D\u5236\u5230\u526A\u8D34\u677F\uFF01",
@@ -65206,7 +65189,17 @@ var zh_default = {
 \u{1F4A1} \u63D0\u793A\uFF1A'{word}' \u662F\u4FDD\u7559\u5B57\u3002\u8BF7\u5C1D\u8BD5\u4F7F\u7528\u5F15\u53F7\uFF08\u5982 "{lower}"\uFF09\u6216\u66F4\u6539\u540D\u79F0\u3002`,
     "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F \u5DF2\u77E5 AlaSQL \u9519\u8BEF\uFF1A\u5728 'INSERT INTO ... SELECT' \u4E2D\u4F7F\u7528\u663E\u5F0F\u5217\u5217\u8868\u5BFC\u81F4\u5931\u8D25\u3002\n\n\u89E3\u51B3\u65B9\u6848\uFF1A\u5220\u9664\u5217\u5217\u8868\u5E76\u786E\u4FDD\u987A\u5E8F\u5B8C\u5168\u5BF9\u5E94\u3002",
     "err_parse": "{message}\n\n\u{1F4A1} \u8BF7\u68C0\u67E5\u662F\u5426\u9057\u6F0F\u4E86\u5206\u53F7\u3001\u62EC\u53F7/\u5F15\u53F7\u662F\u5426\u672A\u95ED\u5408\u6216\u5B58\u5728\u62FC\u5199\u9519\u8BEF\u3002",
-    "warn_fragile_insert": "\u26A0\uFE0F \u68C0\u6D4B\u5230 'INSERT INTO ... (\u5217) SELECT'\u3002AlaSQL \u53EF\u80FD\u4F1A\u56E0 '$01' \u9519\u8BEF\u800C\u5931\u8D25\u3002\u5982\u679C\u53D1\u751F\uFF0C\u8BF7\u5220\u9664\u5217\u5217\u8868\u3002"
+    "warn_fragile_insert": "\u26A0\uFE0F \u68C0\u6D4B\u5230 'INSERT INTO ... (\u5217) SELECT'\u3002AlaSQL \u53EF\u80FD\u4F1A\u56E0 '$01' \u9519\u8BEF\u800C\u5931\u8D25\u3002\u5982\u679C\u53D1\u751F\uFF0C\u8BF7\u5220\u9664\u5217\u5217\u8868\u3002",
+    "note_db_exists": "\u6570\u636E\u5E93 '{name}' \u5DF2\u5B58\u5728\u3002",
+    "note_table_exists": "\u8868 '{name}' \u5DF2\u5B58\u5728\u3002",
+    "msg_db_changed": "\u6570\u636E\u5E93\u5DF2\u5207\u6362\u81F3 '{name}'\u3002",
+    "msg_rows_inserted": "\u5DF2\u63D2\u5165 {count} \u884C\u3002",
+    "msg_rows_updated": "\u5DF2\u66F4\u65B0 {count} \u884C\u3002",
+    "msg_rows_deleted": "\u5DF2\u5220\u9664 {count} \u884C\u3002",
+    "msg_row_affected": "{count} \u884C\u53D7\u5F71\u54CD\u3002",
+    "err_table_not_found": "\u8868 '{name}' \u4E0D\u5B58\u5728\u3002",
+    "err_db_not_found": "\u6570\u636E\u5E93 '{name}' \u4E0D\u5B58\u5728\u3002",
+    "err_column_not_found": "\u5217 '{name}' \u4E0D\u5B58\u5728\u3002"
   }
 };
 
@@ -65311,6 +65304,7 @@ var es_default = {
     "null_value": "NULO",
     "status_error": "Error",
     "status_done": "Hecho",
+    "status_note": "Nota",
     "switch_db_help": "Cambia a una base de datos con tablas o ",
     "btn_open_settings": "abre la configuraci\xF3n",
     "notice_table_data_copied": "\xA1Datos de la tabla copiados al portapapeles!",
@@ -65417,7 +65411,17 @@ var es_default = {
 \u{1F4A1} Sugerencia: '{word}' es una palabra reservada. Intente usar comillas (ej: "{lower}") o cambie el nombre.`,
     "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F Error Conocido de AlaSQL: El uso de una lista de columnas expl\xEDcita en 'INSERT INTO ... SELECT' caus\xF3 un fallo.\n\nSoluci\xF3n: Elimine la lista de columnas y aseg\xFArese de que el orden coincida exactamente.",
     "err_parse": "{message}\n\n\u{1F4A1} Verifique si olvid\xF3 alg\xFAn punto y coma, par\xE9ntesis/comillas sin cerrar o errores tipogr\xE1ficos.",
-    "warn_fragile_insert": "\u26A0\uFE0F Detectado 'INSERT INTO ... (columnas) SELECT'. AlaSQL puede fallar con el error '$01'. Si ocurre, elimine la lista de columnas y aseg\xFArese de que el orden sea exacto."
+    "warn_fragile_insert": "\u26A0\uFE0F Detectado 'INSERT INTO ... (columnas) SELECT'. AlaSQL puede fallar con el error '$01'. Si ocurre, elimine la lista de columnas y aseg\xFArese de que el orden sea exacto.",
+    "note_db_exists": "La base de datos '{name}' ya existe.",
+    "note_table_exists": "La tabla '{name}' ya existe.",
+    "msg_db_changed": "Base de datos cambiada a '{name}'.",
+    "msg_rows_inserted": "{count} fila(s) insertada(s).",
+    "msg_rows_updated": "{count} fila(s) actualizada(s).",
+    "msg_rows_deleted": "{count} fila(s) eliminada(s).",
+    "msg_row_affected": "{count} fila(s) afectada(s).",
+    "err_table_not_found": "La tabla '{name}' no existe.",
+    "err_db_not_found": "La base de datos '{name}' no existe.",
+    "err_column_not_found": "La columna '{name}' no existe."
   }
 };
 
@@ -65522,6 +65526,7 @@ var de_default = {
     "null_value": "NULL",
     "status_error": "Fehler",
     "status_done": "Fertig",
+    "status_note": "Hinweis",
     "switch_db_help": "Wechseln Sie zu einer Datenbank mit Tabellen oder ",
     "btn_open_settings": "\xF6ffnen Sie die Einstellungen",
     "notice_table_data_copied": "Tabellendaten in die Zwischenablage kopiert!",
@@ -65628,7 +65633,17 @@ var de_default = {
 \u{1F4A1} Tipp: '{word}' ist ein reserviertes Wort. Versuchen Sie, Anf\xFChrungszeichen zu verwenden (z. B. "{lower}") oder \xE4ndern Sie den Namen.`,
     "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F Bekannter AlaSQL-Fehler: Die Verwendung einer expliziten Spaltenliste in 'INSERT INTO ... SELECT' hat zu einem Fehler gef\xFChrt.\n\nL\xF6sung: Entfernen Sie die Spaltenliste und stellen Sie sicher, dass die Reihenfolge genau \xFCbereinstimmt.",
     "err_parse": "{message}\n\n\u{1F4A1} \xDCberpr\xFCfen Sie, ob Sie ein Semikolon vergessen haben, ob Klammern/Anf\xFChrungszeichen nicht geschlossen sind oder ob Tippfehler vorliegen.",
-    "warn_fragile_insert": "\u26A0\uFE0F 'INSERT INTO ... (Spalten) SELECT' erkannt. AlaSQL kann mit dem Fehler '$01' fehlschlagen. Falls dies passiert, entfernen Sie die Spaltenliste."
+    "warn_fragile_insert": "\u26A0\uFE0F 'INSERT INTO ... (Spalten) SELECT' erkannt. AlaSQL kann mit dem Fehler '$01' fehlschlagen. Falls dies passiert, entfernen Sie die Spaltenliste.",
+    "note_db_exists": "Datenbank '{name}' existiert bereits.",
+    "note_table_exists": "Tabelle '{name}' existiert bereits.",
+    "msg_db_changed": "Datenbank zu '{name}' gewechselt.",
+    "msg_rows_inserted": "{count} Zeile(n) eingef\xFCgt.",
+    "msg_rows_updated": "{count} Zeile(n) aktualisiert.",
+    "msg_rows_deleted": "{count} Zeile(n) gel\xF6scht.",
+    "msg_row_affected": "{count} Zeile(n) betroffen.",
+    "err_table_not_found": "Tabelle '{name}' existiert nicht.",
+    "err_db_not_found": "Datenbank '{name}' existiert nicht.",
+    "err_column_not_found": "Spalte '{name}' existiert nicht."
   }
 };
 
@@ -65733,6 +65748,7 @@ var fr_default = {
     "null_value": "NULL",
     "status_error": "Erreur",
     "status_done": "Termin\xE9",
+    "status_note": "Note",
     "switch_db_help": "Passez \xE0 une base de donn\xE9es avec des tables ou ",
     "btn_open_settings": "ouvrez les param\xE8tres",
     "notice_table_data_copied": "Donn\xE9es de table copi\xE9es dans le presse-papiers !",
@@ -65839,7 +65855,17 @@ var fr_default = {
 \u{1F4A1} Conseil : '{word}' est un mot r\xE9serv\xE9. Essayez d'utiliser des guillemets (ex : "{lower}") ou modifiez le nom.`,
     "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F Erreur connue d'AlaSQL : L'utilisation d'une liste de colonnes explicite dans 'INSERT INTO ... SELECT' a provoqu\xE9 un \xE9chec.\n\nSolution : Supprimez la liste de colonnes et assurez-vous que l'ordre correspond exactement.",
     "err_parse": "{message}\n\n\u{1F4A1} V\xE9rifiez si vous avez oubli\xE9 un point-virgule, s'il y a des parenth\xE8ses/guillemets non ferm\xE9s ou des fautes de frappe.",
-    "warn_fragile_insert": "\u26A0\uFE0F 'INSERT INTO ... (colonnes) SELECT' d\xE9tect\xE9. AlaSQL peut \xE9chouer avec l'erreur '$01'. Si cela se produit, supprimez la liste de colonnes."
+    "warn_fragile_insert": "\u26A0\uFE0F 'INSERT INTO ... (colonnes) SELECT' d\xE9tect\xE9. AlaSQL peut \xE9chouer avec l'erreur '$01'. Si cela se produit, supprimez la liste de colonnes.",
+    "note_db_exists": "La base de donn\xE9es '{name}' existe d\xE9j\xE0.",
+    "note_table_exists": "La table '{name}' existe d\xE9j\xE0.",
+    "msg_db_changed": "Base de donn\xE9es chang\xE9e en '{name}'.",
+    "msg_rows_inserted": "{count} ligne(s) ins\xE9r\xE9e(s).",
+    "msg_rows_updated": "{count} ligne(s) mise(s) \xE0 jour.",
+    "msg_rows_deleted": "{count} ligne(s) supprim\xE9e(s).",
+    "msg_row_affected": "{count} ligne(s) affect\xE9e(s).",
+    "err_table_not_found": "La table '{name}' n'existe pas.",
+    "err_db_not_found": "La base de donn\xE9es '{name}' n'existe pas.",
+    "err_column_not_found": "La colonne '{name}' n'existe pas."
   }
 };
 
@@ -65944,6 +65970,7 @@ var ja_default = {
     "null_value": "NULL",
     "status_error": "\u30A8\u30E9\u30FC",
     "status_done": "\u5B8C\u4E86",
+    "status_note": "\u6CE8",
     "switch_db_help": "\u30C6\u30FC\u30D6\u30EB\u306E\u3042\u308B\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u306B\u5207\u308A\u66FF\u3048\u308B\u304B\u3001",
     "btn_open_settings": "\u8A2D\u5B9A\u3092\u958B\u3044\u3066\u304F\u3060\u3055\u3044",
     "notice_table_data_copied": "\u30C6\u30FC\u30D6\u30EB\u30C7\u30FC\u30BF\u3092\u30AF\u30EA\u30C3\u30D7\u30DC\u30FC\u30C9\u306B\u30B3\u30D4\u30FC\u3057\u307E\u3057\u305F\uFF01",
@@ -66050,7 +66077,17 @@ var ja_default = {
 \u{1F4A1} \u30D2\u30F3\u30C8: '{word}' \u306F\u4E88\u7D04\u8A9E\u3067\u3059\u3002\u5F15\u7528\u7B26\u3092\u4F7F\u7528\u3059\u308B\u304B (\u4F8B: "{lower}")\u3001\u540D\u524D\u3092\u5909\u66F4\u3057\u3066\u304F\u3060\u3055\u3044\u3002`,
     "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F \u65E2\u77E5\u306E AlaSQL \u30A8\u30E9\u30FC: 'INSERT INTO ... SELECT' \u3067\u660E\u793A\u7684\u306A\u5217\u30EA\u30B9\u30C8\u3092\u4F7F\u7528\u3057\u305F\u305F\u3081\u5931\u6557\u3057\u307E\u3057\u305F\u3002\n\n\u89E3\u6C7A\u7B56: \u5217\u30EA\u30B9\u30C8\u3092\u524A\u9664\u3057\u3001\u9806\u5E8F\u304C\u6B63\u78BA\u306B\u4E00\u81F4\u3057\u3066\u3044\u308B\u3053\u3068\u3092\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
     "err_parse": "{message}\n\n\u{1F4A1} \u30BB\u30DF\u30B3\u30ED\u30F3\u306E\u5FD8\u308C\u3001\u62EC\u5F27/\u5F15\u7528\u7B26\u306E\u9589\u3058\u5FD8\u308C\u3001\u307E\u305F\u306F\u30BF\u30A4\u30DD\u304C\u306A\u3044\u304B\u78BA\u8A8D\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
-    "warn_fragile_insert": "\u26A0\uFE0F 'INSERT INTO ... (\u5217) SELECT' \u3092\u691C\u51FA\u3057\u307E\u3057\u305F\u3002AlaSQL \u306F\u30A8\u30E9\u30FC '$01' \u3067\u5931\u6557\u3059\u308B\u53EF\u80FD\u6027\u304C\u3042\u308A\u307E\u3059\u3002\u767A\u751F\u3057\u305F\u5834\u5408\u306F\u5217\u30EA\u30B9\u30C8\u3092\u524A\u9664\u3057\u3066\u304F\u3060\u3055\u3044\u3002"
+    "warn_fragile_insert": "\u26A0\uFE0F 'INSERT INTO ... (\u5217) SELECT' \u3092\u691C\u51FA\u3057\u307E\u3057\u305F\u3002AlaSQL \u306F\u30A8\u30E9\u30FC '$01' \u3067\u5931\u6557\u3059\u308B\u53EF\u80FD\u6027\u304C\u3042\u308A\u307E\u3059\u3002\u767A\u751F\u3057\u305F\u5834\u5408\u306F\u5217\u30EA\u30B9\u30C8\u3092\u524A\u9664\u3057\u3066\u304F\u3060\u3055\u3044\u3002",
+    "note_db_exists": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9 '{name}' \u306F\u65E2\u306B\u5B58\u5728\u3057\u307E\u3059\u3002",
+    "note_table_exists": "\u30C6\u30FC\u30D6\u30EB '{name}' \u306F\u65E2\u306B\u5B58\u5728\u3057\u307E\u3059\u3002",
+    "msg_db_changed": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9\u3092 '{name}' \u306B\u5909\u66F4\u3057\u307E\u3057\u305F\u3002",
+    "msg_rows_inserted": "{count} \u884C\u304C\u633F\u5165\u3055\u308C\u307E\u3057\u305F\u3002",
+    "msg_rows_updated": "{count} \u884C\u304C\u66F4\u65B0\u3055\u308C\u307E\u3057\u305F\u3002",
+    "msg_rows_deleted": "{count} \u884C\u304C\u524A\u9664\u3055\u308C\u307E\u3057\u305F\u3002",
+    "msg_row_affected": "{count} \u884C\u304C\u5F71\u97FF\u3092\u53D7\u3051\u307E\u3057\u305F\u3002",
+    "err_table_not_found": "\u30C6\u30FC\u30D6\u30EB '{name}' \u306F\u5B58\u5728\u3057\u307E\u305B\u3093\u3002",
+    "err_db_not_found": "\u30C7\u30FC\u30BF\u30D9\u30FC\u30B9 '{name}' \u306F\u5B58\u5728\u3057\u307E\u305B\u3093\u3002",
+    "err_column_not_found": "\u30AB\u30E9\u30E0 '{name}' \u306F\u5B58\u5728\u3057\u307E\u305B\u3093\u3002"
   }
 };
 
@@ -66155,6 +66192,7 @@ var ko_default = {
     "null_value": "NULL",
     "status_error": "\uC624\uB958",
     "status_done": "\uC644\uB8CC",
+    "status_note": "\uCC38\uACE0",
     "switch_db_help": "\uD14C\uC774\uBE14\uC774 \uC788\uB294 \uB370\uC774\uD130\uBCA0\uC774\uC2A4\uB85C \uC804\uD658\uD558\uAC70\uB098 ",
     "btn_open_settings": "\uC124\uC815\uC744 \uC5EC\uC138\uC694",
     "notice_table_data_copied": "\uD14C\uC774\uBE14 \uB370\uC774\uD130\uB97C \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uD588\uC2B5\uB2C8\uB2E4!",
@@ -66261,7 +66299,17 @@ var ko_default = {
 \u{1F4A1} \uD78C\uD2B8: '{word}'\uC740(\uB294) \uC608\uC57D\uC5B4\uC785\uB2C8\uB2E4. \uB530\uC634\uD45C\uB97C \uC0AC\uC6A9\uD558\uAC70\uB098(\uC608: "{lower}") \uC774\uB984\uC744 \uBCC0\uACBD\uD558\uC138\uC694.`,
     "err_alasql_bug_01": "{message}\n\n\u26A0\uFE0F \uC54C\uB824\uC9C4 AlaSQL \uC624\uB958: 'INSERT INTO ... SELECT'\uC5D0\uC11C \uBA85\uC2DC\uC801 \uCEEC\uB7FC \uBAA9\uB85D\uC744 \uC0AC\uC6A9\uD558\uC5EC \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.\n\n\uD574\uACB0\uCC45: \uCEEC\uB7FC \uBAA9\uB85D\uC744 \uC81C\uAC70\uD558\uACE0 \uC21C\uC11C\uAC00 \uC815\uD655\uD788 \uC77C\uCE58\uD558\uB294\uC9C0 \uD655\uC778\uD558\uC138\uC694.",
     "err_parse": "{message}\n\n\u{1F4A1} \uC138\uBBF8\uCF5C\uB860 \uB204\uB77D, \uAD04\uD638/\uB530\uC634\uD45C \uB2EB\uD798 \uC5EC\uBD80 \uB610\uB294 \uC624\uD0C0\uAC00 \uC788\uB294\uC9C0 \uD655\uC778\uD558\uC138\uC694.",
-    "warn_fragile_insert": "\u26A0\uFE0F 'INSERT INTO ... (\uCEEC\uB7FC) SELECT'\uAC00 \uAC10\uC9C0\uB418\uC5C8\uC2B5\uB2C8\uB2E4. AlaSQL\uC774 '$01' \uC624\uB958\uB85C \uC2E4\uD328\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uBC1C\uC0DD \uC2DC \uCEEC\uB7FC \uBAA9\uB85D\uC744 \uC81C\uAC70\uD558\uC138\uC694."
+    "warn_fragile_insert": "\u26A0\uFE0F 'INSERT INTO ... (\uCEEC\uB7FC) SELECT'\uAC00 \uAC10\uC9C0\uB418\uC5C8\uC2B5\uB2C8\uB2E4. AlaSQL\uC774 '$01' \uC624\uB958\uB85C \uC2E4\uD328\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uBC1C\uC0DD \uC2DC \uCEEC\uB7FC \uBAA9\uB85D\uC744 \uC81C\uAC70\uD558\uC138\uC694.",
+    "note_db_exists": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 '{name}'\uC774(\uAC00) \uC774\uBBF8 \uC874\uC7AC\uD569\uB2C8\uB2E4.",
+    "note_table_exists": "\uD14C\uC774\uBE14 '{name}'\uC774(\uAC00) \uC774\uBBF8 \uC874\uC7AC\uD569\uB2C8\uB2E4.",
+    "msg_db_changed": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4\uAC00 '{name}'(\uC73C)\uB85C \uBCC0\uACBD\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+    "msg_rows_inserted": "{count}\uAC1C \uD589\uC774 \uC0BD\uC785\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+    "msg_rows_updated": "{count}\uAC1C \uD589\uC774 \uC5C5\uB370\uC774\uD2B8\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+    "msg_rows_deleted": "{count}\uAC1C \uD589\uC774 \uC0AD\uC81C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+    "msg_row_affected": "{count}\uAC1C \uD589\uC774 \uC601\uD5A5\uC744 \uBC1B\uC558\uC2B5\uB2C8\uB2E4.",
+    "err_table_not_found": "\uD14C\uC774\uBE14 '{name}'\uC774(\uAC00) \uC874\uC7AC\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+    "err_db_not_found": "\uB370\uC774\uD130\uBCA0\uC774\uC2A4 '{name}'\uC774(\uAC00) \uC874\uC7AC\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.",
+    "err_column_not_found": "\uCEEC\uB7FC '{name}'\uC774(\uAC00) \uC874\uC7AC\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."
   }
 };
 
@@ -66383,27 +66431,25 @@ var QueryExecutor = class {
         for (let i = 0; i < statements.length; i++) {
           let stmt = statements[i];
           const upperStmt = stmt.toUpperCase().trim();
-          const SECURITY_BLOCKED2 = [/\bDROP\s+DATABASE\b/i, /\bSHUTDOWN\b/i, /\bALTER\s+SYSTEM\b/i];
-          for (const pattern of SECURITY_BLOCKED2) {
-            if (pattern.test(stmt)) {
-              throw new Error(`Blocked SQL command: ${pattern.source.replace("\\s+", " ")}`);
-            }
-          }
-          if (options.safeMode) {
-            const BLOCKED_IN_SAFE_MODE = [/\bDROP\s+TABLE\b/i, /\bTRUNCATE\s+TABLE\b/i, /\bTRUNCATE\b/i, /\bALTER\s+TABLE\b/i];
-            for (const pattern of BLOCKED_IN_SAFE_MODE) {
-              if (pattern.test(stmt)) {
-                throw new Error(`Safe Mode Block: Structural destruction (${pattern.source.replace("\\s+", " ")}) is disabled.`);
-              }
-            }
-          }
+          this.validateStatement(stmt, options.safeMode || false);
           const useMatch2 = stmt.match(/^\s*USE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$/i);
           if (useMatch2) {
             const newDB = useMatch2[1];
             if (!import_alasql3.default.databases[newDB]) throw new Error(`Database '${newDB}' does not exist`);
             currentDB = newDB;
-            results.push(1);
+            results.push({
+              type: "message",
+              data: null,
+              message: t("executor.msg_db_changed", { name: newDB })
+            });
             continue;
+          }
+          const dropDbMatch = stmt.match(/^\s*DROP\s+DATABASE\s+(?:IF\s+EXISTS\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\s*$/i);
+          if (dropDbMatch) {
+            const droppedDB = dropDbMatch[1];
+            if (droppedDB === currentDB) {
+              currentDB = "dbo";
+            }
           }
           if (upperStmt.startsWith("FORM")) {
             const formResult = await this.handleFormCommand(stmt, currentDB, monitor);
@@ -66414,8 +66460,57 @@ var QueryExecutor = class {
             warnings.push(t("executor.warn_fragile_insert"));
           }
           stmt = SQLTransformer.prefixTablesWithDatabase(stmt, currentDB);
-          const result = await this.executeWithTimeout(stmt, params, 3e4, options.signal);
-          results.push(result);
+          try {
+            const result = await this.executeWithTimeout(stmt, params, 3e4, options.signal);
+            if (typeof result === "number") {
+              if (upperStmt.includes("CREATE TABLE") && upperStmt.includes("IF NOT EXISTS") && result === 0) {
+                const tableNameMatch = stmt.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:\[[^\]]+\]\.)?(?:[`"[])?([a-zA-Z0-9_]+)/i);
+                results.push({
+                  type: "note",
+                  data: null,
+                  message: t("executor.note_table_exists", { name: tableNameMatch ? tableNameMatch[1] : "table" })
+                });
+              } else {
+                let message;
+                if (upperStmt.startsWith("INSERT")) message = t("executor.msg_rows_inserted", { count: String(result) });
+                else if (upperStmt.startsWith("UPDATE")) message = t("executor.msg_rows_updated", { count: String(result) });
+                else if (upperStmt.startsWith("DELETE")) message = t("executor.msg_rows_deleted", { count: String(result) });
+                else message = t("executor.msg_row_affected", { count: String(result) });
+                results.push({
+                  type: "message",
+                  data: result,
+                  message
+                });
+              }
+            } else {
+              results.push(result);
+            }
+          } catch (e) {
+            const msg = e.message;
+            if (msg.includes("already exists")) {
+              const dbNameMatch = msg.match(/database '([^']+)'/i);
+              const tableNameMatch = msg.match(/table '([^']+)'/i);
+              if (tableNameMatch) {
+                results.push({
+                  type: "note",
+                  data: null,
+                  message: t("executor.note_table_exists", { name: tableNameMatch[1] })
+                });
+              } else {
+                const dbName = dbNameMatch ? dbNameMatch[1] : "database";
+                results.push({
+                  type: "note",
+                  data: null,
+                  message: t("executor.note_db_exists", { name: dbName })
+                });
+              }
+            } else {
+              results.push({
+                type: "error",
+                message: this.beautifyError(msg)
+              });
+            }
+          }
         }
         this.notifyIfModified(statements, currentDB, options.originId);
         let normalizedData2 = this.normalizeResult(results);
@@ -66439,16 +66534,7 @@ var QueryExecutor = class {
         if (!import_alasql3.default.databases[newDB]) throw new Error(`Database '${newDB}' does not exist`);
         return { success: true, data: [{ type: "message", data: null, message: t("modals.notice_switch_success", { name: newDB }) }], executionTime: monitor.end(), activeDatabase: newDB };
       }
-      const SECURITY_BLOCKED = [/\bDROP\s+DATABASE\b/i, /\bSHUTDOWN\b/i, /\bALTER\s+SYSTEM\b/i];
-      for (const pattern of SECURITY_BLOCKED) {
-        if (pattern.test(trimmed)) throw new Error(`Blocked SQL command: ${pattern.source.replace("\\s+", " ")}`);
-      }
-      if (options.safeMode) {
-        const BLOCKED_IN_SAFE_MODE = [/\bDROP\s+TABLE\b/i, /\bTRUNCATE\s+TABLE\b/i, /\bTRUNCATE\b/i, /\bALTER\s+TABLE\b/i];
-        for (const pattern of BLOCKED_IN_SAFE_MODE) {
-          if (pattern.test(trimmed)) throw new Error(`Safe Mode Block: Structural destruction (${pattern.source.replace("\\s+", " ")}) is disabled.`);
-        }
-      }
+      this.validateStatement(trimmed, options.safeMode || false);
       if (SQLTransformer.hasFragileInsertSelect(trimmed)) {
         warnings.push(t("executor.warn_fragile_insert"));
       }
@@ -66468,10 +66554,14 @@ var QueryExecutor = class {
     }
   }
   static beautifyError(message) {
-    const match = message.match(/got '([^']+)'/i);
-    if (match) {
-      const word = match[1].toUpperCase();
-      const reserved = ["TOTAL", "VALUE", "SUM", "COUNT", "MIN", "MAX", "AVG", "KEY", "ORDER", "GROUP", "DATE", "DESC", "ASC"];
+    var _a, _b;
+    const reservedMatch = message.match(/got (?:'|&#039;)([^'&#;]+)(?:'|&#039;)/i);
+    if (reservedMatch) {
+      const word = reservedMatch[1].toUpperCase();
+      if (word === "COMMA" && (message.toUpperCase().includes("VALUE") || message.toUpperCase().includes("KEY"))) {
+        return t("executor.err_reserved_word", { message, word: "VALUE", lower: "value" });
+      }
+      const reserved = ["TOTAL", "VALUE", "SUM", "COUNT", "MIN", "MAX", "AVG", "KEY", "ORDER", "GROUP", "DATE", "DESC", "ASC", "PRIMARY", "IF", "NOT", "EXISTS", "DATABASE", "TABLE", "COLUMN"];
       if (reserved.includes(word)) {
         return t("executor.err_reserved_word", { message, word, lower: word.toLowerCase() });
       }
@@ -66481,6 +66571,19 @@ var QueryExecutor = class {
     }
     if (message.includes("Parse error")) {
       return t("executor.err_parse", { message });
+    }
+    if (message.includes("Table does not exist:")) {
+      const table = ((_a = message.split(":")[1]) == null ? void 0 : _a.trim()) || "table";
+      return t("executor.err_table_not_found", { name: table });
+    }
+    if (message.includes("Database") && message.includes("does not exist")) {
+      const match = message.match(/Database '([^']+)'/i);
+      const db = match ? match[1] : "database";
+      return t("executor.err_db_not_found", { name: db });
+    }
+    if (message.includes("Column does not exist:")) {
+      const col = ((_b = message.split(":")[1]) == null ? void 0 : _b.trim()) || "column";
+      return t("executor.err_column_not_found", { name: col });
     }
     return message;
   }
@@ -66493,8 +66596,11 @@ var QueryExecutor = class {
   }
   static createResultSet(res) {
     if (res === void 0 || res === null) return { type: "message", data: null, message: t("modals.status_done") };
-    if (typeof res === "object" && res !== null && "type" in res && "data" in res) {
-      return res;
+    if (typeof res === "object" && res !== null && "type" in res) {
+      const potential = res;
+      if (["table", "scalar", "message", "error", "form", "note"].includes(potential.type)) {
+        return potential;
+      }
     }
     if (Array.isArray(res)) {
       if (res.length === 0) return { type: "message", data: [], message: "0 rows returned", rowCount: 0 };
@@ -66504,7 +66610,7 @@ var QueryExecutor = class {
       }
       return { type: "scalar", data: res, rowCount: res.length };
     }
-    if (typeof res === "number") return { type: "message", data: res, message: t("renderer.rows_affected", { count: String(res) }) };
+    if (typeof res === "number") return { type: "message", data: res, message: t("executor.msg_row_affected", { count: String(res) }) };
     let message = "";
     if (typeof res === "object" && res !== null) {
       message = JSON.stringify(res);
@@ -66598,6 +66704,28 @@ var QueryExecutor = class {
     if (type.includes("DATE") || type.includes("TIME")) return "DATE";
     if (type.includes("BOOLEAN") || type.includes("BOOL")) return "CHECKBOX";
     return "TEXT";
+  }
+  static validateStatement(stmt, safeMode) {
+    const upper = stmt.toUpperCase();
+    if (upper.includes("SHUTDOWN")) throw new Error(t("executor.err_blocked_command", { command: "SHUTDOWN" }));
+    if (upper.includes("ALTER SYSTEM")) throw new Error(t("executor.err_blocked_command", { command: "ALTER SYSTEM" }));
+    if (upper.includes("DROP DATABASE") && /\bdbo\b/i.test(stmt)) {
+      throw new Error(t("executor.err_blocked_command", { command: "DROP DATABASE dbo" }));
+    }
+    if (safeMode) {
+      const SAFE_MODE_PATTERNS = [
+        { pattern: /\bDROP\s+DATABASE\b/i, label: "DROP DATABASE" },
+        { pattern: /\bDROP\s+TABLE\b/i, label: "DROP TABLE" },
+        { pattern: /\bTRUNCATE\s+TABLE\b/i, label: "TRUNCATE TABLE" },
+        { pattern: /\bTRUNCATE\b/i, label: "TRUNCATE" },
+        { pattern: /\bALTER\s+TABLE\b/i, label: "ALTER TABLE" }
+      ];
+      for (const { pattern, label } of SAFE_MODE_PATTERNS) {
+        if (pattern.test(stmt)) {
+          throw new Error(t("executor.err_safe_mode", { command: label }));
+        }
+      }
+    }
   }
   static notifyIfModified(statements, database, originId) {
     const modifiedTables = /* @__PURE__ */ new Set();
@@ -66970,15 +67098,23 @@ var ResultRenderer = class {
           }
           break;
         case "message":
+        case "note":
         case "error": {
           const isDML = rs.type === "message" && typeof rs.data === "number";
+          const isNote = rs.type === "note" || rs.message && rs.message.toLowerCase().startsWith("note:");
           const msgWrapper = contentWrapper.createDiv({
-            cls: rs.type === "error" ? "mysql-error-inline" : isDML ? "mysql-success-state mysql-msg-compact" : "mysql-info-state mysql-msg-compact"
+            cls: rs.type === "error" ? "mysql-error-inline" : isNote ? "mysql-note-state mysql-msg-compact" : isDML ? "mysql-success-state mysql-msg-compact" : "mysql-info-state mysql-msg-compact"
           });
           if (rs.type === "error") {
             const iconWrapper = msgWrapper.createDiv({ cls: "mysql-error-icon" });
             (0, import_obsidian4.setIcon)(iconWrapper, "alert-circle");
             msgWrapper.createSpan({ text: rs.message || t("modals.status_error") });
+          } else if (isNote) {
+            const iconWrapper = msgWrapper.createDiv({ cls: "mysql-note-icon" });
+            (0, import_obsidian4.setIcon)(iconWrapper, "alert-triangle");
+            const textDiv = msgWrapper.createDiv({ cls: "mysql-note-text" });
+            textDiv.createSpan({ text: t("modals.status_note") + ": ", cls: "mysql-strong" });
+            textDiv.createSpan({ text: rs.message || "" });
           } else {
             const iconWrapper = msgWrapper.createDiv({ cls: isDML ? "mysql-success-icon" : "mysql-info-icon" });
             (0, import_obsidian4.setIcon)(iconWrapper, isDML ? "check-circle" : "info");
@@ -68455,8 +68591,8 @@ var MySQLPlugin = class extends import_obsidian12.Plugin {
     try {
       await this.dbManager.load();
     } catch (e) {
-      console.error("MySQL Plugin: Failed to restore databases during load:", e);
-      new import_obsidian12.Notice("MySQL Plugin: Failed to load previous database state. Starting fresh.");
+      console.error("SQL notebook: Failed to restore databases during load:", e);
+      new import_obsidian12.Notice("Failed to load previous database state. Starting fresh.");
     }
     if (this.settings.databases) delete this.settings.databases;
     this.registerMarkdownCodeBlockProcessor("mysql", (source, el, ctx) => {

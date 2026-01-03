@@ -80,8 +80,8 @@ export default class MySQLPlugin extends Plugin implements IMySQLPlugin {
         try {
             await this.dbManager.load();
         } catch (e) {
-            console.error('MySQL Plugin: Failed to restore databases during load:', e);
-            new Notice('MySQL Plugin: Failed to load previous database state. Starting fresh.');
+            console.error('SQL notebook: Failed to restore databases during load:', e);
+            new Notice('Failed to load previous database state. Starting fresh.');
         }
 
         // OPTIMIZATION: Clear the huge database object from settings memory.

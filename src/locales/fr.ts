@@ -98,6 +98,7 @@ export default {
         "null_value": "NULL",
         "status_error": "Erreur",
         "status_done": "Terminé",
+        "status_note": "Note",
         "switch_db_help": "Passez à une base de données avec des tables ou ",
         "btn_open_settings": "ouvrez les paramètres",
         "notice_table_data_copied": "Données de table copiées dans le presse-papiers !",
@@ -202,6 +203,16 @@ export default {
         "err_reserved_word": "{message}\n\n💡 Conseil : '{word}' est un mot réservé. Essayez d'utiliser des guillemets (ex : \"{lower}\") ou modifiez le nom.",
         "err_alasql_bug_01": "{message}\n\n⚠️ Erreur connue d'AlaSQL : L'utilisation d'une liste de colonnes explicite dans 'INSERT INTO ... SELECT' a provoqué un échec.\n\nSolution : Supprimez la liste de colonnes et assurez-vous que l'ordre correspond exactement.",
         "err_parse": "{message}\n\n💡 Vérifiez si vous avez oublié un point-virgule, s'il y a des parenthèses/guillemets non fermés ou des fautes de frappe.",
-        "warn_fragile_insert": "⚠️ 'INSERT INTO ... (colonnes) SELECT' détecté. AlaSQL peut échouer avec l'erreur '$01'. Si cela se produit, supprimez la liste de colonnes."
+        "warn_fragile_insert": "⚠️ 'INSERT INTO ... (colonnes) SELECT' détecté. AlaSQL peut échouer avec l'erreur '$01'. Si cela se produit, supprimez la liste de colonnes.",
+        "note_db_exists": "La base de données '{name}' existe déjà.",
+        "note_table_exists": "La table '{name}' existe déjà.",
+        "msg_db_changed": "Base de données changée en '{name}'.",
+        "msg_rows_inserted": "{count} ligne(s) insérée(s).",
+        "msg_rows_updated": "{count} ligne(s) mise(s) à jour.",
+        "msg_rows_deleted": "{count} ligne(s) supprimée(s).",
+        "msg_row_affected": "{count} ligne(s) affectée(s).",
+        "err_table_not_found": "La table '{name}' n'existe pas.",
+        "err_db_not_found": "La base de données '{name}' n'existe pas.",
+        "err_column_not_found": "La colonne '{name}' n'existe pas."
     }
 }

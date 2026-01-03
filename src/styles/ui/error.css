@@ -90,9 +90,10 @@
     color: var(--text-muted);
 }
 
-/* Success & Info Message Components */
+/* Success, Info & Note Message Components */
 .mysql-success-state,
-.mysql-info-state {
+.mysql-info-state,
+.mysql-note-state {
     padding: 12px 24px;
     background-color: var(--background-secondary-alt);
     border-radius: var(--mysql-radius-md);
@@ -106,7 +107,6 @@
     border: 1px dashed var(--mysql-border-color, var(--background-modifier-border));
 }
 
-
 .mysql-success-state {
     border-color: var(--mysql-accent);
 }
@@ -115,8 +115,13 @@
     border-color: var(--text-muted);
 }
 
+.mysql-note-state {
+    border-color: var(--text-warning);
+}
+
 .mysql-success,
-.mysql-info-text {
+.mysql-info-text,
+.mysql-note-text {
     font-weight: 500;
     font-size: 0.95em;
     margin: 0 !important;
@@ -130,8 +135,13 @@
     color: var(--text-muted);
 }
 
+.mysql-note-text {
+    color: var(--text-warning);
+}
+
 .mysql-success-icon,
-.mysql-info-icon {
+.mysql-info-icon,
+.mysql-note-icon {
     opacity: 0.8;
     display: flex;
     align-items: center;
@@ -145,8 +155,13 @@
     color: var(--text-muted);
 }
 
+.mysql-note-icon {
+    color: var(--text-warning);
+}
+
 .mysql-success-icon svg,
-.mysql-info-icon svg {
+.mysql-info-icon svg,
+.mysql-note-icon svg {
     width: 18px;
     height: 18px;
 }

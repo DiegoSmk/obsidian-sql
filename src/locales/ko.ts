@@ -98,6 +98,7 @@ export default {
         "null_value": "NULL",
         "status_error": "오류",
         "status_done": "완료",
+        "status_note": "참고",
         "switch_db_help": "테이블이 있는 데이터베이스로 전환하거나 ",
         "btn_open_settings": "설정을 여세요",
         "notice_table_data_copied": "테이블 데이터를 클립보드에 복사했습니다!",
@@ -202,6 +203,16 @@ export default {
         "err_reserved_word": "{message}\n\n💡 힌트: '{word}'은(는) 예약어입니다. 따옴표를 사용하거나(예: \"{lower}\") 이름을 변경하세요.",
         "err_alasql_bug_01": "{message}\n\n⚠️ 알려진 AlaSQL 오류: 'INSERT INTO ... SELECT'에서 명시적 컬럼 목록을 사용하여 실패했습니다.\n\n해결책: 컬럼 목록을 제거하고 순서가 정확히 일치하는지 확인하세요.",
         "err_parse": "{message}\n\n💡 세미콜론 누락, 괄호/따옴표 닫힘 여부 또는 오타가 있는지 확인하세요.",
-        "warn_fragile_insert": "⚠️ 'INSERT INTO ... (컬럼) SELECT'가 감지되었습니다. AlaSQL이 '$01' 오류로 실패할 수 있습니다. 발생 시 컬럼 목록을 제거하세요."
+        "warn_fragile_insert": "⚠️ 'INSERT INTO ... (컬럼) SELECT'가 감지되었습니다. AlaSQL이 '$01' 오류로 실패할 수 있습니다. 발생 시 컬럼 목록을 제거하세요.",
+        "note_db_exists": "데이터베이스 '{name}'이(가) 이미 존재합니다.",
+        "note_table_exists": "테이블 '{name}'이(가) 이미 존재합니다.",
+        "msg_db_changed": "데이터베이스가 '{name}'(으)로 변경되었습니다.",
+        "msg_rows_inserted": "{count}개 행이 삽입되었습니다.",
+        "msg_rows_updated": "{count}개 행이 업데이트되었습니다.",
+        "msg_rows_deleted": "{count}개 행이 삭제되었습니다.",
+        "msg_row_affected": "{count}개 행이 영향을 받았습니다.",
+        "err_table_not_found": "테이블 '{name}'이(가) 존재하지 않습니다.",
+        "err_db_not_found": "데이터베이스 '{name}'이(가) 존재하지 않습니다.",
+        "err_column_not_found": "컬럼 '{name}'이(가) 존재하지 않습니다."
     }
 }

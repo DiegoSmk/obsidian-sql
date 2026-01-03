@@ -89,23 +89,8 @@ export class QueryExecutor {
                     let stmt = statements[i];
                     const upperStmt = stmt.toUpperCase().trim();
 
-                    // Security checks (always ON)
-                    const SECURITY_BLOCKED = [/\bDROP\s+DATABASE\b/i, /\bSHUTDOWN\b/i, /\bALTER\s+SYSTEM\b/i];
-                    for (const pattern of SECURITY_BLOCKED) {
-                        if (pattern.test(stmt)) {
-                            throw new Error(`Blocked SQL command: ${pattern.source.replace('\\s+', ' ')}`);
-                        }
-                    }
-
-                    // Safe Mode checks
-                    if (options.safeMode) {
-                        const BLOCKED_IN_SAFE_MODE = [/\bDROP\s+TABLE\b/i, /\bTRUNCATE\s+TABLE\b/i, /\bTRUNCATE\b/i, /\bALTER\s+TABLE\b/i];
-                        for (const pattern of BLOCKED_IN_SAFE_MODE) {
-                            if (pattern.test(stmt)) {
-                                throw new Error(`Safe Mode Block: Structural destruction (${pattern.source.replace('\\s+', ' ')}) is disabled.`);
-                            }
-                        }
-                    }
+                    // Security and Safe Mode checks
+                    this.validateStatement(stmt, options.safeMode || false);
 
                     // Intercept USE statements
                     const useMatch = stmt.match(/^\s*USE\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*$/i);
@@ -113,8 +98,23 @@ export class QueryExecutor {
                         const newDB = useMatch[1];
                         if (!(alasql as unknown as AlaSQLInstance).databases[newDB]) throw new Error(`Database '${newDB}' does not exist`);
                         currentDB = newDB;
-                        results.push(1);
+                        results.push({
+                            type: 'message',
+                            data: null,
+                            message: t('executor.msg_db_changed', { name: newDB })
+                        });
                         continue;
+                    }
+
+                    // Intercept DROP DATABASE
+                    const dropDbMatch = stmt.match(/^\s*DROP\s+DATABASE\s+(?:IF\s+EXISTS\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\s*$/i);
+                    if (dropDbMatch) {
+                        const droppedDB = dropDbMatch[1];
+                        // If dropping current database, reset to dbo
+                        if (droppedDB === currentDB) {
+                            currentDB = 'dbo';
+                            // Note: We don't continue; we let the DROP execute first.
+                        }
                     }
 
                     // Intercept FORM inside batch
@@ -130,8 +130,66 @@ export class QueryExecutor {
                     }
 
                     stmt = SQLTransformer.prefixTablesWithDatabase(stmt, currentDB);
-                    const result = await this.executeWithTimeout(stmt, params, 30000, options.signal);
-                    results.push(result);
+                    try {
+                        const result = await this.executeWithTimeout(stmt, params, 30000, options.signal);
+
+                        // Improve feedback for non-selection queries
+                        if (typeof result === 'number') {
+                            // Detect if it was a CREATE TABLE IF NOT EXISTS that did nothing
+                            if (upperStmt.includes('CREATE TABLE') && upperStmt.includes('IF NOT EXISTS') && result === 0) {
+                                const tableNameMatch = stmt.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:\[[^\]]+\]\.)?(?:[`"[])?([a-zA-Z0-9_]+)/i);
+                                results.push({
+                                    type: 'note',
+                                    data: null,
+                                    message: t('executor.note_table_exists', { name: tableNameMatch ? tableNameMatch[1] : 'table' })
+                                });
+                            } else {
+                                let message: string;
+                                if (upperStmt.startsWith('INSERT')) message = t('executor.msg_rows_inserted', { count: String(result) });
+                                else if (upperStmt.startsWith('UPDATE')) message = t('executor.msg_rows_updated', { count: String(result) });
+                                else if (upperStmt.startsWith('DELETE')) message = t('executor.msg_rows_deleted', { count: String(result) });
+                                else message = t('executor.msg_row_affected', { count: String(result) });
+
+                                results.push({
+                                    type: 'message',
+                                    data: result,
+                                    message: message
+                                });
+                            }
+                        } else {
+                            results.push(result);
+                        }
+                    } catch (e) {
+                        // Soft failure for "already exists" errors, but escalate others
+                        const msg = (e as Error).message;
+                        if (msg.includes('already exists')) {
+                            const dbNameMatch = msg.match(/database '([^']+)'/i);
+                            const tableNameMatch = msg.match(/table '([^']+)'/i);
+
+                            if (tableNameMatch) {
+                                results.push({
+                                    type: 'note',
+                                    data: null,
+                                    message: t('executor.note_table_exists', { name: tableNameMatch[1] })
+                                });
+                            } else {
+                                const dbName = dbNameMatch ? dbNameMatch[1] : 'database';
+                                results.push({
+                                    type: 'note',
+                                    data: null,
+                                    message: t('executor.note_db_exists', { name: dbName })
+                                });
+                            }
+                        } else {
+                            // Re-throw critical errors to stop batch?
+                            // Or push error object to let user see it inline?
+                            // User requested to "follow with next commands", so we push error and continue
+                            results.push({
+                                type: 'error',
+                                message: this.beautifyError(msg)
+                            });
+                        }
+                    }
                 }
 
                 this.notifyIfModified(statements, currentDB, options.originId);
@@ -165,19 +223,8 @@ export class QueryExecutor {
                 return { success: true, data: [{ type: 'message', data: null, message: t('modals.notice_switch_success', { name: newDB }) }], executionTime: monitor.end(), activeDatabase: newDB };
             }
 
-            // Security Check (Always ON)
-            const SECURITY_BLOCKED = [/\bDROP\s+DATABASE\b/i, /\bSHUTDOWN\b/i, /\bALTER\s+SYSTEM\b/i];
-            for (const pattern of SECURITY_BLOCKED) {
-                if (pattern.test(trimmed)) throw new Error(`Blocked SQL command: ${pattern.source.replace('\\s+', ' ')}`);
-            }
-
-            // Safe Mode
-            if (options.safeMode) {
-                const BLOCKED_IN_SAFE_MODE = [/\bDROP\s+TABLE\b/i, /\bTRUNCATE\s+TABLE\b/i, /\bTRUNCATE\b/i, /\bALTER\s+TABLE\b/i];
-                for (const pattern of BLOCKED_IN_SAFE_MODE) {
-                    if (pattern.test(trimmed)) throw new Error(`Safe Mode Block: Structural destruction (${pattern.source.replace('\\s+', ' ')}) is disabled.`);
-                }
-            }
+            // Security and Safe Mode checks
+            this.validateStatement(trimmed, options.safeMode || false);
 
             // Warning check for Fragile INSERT
             if (SQLTransformer.hasFragileInsertSelect(trimmed)) {
@@ -205,10 +252,17 @@ export class QueryExecutor {
     }
 
     private static beautifyError(message: string): string {
-        const match = message.match(/got '([^']+)'/i);
-        if (match) {
-            const word = match[1].toUpperCase();
-            const reserved = ['TOTAL', 'VALUE', 'SUM', 'COUNT', 'MIN', 'MAX', 'AVG', 'KEY', 'ORDER', 'GROUP', 'DATE', 'DESC', 'ASC'];
+        // Match 'got X', handle both literal single quotes and HTML entities (&#039; or ')
+        const reservedMatch = message.match(/got (?:'|&#039;)([^'&#;]+)(?:'|&#039;)/i);
+        if (reservedMatch) {
+            const word = reservedMatch[1].toUpperCase();
+
+            // If it's a comma error, it's very often a reserved word (like VALUE) used right before it.
+            if (word === 'COMMA' && (message.toUpperCase().includes('VALUE') || message.toUpperCase().includes('KEY'))) {
+                return t('executor.err_reserved_word', { message, word: 'VALUE', lower: 'value' });
+            }
+
+            const reserved = ['TOTAL', 'VALUE', 'SUM', 'COUNT', 'MIN', 'MAX', 'AVG', 'KEY', 'ORDER', 'GROUP', 'DATE', 'DESC', 'ASC', 'PRIMARY', 'IF', 'NOT', 'EXISTS', 'DATABASE', 'TABLE', 'COLUMN'];
             if (reserved.includes(word)) {
                 return t('executor.err_reserved_word', { message, word, lower: word.toLowerCase() });
             }
@@ -219,6 +273,22 @@ export class QueryExecutor {
         if (message.includes("Parse error")) {
             return t('executor.err_parse', { message });
         }
+
+        // Translate common AlaSQL errors
+        if (message.includes("Table does not exist:")) {
+            const table = message.split(':')[1]?.trim() || "table";
+            return t('executor.err_table_not_found', { name: table });
+        }
+        if (message.includes("Database") && message.includes("does not exist")) {
+            const match = message.match(/Database '([^']+)'/i);
+            const db = match ? match[1] : "database";
+            return t('executor.err_db_not_found', { name: db });
+        }
+        if (message.includes("Column does not exist:")) {
+            const col = message.split(':')[1]?.trim() || "column";
+            return t('executor.err_column_not_found', { name: col });
+        }
+
         return message;
     }
 
@@ -233,9 +303,12 @@ export class QueryExecutor {
     private static createResultSet(res: unknown): ResultSet {
         if (res === undefined || res === null) return { type: 'message', data: null, message: t('modals.status_done') };
 
-        // If it's already a ResultSet (e.g. from FORM interception)
-        if (typeof res === 'object' && res !== null && 'type' in res && 'data' in res) {
-            return res as ResultSet;
+        // If it's already a ResultSet (e.g. from FORM interception or batch errors)
+        if (typeof res === 'object' && res !== null && 'type' in res) {
+            const potential = res as ResultSet;
+            if (['table', 'scalar', 'message', 'error', 'form', 'note'].includes(potential.type)) {
+                return potential;
+            }
         }
         if (Array.isArray(res)) {
             if (res.length === 0) return { type: 'message', data: [], message: '0 rows returned', rowCount: 0 };
@@ -245,7 +318,7 @@ export class QueryExecutor {
             }
             return { type: 'scalar', data: res, rowCount: res.length };
         }
-        if (typeof res === 'number') return { type: 'message', data: res, message: t('renderer.rows_affected', { count: String(res) }) };
+        if (typeof res === 'number') return { type: 'message', data: res, message: t('executor.msg_row_affected', { count: String(res) }) };
         let message = '';
         if (typeof res === 'object' && res !== null) {
             message = JSON.stringify(res);
@@ -354,6 +427,36 @@ export class QueryExecutor {
         if (type.includes('DATE') || type.includes('TIME')) return 'DATE';
         if (type.includes('BOOLEAN') || type.includes('BOOL')) return 'CHECKBOX';
         return 'TEXT';
+    }
+
+    private static validateStatement(stmt: string, safeMode: boolean): void {
+        const upper = stmt.toUpperCase();
+
+        // 1. Hard Security Blocks (Internal system integrity)
+        if (upper.includes('SHUTDOWN')) throw new Error(t('executor.err_blocked_command', { command: 'SHUTDOWN' }));
+        if (upper.includes('ALTER SYSTEM')) throw new Error(t('executor.err_blocked_command', { command: 'ALTER SYSTEM' }));
+
+        // 2. Protect system database
+        if (upper.includes('DROP DATABASE') && /\bdbo\b/i.test(stmt)) {
+            throw new Error(t('executor.err_blocked_command', { command: 'DROP DATABASE dbo' }));
+        }
+
+        // 3. Safe Mode Protections
+        if (safeMode) {
+            const SAFE_MODE_PATTERNS = [
+                { pattern: /\bDROP\s+DATABASE\b/i, label: 'DROP DATABASE' },
+                { pattern: /\bDROP\s+TABLE\b/i, label: 'DROP TABLE' },
+                { pattern: /\bTRUNCATE\s+TABLE\b/i, label: 'TRUNCATE TABLE' },
+                { pattern: /\bTRUNCATE\b/i, label: 'TRUNCATE' },
+                { pattern: /\bALTER\s+TABLE\b/i, label: 'ALTER TABLE' }
+            ];
+
+            for (const { pattern, label } of SAFE_MODE_PATTERNS) {
+                if (pattern.test(stmt)) {
+                    throw new Error(t('executor.err_safe_mode', { command: label }));
+                }
+            }
+        }
     }
 
     private static notifyIfModified(statements: string[], database: string, originId?: string): void {

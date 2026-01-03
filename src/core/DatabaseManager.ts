@@ -3,6 +3,7 @@ import alasql from 'alasql';
 import { IMySQLPlugin, DatabaseSnapshot, DatabaseStats, AlaSQLInstance } from '../types';
 import { Logger } from '../utils/Logger';
 import { DatabaseEventBus } from './DatabaseEventBus';
+import { SchemaReconstructor } from '../utils/SchemaReconstructor';
 
 
 export class DatabaseManager {
@@ -76,29 +77,17 @@ export class DatabaseManager {
                             dbData[tableName] = rows;
                         }
 
-                        // Generate Schema from AlaSQL (Supports empty tables)
+                        // Generate Schema from AlaSQL internal structure (Supports empty tables and metadata)
                         try {
-                            const createRes = (alasql as unknown as AlaSQLInstance)(`SHOW CREATE TABLE ${dbName}.${tableName}`) as Record<string, string>[];
-                            if (createRes?.[0]) {
-                                dbSchema[tableName] = (createRes[0])["Create Table"] || (createRes[0])["CreateTable"];
-                            }
-
-                            // If SHOW CREATE failed but we have table object, try to reconstruct from columns (Essential for AUTO_INCREMENT)
-                            if (!dbSchema[tableName] && tableObj.columns && tableObj.columns.length > 0) {
-                                const colDefs = tableObj.columns.map((c) => {
-                                    let def = `\`${c.columnid}\` ${c.dbtypeid || 'VARCHAR'}`;
-                                    if (c.primarykey) def += ' PRIMARY KEY';
-                                    if (c.auto_increment || c.autoincrement || c.identity) def += ' AUTO_INCREMENT';
-                                    return def;
-                                }).join(', ');
-                                dbSchema[tableName] = `CREATE TABLE \`${tableName}\` (${colDefs})`;
-                            } else if (!dbSchema[tableName] && rows.length > 0) {
-                                // Fallback: Generate from data structure if SHOW CREATE and columns fail
+                            dbSchema[tableName] = SchemaReconstructor.reconstruct(tableName, tableObj);
+                        } catch (e) {
+                            Logger.warn(`Failed to reconstruct schema for table '${tableName}':`, e);
+                            // Fallback: Generate from data structure if reconstruction fails
+                            if (rows.length > 0) {
                                 const firstRow = rows[0] as Record<string, unknown>;
                                 const columns = Object.keys(firstRow).map(col => {
                                     const value = firstRow[col];
                                     let type = 'VARCHAR';
-
                                     if (value === null || value === undefined) type = 'VARCHAR';
                                     else if (typeof value === 'number') type = Number.isInteger(value) ? 'INT' : 'FLOAT';
                                     else if (typeof value === 'boolean') type = 'BOOLEAN';
@@ -110,8 +99,6 @@ export class DatabaseManager {
                                 const createSQL = `CREATE TABLE \`${tableName}\` (${columns})`;
                                 dbSchema[tableName] = createSQL;
                             }
-                        } catch (e) {
-                            console.debug(`MySQL Plugin: Failed to generate schema for '${tableName}':`, e);
                         }
 
                         tableCount++;

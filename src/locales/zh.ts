@@ -98,6 +98,7 @@ export default {
         "null_value": "空",
         "status_error": "错误",
         "status_done": "完成",
+        "status_note": "注意",
         "switch_db_help": "切换到包含表的数据库或 ",
         "btn_open_settings": "打开设置",
         "notice_table_data_copied": "表数据已复制到剪贴板！",
@@ -202,6 +203,16 @@ export default {
         "err_reserved_word": "{message}\n\n💡 提示：'{word}' 是保留字。请尝试使用引号（如 \"{lower}\"）或更改名称。",
         "err_alasql_bug_01": "{message}\n\n⚠️ 已知 AlaSQL 错误：在 'INSERT INTO ... SELECT' 中使用显式列列表导致失败。\n\n解决方案：删除列列表并确保顺序完全对应。",
         "err_parse": "{message}\n\n💡 请检查是否遗漏了分号、括号/引号是否未闭合或存在拼写错误。",
-        "warn_fragile_insert": "⚠️ 检测到 'INSERT INTO ... (列) SELECT'。AlaSQL 可能会因 '$01' 错误而失败。如果发生，请删除列列表。"
+        "warn_fragile_insert": "⚠️ 检测到 'INSERT INTO ... (列) SELECT'。AlaSQL 可能会因 '$01' 错误而失败。如果发生，请删除列列表。",
+        "note_db_exists": "数据库 '{name}' 已存在。",
+        "note_table_exists": "表 '{name}' 已存在。",
+        "msg_db_changed": "数据库已切换至 '{name}'。",
+        "msg_rows_inserted": "已插入 {count} 行。",
+        "msg_rows_updated": "已更新 {count} 行。",
+        "msg_rows_deleted": "已删除 {count} 行。",
+        "msg_row_affected": "{count} 行受影响。",
+        "err_table_not_found": "表 '{name}' 不存在。",
+        "err_db_not_found": "数据库 '{name}' 不存在。",
+        "err_column_not_found": "列 '{name}' 不存在。"
     }
 }
